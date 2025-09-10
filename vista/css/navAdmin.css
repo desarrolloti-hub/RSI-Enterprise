@@ -1,0 +1,192 @@
+/* Reset básico para evitar interferencias */
+.nan_reset * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif; /* Fuente Arial */
+}
+
+/* Estilos del menú de hamburguesa */
+.nan_header {
+    background-color: rgb(29, 28, 28);
+    color: black;
+    padding: 10px 20px;
+    position: fixed; /* 🔥 Fijamos el navbar en la parte superior */
+    top: 0;
+    left: 0;
+    width: 100%; /* Ocupa todo el ancho */
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nan_navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nan_logo img {
+    height: 90px; /* Ajusta el tamaño del logo */
+}
+
+.nan_menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nan_menu li {
+    margin-left: 20px;
+}
+
+.nan_menu a {
+    color: rgb(255, 255, 255); /* Letras negras */
+    text-decoration: none;
+    font-size: 20px;
+    position: relative;
+    transition: all 0.3s ease; /* Transición suave para todas las propiedades */
+}
+
+/* Animación al pasar el cursor */
+.nan_menu a:hover {
+    color: #58a6fb; /* Azul juerte */
+    transform: scale(1.1); /* Escala el texto al 110% */
+    padding-left: 10px; /* Desplaza el texto hacia la derecha */
+}
+
+/* Efecto de fondo animado */
+.nan_menu a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 123, 255, 0.1); /* Fondo azul suave */
+    z-index: -1;
+    transform: scaleX(0); /* Inicialmente sin ancho */
+    transform-origin: left;
+    transition: transform 0.3s ease; /* Animación de la expansión */
+}
+
+.nan_menu a:hover::before {
+    transform: scaleX(1); /* Expande el fondo */
+}
+
+.nan_actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nan_actions select {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+/* Estilos para el menú de hamburguesa */
+.nan_hamburger {
+    display: none; /* Oculto por defecto */
+    background: none;
+    border: none;
+    color: black; /* Color del ícono */
+    font-size: 24px;
+    cursor: context-menu;
+    z-index: 1001;
+    margin: 0; /* Eliminar margen */
+    padding: 10; /* Eliminar padding */
+}
+
+.nan_menu .fa-user,
+.nan_menu .fa-sign-out-alt,
+.nan_menu .fa-home{
+    color: white; /* Color blanco */
+    margin-right: 8px; /* Espacio entre el ícono y el texto */
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .nan_hamburger {
+        display: block;
+    }
+
+    .nan_menu {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        right: -70%; /* Inicialmente oculto */
+        width: 70%;
+        height: 100vh;
+        background-color: #000000;
+        border-left: 1px solid #ddd;
+        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+        z-index: 1000;
+    }
+    .nan_menu.nan_active {
+    display: flex;
+    right: 0; /* Mostrar desde la derecha */
+    opacity: 1;
+    }
+
+    .nan_menu li {
+        margin: 20px 0; /* Aumenta el margen entre los elementos del menú */
+    }
+
+    .nan_menu a {
+padding: 10px 20px; /* Aumenta el padding de los enlaces para más separación */
+display: block; /* Hace que los enlaces ocupen todo el ancho disponible */
+font-family: Arial, sans-serif; /* Cambia la fuente a Arial */
+font-size: 18px; /* Aumenta el tamaño de la letra */
+}
+
+
+    .nan_menu.nan_active {
+        display: flex;
+        right: 0; /* Mostrar desde la derecha */
+        opacity: 1;
+    }
+
+    .nan_close {
+        display: none;
+        font-size: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #ffffff;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        z-index: 1001;
+    }
+
+    .nan_active + .nan_close {
+        display: block;
+    }
+
+    .nan_active ~ .nan_hamburger {
+        display: none;
+    }
+
+    .nan_actions {
+        display: none; /* Ocultar selectores en móviles */
+    }
+}
+
+body {
+    overflow-x: hidden; /* Evitar desplazamiento horizontal */
+}
+
+/* Estilos para el logo */
+.nan_logo img {
+    max-width: 100px; /* Ajusta este valor según el tamaño deseado */
+    height: auto; /* Mantiene la proporción de la imagen */
+}
+
+body {
+    padding-top: 80px;
+}

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="https://rsienterprise.com/vista/css/navAdmin.css">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <title>RSI Enterprise - Blog Manager</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" />
+</head>
+<body>
+  <header class="header">
+    <header class="nan_header">
+      <nav class="nan_navbar">
+          <div class="nan_logo">
+              <img src="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png" alt="Logo">
+          </div>
+          <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+          <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+          <ul class="nan_menu">
+            <li><i class="fas fa-home"></i><a href="panel-administrador"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+          </ul> 
+            <!-- Icono de papelera para ver la papelera -->        
+      </nav>
+  </header>
+
+  <main class="container">
+    <h1 class="title" id="mainTitle">Contenido</h1>
+    <a href="formularioblogs.html" class="add-button" id="addButton">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      Agregar Nuevo Blog
+    </a>
+    <!-- Contenedor para blogs activos -->
+    <div class="grid" id="blogGrid"></div>
+    <!-- Contenedor para blogs en la papelera (oculto por defecto) -->
+    <div class="grid" id="papeleraGrid" style="display: none;"></div>
+  </main>
+
+  <!-- View Modal -->
+  <div class="modal" id="viewModal">
+    <div class="modal-content">
+      <button class="modal-close" id="viewModalClose">&times;</button>
+      <h2 class="modal-title" id="viewTitle"></h2>
+      <div class="pdf-container">
+        <iframe class="pdf-viewer" id="viewPdfViewer"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h2 class="modal-title">Editar Blog</h2>
+      <form id="editForm">
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input type="text" class="form-input" id="editTitle" required />
+        </div>
+        <div id="currentPdfContainer" class="pdf-container" style="display: none;">
+          <iframe class="pdf-viewer" id="editPdfViewer"></iframe>
+          <div class="pdf-actions">
+            <span class="pdf-filename" id="pdfFilename">documento.pdf</span>
+            <button type="button" class="pdf-remove" id="removePdf">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"/>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              </svg>
+              Eliminar PDF
+            </button>
+          </div>
+        </div>
+        <div class="pdf-upload" id="pdfUploadContainer" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Nuevo PDF</label>
+            <input type="file" class="form-input" id="newPdf" accept="application/pdf" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-cancel" id="cancelEdit">Cancelar</button>
+          <button type="submit" class="modal-btn modal-btn-save">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<!-- Botón flotante -->
+ <br><br><br> <br><br><br><br><br>
+<li class="floating-button-container">
+  <a href="#" onclick="showPapeleraBlogs()" class="boton-flotante" title="Papelera">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6l-1 14H6L5 6"></path>
+          <path d="M10 11v6"></path>
+          <path d="M14 11v6"></path>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+      </svg>
+      Papelera Blogs
+  </a>
+</li>
+<!-- Botón de Regreso flotante -->
+<div class="floating-button-container-left">
+  <a href="blogs.html" class="boton-flotante-azul" title="Regresar">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
+          <path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Regresar a blogs
+  </a>
+</div>
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+      authDomain: "rsienterprise.firebaseapp.com",
+      projectId: "rsienterprise",
+      storageBucket: "rsienterprise.appspot.com",
+      messagingSenderId: "1063117165770",
+      appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // DOM Elements
+    const blogGrid = document.getElementById('blogGrid');
+    const papeleraGrid = document.getElementById('papeleraGrid');
+    const viewModal = document.getElementById('viewModal');
+    const editModal = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    const editTitle = document.getElementById('editTitle');
+    const viewTitle = document.getElementById('viewTitle');
+    const viewPdfViewer = document.getElementById('viewPdfViewer');
+    const editPdfViewer = document.getElementById('editPdfViewer');
+    const currentPdfContainer = document.getElementById('currentPdfContainer');
+    const pdfUploadContainer = document.getElementById('pdfUploadContainer');
+    const newPdfInput = document.getElementById('newPdf');
+    const removePdfButton = document.getElementById('removePdf');
+    const modalClose = document.getElementById('modalClose');
+    const viewModalClose = document.getElementById('viewModalClose');
+    const cancelEdit = document.getElementById('cancelEdit');
+    const mainTitle = document.getElementById('mainTitle');
+    const addButton = document.getElementById('addButton');
+
+    let currentBlogId = null;
+    let currentPdfData = null;
+
+    // Función para cargar blogs activos (colección 'blogs')
+    async function loadBlogs() {
+      try {
+        const snapshot = await db.collection('blogs')
+          .orderBy('fecha', 'desc')
+          .get();
+        blogGrid.innerHTML = "";
+        snapshot.forEach(doc => {
+          const blog = doc.data();
+          const card = createBlogCard(doc.id, blog);
+          blogGrid.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error loading blogs:', error);
+        Swal.fire('Error', 'No se pudieron cargar los blogs', 'error');
+      }
+    }
+
+    // Función para crear tarjeta de blog activo
+    function createBlogCard(id, blog) {
+      const card = document.createElement('div');
+      card.className = "card";
+      const date = blog.fecha?.toDate().toLocaleDateString('es-ES') || '';
+      card.innerHTML = `
+        <h3 class="card-title">${blog.titulo}</h3>
+        <div class="card-meta">
+          ${blog.tipo.toUpperCase()} • ${date}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-view" onclick="handleView('${id}')" title="Ver">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button class="btn btn-edit" onclick="handleEdit('${id}')" title="Editar">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+            </svg>
+          </button>
+          <button class="btn btn-delete" onclick="handleDelete('${id}')" title="Mover a Papelera">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18"/>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+      `;
+      return card;
+    }
+
+    // Función para manejar la vista (modal) de un blog
+    async function handleView(id) {
+      try {
+        const doc = await db.collection('blogs').doc(id).get();
+        if (doc.exists) {
+          const blog = doc.data();
+          viewTitle.textContent = blog.titulo;
+          if (blog.tipo === 'pdf' && blog.contenido) {
+            viewPdfViewer.src = `data:application/pdf;base64,${blog.contenido}`;
+          }
+          viewModal.classList.add('active');
+        }
+      } catch (error) {
+        console.error('Error loading blog:', error);
+        Swal.fire('Error', 'No se pudo cargar el blog', 'error');
+      }
+    }
+
+    // Función para manejar la edición de un blog
+    async function handleEdit(id) {
+      try {
+        const doc = await db.collection('blogs').doc(id).get();
+        if (doc.exists) {
+          const blog = doc.data();
+          currentBlogId = id;
+          currentPdfData = blog.contenido;
+          editTitle.value = blog.titulo;
+          if (blog.tipo === 'pdf' && blog.contenido) {
+            editPdfViewer.src = `data:application/pdf;base64,${blog.contenido}`;
+            currentPdfContainer.style.display = "block";
+            pdfUploadContainer.style.display = "none";
+          } else {
+            currentPdfContainer.style.display = "none";
+            pdfUploadContainer.style.display = "block";
+          }
+          editModal.classList.add('active');
+        }
+      } catch (error) {
+        console.error('Error loading blog:', error);
+        Swal.fire('Error', 'No se pudo cargar el blog', 'error');
+      }
+    }
+
+    // Función para eliminar un blog activo (moviéndolo a 'blogsPapelera')
+    async function handleDelete(id) {
+      const result = await Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Este artículo será movido a la papelera",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#FFD700",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar"
+      });
+      if (result.isConfirmed) {
+        try {
+          const blogRef = db.collection("blogs").doc(id);
+          const docSnap = await blogRef.get();
+          if (docSnap.exists) {
+            const blogData = docSnap.data();
+            blogData.fechaEliminacion = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection("blogsPapelera").doc(id).set(blogData);
+          }
+          await blogRef.delete();
+          loadBlogs();
+          Swal.fire("¡Eliminado!", "El artículo ha sido movido a la papelera.", "success");
+        } catch (error) {
+          console.error("Error deleting blog:", error);
+          Swal.fire("Error", error.message || "No se pudo eliminar el artículo.", "error");
+        }
+      }
+    }
+
+    // Función para cargar los blogs de la papelera (colección 'blogsPapelera')
+    async function loadTrashBlogs() {
+      try {
+        const snapshot = await db.collection("blogsPapelera")
+          .orderBy("fechaEliminacion", "desc")
+          .get();
+        papeleraGrid.innerHTML = "";
+        snapshot.forEach(doc => {
+          const blog = doc.data();
+          const card = createTrashCard(doc.id, blog);
+          papeleraGrid.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Error loading trash blogs:", error);
+        Swal.fire("Error", "No se pudieron cargar los blogs de la papelera", "error");
+      }
+    }
+
+    // Función para crear tarjeta de blog en la papelera
+    function createTrashCard(id, blog) {
+      const card = document.createElement("div");
+      card.className = "card";
+      let formattedDate = "";
+      if (blog.fechaEliminacion && blog.fechaEliminacion.toDate) {
+        formattedDate = blog.fechaEliminacion.toDate().toLocaleDateString("es-ES");
+      }
+      card.innerHTML = `
+        <h3 class="card-title">${blog.titulo}</h3>
+        <div class="card-meta">
+          Papelera • ${formattedDate}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-recover" onclick="handleRecover('${id}')" title="Recuperar">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="green" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+          <button class="btn btn-delete" onclick="handleTrashDelete('${id}')" title="Eliminar Permanentemente">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="red" stroke-width="2">
+              <path d="M3 6h18"/>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+      `;
+      return card;
+    }
+
+    // Función para eliminar permanentemente un blog de la papelera
+    async function handleTrashDelete(id) {
+      const result = await Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Este artículo se eliminará permanentemente",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar"
+      });
+      if (result.isConfirmed) {
+        try {
+          await db.collection("blogsPapelera").doc(id).delete();
+          loadTrashBlogs();
+          Swal.fire("¡Eliminado!", "El artículo ha sido eliminado permanentemente.", "success");
+        } catch (error) {
+          console.error("Error deleting trash blog:", error);
+          Swal.fire("Error", error.message || "No se pudo eliminar el artículo.", "error");
+        }
+      }
+    }
+
+    // Función para recuperar un blog (mover de 'blogsPapelera' a 'blogs')
+    async function handleRecover(id) {
+      const result = await Swal.fire({
+        title: "¿Recuperar blog?",
+        text: "El artículo se moverá a los blogs activos",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, recuperar",
+        cancelButtonText: "Cancelar"
+      });
+      if (result.isConfirmed) {
+        try {
+          const docSnap = await db.collection("blogsPapelera").doc(id).get();
+          if (docSnap.exists) {
+            const blogData = docSnap.data();
+            delete blogData.fechaEliminacion;
+            await db.collection("blogs").doc(id).set(blogData);
+            await db.collection("blogsPapelera").doc(id).delete();
+            loadTrashBlogs();
+            Swal.fire("¡Recuperado!", "El artículo ha sido recuperado.", "success");
+          }
+        } catch (error) {
+          console.error("Error recovering blog:", error);
+          Swal.fire("Error", error.message || "No se pudo recuperar el artículo.", "error");
+        }
+      }
+    }
+
+    // Funciones para mostrar la vista activa o la papelera
+    function showActiveBlogs() {
+      mainTitle.textContent = "Contenido";
+      addButton.style.display = "flex";
+      blogGrid.style.display = "grid";
+      papeleraGrid.style.display = "none";
+      loadBlogs();
+    }
+
+    function showPapeleraBlogs() {
+      mainTitle.textContent = "Papelera";
+      addButton.style.display = "none";
+      blogGrid.style.display = "none";
+      papeleraGrid.style.display = "grid";
+      loadTrashBlogs();
+    }
+
+    // Handle Remove PDF en el modal de edición
+    removePdfButton.addEventListener("click", () => {
+      currentPdfContainer.style.display = "none";
+      pdfUploadContainer.style.display = "block";
+      currentPdfData = null;
+    });
+
+    // Handle Form Submit para actualizar blog
+    editForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentBlogId) return;
+      try {
+        const updateData = {
+          titulo: editTitle.value
+        };
+        if (newPdfInput.files.length > 0) {
+          const file = newPdfInput.files[0];
+          const reader = new FileReader();
+          reader.onload = async function(e) {
+            const base64String = e.target.result.split(",")[1];
+            updateData.contenido = base64String;
+            updateData.tipo = "pdf";
+            await updateBlog(updateData);
+          };
+          reader.readAsDataURL(file);
+        } else if (currentPdfData) {
+          updateData.contenido = currentPdfData;
+          updateData.tipo = "pdf";
+          await updateBlog(updateData);
+        } else {
+          await updateBlog(updateData);
+        }
+      } catch (error) {
+        console.error("Error updating blog:", error);
+        Swal.fire("Error", "No se pudo actualizar el artículo.", "error");
+      }
+    });
+
+    async function updateBlog(data) {
+      await db.collection("blogs").doc(currentBlogId).update(data);
+      loadBlogs();
+      editModal.classList.remove("active");
+      Swal.fire("¡Actualizado!", "El artículo ha sido actualizado.", "success");
+    }
+
+    // Modal Close Handlers
+    modalClose.addEventListener("click", () => editModal.classList.remove("active"));
+    viewModalClose.addEventListener("click", () => viewModal.classList.remove("active"));
+    cancelEdit.addEventListener("click", () => editModal.classList.remove("active"));
+
+    editModal.addEventListener("click", (e) => {
+      if (e.target === editModal) {
+        editModal.classList.remove("active");
+      }
+    });
+    viewModal.addEventListener("click", (e) => {
+      if (e.target === viewModal) {
+        viewModal.classList.remove("active");
+      }
+    });
+
+    // Cargar blogs activos al iniciar la página
+    document.addEventListener("DOMContentLoaded", showActiveBlogs);
+
+    // Hacer las funciones globales
+    window.handleView = handleView;
+    window.handleEdit = handleEdit;
+    window.handleDelete = handleDelete;
+    window.handleRecover = handleRecover;
+    window.handleTrashDelete = handleTrashDelete;
+    window.showActiveBlogs = showActiveBlogs;
+    window.showPapeleraBlogs = showPapeleraBlogs;
+  </script>
+</body>
+<style>
+  :root {
+    --primary: #FFD700;
+    --secondary: #e6b800;
+    --background: #000000;
+    --card-bg: #1a1a1a;
+    --text: #ffffff;
+  }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background-color: var(--card-bg);
+    padding: 1rem;
+  }
+  svg {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  .title {
+    text-align: center;
+    color: var(--primary);
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+  .add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--primary);
+    color: black;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    transition: background-color 0.3s;
+  }
+  .add-button:hover {
+    background-color: var(--secondary);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background-color: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: transform 0.3s;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  .card-title {
+    color: var(--primary);
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+  .card-meta {
+    color: #666;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  .btn {
+    padding: 0.5rem;
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    background: none;
+  }
+  .btn-view {
+    color: #3b82f6;
+  }
+  .btn-view:hover {
+    background-color: #3b82f6;
+    color: white;
+  }
+  .btn-edit {
+    color: var(--primary);
+  }
+  .btn-edit:hover {
+    background-color: var(--primary);
+    color: black;
+  }
+  .btn-delete {
+    color: #ef4444;
+  }
+  .btn-delete:hover {
+    background-color: #ef4444;
+    color: white;
+  }
+  .btn-recover {
+    color: green;
+  }
+  .btn-recover:hover {
+    background-color: rgba(0, 128, 0, 0.2);
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 1rem;
+    z-index: 50;
+  }
+  .modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-content {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 0.5rem;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  .modal-title {
+    color: var(--primary);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  .form-label {
+    display: block;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+  .form-input {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #000;
+    border: 1px solid #333;
+    border-radius: 0.25rem;
+    color: var(--text);
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .modal-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .modal-btn-cancel {
+    background-color: transparent;
+    color: #666;
+  }
+  .modal-btn-save {
+    background-color: var(--primary);
+    color: black;
+  }
+  .modal-btn-save:hover {
+    background-color: var(--secondary);
+  }
+  .pdf-container {
+    margin-top: 1rem;
+    border: 1px solid #333;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  .pdf-viewer {
+    width: 100%;
+    height: 500px;
+    border: none;
+  }
+  .pdf-actions {
+    padding: 1rem;
+    background-color: #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pdf-filename {
+    color: #666;
+  }
+  .pdf-remove {
+    color: #ef4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+  }
+  .pdf-remove:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+  .pdf-upload {
+    margin-top: 1rem;
+  }
+  .floating-button-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    list-style: none;
+  }
+  .boton-flotante {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 30px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease;
+  }
+  .boton-flotante:hover {
+    background-color: #bb2d3b;
+    color: white;
+  }
+  .boton-flotante svg {
+    width: 24px;
+    height: 24px;
+  }
+  .floating-button-container-left {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+  }
+  .boton-flotante-azul {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 25px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 30px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  }
+  .boton-flotante-azul:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    color: white;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  }
+  .boton-flotante-azul:active {
+    transform: translateY(0);
+  }
+  .boton-flotante-azul svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5px;
+  }
+  @media (max-width: 768px) {
+    .nav {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .modal-content {
+      margin: 1rem;
+      max-height: 80vh;
+    }
+    .pdf-viewer {
+      height: 300px;
+    }
+  }
+</style>
+</html>

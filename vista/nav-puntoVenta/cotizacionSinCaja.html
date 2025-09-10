@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta RSI IXTAPALUCA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+       @media print {
+    img {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        filter: contrast(200%) brightness(0%) !important;
+    }
+    
+    .ticket-logo img {
+        height: 40mm !important;  /* Aumentado de 30mm */
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .qr-section img {
+        width: 30mm !important;   /* Aumentado de 25mm */
+        height: 30mm !important;  /* Aumentado de 25mm */
+        margin: 0 auto;
+        display: block;
+    }
+}
+    .nan_header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; }
+    main { margin-top: 80px; }
+    
+    #scanner-input, #search-input {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 128, 0, 0.2);
+    }
+    
+    #scanner-input:focus, #search-input:focus {
+        box-shadow: 0 4px 8px rgba(0, 128, 0, 0.3);
+        outline: none;
+    }
+    
+    #quote-items input[type="number"] {
+        -moz-appearance: textfield;
+    }
+    
+    #quote-items input[type="number"]::-webkit-outer-spin-button,
+    #quote-items input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    .search-results {
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 0.375rem;
+        z-index: 10;
+        position: absolute;
+        background: white;
+        width: calc(100% - 2rem);
+    }
+    
+    .search-results::-webkit-scrollbar { width: 8px; }
+    .search-results::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .search-results::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .search-results::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+    
+    .search-result-item { 
+        transition: background-color 0.2s;
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+    }
+    .search-result-item:hover { background-color: #f0fdf4; }
+    
+    .payment-method {
+        transition: all 0.3s ease;
+    }
+    
+    .payment-method:hover { transform: scale(1.05); }
+    .payment-method.selected {
+        border: 2px solid #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    }
+
+    .ticket-preview {
+        display: none;
+        width: 80mm;
+        margin: 20px auto;
+        padding: 5mm;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+    }
+    
+    .ticket-header {
+        text-align: center;
+        margin-bottom: 3mm;
+        padding-bottom: 2mm;
+        border-bottom: 1px dashed #000;
+        font-family: 'Agency FB', Arial, sans-serif;
+    }
+    
+    .business-name {
+        font-size: 14pt;
+        font-weight: bold;
+        margin-bottom: 2mm;
+        font-family: 'Agency FB', Arial, sans-serif;
+    }
+    
+    .ticket-info p { 
+        margin: 1mm 0;
+        font-size: 9pt;
+    }
+    
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2mm 0;
+        font-size: 9pt;
+        table-layout: fixed;
+    }
+    
+    .items-table th {
+        text-align: left;
+        border-bottom: 1px solid #000;
+        padding: 1mm 0;
+        font-family: 'Agency FB', Arial, sans-serif;
+        font-weight: bold;
+    }
+    
+    .items-table td {
+        padding: 1mm 0;
+        border-bottom: 1px dashed #ddd;
+        vertical-align: top;
+    }
+    
+    .items-table td:nth-child(2) {
+        white-space: normal;
+        word-wrap: break-word;
+    }
+    
+    .total-section {
+        text-align: right;
+        margin-top: 3mm;
+        font-weight: bold;
+        font-size: 10pt;
+        font-family: 'Agency FB', Arial, sans-serif;
+    }
+    
+    .print-btn {
+        display: none;
+        width: 80mm;
+        margin: 10px auto;
+        padding: 8px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12pt;
+    }
+
+    .ticket-logo {
+        text-align: center;
+        margin-bottom: 3mm;
+    }
+    
+    .ticket-logo img {
+        height: 30mm;
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .qr-section {
+        text-align: center;
+        margin-top: 5mm;
+        padding-top: 3mm;
+        border-top: 1px dashed #000;
+    }
+    
+    .qr-section img {
+        width: 25mm;
+        height: 25mm;
+    }
+    
+    .qr-section p {
+        font-family: 'Agency FB', Arial, sans-serif;
+        font-weight: bold;
+        font-size: 11pt;
+        margin-bottom: 2mm;
+    }
+
+    @media print {
+        body * { visibility: hidden; }
+        .ticket-preview, .ticket-preview * { visibility: visible; }
+        .ticket-preview {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80mm;
+            margin: 0;
+            padding: 0;
+        }
+        .print-btn { display: none !important; }
+        @page { size: 80mm auto; margin: 0; }
+    }
+    
+    @font-face {
+        font-family: 'Agency FB';
+        src: local('Agency FB'), local('AgencyFB-Bold');
+        font-weight: bold;
+    }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="nan_header">
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Logo" class="h-12">
+                        <span class="ml-2 text-xl font-bold text-blue-900">RSI IXTAPALUCA</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-gray-500">Punto de Venta</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 pt-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4">Punto de Venta</h2>
+            
+            <div class="mb-4 relative">
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="search-input" 
+                           class="flex-1 p-2 border-2 border-blue-500 rounded-md" 
+                           placeholder="Buscar por Marca, Modelo, Precio o Producto">
+                    <button id="search-button" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                        Buscar
+                    </button>
+                </div>
+                <div id="search-results" class="search-results hidden"></div>
+                
+                <input type="text" id="scanner-input" 
+                       class="w-full p-2 border-2 border-green-500 rounded-md font-mono"
+                       placeholder="Escanear código de barras"
+                       autofocus>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-100 text-gray-600 text-sm font-semibold uppercase">
+                        <tr>
+                            <th class="px-6 py-4 text-left">Producto</th>
+                            <th class="px-6 py-4 text-left">Precio Unitario</th>
+                            <th class="px-6 py-4 text-left">Cantidad</th>
+                            <th class="px-6 py-4 text-left">Subtotal</th>
+                            <th class="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quote-items" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <div class="mt-6">
+                <div class="grid grid-cols-4 gap-4 mb-4" id="payment-methods">
+                    <div class="payment-method p-4 border rounded-lg text-center cursor-pointer" data-method="Efectivo">
+                        <div class="text-2xl">💵</div>
+                        <div class="font-medium">Efectivo</div>
+                    </div>
+                    <div class="payment-method p-4 border rounded-lg text-center cursor-pointer" data-method="Tarjeta">
+                        <div class="text-2xl">💳</div>
+                        <div class="font-medium">Tarjeta</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="text-xl font-bold">Total: <span id="quote-total">$0.00</span></div>
+                    <div class="space-x-2">
+                        <button onclick="finalizarCotizacion()" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">Finalizar Venta</button>
+                        <button onclick="cancelarCotizacion()" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Datos del Cliente</h2>
+                <button onclick="cerrarModalCliente()" class="text-gray-500 hover:text-gray-700">&times;</button>
+            </div>
+            
+            <form id="cliente-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nombre del Cliente</label>
+                    <input type="text" id="cliente-nombre" required class="w-full p-2 border rounded-md">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <input type="tel" id="cliente-telefono" required class="w-full p-2 border rounded-md">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Método de Pago</label>
+                    <input type="text" id="cliente-metodo-pago" readonly class="w-full p-2 border rounded-md bg-gray-100">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Estado</label>
+                    <select id="cliente-estado" class="w-full p-2 border rounded-md">
+                        <option value="Cotización">Cotización</option>
+                        <option value="Venta Completada">Venta Completada</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="cerrarModalCliente()" class="px-4 py-2 border rounded-md hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" id="submit-button" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        <span id="submit-text">Procesar Venta</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="cash-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Pago en Efectivo</h2>
+                <button onclick="cerrarModalEfectivo()" class="text-gray-500 hover:text-gray-700">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Total a Pagar</label>
+                    <input type="text" id="total-pagar" readonly class="w-full p-2 border rounded-md bg-gray-100">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Efectivo Recibido</label>
+                    <input type="number" id="efectivo-recibido" class="w-full p-2 border rounded-md" autofocus>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cambio</label>
+                    <input type="text" id="cambio" readonly class="w-full p-2 border rounded-md bg-gray-100">
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="cerrarModalEfectivo()" class="px-4 py-2 border rounded-md hover:bg-gray-50">Cancelar</button>
+                    <button type="button" onclick="confirmarPagoEfectivo()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        Confirmar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ticket-preview" id="ticket-preview">
+        <div class="ticket-logo">
+            <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Logo RSI">
+        </div>
+        
+        <div class="ticket-header">
+            <div class="business-name">RSI ENTERPRISE</div>
+            <div>20 Av. Morelos</div>
+            <div>San Francisco Acuautla</div>
+            <div>Estado de México</div>
+            <div>Tel: 55 76 90 82 48</div>
+            <div>rsienterprise.com</div>
+        </div>
+        
+        <div class="ticket-info">
+            <p><strong>Fecha:</strong> <span id="ticket-fecha"></span></p>
+            <p><strong>Cliente:</strong> <span id="ticket-cliente"></span></p>
+            <p><strong>Teléfono:</strong> <span id="ticket-telefono"></span></p>
+            <p><strong>Método Pago:</strong> <span id="ticket-metodo-pago"></span></p>
+        </div>
+        
+        <table class="items-table" id="ticket-items">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Cant.</th>
+                    <th style="width: 55%;">Descripción</th>
+                    <th style="width: 30%;">Total</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        
+        <div class="total-section">
+            <p>TOTAL: $<span id="ticket-total"></span></p>
+            <p id="ticket-efectivo" style="display: none;">EFECTIVO: $<span></span></p>
+            <p id="ticket-cambio" style="display: none;">CAMBIO: $<span></span></p>
+        </div>
+
+        <div class="qr-section">
+            <p>Si requieres factura escanea el siguiente QR</p>
+            <img src="../css/img/QR.PNG" alt="QR para facturación">
+        </div>
+    </div>
+    
+    <button class="print-btn" onclick="imprimirTicketPDF()" id="print-btn">Imprimir Ticket</button>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let cotizacion = [];
+    let productos = [];
+    let selectedPaymentMethod = '';
+    let totalVenta = 0;
+    let ticketData = null;
+
+    const { jsPDF } = window.jspdf;
+
+    const showAlert = (title, icon = 'success') => {
+        Swal.fire({
+            position: 'top-end',
+            icon: icon,
+            title: title,
+            showConfirmButton: false,
+            timer: 3000,
+            toast: true
+        });
+    };
+
+    function generarIdUnico() {
+        return `VT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    async function cargarProductos() {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'productosIxtapaluca'));
+            productos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            showAlert(`Error al cargar productos: ${error.message}`, 'error');
+        }
+    }
+
+    function buscarProductos(query) {
+        if (!query || query.trim() === '') return [];
+        const searchTerm = query.toLowerCase().trim();
+        return productos.filter(product => {
+            return Object.values(product).some(value => 
+                String(value).toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+
+    function mostrarResultadosBusqueda(resultados, contenedor) {
+        contenedor.innerHTML = '';
+        
+        if (resultados.length === 0) {
+            contenedor.innerHTML = '<div class="p-4 text-gray-500">No se encontraron productos</div>';
+        } else {
+            resultados.slice(0, 10).forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.innerHTML = `
+                    <div class="font-semibold text-gray-800">${product.Producto || 'N/A'}</div>
+                    <div class="text-sm text-gray-600">Marca: ${product.Marca || 'N/A'}</div>
+                    <div class="text-sm text-green-600 font-semibold">$${product.Precio?.toLocaleString('es-MX') || 'N/A'}</div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    agregarProductoCotizacion(product);
+                    actualizarCotizacionUI();
+                    document.getElementById('search-input').value = '';
+                    contenedor.classList.add('hidden');
+                    showAlert('Producto agregado');
+                });
+                
+                contenedor.appendChild(div);
+            });
+        }
+        contenedor.classList.remove('hidden');
+    }
+
+    function setupSearch() {
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchResults = document.getElementById('search-results');
+        
+        const handleSearch = () => {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            
+            const matches = buscarProductos(query);
+            mostrarResultadosBusqueda(matches, searchResults);
+        };
+        
+        searchInput.addEventListener('input', handleSearch);
+        searchButton.addEventListener('click', handleSearch);
+        
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+    }
+
+    document.getElementById('scanner-input').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            const barcode = e.target.value.trim();
+            if (!barcode) return;
+
+            try {
+                const product = await buscarProductoPorCodigo(barcode);
+                if (product) {
+                    agregarProductoCotizacion(product);
+                    actualizarCotizacionUI();
+                    showAlert('Producto agregado');
+                } else {
+                    showAlert('Producto no encontrado', 'error');
+                }
+            } catch (error) {
+                showAlert(`Error: ${error.message}`, 'error');
+            }
+            e.target.value = '';
+        }
+    });
+
+    async function buscarProductoPorCodigo(barcode) {
+        const querySnapshot = await getDocs(collection(db, 'productosIxtapaluca'));
+        return querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .find(product => 
+                product.mainBarcode === barcode || 
+                (product.uniqueBarcodes && product.uniqueBarcodes.includes(barcode))
+            );
+    }
+
+    function agregarProductoCotizacion(product) {
+        const existing = cotizacion.find(item => item.id === product.id);
+        if (existing) {
+            existing.cantidad++;
+            existing.subtotal = existing.cantidad * existing.precio;
+        } else {
+            cotizacion.push({
+                id: product.id,
+                nombre: product.Producto,
+                precio: product.Precio,
+                cantidad: 1,
+                subtotal: product.Precio
+            });
+        }
+    }
+
+    function actualizarCotizacionUI() {
+        const container = document.getElementById('quote-items');
+        const totalSpan = document.getElementById('quote-total');
+        container.innerHTML = '';
+        let total = 0;
+
+        cotizacion.forEach(item => {
+            total += item.subtotal;
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 border-b border-gray-200';
+            row.innerHTML = `
+                <td class="px-6 py-4">${item.nombre}</td>
+                <td class="px-6 py-4">$${item.precio.toLocaleString('es-MX')}</td>
+                <td class="px-6 py-4">
+                    <input type="number" value="${item.cantidad}" min="1" 
+                        onchange="actualizarCantidad('${item.id}', this.value)"
+                        class="w-20 p-1 border rounded">
+                </td>
+                <td class="px-6 py-4">$${item.subtotal.toLocaleString('es-MX')}</td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="eliminarDeCotizacion('${item.id}')" 
+                            class="text-red-500 hover:text-red-700">Eliminar</button>
+                </td>
+            `;
+            container.appendChild(row);
+        });
+
+        totalSpan.textContent = `$${total.toLocaleString('es-MX')}`;
+        totalVenta = total;
+    }
+
+    window.actualizarCantidad = (id, cantidad) => {
+        const item = cotizacion.find(item => item.id === id);
+        if (item && cantidad > 0) {
+            item.cantidad = parseInt(cantidad);
+            item.subtotal = item.cantidad * item.precio;
+            actualizarCotizacionUI();
+        }
+    };
+
+    window.eliminarDeCotizacion = (id) => {
+        cotizacion = cotizacion.filter(item => item.id !== id);
+        actualizarCotizacionUI();
+        showAlert('Producto eliminado');
+    };
+
+    window.finalizarCotizacion = () => {
+        if (cotizacion.length === 0) {
+            showAlert('No hay productos en la venta', 'error');
+            return;
+        }
+        
+        if (!selectedPaymentMethod) {
+            showAlert('Seleccione un método de pago', 'error');
+            return;
+        }
+        
+        totalVenta = parseFloat(document.getElementById('quote-total').textContent.replace(/[^0-9.]/g, ''));
+        
+        if (selectedPaymentMethod === 'Efectivo') {
+            document.getElementById('total-pagar').value = `$${totalVenta.toFixed(2)}`;
+            document.getElementById('efectivo-recibido').value = '';
+            document.getElementById('cambio').value = '';
+            document.getElementById('cash-modal').classList.remove('hidden');
+            document.getElementById('efectivo-recibido').focus();
+        } else {
+            document.getElementById('cliente-metodo-pago').value = selectedPaymentMethod;
+            document.getElementById('cliente-estado').value = 'Venta Completada';
+            document.getElementById('cliente-modal').classList.remove('hidden');
+        }
+    };
+
+    window.cerrarModalCliente = () => {
+        document.getElementById('cliente-modal').classList.add('hidden');
+    };
+
+    window.cerrarModalEfectivo = () => {
+        document.getElementById('cash-modal').classList.add('hidden');
+    };
+
+    document.getElementById('efectivo-recibido').addEventListener('input', function() {
+        const efectivo = parseFloat(this.value);
+        const total = totalVenta;
+        
+        if (!isNaN(efectivo) && efectivo >= total) {
+            const cambio = efectivo - total;
+            document.getElementById('cambio').value = cambio.toFixed(2);
+        } else {
+            document.getElementById('cambio').value = '';
+        }
+    });
+
+    window.confirmarPagoEfectivo = () => {
+        const efectivoRecibido = parseFloat(document.getElementById('efectivo-recibido').value);
+        const total = totalVenta;
+        
+        if (isNaN(efectivoRecibido)) {
+            showAlert('Ingrese una cantidad válida', 'error');
+            return;
+        }
+        
+        if (efectivoRecibido < total) {
+            showAlert('El efectivo recibido es menor al total', 'error');
+            return;
+        }
+        
+        const cambio = efectivoRecibido - total;
+        document.getElementById('cambio').value = cambio.toFixed(2);
+        
+        document.getElementById('cliente-metodo-pago').value = `Efectivo - Recibido: $${efectivoRecibido.toFixed(2)}, Cambio: $${cambio.toFixed(2)}`;
+        document.getElementById('cliente-estado').value = 'Venta Completada';
+        document.getElementById('cash-modal').classList.add('hidden');
+        document.getElementById('cliente-modal').classList.remove('hidden');
+    };
+
+    function generarTicket(folio, clienteInfo, items, total, metodoPago, efectivo, cambio) {
+        const ticketContainer = document.getElementById('ticket-preview');
+        const printBtn = document.getElementById('print-btn');
+        
+        // Formatear fecha
+        const now = new Date();
+        const options = { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        };
+        const fecha = now.toLocaleString('es-MX', options);
+        
+        document.getElementById("ticket-fecha").textContent = fecha;
+        document.getElementById("ticket-cliente").textContent = clienteInfo.nombre || "Público en general";
+        document.getElementById("ticket-telefono").textContent = clienteInfo.telefono || "N/A";
+        document.getElementById("ticket-metodo-pago").textContent = metodoPago;
+        document.getElementById("ticket-total").textContent = total.toFixed(2);
+
+        const itemsTable = document.querySelector("#ticket-items tbody");
+        itemsTable.innerHTML = items.map(item => `
+            <tr>
+                <td>${item.cantidad}</td>
+                <td>${item.nombre}</td>
+                <td>$${item.subtotal.toFixed(2)}</td>
+            </tr>
+        `).join("");
+
+        const ticketEfectivo = document.getElementById('ticket-efectivo');
+        const ticketCambio = document.getElementById('ticket-cambio');
+        if (metodoPago.includes('Efectivo')) {
+            ticketEfectivo.style.display = 'block';
+            ticketCambio.style.display = 'block';
+            ticketEfectivo.querySelector('span').textContent = efectivo.toFixed(2);
+            ticketCambio.querySelector('span').textContent = cambio.toFixed(2);
+        } else {
+            ticketEfectivo.style.display = 'none';
+            ticketCambio.style.display = 'none';
+        }
+
+        ticketContainer.style.display = 'block';
+        printBtn.style.display = 'block';
+        
+        // Guardar los datos del ticket para imprimir
+        ticketData = {
+            fecha,
+            cliente: clienteInfo.nombre || "Público en general",
+            telefono: clienteInfo.telefono || "N/A",
+            metodoPago,
+            items: items.map(item => ({
+                cantidad: item.cantidad,
+                nombre: item.nombre,
+                subtotal: item.subtotal.toFixed(2),
+                precioUnitario: item.precio
+            })),
+            total: total.toFixed(2),
+            efectivo: efectivo ? efectivo.toFixed(2) : null,
+            cambio: cambio ? cambio.toFixed(2) : null,
+            folio: folio
+        };
+    }
+
+    // Función para imprimir el ticket como PDF
+    
+    window.imprimirTicketPDF = async function() {
+        if (!ticketData) {
+            showAlert('No hay datos de ticket para imprimir', 'error');
+            return;
+        }
+
+        try {
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [80, 297]
+            });
+
+            // Configuración de fuentes (tamaño moderado)
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10); // Tamaño base reducido a 10
+
+            let y = 5;
+
+            // Logo (más pequeño)
+            const logoUrl = '../css/img/Logo-RSI-OFICIAL.png';
+            const qrUrl = '../css/img/QR.PNG';
+            const logoWidth = 80; // Reducido de 80 a 60
+            const logoHeight = 80; // Reducido de 80 a 60
+            const logoX = (80 - logoWidth) / 2;
+            doc.addImage(logoUrl, 'PNG', logoX, y, logoWidth, logoHeight);
+            y += logoHeight + 3;
+
+            // Información de la empresa
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12); // Reducido de 13 a 12
+            doc.text('RSI ENTERPRISE', 40, y, { align: 'center' });
+            y += 5;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9); // Reducido de 10 a 9
+            const companyInfo = [
+                '20 Av. Morelos',
+                'San Francisco Acuautla',
+                'Estado de México',
+                'Tel: 55 76 90 82 48',
+                'rsienterprise.com'
+            ];
+            
+            companyInfo.forEach(line => {
+                doc.text(line, 40, y, { align: 'center' });
+                y += 4;
+            });
+            
+            y += 3;
+
+            // Línea divisoria
+            doc.line(5, y, 75, y);
+            y += 4;
+
+            // Información del ticket
+            doc.setFontSize(10); // Mantenido en 10
+            doc.text(`Fecha: ${ticketData.fecha}`, 5, y);
+            y += 4.5;
+            doc.text(`Cliente: ${ticketData.cliente}`, 5, y);
+            y += 4.5;
+            doc.text(`Teléfono: ${ticketData.telefono}`, 5, y);
+            y += 4.5;
+            
+            // Método de pago
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Método Pago: ${ticketData.metodoPago}`, 5, y);
+            doc.setFont('helvetica', 'normal');
+            y += 5;
+
+            // Línea divisoria
+            doc.line(5, y, 75, y);
+            y += 4;
+
+            // Encabezados de productos
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10); // Reducido de 12 a 10
+            doc.text('CANT.', 5, y);
+            doc.text('DESCRIPCIÓN', 22, y); // Movido más a la izquierda
+            doc.text('TOTAL', 72, y, { align: 'right' });
+            y += 4;
+            
+            // Línea divisoria
+            doc.line(5, y, 75, y);
+            y += 4;
+
+            // Items de productos
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9); // Reducido de 11 a 9 para los items
+            const descWidth = 40; // Ancho para descripción
+            
+            ticketData.items.forEach(item => {
+                // Cantidad
+                doc.text(item.cantidad.toString(), 5, y);
+                
+                // Descripción limitada a 2 palabras
+                const words = item.nombre.split(' ').slice(0, 2).join(' ');
+                
+                // Precio
+                doc.text(`$${item.subtotal}`, 72, y, { align: 'right' });
+                
+                // Descripción (con máximo de caracteres)
+                const maxChars = 20; // Máximo de caracteres para evitar traslape
+                const shortDesc = words.length > maxChars ? words.substring(0, maxChars) + '...' : words;
+                doc.text(shortDesc, 18, y);
+                
+                y += 4; // Espaciado reducido
+            });
+
+            // Línea divisoria final
+            doc.line(5, y, 75, y);
+            y += 5;
+
+            // Totales
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10); // Reducido de 12 a 10
+            doc.text(`TOTAL: $${ticketData.total}`, 72, y, { align: 'right' });
+            y += 4;
+            
+            if (ticketData.efectivo && ticketData.cambio) {
+                doc.text(`EFECTIVO: $${ticketData.efectivo}`, 72, y, { align: 'right' });
+                y += 4;
+                doc.text(`CAMBIO: $${ticketData.cambio}`, 72, y, { align: 'right' });
+                y += 5;
+            }
+
+            // Sección QR (más pequeña)
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9); // Reducido
+            doc.text('En caso de requerir Factura escanea QR:', 40, y, { align: 'center' });
+            y += 4;
+            
+            const qrSize = 80; // Reducido de 70 a 50
+            const qrX = (80 - qrSize) / 2;
+            doc.addImage(qrUrl, 'PNG', qrX, y, qrSize, qrSize);
+            y += qrSize + 5;
+
+            // Generar PDF
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            
+            const printWindow = window.open(pdfUrl);
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+            
+            document.getElementById('ticket-preview').style.display = 'none';
+            document.getElementById('print-btn').style.display = 'none';
+            
+            showAlert('Ticket generado para impresión');
+            
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            showAlert(`Error al generar ticket: ${error.message}`, 'error');
+        }
+    };
+
+    document.getElementById('cliente-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const clienteInfo = {
+            nombre: document.getElementById('cliente-nombre').value.trim(),
+            telefono: document.getElementById('cliente-telefono').value.trim(),
+            estado: document.getElementById('cliente-estado').value
+        };
+
+        if (!clienteInfo.nombre || !clienteInfo.telefono || !/^\d+$/.test(clienteInfo.telefono)) {
+            showAlert('Datos inválidos: El telefono debe contener solo números', 'error');
+            return;
+        }
+
+        try {
+            const folio = generarIdUnico();
+            let efectivo = 0;
+            let cambio = 0;
+            
+            if (selectedPaymentMethod === 'Efectivo') {
+                efectivo = parseFloat(document.getElementById('efectivo-recibido').value);
+                cambio = parseFloat(document.getElementById('cambio').value);
+            }
+
+            await addDoc(collection(db, 'tickets'), {
+                fecha: new Date(),
+                items: cotizacion.map(item => ({
+                    id: item.id,
+                    nombre: item.nombre,
+                    precio: item.precio,
+                    cantidad: item.cantidad,
+                    subtotal: item.subtotal
+                })),
+                total: totalVenta,
+                cliente: clienteInfo,
+                metodoPago: selectedPaymentMethod,
+                efectivoRecibido: selectedPaymentMethod === 'Efectivo' ? efectivo : null,
+                cambio: selectedPaymentMethod === 'Efectivo' ? cambio : null,
+                folio: folio,
+                estado: clienteInfo.estado,
+                busqueda: [
+                    clienteInfo.nombre.toLowerCase(),
+                    clienteInfo.telefono,
+                    folio.toLowerCase()
+                ]
+            });
+
+            // Generar el ticket visual y guardar los datos para impresión
+            generarTicket(
+                folio,
+                clienteInfo,
+                cotizacion,
+                totalVenta,
+                selectedPaymentMethod,
+                efectivo,
+                cambio
+            );
+            
+            document.getElementById('cliente-modal').classList.add('hidden');
+            document.getElementById('cliente-form').reset();
+            
+        } catch (error) {
+            console.error("Error: ", error);
+            showAlert(`Error: ${error.message}`, 'error');
+        }
+    });
+
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function() {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPaymentMethod = this.dataset.method;
+            document.getElementById('cliente-metodo-pago').value = selectedPaymentMethod;
+            document.getElementById('submit-text').textContent = 
+                selectedPaymentMethod === 'Efectivo' ? 'Confirmar Pago' : 'Procesar Venta';
+        });
+    });
+
+    window.cancelarCotizacion = () => {
+        cotizacion = [];
+        actualizarCotizacionUI();
+        document.getElementById('scanner-input').focus();
+        showAlert('Venta cancelada');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarProductos();
+        setupSearch();
+        document.getElementById('scanner-input').focus();
+        document.querySelector('.payment-method[data-method="Efectivo"]').click();
+    });
+</script>
+</body>
+</html>

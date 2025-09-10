@@ -1,0 +1,255 @@
+
+    /* --- ESTILOS GENERALES Y RESET --- */
+    :root { /* Define variables de color y tamaño para usar en toda la página. */
+        --safe-area-top: env(safe-area-inset-top, 0px); /* Variable para respetar el "notch" (muesca) de los iPhones en la parte superior. */
+        --safe-area-right: env(safe-area-inset-right, 0px); /* Variable para respetar los bordes laterales en modo horizontal en iPhones. */
+        --safe-area-bottom: env(safe-area-inset-bottom, 0px); /* Variable para respetar la barra inferior de gestos en iPhones. */
+        --safe-area-left: env(safe-area-inset-left, 0px); /* Variable para respetar los bordes laterales en modo horizontal en iPhones. */
+        --theme-color: #00ffff; /* Variable para tu color principal (cian). */
+        --dark-bg: #121212; /* Variable para el color de fondo más oscuro. */
+        --medium-bg: #1e1e1e; /* Variable para un color de fondo un poco más claro. */
+    }
+
+    html, body { /* Estilos aplicados a la estructura base de la página. */
+        height: 100%; /* Asegura que la página ocupe todo el alto de la pantalla. */
+        margin: 0; /* Elimina el margen blanco que los navegadores ponen por defecto. */
+        overflow-x: hidden; /* Evita que el usuario pueda hacer scroll hacia los lados. */
+        background-color: var(--dark-bg); /* Pone el color de fondo oscuro usando la variable. */
+        font-family: 'Rajdhani', sans-serif; /* Define el tipo de letra para todo el sitio. */
+        color: #ffffff; /* Define el color del texto como blanco. */
+    }
+
+    *, *::before, *::after { /* Selector universal que aplica a TODOS los elementos. */
+        box-sizing: border-box; /* Cambia cómo se calcula el tamaño: el padding y borde no aumentan el ancho total. */
+    }
+
+    .hidden { /* Una clase de ayuda para ocultar cualquier elemento. */
+        display: none !important; /* Oculta el elemento por completo y le da prioridad (!important). */
+    }
+
+    /* --- CONTENEDOR DE VISTAS --- */
+    .view { /* Estilo base para las diferentes "pantallas" de la app. */
+        width: 100%; /* Hace que la vista ocupe todo el ancho disponible. */
+        height: 100%; /* Hace que la vista ocupe todo el alto disponible. */
+        padding: var(--safe-area-top) var(--safe-area-right) var(--safe-area-bottom) var(--safe-area-left); /* Aplica los márgenes de seguridad para celulares. */
+        display: flex; /* Activa el modo Flexbox para alinear su contenido. */
+        flex-direction: column; /* Apila los elementos hijos uno encima del otro. */
+        justify-content: center; /* Centra el contenido verticalmente. */
+        align-items: center; /* Centra el contenido horizontalmente. */
+        background-color: var(--dark-bg); /* Pone el color de fondo oscuro. */
+    }
+
+    /* --- ESTILOS PARA EL PANEL DE ADMINISTRACIÓN --- */
+    #admin-view { /* Estilos específicos para la pantalla del administrador. */
+        justify-content: flex-start; /* Alinea el contenido hacia arriba en lugar de al centro. */
+        padding: 15px; /* Añade un espacio interno de 15 píxeles. */
+        padding-top: calc(var(--safe-area-top) + 15px); /* Suma el padding normal al padding de seguridad del notch. */
+    }
+
+    #admin-view .container { /* Contenedor dentro de la vista de admin. */
+        max-width: none; /* Elimina cualquier límite de ancho. */
+        width: 100%; /* Ocupa el 100% del ancho. */
+        height: 100%; /* Ocupa el 100% del alto. */
+        padding: 0; /* Elimina cualquier espacio interno. */
+        display: flex; /* Activa Flexbox. */
+        flex-direction: column; /* Apila la cabecera y la galería de imágenes verticalmente. */
+    }
+
+    #admin-header { /* La cabecera con el título y el botón de Play. */
+        display: flex; /* Activa Flexbox. */
+        justify-content: space-between; /* Coloca el título a un lado y el botón al otro. */
+        align-items: center; /* Alinea verticalmente el título y el botón. */
+        padding: 15px; /* Añade espacio interno. */
+        border-bottom: 2px solid var(--theme-color); /* Pone una línea cian debajo de la cabecera. */
+        background-color: var(--medium-bg); /* Le da un color de fondo ligeramente más claro. */
+        flex-shrink: 0; /* Evita que la cabecera se encoja si no hay espacio. */
+    }
+
+    #admin-header h1 { /* El título "Imágenes de la Fiesta". */
+        margin: 0; /* Quita cualquier margen. */
+        color: var(--theme-color); /* Pone el color del texto en cian. */
+        text-align: center; /* Centra el texto (útil si solo hubiera un elemento). */
+    }
+
+    #admin-images { /* La sección donde se muestran las fotos en miniatura. */
+        padding: 15px; /* Añade espacio interno. */
+        overflow-y: auto; /* Si hay muchas fotos, aparece una barra de scroll vertical. */
+        display: flex; /* Activa Flexbox para las miniaturas. */
+        flex-wrap: wrap; /* Permite que las fotos pasen a la siguiente fila si no caben. */
+        gap: 15px; /* Crea un espacio de 15px entre cada foto. */
+        justify-content: center; /* Centra las fotos horizontalmente. */
+        flex-grow: 1; /* Hace que esta sección crezca para ocupar todo el espacio sobrante. */
+    }
+
+    .admin-image-card {
+         /* Cada una de las "tarjetas" que contienen una miniatura. */
+        border-radius: 10px; /* Redondea las esquinas. */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Añade una sombra sutil. */
+        overflow: hidden; /* Recorta cualquier contenido que se salga de la tarjeta (como las esquinas de la imagen). */
+        width: 100%; /* Por defecto ocupa todo el ancho. */
+        max-width: 300px; /* Pero tiene un límite de 300px de ancho. */
+    }
+
+    .admin-image-card img { /* La imagen dentro de la tarjeta. */
+        width: 100%; /* La imagen ocupa todo el ancho de la tarjeta. */
+        height: auto; /* La altura se ajusta automáticamente para no deformar la imagen. */
+        object-fit: cover; /* La imagen cubre toda la tarjeta, recortando lo que sobre si es necesario. */
+        display: block; /* Elimina un pequeño espacio que a veces aparece debajo de las imágenes. */
+    }
+
+    .loading-text { /* El texto de "Cargando...". */
+        color: #999; /* Color de texto gris claro. */
+        text-align: center; /* Centra el texto. */
+        width: 100%; /* Ocupa todo el ancho para centrarse correctamente. */
+    }
+
+    /* --- ESTILOS DEL CARRUSEL EN PANTALLA COMPLETA --- */
+    #fullscreen-carousel { /* La capa principal del carrusel que cubre toda la pantalla. */
+        position: fixed; /* Lo fija en la pantalla, no se mueve con el scroll. */
+        top: 0; /* Lo pega a la parte superior. */
+        left: 0; /* Lo pega a la izquierda. */
+        width: 100%; /* Ocupa el 100% del ancho de la pantalla. */
+        height: 100%; /* Ocupa el 100% del alto de la pantalla. */
+        background-color: rgba(0, 0, 0, 0.95); /* Fondo negro con 95% de opacidad (casi sólido). */
+        display: flex; /* Activa Flexbox para centrar su contenido. */
+        justify-content: center; /* Centra la imagen verticalmente. */
+        align-items: center; /* Centra la imagen horizontalmente. */
+        z-index: 9999; /* Lo pone en una capa superior a todo lo demás. */
+        flex-direction: column; /* Apila los elementos hijos verticalmente. */
+        color: white; /* El color del texto dentro del carrusel será blanco. */
+        opacity: 0; /* Por defecto es totalmente transparente (invisible). */
+        visibility: hidden; /* Por defecto está oculto y no se puede interactuar con él. */
+        transition: opacity 0.5s ease-in-out, visibility 0s 0.5s; /* Anima el cambio de opacidad en 0.5s. */
+    }
+
+    #fullscreen-carousel.active { /* Estilos cuando el carrusel está activo. */
+        opacity: 1; /* Lo hace totalmente opaco (visible). */
+        visibility: visible; /* Lo hace visible y se puede interactuar con él. */
+        transition: opacity 0.5s ease-in-out; /* Define la animación de entrada. */
+    }
+
+    .carousel-background { /* La capa que muestra la imagen de fondo borrosa. */
+        position: absolute; /* Se posiciona con respecto al carrusel, no a la pantalla. */
+        top: 0; /* Lo pega a la parte superior. */
+        left: 0; /* Lo pega a la izquierda. */
+        width: 100%; /* Ocupa todo el ancho del carrusel. */
+        height: 100%; /* Ocupa todo el alto del carrusel. */
+        background-size: cover; /* La imagen de fondo cubre todo el espacio sin deformarse. */
+        background-position: center; /* Centra la imagen de fondo. */
+        filter: blur(20px); /* ¡La magia! Aplica un desenfoque de 20px. */
+        transform: scale(1.1); /* Aumenta el tamaño un 10% para que los bordes borrosos no se vean. */
+        transition: background-image 1s ease-in-out; /* Anima suavemente el cambio de una imagen de fondo a otra. */
+    }
+
+    .carousel-item { /* El contenedor de la imagen principal (la nítida). */
+        position: absolute; /* Se posiciona respecto al carrusel. */
+        top: 0; /* Lo pega arriba. */
+        left: 0; /* Lo pega a la izquierda. */
+        width: 100%; /* Ocupa todo el ancho. */
+        height: 100%; /* Ocupa todo el alto. */
+        display: flex; /* Activa Flexbox para centrar la imagen. */
+        justify-content: center; /* Centra verticalmente la imagen. */
+        align-items: center; /* Centra horizontalmente la imagen. */
+        opacity: 0; /* Por defecto, cada imagen es invisible. */
+        visibility: hidden; /* Y está oculta. */
+        transition: opacity 1s ease-in-out; /* Anima el fundido de entrada y salida de cada foto. */
+        padding: 15px; /* CORRECCIÓN: Añade un espacio para que la imagen no se pegue a los bordes. */
+    }
+
+    .carousel-item.active { /* Estilo para la foto que se está mostrando actualmente. */
+        opacity: 1; /* La hace visible. */
+        visibility: visible; /* La hace visible. */
+    }
+
+    .carousel-item img { /* La imagen nítida en sí. */
+        max-width: 100%; /* CORRECCIÓN: La imagen puede ocupar hasta el 100% del ancho del contenedor. */
+        max-height: 100%; /* CORRECCIÓN: La imagen puede ocupar hasta el 100% del alto del contenedor. */
+        object-fit: contain; /* Se asegura de que se vea la imagen completa sin deformarla. */
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5); /* MEJORA: Añade una sombra para darle profundidad. */
+    }
+
+    .carousel-controls button { /* Estilo para los botones de "anterior" y "siguiente". */
+        position: absolute; /* Se posicionan con respecto al carrusel. */
+        top: 50%; /* Los baja hasta la mitad de la pantalla. */
+        transform: translateY(-50%); /* Los sube la mitad de su propia altura para centrarlos perfectamente. */
+        background: rgba(0, 0, 0, 0.5); /* Fondo negro semitransparente. */
+        border: none; /* Sin borde. */
+        color: white; /* Flechas de color blanco. */
+        padding: 10px 15px; /* Espacio interno del botón. */
+        font-size: 2rem; /* Tamaño grande para las flechas. */
+        cursor: pointer; /* El cursor se convierte en una manita al pasar por encima. */
+        z-index: 10; /* Se asegura de que los botones estén por encima de la imagen. */
+    }
+
+    .carousel-controls .prev { left: 10px; } /* Pega el botón "anterior" a 10px del borde izquierdo. */
+    .carousel-controls .next { right: 10px; } /* Pega el botón "siguiente" a 10px del borde derecho. */
+
+    .carousel-exit-text { /* El texto "Presiona Esc para salir". */
+        position: absolute; /* Se posiciona respecto al carrusel. */
+        top: 10px; /* A 10px del borde superior. */
+        right: 10px; /* A 10px del borde derecho. */
+        color: white; /* Color blanco. */
+        font-size: 1rem; /* Tamaño de letra normal. */
+        opacity: 0.7; /* Ligeramente transparente para no distraer. */
+        z-index: 10; /* Se asegura de que esté por encima de la imagen. */
+    }
+
+    .btn-primary { /* Estilo para el botón principal de "Reproducir". */
+        background-color: var(--theme-color); /* Fondo de color cian. */
+        color: var(--dark-bg); /* Letras de color oscuro. */
+        padding: 10px 20px; /* Espacio interno. */
+        border-radius: 8px; /* Esquinas redondeadas. */
+        border: none; /* Sin borde. */
+        font-weight: bold; /* Letra en negrita. */
+        cursor: pointer; /* El cursor se convierte en una manita. */
+    }
+
+        /* Estilos generales para botones */
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            color: white; display: flex; align-items: center; gap: 8px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            background-color: #cccccc; cursor: not-allowed;
+            transform: none; box-shadow: none;
+        }
+
+        .btn-primary { background-color: #007bff; }
+        .btn-secondary { background-color: #17a2b8; }
+        .btn-danger { background-color: #dc3545; }
+
+        #admin-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 15px;
+        }
+        #admin-header-buttons { display: flex; gap: 10px; }
+
+        /* Estilos para el contenedor del QR */
+        #qr-code-container {
+            position: fixed;
+            bottom: 25px; left: 25px;
+            border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            z-index: 1000; text-align: center; font-family: 'Rajdhani', sans-serif;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
+        }
+
+        #fullscreen-carousel.active #qr-code-container {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        #qr-code-container p {
+            margin: 0 0 10px 0; font-weight: 700;
+        }
+        #qr-code-canvas canvas { border-radius: 8px; }
+ 

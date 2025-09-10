@@ -1,0 +1,163 @@
+ .cctv-container {
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: 3rem 1rem;
+    }
+
+    .cctv-carousel-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cctv-carousel {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+    }
+
+    .cctv-category-section {
+        min-width: 100%;
+        padding: 0 1rem;
+    }
+
+    .cctv-category-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1e293b;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .cctv-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+
+    .cctv-card {
+        background: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .cctv-card:hover {
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .cctv-card-image {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .cctv-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .cctv-card-image::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+    }
+
+    .cctv-card-content {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .cctv-icon-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .cctv-icon-container i {
+        font-size: 2.5rem;
+        color: #3b82f6;
+    }
+
+    .cctv-card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .cctv-card-description {
+        color: #64748b;
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .cctv-nav-button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3rem;
+        height: 3rem;
+        background: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .cctv-nav-button:hover {
+        background: #f0f9ff;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .cctv-prev-button {
+        left: 1rem;
+    }
+
+    .cctv-next-button {
+        right: 1rem;
+    }
+
+    .cctv-dots-container {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .cctv-dot {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 9999px;
+        background: #cbd5e1;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .cctv-dot.active {
+        width: 2rem;
+        background: #3b82f6;
+    }
+
+    @media (max-width: 768px) {
+        .cctv-cards-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .cctv-nav-button {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .cctv-category-title {
+            font-size: 1.5rem;
+        }
+    }

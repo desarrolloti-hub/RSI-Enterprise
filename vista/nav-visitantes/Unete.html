@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Únete a nuestro equipo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #0056b3;
+            --secondary-blue: #003d82;
+            --light-blue: #e6f0ff;
+            --accent-blue: #007bff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .form-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-title {
+            color: var(--primary-blue);
+            border-bottom: 2px solid var(--light-blue);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--secondary-blue);
+        }
+        
+        .form-control, .form-select {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-blue);
+            border-color: var(--primary-blue);
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-blue);
+            border-color: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+        
+        .btn-start {
+            background-color: #28a745;
+            border-color: #28a745;
+            margin-top: 1rem;
+        }
+        
+        .btn-start:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .radio-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+        
+        .form-check-label {
+            margin-left: 0.5rem;
+        }
+        
+        .footer {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        
+        #experienciaFields {
+            display: none;
+            background-color: var(--light-blue);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .file-upload {
+            border: 2px dashed #ced4da;
+            border-radius: 4px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            border-color: var(--accent-blue);
+            background-color: var(--light-blue);
+        }
+        
+        .file-upload i {
+            font-size: 2rem;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header text-center">
+        <div class="container">
+            <h1>Únete a nuestro equipo</h1>
+            <p class="lead">RSI Enterprise - Oportunidades de crecimiento profesional</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-4">
+                    <button id="startBtn" class="btn btn-primary btn-start">EMPEZAR AHORA</button>
+                </div>
+                
+                <div class="form-container">
+                    <h2 class="form-title">FORMULARIO DE REGISTRO</h2>
+                    <form id="registroForm">
+                        <div class="mb-3">
+                            <label for="nombreCompleto" class="form-label required-field">NOMBRE COMPLETO:</label>
+                            <input type="text" class="form-control" id="nombreCompleto" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edad" class="form-label required-field">EDAD:</label>
+                            <input type="number" class="form-control" id="edad" min="18" max="99" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label required-field">SEXO:</label>
+                            <div class="radio-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="sexo" id="femenino" value="Femenino" required>
+                                    <label class="form-check-label" for="femenino">FEMENINO</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="sexo" id="masculino" value="Masculino">
+                                    <label class="form-check-label" for="masculino">MASCULINO</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="sexo" id="indistinto" value="Indistinto">
+                                    <label class="form-check-label" for="indistinto">INDISTINTO</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="correo" class="form-label required-field">CORREO:</label>
+                            <input type="email" class="form-control" id="correo" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="celular" class="form-label required-field">CELULAR:</label>
+                            <input type="tel" class="form-control" id="celular" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label required-field">ESTADO CIVIL:</label>
+                            <div class="radio-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="estadoCivil" id="soltero" value="Soltero/a" required>
+                                    <label class="form-check-label" for="soltero">SOLTERO/A</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="estadoCivil" id="casado" value="Casado/a">
+                                    <label class="form-check-label" for="casado">CASADO/A</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="estadoCivil" id="unionLibre" value="Unión Libre">
+                                    <label class="form-check-label" for="unionLibre">UNION LIBRE</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="estadoCivil" id="viudo" value="Viudo/a">
+                                    <label class="form-check-label" for="viudo">VIUDO/A</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="estadoCivil" id="divorciado" value="Divorciado/a">
+                                    <label class="form-check-label" for="divorciado">DIVORCIADO/A</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label required-field">ESCOLARIDAD:</label>
+                            <div class="radio-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="escolaridad" id="preparatoria" value="Preparatoria" required>
+                                    <label class="form-check-label" for="preparatoria">PREPARATORIA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="escolaridad" id="carreraTecnica" value="Carrera Técnica">
+                                    <label class="form-check-label" for="carreraTecnica">CARRERA TECNICA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="escolaridad" id="ingenieria" value="Ingeniería">
+                                    <label class="form-check-label" for="ingenieria">INGENIERIA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="escolaridad" id="licenciatura" value="Licenciatura">
+                                    <label class="form-check-label" for="licenciatura">LICENCIATURA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="escolaridad" id="maestria" value="Maestría">
+                                    <label class="form-check-label" for="maestria">MAESTRIA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="escolaridad" id="doctorado" value="Doctorado">
+                                    <label class="form-check-label" for="doctorado">DOCTORADO</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="licenciaturaIngenieria" class="form-label">LICENCIATURA/INGENIERIA:</label>
+                            <input type="text" class="form-control" id="licenciaturaIngenieria">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label required-field">¿TIENES EXPERIENCIA?</label>
+                            <div class="radio-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="experiencia" id="experienciaSi" value="Sí" required>
+                                    <label class="form-check-label" for="experienciaSi">Sí</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="experiencia" id="experienciaNo" value="No">
+                                    <label class="form-check-label" for="experienciaNo">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="experienciaFields">
+                            <div class="mb-3">
+                                <label class="form-label">¿CUANTOS AÑOS?</label>
+                                <div class="radio-group">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="anosExperiencia" id="1ano" value="1 año">
+                                        <label class="form-check-label" for="1ano">1 AÑO</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="anosExperiencia" id="2anos" value="2 años">
+                                        <label class="form-check-label" for="2anos">2 AÑOS</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="anosExperiencia" id="3anos" value="3 años">
+                                        <label class="form-check-label" for="3anos">3 AÑOS</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="anosExperiencia" id="4anos" value="4 años">
+                                        <label class="form-check-label" for="4anos">4 AÑOS</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="anosExperiencia" id="mas" value="Más de 4 años">
+                                        <label class="form-check-label" for="mas">MAS</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="cv" class="form-label required-field">SUBE TU CV (PDF):</label>
+                            <div class="file-upload" id="cvUpload">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                                <p>Haz clic para subir tu CV en formato PDF</p>
+                                <input type="file" id="cv" accept=".pdf" style="display: none;" required>
+                                <div id="fileName" class="mt-2 text-muted"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary">ENVIAR SOLICITUD</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer text-center">
+        <div class="container">
+            <p>© 2023 RSI Enterprise. Todos los derechos reservados.</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"></script>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Mostrar alerta inicial
+        document.getElementById('startBtn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Ingeniero Técnico',
+                html: `El objetivo es ejecutar las actividades referentes a los contratos y/u órdenes de compra (implementación, servicios de mantenimiento preventivo y correctivo, levantamientos técnicos), atendiendo las especificaciones técnicas, cantidades y normas aplicables en cada caso, cumpliendo siempre con los procesos, políticas y reglamentos de la Organización.`,
+                icon: 'info',
+                confirmButtonText: 'Continuar',
+                confirmButtonColor: '#0056b3',
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'SOLICITAMOS:',
+                        html: `<ul style="text-align: left;">
+                            <li>Licenciatura/ Ingeniería o formación media superior con conocimientos en: Electrónica, electromecánica, mecatrónica, sistemas, gestión de riesgos o sistemas de seguridad.</li>
+                            <li>Edad: 20 a 45 años</li>
+                            <li>Disponibilidad para viajar</li>
+                            <li>Licencia de conducir, tipo A (saber manejar automóvil estándar)</li>
+                            <li>Conocimiento básico de paquetería office</li>
+                            <li>Elaboración de levantamientos técnicos</li>
+                            <li>Cableado estructurado (avanzado)</li>
+                            <li>Elaboración de diagramas (nivel básico)</li>
+                        </ul>`,
+                        icon: 'info',
+                        confirmButtonText: 'LLENAR FORMULARIO',
+                        confirmButtonColor: '#0056b3'
+                    });
+                }
+            });
+        });
+
+        // Mostrar campos de experiencia si selecciona "Sí"
+        document.querySelectorAll('input[name="experiencia"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const experienciaFields = document.getElementById('experienciaFields');
+                if (this.value === 'Sí' && this.checked) {
+                    experienciaFields.style.display = 'block';
+                    document.querySelectorAll('#experienciaFields input[type="radio"]').forEach(input => {
+                        input.required = true;
+                    });
+                } else {
+                    experienciaFields.style.display = 'none';
+                    document.querySelectorAll('#experienciaFields input[type="radio"]').forEach(input => {
+                        input.required = false;
+                        input.checked = false;
+                    });
+                }
+            });
+        });
+
+        // Manejar la subida de archivos
+        document.getElementById('cvUpload').addEventListener('click', function() {
+            document.getElementById('cv').click();
+        });
+
+        document.getElementById('cv').addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado';
+            document.getElementById('fileName').textContent = fileName;
+            
+            if (this.files[0]) {
+                Swal.fire({
+                    title: 'Archivo seleccionado',
+                    text: `Has seleccionado: ${fileName}`,
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#0056b3'
+                });
+            }
+        });
+
+        // Manejar el envío del formulario
+        document.getElementById('registroForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validar formulario
+            if (!this.checkValidity()) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Por favor completa todos los campos requeridos',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#0056b3'
+                });
+                return;
+            }
+            
+            // Mostrar confirmación
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Deseas enviar tu solicitud?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, enviar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#0056b3'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Subir CV a Firebase Storage primero
+                    const file = document.getElementById('cv').files[0];
+                    const storageRef = storage.ref().child('cvs/' + file.name);
+                    
+                    storageRef.put(file).then((snapshot) => {
+                        return snapshot.ref.getDownloadURL();
+                    }).then((downloadURL) => {
+                        // Obtener datos del formulario
+                        const formData = {
+                            nombreCompleto: document.getElementById('nombreCompleto').value,
+                            edad: document.getElementById('edad').value,
+                            sexo: document.querySelector('input[name="sexo"]:checked').value,
+                            correo: document.getElementById('correo').value,
+                            celular: document.getElementById('celular').value,
+                            estadoCivil: document.querySelector('input[name="estadoCivil"]:checked').value,
+                            escolaridad: document.querySelector('input[name="escolaridad"]:checked').value,
+                            licenciaturaIngenieria: document.getElementById('licenciaturaIngenieria').value,
+                            experiencia: document.querySelector('input[name="experiencia"]:checked').value,
+                            anosExperiencia: document.querySelector('input[name="anosExperiencia"]:checked')?.value || 'No aplica',
+                            cvUrl: downloadURL,
+                            fechaRegistro: new Date().toISOString()
+                        };
+                        
+                        // Guardar en Firestore
+                        return db.collection('Unete').add(formData);
+                    }).then(() => {
+                        Swal.fire({
+                            title: '¡Éxito!',
+                            text: 'Tu solicitud ha sido enviada correctamente.',
+                            icon: 'success',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#0056b3'
+                        });
+                        document.getElementById('registroForm').reset();
+                        document.getElementById('fileName').textContent = '';
+                    }).catch((error) => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Hubo un problema al enviar tu solicitud. Por favor intenta nuevamente.',
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#0056b3'
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

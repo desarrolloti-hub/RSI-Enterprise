@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise Usuario</title>
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/estilos-nav.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        /* Estilos para centrar las tarjetas */
+        body.nan_reset {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .nan_cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .nan_card {
+            width: 300px;
+            padding: 30px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 8px rgba(0, 0, 128, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nan_card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 128, 0.5);
+        }
+
+        .nan_card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 0, 128, 0.3), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        .nan_card:hover::before {
+            opacity: 1;
+            transform: translate(50%, 50%);
+        }
+
+        .nan_card h2 {
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            color: #333;
+        }
+
+        .nan_card p {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .nan_card i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #007BFF;
+        }
+
+        .nan_title h1 {
+            font-family: 'Agency FB', sans-serif;
+            font-size: 2em;
+            margin: 0;
+            background: none;
+        }
+
+        .nan_title h1 span.rsi {
+            color: #000080;
+        }
+
+        .nan_title h1 span.ixtapaluca {
+            color: #D4AF37;
+        }
+
+        @media (max-width: 768px) {
+            .nan_title {
+                display: none;
+            }
+
+            .nan_card {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .nan_cards {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        try {
+            // Inicializar Firebase si no está inicializado
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app(); // Ya está inicializado
+            }
+
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            
+            // Configuración adicional de Firestore
+            db.settings({ ignoreUndefinedProperties: true });
+
+            // Bandera para controlar el cierre de sesión
+            let isLoggingOut = false;
+
+            // Evitar que el usuario retroceda con las flechas del navegador
+            window.history.pushState(null, document.title, window.location.href);
+            window.addEventListener('popstate', function (event) {
+                window.history.pushState(null, document.title, window.location.href);
+            });
+
+            // Observador de estado de autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (isLoggingOut) return;
+
+                if (!user) {
+                    showErrorAndRedirect(
+                        "Acceso denegado", 
+                        "Debes iniciar sesión para acceder a esta página",
+                        "../nav-visitantes/iniciarS.html"
+                    );
+                    return;
+                }
+
+                try {
+                    console.log("Usuario autenticado. UID:", user.uid);
+                    
+                    // 1. Verificar que exista el documento del usuario
+                    const userRef = db.collection("usuarios").doc(user.uid);
+                    const userDoc = await userRef.get();
+                    
+                    if (!userDoc.exists) {
+                        showErrorAndRedirect(
+                            "Usuario no registrado",
+                            "No se encontró tu información en la base de datos",
+                            "../nav-visitantes/iniciarS.html"
+                        );
+                        return;
+                    }
+
+                    const userData = userDoc.data();
+                    console.log("Datos del usuario:", userData);
+
+                    // 2. Verificar que exista el campo 'rol'
+                    if (!userData.hasOwnProperty('rol')) {
+                        showErrorAndRedirect(
+                            "Error de configuración",
+                            "Tu cuenta no tiene asignado un rol válido",
+                            "../nav-visitantes/iniciarS.html"
+                        );
+                        return;
+                    }
+
+                    // 3. Verificar que el rol sea 'puntoVenta'
+                    if (userData.rol !== "puntoVenta") {
+                        showErrorAndRedirect(
+                            "Acceso restringido",
+                            "No tienes permisos para acceder a esta página",
+                            "../nav-visitantes/iniciarS.html"
+                        );
+                        return;
+                    }
+
+                    // Si todas las verificaciones son correctas, cargar los datos
+                    await loadDashboardData(db);
+
+                } catch (error) {
+                    console.error("Error en la verificación del usuario:", error);
+                    showErrorAndRedirect(
+                        "Error del sistema",
+                        `Ocurrió un problema técnico: ${error.message}`,
+                        "../nav-visitantes/iniciarS.html"
+                    );
+                }
+            });
+
+            // Función para cargar los datos del dashboard
+            async function loadDashboardData(db) {
+                try {
+                    console.log("Cargando datos del dashboard...");
+                    
+                    const [productosSnapshot, cotizacionesSnapshot] = await Promise.all([
+                        db.collection("productosIxtapaluca").get(),
+                        db.collection("cotizacionesIxtapaluca").get()
+                    ]);
+
+                    // Actualizar los contadores en la interfaz
+                    document.getElementById("productosCount").textContent = productosSnapshot.size;
+                    document.getElementById("cotizacionesCount").textContent = cotizacionesSnapshot.size;
+                    
+                    console.log("Datos cargados correctamente");
+                    
+                } catch (error) {
+                    console.error("Error al cargar datos:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se pudieron cargar los datos del dashboard",
+                        icon: "error",
+                        timer: 3000,
+                        allowOutsideClick: false
+                    });
+                }
+            }
+
+            // Función para mostrar errores y redirigir
+            function showErrorAndRedirect(title, message, redirectUrl) {
+                console.error(`${title}: ${message}`);
+                Swal.fire({
+                    title: title,
+                    text: message,
+                    icon: "error",
+                    timer: 3000,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
+                }).then(() => {
+                    window.location.href = redirectUrl;
+                });
+            }
+
+            // Manejador para cerrar sesión
+            document.getElementById("cerrarSesion").addEventListener("click", async (e) => {
+                e.preventDefault();
+                isLoggingOut = true;
+                
+                try {
+                    await auth.signOut();
+                    Swal.fire({
+                        title: "Sesión cerrada",
+                        text: "Has cerrado sesión correctamente",
+                        icon: "success",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = "../nav-visitantes/iniciarS.html";
+                    });
+                } catch (error) {
+                    console.error("Error al cerrar sesión:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se pudo cerrar la sesión",
+                        icon: "error",
+                        timer: 2000
+                    });
+                }
+            });
+
+        } catch (initError) {
+            console.error("Error crítico al inicializar Firebase:", initError);
+            document.body.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: red;">
+                    <h1>Error crítico</h1>
+                    <p>No se pudo inicializar la aplicación. Por favor recarga la página.</p>
+                    <p>Si el problema persiste, contacta al administrador.</p>
+                    <p><small>Detalle técnico: ${initError.message}</small></p>
+                </div>
+            `;
+        }
+    });
+</script>
+</head>
+<body class="nan_reset">
+<header class="nan_header">
+<nav class="nan_navbar">
+    <div class="nan_logo">
+        <img src="https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo">
+    </div>
+    <div class="nan_title">
+        <h1>
+            <span class="rsi">RSI</span> 
+            <span class="ixtapaluca">IXTAPALUCA</span>
+        </h1>
+    </div>
+    <button class="nan_hamburger" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+    <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+    <ul class="nan_menu">
+        <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+    </ul>
+</nav>
+</header>
+
+
+
+<main class="nan_main">
+<div class="nan_cards">
+
+
+   <div class="nan_card" onclick="window.location.href='productos.html';">
+        <i class="fas fa-box"></i>
+        <h2>Productos</h2>
+        <p>Productos: <span id="productosCount">0</span></p>
+    </div>
+
+
+    <div class="nan_card" onclick="window.location.href='cotizacionSinCaja.html';">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <h2>Cotizaciones</h2>
+        <p>Cotizaciones: <span id="cotizacionesCount">0</span></p>
+    </div>
+
+
+     <div class="nan_card" onclick="window.location.href='ventas.html';">
+        <i class="fas fa-money-bill-wave"></i>
+        <h2>Ventas</h2>
+        <p>Venta con Tickets: <span id="cotizacionesCount">0</span></p>
+    </div>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+<script src="https://rsienterprise.web.app/javascripts/includesVisita.js"></script>
+<script src="https://rsienterprise.web.app/javascripts/funcionalidades.js"></script>
+<script src="https://rsienterprise.web.app/javascripts/navScript.js"></script>
+</body>
+</html>

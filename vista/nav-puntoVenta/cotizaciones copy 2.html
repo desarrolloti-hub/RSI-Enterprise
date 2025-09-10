@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta RSI IXTAPALUCA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <link rel="stylesheet" href="../css/punoventa.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="nan_header">
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Logo" class="h-12">
+                        <span class="ml-2 text-xl font-bold text-blue-900">RSI IXTAPALUCA</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="abrirCajaDinero()" class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 text-sm">
+                            Abrir Caja
+                        </button>
+                        <div class="text-sm text-gray-500">SkyTicket STBE91F01322</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 pt-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4">Punto de Venta</h2>
+            
+            <div class="mb-4 relative">
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="search-input" 
+                           class="flex-1 p-2 border-2 border-blue-500 rounded-md" 
+                           placeholder="Buscar por Marca, Modelo, Precio o Producto">
+                    <button id="search-button" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                        Buscar
+                    </button>
+                </div>
+                <div id="search-results" class="search-results hidden"></div>
+                
+                <input type="text" id="scanner-input" 
+                       class="w-full p-2 border-2 border-green-500 rounded-md font-mono"
+                       placeholder="Escanear código de barras"
+                       autofocus>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-100 text-gray-600 text-sm font-semibold uppercase">
+                        <tr>
+                            <th class="px-6 py-4 text-left">Producto</th>
+                            <th class="px-6 py-4 text-left">Precio Unitario</th>
+                            <th class="px-6 py-4 text-left">Cantidad</th>
+                            <th class="px-6 py-4 text-left">Subtotal</th>
+                            <th class="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quote-items" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <div class="mt-6">
+                <div class="grid grid-cols-4 gap-4 mb-4" id="payment-methods">
+                    <div class="payment-method p-4 border rounded-lg text-center cursor-pointer" data-method="Efectivo">
+                        <div class="text-2xl">💵</div>
+                        <div class="font-medium">Efectivo</div>
+                    </div>
+                    <div class="payment-method p-4 border rounded-lg text-center cursor-pointer" data-method="Tarjeta">
+                        <div class="text-2xl">💳</div>
+                        <div class="font-medium">Tarjeta</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="text-xl font-bold">Total: <span id="quote-total">$0.00</span></div>
+                    <div class="space-x-2">
+                        <button onclick="finalizarCotizacion()" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">Finalizar Venta</button>
+                        <button onclick="cancelarCotizacion()" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Datos del Cliente</h2>
+                <button onclick="cerrarModalCliente()" class="text-gray-500 hover:text-gray-700">&times;</button>
+            </div>
+            
+            <form id="cliente-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nombre del Cliente</label>
+                    <input type="text" id="cliente-nombre" required class="w-full p-2 border rounded-md">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <input type="tel" id="cliente-telefono" required class="w-full p-2 border rounded-md">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Método de Pago</label>
+                    <input type="text" id="cliente-metodo-pago" readonly class="w-full p-2 border rounded-md bg-gray-100">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Estado</label>
+                    <select id="cliente-estado" class="w-full p-2 border rounded-md">
+                        <option value="Cotización">Cotización</option>
+                        <option value="Venta Completada">Venta Completada</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="cerrarModalCliente()" class="px-4 py-2 border rounded-md hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" id="submit-button" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        <span id="submit-text">Procesar Venta</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="cash-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold">Pago en Efectivo</h2>
+                <button onclick="cerrarModalEfectivo()" class="text-gray-500 hover:text-gray-700">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Total a Pagar</label>
+                    <input type="text" id="total-pagar" readonly class="w-full p-2 border rounded-md bg-gray-100">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Efectivo Recibido</label>
+                    <input type="number" id="efectivo-recibido" class="w-full p-2 border rounded-md" autofocus>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cambio</label>
+                    <input type="text" id="cambio" readonly class="w-full p-2 border rounded-md bg-gray-100">
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="cerrarModalEfectivo()" class="px-4 py-2 border rounded-md hover:bg-gray-50">Cancelar</button>
+                    <button type="button" onclick="confirmarPagoEfectivo()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                        Confirmar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-container">
+        <div class="ticket" id="ticket-content">
+            <div class="header">
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <img src="../css/img/logocon fondo.png" alt="" style="width: 150px; height: 150px;">
+                </div>
+                <div class="business-name">RSI Enterprise</div>
+                <div>20 Av. Morelos, 
+                    San Francisco Acuautla, Estado de México</div>
+                <div>Tel: 55 76 90 82 48</div>
+                <div id="ticket-caja">rsienterprise.com</div>
+            </div>
+            
+            <div class="ticket-info">
+                <p><strong>Fecha:</strong> <span id="ticket-fecha"></span></p>
+                <p><strong>Cliente:</strong> <span id="ticket-cliente"></span></p>
+                <p><strong>Teléfono:</strong> <span id="ticket-telefono"></span></p>
+                <p><strong>Método Pago:</strong> <span id="ticket-metodo-pago"></span></p>
+            </div>
+            
+            <table class="items-table" id="ticket-items">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Cant.</th>
+                        <th style="width: 60%;">Descripción</th>
+                        <th style="width: 20%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            
+            <div class="total-section">
+                <p>TOTAL: $<span id="ticket-total"></span></p>
+                <p id="ticket-efectivo" style="display: none;">EFECTIVO: $<span></span></p>
+                <p id="ticket-cambio" style="display: none;">CAMBIO: $<span></span></p>
+            </div>
+
+            <div class="footer">
+                <p>¡Gracias por su compra!</p>
+                <p>rsienterprise.com</p>
+            </div>
+        </div>
+    </div>
+    
+    <button class="print-btn" onclick="imprimirTicket()" id="print-btn">Imprimir Ticket</button>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let cotizacion = [];
+    let productos = [];
+    let selectedPaymentMethod = '';
+    let totalVenta = 0;
+    let currentDevice = null;
+    let ticketData = null;
+
+    // Comandos para impresora térmica (ampliados para soportar imágenes)
+    const PRINTER_COMMANDS = {
+        INIT: new Uint8Array([0x1B, 0x40]),
+        CUT: new Uint8Array([0x1B, 0x69]),
+        ALIGN_CENTER: new Uint8Array([0x1B, 0x61, 0x01]),
+        ALIGN_LEFT: new Uint8Array([0x1B, 0x61, 0x00]),
+        ALIGN_RIGHT: new Uint8Array([0x1B, 0x61, 0x02]),
+        BOLD_ON: new Uint8Array([0x1B, 0x45, 0x01]),
+        BOLD_OFF: new Uint8Array([0x1B, 0x45, 0x00]),
+        OPEN_DRAWER: new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]),
+        IMAGE_MODE: new Uint8Array([0x1D, 0x76, 0x30, 0x00]), // Comando para imprimir imagen
+        LINE_SPACING_24: new Uint8Array([0x1B, 0x33, 0x18]), // Espaciado de línea 24/180 pulgadas
+        LINE_SPACING_30: new Uint8Array([0x1B, 0x33, 0x1E]), // Espaciado de línea 30/180 pulgadas
+        LINE_SPACING_DEFAULT: new Uint8Array([0x1B, 0x32])   // Espaciado de línea por defecto
+    };
+
+    const showAlert = (title, icon = 'success') => {
+        Swal.fire({
+            position: 'top-end',
+            icon: icon,
+            title: title,
+            showConfirmButton: false,
+            timer: 3000,
+            toast: true
+        });
+    };
+
+    function generarIdUnico() {
+        return `VT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    async function cargarProductos() {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'productosIxtapaluca'));
+            productos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            showAlert(`Error al cargar productos: ${error.message}`, 'error');
+        }
+    }
+
+    function buscarProductos(query) {
+        if (!query || query.trim() === '') return [];
+        const searchTerm = query.toLowerCase().trim();
+        return productos.filter(product => {
+            return Object.values(product).some(value => 
+                String(value).toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+
+    function mostrarResultadosBusqueda(resultados, contenedor) {
+        contenedor.innerHTML = '';
+        
+        if (resultados.length === 0) {
+            contenedor.innerHTML = '<div class="p-4 text-gray-500">No se encontraron productos</div>';
+        } else {
+            resultados.slice(0, 10).forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.innerHTML = `
+                    <div class="font-semibold text-gray-800">${product.Producto || 'N/A'}</div>
+                    <div class="text-sm text-gray-600">Marca: ${product.Marca || 'N/A'}</div>
+                    <div class="text-sm text-green-600 font-semibold">$${product.Precio?.toLocaleString('es-MX') || 'N/A'}</div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    agregarProductoCotizacion(product);
+                    actualizarCotizacionUI();
+                    document.getElementById('search-input').value = '';
+                    contenedor.classList.add('hidden');
+                    showAlert('Producto agregado');
+                });
+                
+                contenedor.appendChild(div);
+            });
+        }
+        contenedor.classList.remove('hidden');
+    }
+
+    function setupSearch() {
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchResults = document.getElementById('search-results');
+        
+        const handleSearch = () => {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            
+            const matches = buscarProductos(query);
+            mostrarResultadosBusqueda(matches, searchResults);
+        };
+        
+        searchInput.addEventListener('input', handleSearch);
+        searchButton.addEventListener('click', handleSearch);
+        
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+    }
+
+    document.getElementById('scanner-input').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            const barcode = e.target.value.trim();
+            if (!barcode) return;
+
+            try {
+                const product = await buscarProductoPorCodigo(barcode);
+                if (product) {
+                    agregarProductoCotizacion(product);
+                    actualizarCotizacionUI();
+                    showAlert('Producto agregado');
+                } else {
+                    showAlert('Producto no encontrado', 'error');
+                }
+            } catch (error) {
+                showAlert(`Error: ${error.message}`, 'error');
+            }
+            e.target.value = '';
+        }
+    });
+
+    async function buscarProductoPorCodigo(barcode) {
+        const querySnapshot = await getDocs(collection(db, 'productosIxtapaluca'));
+        return querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .find(product => 
+                product.mainBarcode === barcode || 
+                (product.uniqueBarcodes && product.uniqueBarcodes.includes(barcode))
+            );
+    }
+
+    function agregarProductoCotizacion(product) {
+        const existing = cotizacion.find(item => item.id === product.id);
+        if (existing) {
+            existing.cantidad++;
+            existing.subtotal = existing.cantidad * existing.precio;
+        } else {
+            cotizacion.push({
+                id: product.id,
+                nombre: product.Producto,
+                precio: product.Precio,
+                cantidad: 1,
+                subtotal: product.Precio
+            });
+        }
+    }
+
+    function actualizarCotizacionUI() {
+        const container = document.getElementById('quote-items');
+        const totalSpan = document.getElementById('quote-total');
+        container.innerHTML = '';
+        let total = 0;
+
+        cotizacion.forEach(item => {
+            total += item.subtotal;
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 border-b border-gray-200';
+            row.innerHTML = `
+                <td class="px-6 py-4">${item.nombre}</td>
+                <td class="px-6 py-4">$${item.precio.toLocaleString('es-MX')}</td>
+                <td class="px-6 py-4">
+                    <input type="number" value="${item.cantidad}" min="1" 
+                        onchange="actualizarCantidad('${item.id}', this.value)"
+                        class="w-20 p-1 border rounded">
+                </td>
+                <td class="px-6 py-4">$${item.subtotal.toLocaleString('es-MX')}</td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="eliminarDeCotizacion('${item.id}')" 
+                            class="text-red-500 hover:text-red-700">Eliminar</button>
+                </td>
+            `;
+            container.appendChild(row);
+        });
+
+        totalSpan.textContent = `$${total.toLocaleString('es-MX')}`;
+        totalVenta = total;
+    }
+
+    window.actualizarCantidad = (id, cantidad) => {
+        const item = cotizacion.find(item => item.id === id);
+        if (item && cantidad > 0) {
+            item.cantidad = parseInt(cantidad);
+            item.subtotal = item.cantidad * item.precio;
+            actualizarCotizacionUI();
+        }
+    };
+
+    window.eliminarDeCotizacion = (id) => {
+        cotizacion = cotizacion.filter(item => item.id !== id);
+        actualizarCotizacionUI();
+        showAlert('Producto eliminado');
+    };
+
+    window.finalizarCotizacion = () => {
+        if (cotizacion.length === 0) {
+            showAlert('No hay productos en la venta', 'error');
+            return;
+        }
+        
+        if (!selectedPaymentMethod) {
+            showAlert('Seleccione un método de pago', 'error');
+            return;
+        }
+        
+        totalVenta = parseFloat(document.getElementById('quote-total').textContent.replace(/[^0-9.]/g, ''));
+        
+        if (selectedPaymentMethod === 'Efectivo') {
+            document.getElementById('total-pagar').value = `$${totalVenta.toFixed(2)}`;
+            document.getElementById('efectivo-recibido').value = '';
+            document.getElementById('cambio').value = '';
+            document.getElementById('cash-modal').classList.remove('hidden');
+            document.getElementById('efectivo-recibido').focus();
+        } else {
+            document.getElementById('cliente-metodo-pago').value = selectedPaymentMethod;
+            document.getElementById('cliente-estado').value = 'Venta Completada';
+            document.getElementById('cliente-modal').classList.remove('hidden');
+        }
+    };
+
+    window.cerrarModalCliente = () => {
+        document.getElementById('cliente-modal').classList.add('hidden');
+    };
+
+    window.cerrarModalEfectivo = () => {
+        document.getElementById('cash-modal').classList.add('hidden');
+    };
+
+    document.getElementById('efectivo-recibido').addEventListener('input', function() {
+        const efectivo = parseFloat(this.value);
+        const total = totalVenta;
+        
+        if (!isNaN(efectivo) && efectivo >= total) {
+            const cambio = efectivo - total;
+            document.getElementById('cambio').value = cambio.toFixed(2);
+        } else {
+            document.getElementById('cambio').value = '';
+        }
+    });
+
+    window.confirmarPagoEfectivo = () => {
+        const efectivoRecibido = parseFloat(document.getElementById('efectivo-recibido').value);
+        const total = totalVenta;
+        
+        if (isNaN(efectivoRecibido)) {
+            showAlert('Ingrese una cantidad válida', 'error');
+            return;
+        }
+        
+        if (efectivoRecibido < total) {
+            showAlert('El efectivo recibido es menor al total', 'error');
+            return;
+        }
+        
+        const cambio = efectivoRecibido - total;
+        document.getElementById('cambio').value = cambio.toFixed(2);
+        
+        document.getElementById('cliente-metodo-pago').value = `Efectivo - Recibido: $${efectivoRecibido.toFixed(2)}, Cambio: $${cambio.toFixed(2)}`;
+        document.getElementById('cliente-estado').value = 'Venta Completada';
+        document.getElementById('cash-modal').classList.add('hidden');
+        document.getElementById('cliente-modal').classList.remove('hidden');
+    };
+
+    function generarTicket(folio, clienteInfo, items, total, metodoPago, efectivo, cambio) {
+        const ticketContainer = document.querySelector('.preview-container');
+        const printBtn = document.getElementById('print-btn');
+        
+        // Formatear fecha
+        const now = new Date();
+        const options = { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        };
+        const fecha = now.toLocaleString('es-MX', options);
+        
+        document.getElementById("ticket-fecha").textContent = fecha;
+        document.getElementById("ticket-cliente").textContent = clienteInfo.nombre || "Público en general";
+        document.getElementById("ticket-telefono").textContent = clienteInfo.telefono || "N/A";
+        document.getElementById("ticket-metodo-pago").textContent = metodoPago;
+        document.getElementById("ticket-total").textContent = total.toFixed(2);
+
+        const itemsTable = document.querySelector("#ticket-items tbody");
+        itemsTable.innerHTML = items.map(item => `
+            <tr>
+                <td>${item.cantidad}</td>
+                <td>${item.nombre}</td>
+                <td>$${item.subtotal.toFixed(2)}</td>
+            </tr>
+        `).join("");
+
+        const ticketEfectivo = document.getElementById('ticket-efectivo');
+        const ticketCambio = document.getElementById('ticket-cambio');
+        if (metodoPago.includes('Efectivo')) {
+            ticketEfectivo.style.display = 'block';
+            ticketCambio.style.display = 'block';
+            ticketEfectivo.querySelector('span').textContent = efectivo.toFixed(2);
+            ticketCambio.querySelector('span').textContent = cambio.toFixed(2);
+        } else {
+            ticketEfectivo.style.display = 'none';
+            ticketCambio.style.display = 'none';
+        }
+
+        ticketContainer.style.display = 'block';
+        printBtn.style.display = 'block';
+        
+        // Guardar los datos del ticket para imprimir
+        ticketData = {
+            fecha,
+            cliente: clienteInfo.nombre || "Público en general",
+            telefono: clienteInfo.telefono || "N/A",
+            metodoPago,
+            items: items.map(item => ({
+                cantidad: item.cantidad,
+                nombre: item.nombre,
+                subtotal: item.subtotal.toFixed(2),
+                precioUnitario: item.precio
+            })),
+            total: total.toFixed(2),
+            efectivo: efectivo ? efectivo.toFixed(2) : null,
+            cambio: cambio ? cambio.toFixed(2) : null,
+            folio: folio
+        };
+    }
+
+    // Función para convertir texto a Uint8Array
+    function textToUint8Array(text) {
+        return new TextEncoder().encode(text);
+    }
+
+    // Función para convertir imagen a formato de impresora térmica (formato raster)
+    async function prepareImageForPrinting(imageUrl, maxWidth = 384) {
+        try {
+            // Crear un canvas para procesar la imagen
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Cargar la imagen
+            const img = new Image();
+            img.src = imageUrl;
+            
+            // Esperar a que cargue la imagen
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+            
+            // Calcular dimensiones manteniendo proporción
+            const ratio = img.height / img.width;
+            const width = Math.min(img.width, maxWidth);
+            const height = Math.round(width * ratio);
+            
+            // Configurar canvas
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Dibujar imagen en canvas (convertir a blanco y negro)
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convertir a escala de grises y luego a blanco y negro (umbral)
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                // Umbral para determinar si es negro o blanco
+                const value = avg < 128 ? 0 : 255;
+                data[i] = data[i + 1] = data[i + 2] = value;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Convertir a datos binarios para impresora térmica
+            const binaryData = [];
+            const bytesPerLine = Math.ceil(width / 8);
+            
+            for (let y = 0; y < height; y++) {
+                for (let xByte = 0; xByte < bytesPerLine; xByte++) {
+                    let byte = 0;
+                    for (let bit = 0; bit < 8; bit++) {
+                        const x = xByte * 8 + bit;
+                        if (x < width) {
+                            const pixelIndex = (y * width + x) * 4;
+                            const isBlack = data[pixelIndex] < 128;
+                            if (isBlack) {
+                                byte |= (1 << (7 - bit));
+                            }
+                        }
+                    }
+                    binaryData.push(byte);
+                }
+            }
+            
+            // Crear comando de imagen para impresora térmica
+            const lineHeight = Math.ceil(height / 24);
+            const command = new Uint8Array([
+                0x1D, 0x76, 0x30, 0x00,       // GS v 0 (imagen en modo raster)
+                (width / 8) & 0xFF,            // Ancho en bytes (LSB)
+                Math.floor(width / 8 / 256),    // Ancho en bytes (MSB)
+                height & 0xFF,                  // Alto en píxeles (LSB)
+                Math.floor(height / 256),       // Alto en píxeles (MSB)
+                ...binaryData                   // Datos de la imagen
+            ]);
+            
+            return command;
+        } catch (error) {
+            console.error('Error al preparar imagen:', error);
+            return null;
+        }
+    }
+
+    // Función para imprimir en la impresora térmica (actualizada con imágenes)
+    async function imprimirEnImpresoraTermica(ticketData) {
+        try {
+            if (!currentDevice) {
+                currentDevice = await requestDevice(currentDevice);
+            }
+
+            if (!currentDevice.opened) {
+                await currentDevice.open();
+            }
+
+            // Configurar interfaz
+            let interfaceNumber = 0;
+            if (currentDevice.configuration) {
+                for (let i = 0; i < currentDevice.configuration.interfaces.length; i++) {
+                    try {
+                        await currentDevice.claimInterface(i);
+                        interfaceNumber = i;
+                        break;
+                    } catch (e) {
+                        console.error(`Error interfaz ${i}:`, e);
+                    }
+                }
+            } else {
+                await currentDevice.selectConfiguration(1);
+                await currentDevice.claimInterface(0);
+            }
+
+            let endpointOut = null;
+            const interfaces = currentDevice.configuration?.interfaces || [];
+            
+            for (const iface of interfaces) {
+                for (const alternate of iface.alternates) {
+                    for (const endpoint of alternate.endpoints) {
+                        if (endpoint.direction === 'out') {
+                            endpointOut = endpoint.endpointNumber;
+                            break;
+                        }
+                    }
+                    if (endpointOut !== null) break;
+                }
+                if (endpointOut !== null) break;
+            }
+
+            if (!endpointOut) throw new Error('No se encontró puerto de salida');
+
+            // Enviar comandos de impresión
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.INIT);
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.LINE_SPACING_24);
+            
+            // Imprimir imagen superior (logo)
+            const logoCommand = await prepareImageForPrinting('../css/img/logocon fondo.png');
+            if (logoCommand) {
+                await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.ALIGN_CENTER);
+                await currentDevice.transferOut(endpointOut, logoCommand);
+                await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.LINE_SPACING_30);
+            }
+            
+            // Encabezado del ticket
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.ALIGN_CENTER);
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.BOLD_ON);
+            await currentDevice.transferOut(endpointOut, textToUint8Array("RSI ENTERPRISE\n"));
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.BOLD_OFF);
+            await currentDevice.transferOut(endpointOut, textToUint8Array("20 Av. Morelos, San Francisco Acuautla\n"));
+            await currentDevice.transferOut(endpointOut, textToUint8Array("Estado de Mexico\n"));
+            await currentDevice.transferOut(endpointOut, textToUint8Array("Tel: 55 76 90 82 48\n"));
+            await currentDevice.transferOut(endpointOut, textToUint8Array("Visita nuestra web \nrsienterprise.com\n"));
+            await currentDevice.transferOut(endpointOut, textToUint8Array("--------------------------------\n\n"));
+            
+            // Información del ticket
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.ALIGN_LEFT);
+            await currentDevice.transferOut(endpointOut, textToUint8Array(`Fecha: ${ticketData.fecha}\n`));
+            await currentDevice.transferOut(endpointOut, textToUint8Array(`Cliente: ${ticketData.cliente}\n`));
+            await currentDevice.transferOut(endpointOut, textToUint8Array(`Telefono: ${ticketData.telefono}\n`));
+            await currentDevice.transferOut(endpointOut, textToUint8Array(`Metodo Pago: ${ticketData.metodoPago}\n\n`));
+            
+            // Encabezado de productos
+            await currentDevice.transferOut(endpointOut, textToUint8Array("--------------------------------\n"));
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.BOLD_ON);
+            await currentDevice.transferOut(endpointOut, textToUint8Array("CANT  DESCRIPCION       PRECIO\n"));
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.BOLD_OFF);
+            await currentDevice.transferOut(endpointOut, textToUint8Array("--------------------------------\n"));
+            
+            // Items de productos
+            for (const item of ticketData.items) {
+                const cantidad = item.cantidad.toString().padStart(3);
+                let descripcion = item.nombre;
+                
+                if (descripcion.length > 16) {
+                    descripcion = descripcion.substring(0, 13) + '...';
+                }
+                descripcion = descripcion.padEnd(16);
+                
+                const precio = `$${item.precioUnitario || item.subtotal/item.cantidad}`.padStart(6);
+                const total = `$${item.subtotal}`.padStart(8);
+                
+                const line = `${cantidad}  ${descripcion} ${precio}\n`;
+                await currentDevice.transferOut(endpointOut, textToUint8Array(line));
+            }
+            
+            await currentDevice.transferOut(endpointOut, textToUint8Array("--------------------------------\n"));
+            
+            // Totales
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.ALIGN_RIGHT);
+            if (ticketData.iva) {
+            }
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.BOLD_ON);
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.BOLD_OFF);
+            
+            // Mostrar efectivo y cambio si es pago en efectivo
+            if (ticketData.efectivo && ticketData.cambio) {
+                await currentDevice.transferOut(endpointOut, textToUint8Array(`EFECTIVO: $${ticketData.efectivo}\n`));
+                await currentDevice.transferOut(endpointOut, textToUint8Array(`CAMBIO: $${ticketData.cambio}\n`));
+            }
+            
+            // Pie de página
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.ALIGN_CENTER);
+            await currentDevice.transferOut(endpointOut, textToUint8Array("Gracias por su compra\n"));
+            await currentDevice.transferOut(endpointOut, textToUint8Array("\nEncaso de requerir factura\n escanea el codigo Qr\n"));
+            
+            // Imprimir imagen inferior (pie de página)
+            const footerCommand = await prepareImageForPrinting('../css/img/Qr.png');
+            if (footerCommand) {
+                await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.LINE_SPACING_24);
+                await currentDevice.transferOut(endpointOut, footerCommand);
+            }
+            
+            // Cortar papel
+            await currentDevice.transferOut(endpointOut, PRINTER_COMMANDS.CUT);
+            
+            showAlert('Ticket impreso correctamente');
+            
+        } catch (error) {
+            console.error('Error al imprimir:', error);
+            showAlert(`Error al imprimir: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    // Función para imprimir ticket
+    window.imprimirTicket = async () => {
+        try {
+            if (!ticketData) {
+                showAlert('No hay datos de ticket para imprimir', 'error');
+                return;
+            }
+            
+            // Imprimir directamente en la impresora térmica usando los mismos datos
+            await imprimirEnImpresoraTermica(ticketData);
+            
+            // Ocultar preview
+            document.querySelector('.preview-container').style.display = 'none';
+            document.getElementById('print-btn').style.display = 'none';
+            
+            // Abrir caja automáticamente después de imprimir
+            await abrirCajaDinero();
+            
+        } catch (error) {
+            console.error('Error en el proceso de impresión:', error);
+            showAlert(`Error: ${error.message}`, 'error');
+        }
+    };
+
+    // Función para abrir la caja de dinero y registrar la apertura en Firebase
+    window.abrirCajaDinero = async function() {
+        try {
+            const device = await requestDevice(currentDevice);
+            currentDevice = device;
+            
+            if (!device.opened) await device.open();
+            
+            let interfaceNumber = 0;
+            if (device.configuration) {
+                for (let i = 0; i < device.configuration.interfaces.length; i++) {
+                    try {
+                        await device.claimInterface(i);
+                        interfaceNumber = i;
+                        break;
+                    } catch (e) {
+                        console.error(`Error interfaz ${i}:`, e);
+                    }
+                }
+            } else {
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+            }
+            
+            let endpointOut = null;
+            const interfaces = device.configuration?.interfaces || [];
+            
+            for (const iface of interfaces) {
+                for (const alternate of iface.alternates) {
+                    for (const endpoint of alternate.endpoints) {
+                        if (endpoint.direction === 'out') {
+                            endpointOut = endpoint.endpointNumber;
+                            break;
+                        }
+                    }
+                    if (endpointOut !== null) break;
+                }
+                if (endpointOut !== null) break;
+            }
+            
+            if (!endpointOut) throw new Error('No se encontró puerto de salida');
+            
+            await device.transferOut(endpointOut, PRINTER_COMMANDS.OPEN_DRAWER);
+            await device.releaseInterface(interfaceNumber);
+            
+            // Registrar la apertura de caja en Firebase
+            try {
+                const registroCaja = {
+                    fecha: new Date(),
+                    tipo: 'apertura',
+                    motivo: 'venta',
+                    usuario: 'sistema', // Puedes cambiar esto por el usuario actual si lo tienes
+                    monto: ticketData ? parseFloat(ticketData.total) : 0,
+                    folio: ticketData ? ticketData.folio : 'sin-ticket'
+                };
+                
+                await addDoc(collection(db, 'cajaopen'), registroCaja);
+                showAlert('Caja abierta');
+            } catch (firebaseError) {
+                console.error('Error al guardar registro de caja:', firebaseError);
+                showAlert('Caja abierta pero error al guardar registro', 'warning');
+            }
+            
+            return device;
+        } catch (error) {
+            showAlert(`Error caja: ${error.message}`, 'error');
+            throw error;
+        }
+    };
+    
+    // Función para solicitar dispositivo USB
+    async function requestDevice(existingDevice) {
+        try {
+            if (existingDevice) return existingDevice;
+            return await navigator.usb.requestDevice({
+                filters: [{ 
+                    vendorId: 0x0FE6,
+                    productId: 0x811E
+                }]
+            });
+        } catch (error) {
+            showAlert('Error de conexión con la caja. Verifique la conexión USB.', 'error');
+            throw error;
+        }
+    }
+
+    document.getElementById('cliente-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const clienteInfo = {
+            nombre: document.getElementById('cliente-nombre').value.trim(),
+            telefono: document.getElementById('cliente-telefono').value.trim(),
+            estado: document.getElementById('cliente-estado').value
+        };
+
+        if (!clienteInfo.nombre || !clienteInfo.telefono || !/^\d+$/.test(clienteInfo.telefono)) {
+            showAlert('Datos inválidos: El telefono debe contener solo números', 'error');
+            return;
+        }
+
+        try {
+            const folio = generarIdUnico();
+            let efectivo = 0;
+            let cambio = 0;
+            
+            if (selectedPaymentMethod === 'Efectivo') {
+                efectivo = parseFloat(document.getElementById('efectivo-recibido').value);
+                cambio = parseFloat(document.getElementById('cambio').value);
+            }
+
+            await addDoc(collection(db, 'tickets'), {
+                fecha: new Date(),
+                items: cotizacion.map(item => ({
+                    id: item.id,
+                    nombre: item.nombre,
+                    precio: item.precio,
+                    cantidad: item.cantidad,
+                    subtotal: item.subtotal
+                })),
+                total: totalVenta,
+                cliente: clienteInfo,
+                metodoPago: selectedPaymentMethod,
+                efectivoRecibido: selectedPaymentMethod === 'Efectivo' ? efectivo : null,
+                cambio: selectedPaymentMethod === 'Efectivo' ? cambio : null,
+                folio: folio,
+                estado: clienteInfo.estado,
+                busqueda: [
+                    clienteInfo.nombre.toLowerCase(),
+                    clienteInfo.telefono,
+                    folio.toLowerCase()
+                ]
+            });
+
+            // Generar el ticket visual y guardar los datos para impresión
+            generarTicket(
+                folio,
+                clienteInfo,
+                cotizacion,
+                totalVenta,
+                selectedPaymentMethod,
+                efectivo,
+                cambio
+            );
+            
+            document.getElementById('cliente-modal').classList.add('hidden');
+            document.getElementById('cliente-form').reset();
+            
+        } catch (error) {
+            console.error("Error: ", error);
+            showAlert(`Error: ${error.message}`, 'error');
+        }
+    });
+
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function() {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPaymentMethod = this.dataset.method;
+            document.getElementById('cliente-metodo-pago').value = selectedPaymentMethod;
+            document.getElementById('submit-text').textContent = 
+                selectedPaymentMethod === 'Efectivo' ? 'Confirmar Pago' : 'Procesar Venta';
+        });
+    });
+
+    window.cancelarCotizacion = () => {
+        cotizacion = [];
+        actualizarCotizacionUI();
+        document.getElementById('scanner-input').focus();
+        showAlert('Venta cancelada');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarProductos();
+        setupSearch();
+        document.getElementById('scanner-input').focus();
+        document.querySelector('.payment-method[data-method="Efectivo"]').click();
+    });
+</script>
+</body>
+</html>

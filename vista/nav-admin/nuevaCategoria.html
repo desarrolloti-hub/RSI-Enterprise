@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <title>Registro de Categorías</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+    <style>
+        /* Estilos generales */
+        .registro-body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navbar fixed */
+        .nan_header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px; /* Altura del navbar */
+            background-color: #1d1d1d;
+            z-index: 1000;
+        }
+
+        /* Contenedor del formulario */
+        .registro-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 80px auto 20px; /* Margen superior igual a la altura del navbar + 20px */
+            padding: 20px;
+        }
+
+        /* Estilos para el formulario */
+        .registro-form {
+            background-color: #1d1d1d;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            position: relative;
+            margin-top: 40px; /* Espacio para el círculo */
+        }
+
+        /* Círculo superior */
+        .registro-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: -40px; /* Mitad fuera, mitad dentro */
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .registro-circle i {
+            font-size: 36px;
+            color: #000;
+        }
+
+        /* Título dentro del formulario */
+        .registro-title {
+            color: #FFD700;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 30px; /* Espacio debajo del círculo */
+            margin-bottom: 20px;
+        }
+
+        /* Campos del formulario */
+        .registro-form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .registro-form-group i {
+            color: #FFD700;
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .registro-input,
+        .registro-file {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .registro-file {
+            cursor: pointer;
+        }
+
+        /* Botón de enviar */
+        .registro-button {
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .registro-button i {
+            margin-left: 8px;
+        }
+
+        .registro-button:hover {
+            background-color: #e6b800;
+        }
+    </style>
+</head>
+<body class="registro-body">
+    <!-- Navbar -->
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contenedor del formulario -->
+    <div class="registro-container">
+        <!-- Formulario -->
+        <form id="registro-categoria-form" class="registro-form">
+            <!-- Círculo superior -->
+            <div class="registro-circle">
+                <i class="fas fa-folder"></i>
+            </div>
+
+            <!-- Título dentro del formulario -->
+            <h2 class="registro-title">Registro de Categoría</h2>
+
+            <!-- Campos del formulario con iconos -->
+            <div class="registro-form-group">
+                <i class="fas fa-tag"></i>
+                <input type="text" id="nombreCategoria" class="registro-input" placeholder="Nombre de la categoría" required>
+            </div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-image"></i>
+                <input type="file" id="imagenCategoria" class="registro-file" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="registro-button">
+                Guardar Categoría <i class="fas fa-save"></i>
+            </button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Mostrar mensaje al cargar la página
+        Swal.fire({
+            icon: "info",
+            title: "Formulario de Categorías",
+            text: "Este es el formulario para registrar nuevas categorías. Para la imagen, se recomienda usar un archivo .png sin fondo para conservar la estética.",
+            confirmButtonColor: "#FFD700"
+        });
+
+        // Convertir imagen a base64
+        const toBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+
+        // Manejar el envío del formulario
+        document.getElementById("registro-categoria-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // Obtener valores del formulario
+            const nombre = document.getElementById("nombreCategoria").value;
+            const imagen = document.getElementById("imagenCategoria").files[0];
+
+            if (!nombre || !imagen) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Todos los campos son obligatorios.",
+                    confirmButtonColor: "#FFD700"
+                });
+                return;
+            }
+
+            try {
+                // Convertir la imagen a base64
+                const imagenBase64 = await toBase64(imagen);
+
+                // Guardar en Firestore
+                await addDoc(collection(db, "categorias"), {
+                    nombre: nombre,
+                    imagen: imagenBase64
+                });
+
+                // Mostrar alerta de éxito
+                Swal.fire({
+                    icon: "success",
+                    title: "Éxito",
+                    text: "Categoría registrada correctamente.",
+                    confirmButtonColor: "#FFD700"
+                }).then(() => {
+                    // Redirigir a categorias.html
+                    window.location.href = "categorias.html";
+                });
+
+                // Limpiar formulario
+                document.getElementById("registro-categoria-form").reset();
+            } catch (error) {
+                // Mostrar alerta de error
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "No se pudo registrar la categoría.",
+                    confirmButtonColor: "#FFD700"
+                });
+                console.error("Error al registrar la categoría:", error);
+            }
+        });
+    </script>
+</body>
+</html>

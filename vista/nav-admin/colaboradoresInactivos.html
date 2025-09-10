@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Colaboradores - RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../css/colaboradores.css">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+</head>
+
+<header class="header">
+    <header class="nan_header">
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+      </nav>
+  </header>
+<br><br><br><br>
+<body>
+    <div class="btn-container">
+        <h1 style="color: #FFD700;">Gestión de Colaboradores Inactivos</h1>
+        <center>
+         <div class="container">
+            <a href="colaboradores.html">
+                <button>
+                    <i class="fas fa-user"></i> Ver colaboradores activos
+                </button>
+            </a>
+        </div>
+        </center>
+    </div>
+    
+    <div class="contenedor-tabla">
+        <table>
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Acciones</th>
+                    <th>Nombre</th>
+                    <th>Correo Personal</th>
+                    <th>Correo Empresarial</th>
+                    <th>CURP</th>
+                    <th>Estado Civil</th>
+                    <th>Fecha Ingreso</th>
+                    <th>Fecha Nacimiento</th>
+                    <th>NIT</th>
+                    <th>NSS</th>
+                    <th>RFC</th>
+                    <th>Teléfono Fijo</th>
+                    <th>Teléfono Móvil</th>
+                    <th>Área</th>
+                    <th>Fecha Baja</th>
+                    <th>Motivo Baja</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-inactivos"></tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const DEFAULT_IMAGE = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+
+        // Funciones de formato
+        const formatearFecha = (timestamp) => {
+            if (!timestamp) return 'RSI';
+            const fecha = timestamp.toDate();
+            return fecha.toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        };
+
+        const verificarCampo = (valor) => valor || 'RSI';
+
+        // Funcionalidad de Reactivación
+        const reactivarColaborador = async (docId) => {
+            const { value: motivo } = await Swal.fire({
+                title: 'Reactivar Colaborador',
+                input: 'textarea',
+                inputLabel: 'Motivo de Reactivación',
+                inputPlaceholder: 'Ingrese el motivo de la reactivación...',
+                confirmButtonText: 'Confirmar Reactivación',
+                showCancelButton: true,
+                customClass: 'swal2-wide',
+                background: '#111',
+                confirmButtonColor: '#FFD700',
+                cancelButtonColor: '#333'
+            });
+
+            if (motivo) {
+                try {
+                    const docRef = db.collection("colaboradoresInactivos").doc(docId);
+                    const datos = (await docRef.get()).data();
+                    
+                    const batch = db.batch();
+                    const nuevoRef = db.collection("colaboradores").doc(docId);
+                    
+                    batch.set(nuevoRef, {
+                        ...datos,
+                        activo: true,
+                        fechaReactivacion: new Date(),
+                        motivoReactivacion: motivo
+                    }, { merge: true });
+                    
+                    batch.delete(docRef);
+                    await batch.commit();
+                    
+                    Swal.fire('¡Reactivado!', 'El colaborador ha sido reactivado exitosamente.', 'success');
+                    cargarInactivos();
+                } catch (error) {
+                    Swal.fire('Error', `Error al reactivar: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Funcionalidad de Edición
+        const editarColaborador = async (docId) => {
+            const docRef = db.collection("colaboradoresInactivos").doc(docId);
+            const docSnap = await docRef.get();
+            const data = docSnap.data();
+            
+            const fechaBaja = data.fechaBaja?.toDate().toISOString().split('T')[0] || '';
+
+            const { value: formData } = await Swal.fire({
+                title: 'Editar Datos de Baja',
+                html: `
+                    <div class="form-edicion">
+                        <div class="input-group">
+                            <label class="swal2-label">Nombre</label>
+                            <input value="${verificarCampo(data.NOMBRE)}" 
+                                   class="swal2-input" 
+                                   readonly>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="swal2-label">NIT</label>
+                            <input value="${verificarCampo(data.NIT)}" 
+                                   class="swal2-input" 
+                                   readonly>
+                        </div>
+                        
+                        <div class="input-group full-width">
+                            <label class="swal2-label">Fecha de Baja</label>
+                            <input type="date" 
+                                   value="${fechaBaja}" 
+                                   class="swal2-input" 
+                                   id="fechaBaja">
+                        </div>
+                        
+                        <div class="input-group full-width">
+                            <label class="swal2-label">Motivo de Baja</label>
+                            <textarea class="swal2-textarea" 
+                                      id="motivoBaja"
+                                      placeholder="Detalle del motivo de baja..."
+                                      >${verificarCampo(data.motivoBaja)}</textarea>
+                        </div>
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                background: '#111',
+                customClass: 'swal2-wide',
+                confirmButtonColor: '#FFD700',
+                preConfirm: () => ({
+                    fechaBaja: document.getElementById('fechaBaja').value,
+                    motivoBaja: document.getElementById('motivoBaja').value
+                })
+            });
+
+            if (formData) {
+                try {
+                    await docRef.update({
+                        fechaBaja: firebase.firestore.Timestamp.fromDate(new Date(formData.fechaBaja)),
+                        motivoBaja: formData.motivoBaja
+                    });
+                    Swal.fire('Actualizado', 'Los cambios se han guardado correctamente.', 'success');
+                    cargarInactivos();
+                } catch (error) {
+                    Swal.fire('Error', `Error al actualizar: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Función para Ver Detalles
+        const verDetalles = async (docId) => {
+            const doc = await db.collection("colaboradoresInactivos").doc(docId).get();
+            const data = doc.data();
+            
+            Swal.fire({
+                title: data.NOMBRE,
+                html: `
+                    <div style="text-align: left; color: #ddd;">
+                        <p><strong>NIT:</strong> ${verificarCampo(data.NIT)}</p>
+                        <p><strong>Fecha Baja:</strong> ${formatearFecha(data.fechaBaja)}</p>
+                        <p><strong>Motivo:</strong> ${verificarCampo(data.motivoBaja)}</p>
+                    </div>
+                `,
+                background: '#111',
+                confirmButtonColor: '#FFD700',
+                showCloseButton: true
+            });
+        };
+
+        // Cargar Datos Iniciales
+        const cargarInactivos = async () => {
+            try {
+                const query = await db.collection("colaboradoresInactivos").orderBy("NOMBRE").get();
+                const tbody = document.getElementById('tabla-inactivos');
+                tbody.innerHTML = '';
+                
+                query.forEach(doc => {
+                    const data = doc.data();
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><img src="${data.imagen || DEFAULT_IMAGE}" class="mini-img"></td>
+                            <td>
+                                <div class="acciones">
+                                    <i class="fas fa-redo" title="Reactivar" onclick="reactivarColaborador('${doc.id}')"></i>
+                                    <i class="fas fa-edit" title="Editar" onclick="editarColaborador('${doc.id}')"></i>
+                                    <i class="fas fa-eye" title="Detalles" onclick="verDetalles('${doc.id}')"></i>
+                                </div>
+                            </td>
+                            <td>${verificarCampo(data.NOMBRE)}</td>
+                            <td>${verificarCampo(data.correoPersonal)}</td>
+                            <td>${verificarCampo(data.correoEmpresarial)}</td>
+                            <td>${verificarCampo(data.CURP)}</td>
+                            <td>${verificarCampo(data.estadoCivil)}</td>
+                            <td>${formatearFecha(data.fechaIngreso)}</td>
+                            <td>${formatearFecha(data.fechaNacimiento)}</td>
+                            <td>${verificarCampo(data.NIT)}</td>
+                            <td>${verificarCampo(data.NSS)}</td>
+                            <td>${verificarCampo(data.RFC)}</td>
+                            <td>${verificarCampo(data.telefonoFijo)}</td>
+                            <td>${verificarCampo(data.telefonoMovil)}</td>
+                            <td>${verificarCampo(data.ÁREA)}</td>
+                            <td>${formatearFecha(data.fechaBaja)}</td>
+                            <td>${verificarCampo(data.motivoBaja)}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                Swal.fire('Error', `Error al cargar datos: ${error.message}`, 'error');
+            }
+        };
+
+        // Inicializar
+        window.addEventListener('DOMContentLoaded', cargarInactivos);
+    </script>
+</body>
+</html>

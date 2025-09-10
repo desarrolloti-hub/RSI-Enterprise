@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Share at the Party</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&family=Gochi+Hand&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <link rel="stylesheet" href="vista/pmcfotos/Qr/fotos.css">
+
+    
+</head>
+<body>
+
+    <div id="loader" class="view"><h1>Loading party...</h1></div>
+    <div id="error-view" class="view hidden"><h1>Error</h1><p id="error-message"></p></div>
+
+    <div id="choice-view" class="view hidden">
+        <div class="container">
+            <h1 id="party-title"></h1>
+            <div class="choice-options">
+                <button class="choice-btn" data-choice="camera">📸 Take Photo</button>
+                <button class="choice-btn" data-choice="drawing">🎨 Create Drawing</button>
+                <a href="https://rsienterprise.com/" class="choice-btn" data-choice="drawing">🔥 See RSI</a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="camera-view" class="view hidden">
+        <div class="preview-container"><video id="camera-preview" autoplay playsinline></video></div>
+        <canvas id="photo-canvas" class="hidden"></canvas>
+        <div class="controls">
+            <button id="camera-back-btn" class="btn-secondary">Back</button>
+            <button id="switch-camera-btn" class="btn-icon" title="Switch Camera">🔄</button>
+            <button id="capture-btn" class="btn-primary">Take Photo</button>
+        </div>
+    </div>
+    
+    <div id="photo-editor-view" class="view hidden">
+        <div class="photo-editor-main">
+            <div class="photo-editor-toolbar">
+                <button id="add-text-tool" class="tool-btn" title="Add Text">Aa</button>
+                <button id="add-emoji-tool" class="tool-btn" title="Add Emoji">😀</button>
+                <button id="add-filter-tool" class="tool-btn" title="Apply Filter">🎨</button>
+                <button id="add-frame-tool" class="tool-btn" title="Add Frame">🖼️</button>
+                <button id="delete-object-tool" class="tool-btn" title="Delete Object">🗑️</button>
+            </div>
+            <div id="editor-canvas-container" class="photo-editor-canvas-container">
+                <canvas id="editor-canvas"></canvas>
+                <div id="filters-panel" class="editor-panel">
+                    <button class="close-panel-btn">✖</button>
+                    <h3 class="panel-title">Filters</h3>
+                    <button class="panel-option" data-filter="Normal">Normal</button><button class="panel-option" data-filter="Vintage">Vintage</button><button class="panel-option" data-filter="Technicolor">Technicolor</button><button class="panel-option" data-filter="Invertir">Invert</button><button class="panel-option" data-filter="ContrasteBN">B&W Contrast</button><button class="panel-option" data-filter="Fresco">Cool</button><button class="panel-option" data-filter="Calido">Warm</button>
+                </div>
+                 <div id="emojis-panel" class="editor-panel">
+                    <button class="close-panel-btn">✖</button>
+                    <h3 class="panel-title">Emojis</h3>
+                    <span class="panel-option emoji-option">🎉</span><span class="panel-option emoji-option">❤️</span><span class="panel-option emoji-option">🥳</span><span class="panel-option emoji-option">😎</span><span class="panel-option emoji-option">😂</span><span class="panel-option emoji-option">🔥</span><span class="panel-option emoji-option">✨</span><span class="panel-option emoji-option">💯</span>
+                </div>
+                <div id="frames-panel" class="editor-panel">
+                      <button class="close-panel-btn">✖</button>
+                      <h3 class="panel-title">Frames</h3>
+                      <div id="frames-container" style="display: contents;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="photo-editor-footer">
+            <button id="editor-back-btn" class="btn-secondary">Cancel</button>
+            <button id="save-edited-photo-btn" class="btn-primary">Save and Continue</button>
+        </div>
+    </div>
+
+    <div id="review-view" class="view hidden">
+        <img id="review-image-preview" alt="Preview of your creation">
+        <div class="controls">
+            <button id="review-upload-btn" class="btn-primary">Upload</button>
+            <button id="review-cancel-btn" class="btn-secondary">Edit Again</button>
+        </div>
+    </div>
+
+    <div id="drawing-view" class="view hidden">
+        <div class="drawing-editor-main">
+            <div class="drawing-editor-toolbar">
+                <button id="select-tool" class="tool-btn-drawing" title="Select/Move">🖐️</button>
+                <button id="pencil-tool" class="tool-btn-drawing active" title="Pencil">✏️</button>
+                <button id="eraser-tool" class="tool-btn-drawing" title="Eraser">🧼</button>
+                <button id="text-tool-drawing" class="tool-btn-drawing" title="Add Text">Aa</button>
+                <button id="shapes-tool" class="tool-btn-drawing" title="Shapes">◇</button>
+                <button id="delete-object-tool-drawing" class="tool-btn-drawing" title="Delete Object">🗑️</button>
+                <label for="brush-color">Color:</label>
+                <input type="color" id="brush-color" value="#000000">
+                <label for="brush-width">Thickness:</label>
+                <input type="range" id="brush-width" min="1" max="50" value="5">
+                <label for="background-color">Background:</label>
+                <input type="color" id="background-color" value="#FFFFFF">
+                <button id="clear-canvas-btn" title="Clear All">Clear</button>
+            </div>
+            <div id="drawing-canvas-container" class="drawing-canvas-container">
+                <canvas id="drawing-canvas"></canvas>
+                <div id="shapes-panel" class="editor-panel">
+                    <button class="close-panel-btn">✖</button>
+                    <h3 class="panel-title">Shapes</h3>
+                    <button class="panel-option" data-shape="rect">Rectangle</button>
+                    <button class="panel-option" data-shape="circle">Circle</button>
+                    <button class="panel-option" data-shape="triangle">Triangle</button>
+                </div>
+            </div>
+        </div>
+        <div class="drawing-editor-footer">
+            <button id="drawing-back-btn" class="btn-secondary">Cancel</button>
+            <button id="save-drawing-btn" class="btn-primary">Save and Upload</button>
+        </div>
+    </div>
+
+
+    <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+      authDomain: "rsienterprise.firebaseapp.com",
+      projectId: "rsienterprise",
+      storageBucket: "rsienterprise.appspot.com",
+      messagingSenderId: "1063117165770",
+      appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Custom options for all neon-styled SweetAlerts
+    const neonSwal = Swal.mixin({
+        customClass: {
+            popup: 'neon-style',
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const views = { 
+            loader: document.getElementById('loader'), 
+            error: document.getElementById('error-view'), 
+            choice: document.getElementById('choice-view'), 
+            camera: document.getElementById('camera-view'), 
+            photoEditor: document.getElementById('photo-editor-view'), 
+            review: document.getElementById('review-view'),
+            drawing: document.getElementById('drawing-view')
+        };
+        let partyId = null;
+        let currentReviewImage = null;
+
+        const takePictureBtn = document.querySelector('.choice-btn[data-choice="camera"]');
+        const createDrawingBtn = document.querySelector('.choice-btn[data-choice="drawing"]');
+        const COOLDOWN_SECONDS = 120;
+        let photoTimerInterval = null;
+        let drawingTimerInterval = null;
+
+        function updateTimerUI(btn, type) {
+            if (type === 'photo' && photoTimerInterval) clearInterval(photoTimerInterval);
+            if (type === 'drawing' && drawingTimerInterval) clearInterval(drawingTimerInterval);
+
+            const timer = setInterval(() => {
+                const cooldownEndTime = localStorage.getItem(`${type}Cooldown_${partyId}`);
+                if (!cooldownEndTime) {
+                    btn.disabled = false;
+                    btn.textContent = type === 'photo' ? '📸 Take Photo' : '🎨 Create Drawing';
+                    clearInterval(timer);
+                    return;
+                }
+
+                const remainingTime = cooldownEndTime - Date.now();
+                if (remainingTime > 0) {
+                    const minutes = Math.floor(remainingTime / 60000).toString().padStart(2, '0');
+                    const seconds = Math.floor((remainingTime % 60000) / 1000).toString().padStart(2, '0');
+                    btn.disabled = true;
+                    const nextActionText = type === 'photo' ? 'Next photo' : 'Next drawing';
+                    btn.textContent = `${nextActionText} in ${minutes}:${seconds}`;
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = type === 'photo' ? '📸 Take Photo' : '🎨 Create Drawing';
+                    localStorage.removeItem(`${type}Cooldown_${partyId}`);
+                    clearInterval(timer);
+                }
+            }, 1000);
+
+            if (type === 'photo') photoTimerInterval = timer;
+            if (type === 'drawing') drawingTimerInterval = timer;
+        }
+
+        function startTimer(type) {
+            const endTime = Date.now() + COOLDOWN_SECONDS * 1000;
+            localStorage.setItem(`${type}Cooldown_${partyId}`, endTime);
+            const btn = type === 'photo' ? takePictureBtn : createDrawingBtn;
+            updateTimerUI(btn, type);
+        }
+        
+        function showView(viewName) { 
+            Object.values(views).forEach(view => view.classList.add('hidden')); 
+            views[viewName].classList.remove('hidden'); 
+        }
+
+        try {
+            partyId = new URLSearchParams(window.location.search).get('fiesta');
+            if (!partyId) throw new Error("Party parameter not found.");
+            const partyConfigDoc = await db.collection(partyId).doc('_config').get();
+            if (!partyConfigDoc.exists) throw new Error("This party does not exist.");
+            document.getElementById('party-title').textContent = `Share at ${partyConfigDoc.data().nombreOriginal}!`;
+            showView('choice');
+            updateTimerUI(takePictureBtn, 'photo');
+            updateTimerUI(createDrawingBtn, 'drawing');
+        } catch (error) {
+            document.getElementById('error-message').textContent = error.message;
+            showView('error');
+        }
+
+        views.choice.addEventListener('click', (e) => {
+            if (e.target.matches('.choice-btn[data-choice="camera"]')) { 
+                showView('camera'); 
+                initCamera(); 
+            }
+            if (e.target.matches('.choice-btn[data-choice="drawing"]')) { 
+                showView('drawing');
+                initDrawingEditor();
+            }
+        });
+        
+        async function uploadBase64ToFirebase(base64Data) {
+    // Simplemente agrega el nuevo documento. 
+    // Firestore se encargará de generar un ID único y distribuido.
+    await db.collection(partyId).add({ 
+        imageBase64: base64Data, 
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+        aprobada: false 
+    });
+}
+        async function loadFramesFromFirestore() {
+            const framesContainer = document.getElementById('frames-container');
+            framesContainer.innerHTML = 'Loading frames...';
+            try {
+                const snapshot = await db.collection('Marcos').get();
+                if (snapshot.empty) {
+                    framesContainer.innerHTML = 'No frames found.'; return;
+                }
+                framesContainer.innerHTML = '';
+                
+                const removeFrameBtn = document.createElement('button');
+                removeFrameBtn.className = 'panel-option';
+                removeFrameBtn.textContent = 'Remove Frame';
+                removeFrameBtn.onclick = removeFrameFromCanvas;
+                framesContainer.appendChild(removeFrameBtn);
+
+                snapshot.forEach(doc => {
+                    let imageData = doc.data().images; 
+                    if (Array.isArray(imageData) && imageData.length > 0) imageData = imageData[0];
+                    if(imageData && typeof imageData === 'string') {
+                        const frameDiv = document.createElement('div');
+                        frameDiv.className = 'panel-option frame-option';
+                        frameDiv.innerHTML = `<img src="${imageData}" alt="Frame">`;
+                        frameDiv.onclick = () => addFrameToCanvas(imageData);
+                        framesContainer.appendChild(frameDiv);
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading frames:", error);
+                framesContainer.innerHTML = 'Error loading frames.';
+            }
+        }
+        
+        let cameraStream = null;
+        let currentFacingMode = 'environment';
+        
+        async function initCamera() {
+            document.getElementById('camera-back-btn').onclick = () => { if (cameraStream) cameraStream.getTracks().forEach(t => t.stop()); showView('choice'); };
+            document.getElementById('switch-camera-btn').onclick = () => { currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment'; startCamera(); };
+            document.getElementById('capture-btn').onclick = takePicture;
+            
+            await startCamera();
+        }
+
+        async function startCamera() {
+            if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+            const cameraPreview = document.getElementById('camera-preview');
+            const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } };
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraPreview.srcObject = cameraStream;
+                cameraPreview.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+            } catch(err) {
+                console.error("Error starting camera:", err);
+                neonSwal.fire({
+                    icon: 'error',
+                    title: 'Camera Error',
+                    text: 'Could not start the camera. Please ensure you have granted permissions and are on a secure (https) connection.'
+                });
+                showView('choice');
+            }
+        }
+
+        function takePicture() {
+            const cameraPreview = document.getElementById('camera-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = cameraPreview.videoWidth;
+            canvas.height = cameraPreview.videoHeight;
+            if (currentFacingMode === 'user') {
+                ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+            }
+            ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+            const originalPhotoForEditing = canvas.toDataURL('image/jpeg', 1.0);
+            if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+            showView('photoEditor');
+            initPhotoEditor(originalPhotoForEditing);
+        }
+
+        let fabricCanvas = null;
+        let photoObject = null; 
+        const advancedFilters = {
+            'Normal': [], 'Vintage': [ new fabric.Image.filters.Sepia(), new fabric.Image.filters.Contrast({ contrast: 0.1 }) ], 'Technicolor': [ new fabric.Image.filters.Technicolor() ], 'Invert': [ new fabric.Image.filters.Invert() ], 'B&W Contrast': [ new fabric.Image.filters.Grayscale(), new fabric.Image.filters.Contrast({ contrast: 0.25 }) ], 'Cool': [ new fabric.Image.filters.BlendColor({ color: '#00BFFF', mode: 'tint', alpha: 0.15 }), new fabric.Image.filters.Saturation({ saturation: 0.1 })], 'Warm': [ new fabric.Image.filters.BlendColor({ color: '#FFA500', mode: 'tint', alpha: 0.15 }), new fabric.Image.filters.Saturation({ saturation: 0.15 })]
+        };
+
+        function initPhotoEditor(photoBase64) {
+            if(fabricCanvas) {
+                fabricCanvas.dispose();
+                photoObject = null;
+            }
+            const canvasContainer = document.getElementById('editor-canvas-container');
+            fabricCanvas = new fabric.Canvas('editor-canvas', {
+                width: canvasContainer.clientWidth, height: canvasContainer.clientHeight,
+                backgroundColor: '#121212'
+            });
+            fabric.Image.fromURL(photoBase64, (img) => {
+                const scale = Math.min(fabricCanvas.width / img.width, fabricCanvas.height / img.height);
+                img.set({ scaleX: scale, scaleY: scale, left: fabricCanvas.width / 2, top: fabricCanvas.height / 2, originX: 'center', originY: 'center', selectable: false, evented: false });
+                fabricCanvas.add(img);
+                photoObject = img; 
+            }, { crossOrigin: 'anonymous' });
+            setupEditorControls();
+        }
+        
+        function setupEditorControls(){
+            document.getElementById('save-edited-photo-btn').onclick = saveEditedPhoto;
+            document.getElementById('editor-back-btn').onclick = () => { showView('camera'); initCamera(); };
+            document.getElementById('add-text-tool').onclick = addTextToCanvas;
+            document.getElementById('delete-object-tool').onclick = deleteSelectedObject;
+            document.getElementById('add-emoji-tool').onclick = () => togglePanel('emojis-panel');
+            document.getElementById('add-filter-tool').onclick = () => togglePanel('filters-panel');
+            document.getElementById('add-frame-tool').onclick = () => { loadFramesFromFirestore(); togglePanel('frames-panel'); };
+            document.querySelectorAll('.close-panel-btn').forEach(btn => btn.onclick = () => btn.parentElement.classList.remove('visible'));
+            document.querySelectorAll('#emojis-panel .emoji-option').forEach(el => el.onclick = (e) => addEmojiToCanvas(e.target.innerText));
+            document.querySelectorAll('#filters-panel .panel-option').forEach(el => el.onclick = (e) => applyFilterToCanvas(e.target.dataset.filter));
+        }
+        
+        function togglePanel(panelId) {
+            document.querySelectorAll('.editor-panel').forEach(p => p.id !== panelId && p.classList.remove('visible'));
+            document.getElementById(panelId).classList.toggle('visible');
+        }
+
+        function applyFilterToCanvas(filterName) {
+            if (!photoObject) return; 
+            photoObject.filters = advancedFilters[filterName] ? [...advancedFilters[filterName]] : [];
+            photoObject.applyFilters(); 
+            fabricCanvas.renderAll(); 
+        }
+        
+        function removeFrameFromCanvas() {
+            fabricCanvas.getObjects().forEach(obj => { if (obj.isFrame) fabricCanvas.remove(obj); });
+            fabricCanvas.renderAll();
+        }
+        
+        function addFrameToCanvas(frameUrl) {
+            if (typeof frameUrl !== 'string' || !frameUrl.startsWith('data:image')) {
+                neonSwal.fire('Error', 'The selected frame has an invalid format and cannot be loaded.', 'error');
+                return; 
+            }
+            if (!photoObject) return; 
+            removeFrameFromCanvas();
+            fabric.Image.fromURL(frameUrl, (frameImg) => {
+                const scale = Math.min(fabricCanvas.width / frameImg.width, fabricCanvas.height / frameImg.height) * 0.75;
+                frameImg.set({ left: fabricCanvas.width / 2, top: fabricCanvas.height / 2, originX: 'center', originY: 'center', scaleX: scale, scaleY: scale, isFrame: true, selectable: true, hasControls: true, hasBorders: true, evented: true });
+                fabricCanvas.add(frameImg).setActiveObject(frameImg).renderAll();
+            }, { crossOrigin: 'anonymous' });
+            togglePanel('frames-panel');
+        }
+
+        function addTextToCanvas() {
+            const text = new fabric.IText('Edit Text', { left: 50, top: 100, fontFamily: 'Kalam', fill: '#FFFFFF', fontSize: 50, shadow: 'rgba(0,0,0,0.5) 3px 3px 5px', padding: 10 });
+            fabricCanvas.add(text).setActiveObject(text);
+        }
+        
+        function addEmojiToCanvas(emoji) {
+            const emojiText = new fabric.IText(emoji, { left: 100, top: 100, fontSize: 100, transparentCorners: false, padding: 10 });
+            fabricCanvas.add(emojiText);
+            togglePanel('emojis-panel');
+        }
+        
+        function deleteSelectedObject() {
+            fabricCanvas.getActiveObjects().forEach(obj => { if (obj !== photoObject) fabricCanvas.remove(obj); });
+            fabricCanvas.discardActiveObject().renderAll();
+        }
+
+        function saveEditedPhoto() {
+             fabricCanvas.discardActiveObject().renderAll();
+             currentReviewImage = fabricCanvas.toDataURL({ format: 'jpeg', quality: 1.0 });
+             showReviewView();
+        }
+        
+        function showReviewView() {
+            document.getElementById('review-image-preview').src = currentReviewImage;
+            const uploadBtn = document.getElementById('review-upload-btn');
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload';
+            document.getElementById('review-cancel-btn').onclick = () => showView('photoEditor');
+            
+            uploadBtn.onclick = async () => {
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Uploading...';
+                try {
+                    await uploadBase64ToFirebase(currentReviewImage);
+                    neonSwal.fire({ icon: 'success', title: 'Uploaded!', text: 'Thanks for sharing!', timer: 2000, showConfirmButton: false });
+                    startTimer('photo');
+                    showView('choice');
+                } catch (error) {
+                    console.error("Firebase upload error: ", error);
+                    neonSwal.fire({ icon: 'error', title: 'Error', text: 'Could not upload the image.' });
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = 'Upload';
+                }
+            };
+            showView('review');
+        }
+        
+        let fabricDrawingCanvas = null;
+
+        const resizeDrawingCanvas = () => {
+            if (!fabricDrawingCanvas) return;
+            const container = document.getElementById('drawing-canvas-container');
+            fabricDrawingCanvas.setDimensions({ width: container.clientWidth, height: container.clientHeight });
+            fabricDrawingCanvas.renderAll();
+        };
+
+        function initDrawingEditor() {
+            if(fabricDrawingCanvas) fabricDrawingCanvas.dispose();
+            fabricDrawingCanvas = new fabric.Canvas('drawing-canvas', { isDrawingMode: true, backgroundColor: '#FFFFFF' });
+            resizeDrawingCanvas();
+            window.addEventListener('resize', resizeDrawingCanvas);
+
+            const pencilTool = document.getElementById('pencil-tool');
+            const eraserTool = document.getElementById('eraser-tool');
+            const selectTool = document.getElementById('select-tool');
+            const brushColorInput = document.getElementById('brush-color');
+            const brushWidthSlider = document.getElementById('brush-width');
+            const bgColorInput = document.getElementById('background-color');
+
+            fabricDrawingCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricDrawingCanvas);
+            fabricDrawingCanvas.freeDrawingBrush.color = brushColorInput.value;
+            fabricDrawingCanvas.freeDrawingBrush.width = parseInt(brushWidthSlider.value, 10);
+            
+            function setActiveTool(toolBtn) {
+                document.querySelectorAll('.tool-btn-drawing').forEach(btn => btn.classList.remove('active'));
+                toolBtn.classList.add('active');
+            }
+
+            pencilTool.onclick = () => {
+                fabricDrawingCanvas.isDrawingMode = true;
+                fabricDrawingCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricDrawingCanvas);
+                fabricDrawingCanvas.freeDrawingBrush.color = brushColorInput.value;
+                fabricDrawingCanvas.freeDrawingBrush.width = parseInt(brushWidthSlider.value, 10);
+                setActiveTool(pencilTool);
+            };
+            eraserTool.onclick = () => {
+                fabricDrawingCanvas.isDrawingMode = true;
+                fabricDrawingCanvas.freeDrawingBrush = new fabric.EraserBrush(fabricDrawingCanvas);
+                fabricDrawingCanvas.freeDrawingBrush.width = parseInt(brushWidthSlider.value, 10);
+                setActiveTool(eraserTool);
+            };
+            selectTool.onclick = () => {
+                fabricDrawingCanvas.isDrawingMode = false;
+                setActiveTool(selectTool);
+            };
+
+            brushColorInput.onchange = () => {
+                const activeObject = fabricDrawingCanvas.getActiveObject();
+                if(fabricDrawingCanvas.isDrawingMode && fabricDrawingCanvas.freeDrawingBrush.color) {
+                    fabricDrawingCanvas.freeDrawingBrush.color = brushColorInput.value;
+                } else if (activeObject) {
+                    activeObject.set('fill', brushColorInput.value);
+                    fabricDrawingCanvas.renderAll();
+                }
+            };
+            brushWidthSlider.oninput = () => { if(fabricDrawingCanvas.isDrawingMode) fabricDrawingCanvas.freeDrawingBrush.width = parseInt(brushWidthSlider.value, 10); };
+            bgColorInput.onchange = () => { fabricDrawingCanvas.setBackgroundColor(bgColorInput.value, fabricDrawingCanvas.renderAll.bind(fabricDrawingCanvas)); };
+
+            document.getElementById('text-tool-drawing').onclick = () => {
+                fabricDrawingCanvas.isDrawingMode = false;
+                setActiveTool(selectTool);
+                const text = new fabric.IText('Edit', { left: 20, top: 20, fontFamily: 'Kalam', fill: brushColorInput.value, fontSize: 40 });
+                fabricDrawingCanvas.add(text).setActiveObject(text);
+            };
+
+            document.getElementById('shapes-tool').onclick = () => togglePanel('shapes-panel');
+            document.querySelector('#shapes-panel .close-panel-btn').onclick = () => togglePanel('shapes-panel');
+            document.querySelectorAll('#shapes-panel .panel-option').forEach(btn => {
+                btn.onclick = (e) => {
+                    fabricDrawingCanvas.isDrawingMode = false;
+                    setActiveTool(selectTool);
+                    const shapeType = e.target.dataset.shape;
+                    let shape;
+                    if (shapeType === 'rect') shape = new fabric.Rect({ width: 100, height: 80 });
+                    if (shapeType === 'circle') shape = new fabric.Circle({ radius: 50 });
+                    if (shapeType === 'triangle') shape = new fabric.Triangle({ width: 100, height: 100 });
+                    if(shape) {
+                        shape.set({ left: 20, top: 20, fill: brushColorInput.value });
+                        fabricDrawingCanvas.add(shape).setActiveObject(shape);
+                    }
+                    togglePanel('shapes-panel');
+                };
+            });
+            
+            document.getElementById('delete-object-tool-drawing').onclick = () => {
+                fabricDrawingCanvas.getActiveObjects().forEach(obj => fabricDrawingCanvas.remove(obj));
+                fabricDrawingCanvas.discardActiveObject().renderAll();
+            };
+
+            document.getElementById('clear-canvas-btn').onclick = async () => {
+                const result = await neonSwal.fire({
+                    title: 'Are you sure?',
+                    text: "This will clear the entire drawing!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, clear it!',
+                    cancelButtonText: 'No, cancel'
+                });
+                if(result.isConfirmed) {
+                    fabricDrawingCanvas.clear();
+                    fabricDrawingCanvas.setBackgroundColor(bgColorInput.value, fabricDrawingCanvas.renderAll.bind(fabricDrawingCanvas));
+                }
+            };
+
+            document.getElementById('drawing-back-btn').onclick = async () => {
+                 const result = await neonSwal.fire({
+                    title: 'Are you sure?',
+                    text: "You will lose your current drawing.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, exit',
+                    cancelButtonText: 'No, stay'
+                });
+                if(result.isConfirmed) {
+                    window.removeEventListener('resize', resizeDrawingCanvas);
+                    showView('choice');
+                }
+            };
+            document.getElementById('save-drawing-btn').onclick = saveDrawing;
+        }
+
+        async function saveDrawing() {
+            const saveBtn = document.getElementById('save-drawing-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Uploading...';
+            
+            const drawingData = fabricDrawingCanvas.toDataURL({ format: 'jpeg', quality: 0.95 });
+            try {
+                await uploadBase64ToFirebase(drawingData);
+                neonSwal.fire({ icon: 'success', title: 'Drawing Uploaded!', text: 'Thanks for sharing!', timer: 2000, showConfirmButton: false });
+                startTimer('drawing');
+                window.removeEventListener('resize', resizeDrawingCanvas);
+                showView('choice');
+            } catch (error) {
+                console.error("Error uploading drawing: ", error);
+                neonSwal.fire({ icon: 'error', title: 'Error', text: 'Could not upload your creation.' });
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save and Upload';
+            }
+        }
+    });
+    </script>
+</body>
+</html>

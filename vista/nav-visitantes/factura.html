@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Facturación - RS I Enterprise</title>
+    
+    <!-- Dependencias -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/facturas.css">
+</head>
+<body>
+    <div class="form-container">
+        <div class="logo-container">
+            <a href="https://rsienterprise.web.app/" target="_blank">
+                <img src="../css/img/Logo-RSI-OFICIAL.png" alt="RS I Enterprise Logo" class="logo">
+            </a>
+        </div>
+
+        <h2>Formulario de Facturación</h2>
+        
+        <div class="form-group">
+            <label for="userName" class="required-field">Nombre completo o Razón Social</label>
+            <input type="text" id="userName" placeholder="Ingresa tu nombre completo o razón social" required>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="userEmail" class="required-field">Correo electrónico</label>
+                <input type="email" id="userEmail" placeholder="Ingresa tu correo electrónico" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="userRFC" class="required-field">RFC</label>
+                <input type="text" id="userRFC" placeholder="Ingresa tu RFC" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="taxRegime" class="required-field">Régimen Fiscal</label>
+            <select id="taxRegime" required>
+                <option value="" disabled selected>Selecciona tu régimen fiscal</option>
+                <option value="601">601 - General de Ley Personas Morales</option>
+                <option value="603">603 - Personas Morales con Fines no Lucrativos</option>
+                <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
+                <option value="606">606 - Arrendamiento</option>
+                <option value="607">607 - Régimen de Enajenación o Adquisición de Bienes</option>
+                <option value="608">608 - Demás ingresos</option>
+                <option value="610">610 - Residentes en el Extranjero sin Establecimiento Permanente en México</option>
+                <option value="611">611 - Ingresos por Dividendos (socios y accionistas)</option>
+                <option value="612">612 - Personas Físicas con Actividades Empresariales y Profesionales</option>
+                <option value="614">614 - Ingresos por intereses</option>
+                <option value="615">615 - Régimen de los ingresos por obtención de premios</option>
+                <option value="616">616 - Sin obligaciones fiscales</option>
+                <option value="620">620 - Sociedades Cooperativas de Producción que optan por diferir sus ingresos</option>
+                <option value="621">621 - Incorporación Fiscal</option>
+                <option value="622">622 - Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras</option>
+                <option value="623">623 - Opcional para Grupos de Sociedades</option>
+                <option value="624">624 - Coordinados</option>
+                <option value="625">625 - Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas</option>
+                <option value="626">626 - Régimen Simplificado de Confianza</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="cfdiUse" class="required-field">Uso de CFDI</label>
+            <select id="cfdiUse" required>
+                <option value="" disabled selected>Selecciona el uso de CFDI</option>
+                <option value="G01">G01 - Adquisición de mercancías</option>
+                <option value="G02">G02 - Devoluciones, descuentos o bonificaciones</option>
+                <option value="G03">G03 - Gastos en general</option>
+                <option value="I01">I01 - Construcciones</option>
+                <option value="I02">I02 - Mobiliario y equipo de oficina</option>
+                <option value="I03">I03 - Equipo de transporte</option>
+                <option value="I04">I04 - Equipo de cómputo y accesorios</option>
+                <option value="I05">I05 - Dados, troqueles, moldes, matrices y herramental</option>
+                <option value="I06">I06 - Comunicaciones telefónicas</option>
+                <option value="I07">I07 - Comunicaciones satelitales</option>
+                <option value="I08">I08 - Otra maquinaria y equipo</option>
+                <option value="D01">D01 - Honorarios médicos, dentales y gastos hospitalarios</option>
+                <option value="D02">D02 - Gastos médicos por incapacidad o discapacidad</option>
+                <option value="D03">D03 - Gastos funerales</option>
+                <option value="D04">D04 - Donativos</option>
+                <option value="D05">D05 - Intereses reales efectivamente pagados por créditos hipotecarios</option>
+                <option value="D06">D06 - Aportaciones voluntarias al SAR</option>
+                <option value="D07">D07 - Primas por seguros de gastos médicos</option>
+                <option value="D08">D08 - Gastos de transportación escolar obligatoria</option>
+                <option value="D09">D09 - Depósitos en cuentas para el ahorro</option>
+                <option value="D10">D10 - Pagos por servicios educativos</option>
+                <option value="P01">P01 - Por definir</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="userAddress" class="required-field">Dirección Fiscal</label>
+            <textarea id="userAddress" placeholder="Ingresa tu dirección completa (Calle, número, colonia, ciudad, estado, código postal)" rows="3" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="userPhoto" class="required-field">Foto legible del ticket o comprobante de compra</label>
+            <div class="file-input-container">
+                <div class="file-input-button">Seleccionar archivo</div>
+                <input type="file" id="userPhoto" class="file-input" accept="image/*" required>
+                <div class="file-name" id="fileName">No se ha seleccionado ningún archivo</div>
+            </div>
+            <div class="file-info" id="fileInfo">
+                Tamaño original: <span id="originalSize">0</span> MB | 
+                Tamaño después de compresión: <span class="compression-info" id="compressedSize">0</span> MB
+            </div>
+            <img id="imagePreview" class="image-preview" alt="Vista previa de la imagen">
+            <small style="display: block; margin-top: 0.5rem; color: #666;">Por favor asegúrate que la imagen sea clara y legible (Máx. 5MB)</small>
+        </div>
+
+        <button id="submitBtn">Enviar Solicitud de Factura</button>
+    </div>
+
+    <script>
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Variables globales
+        let imageBase64 = null;
+        let originalFileSize = 0;
+        const MAX_FILE_SIZE = 5000000; // 5MB
+        const TARGET_FILE_SIZE = 1000000; // 1MB
+
+        // Función para comprimir imagen
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Calcular nuevas dimensiones manteniendo el aspect ratio
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDimension = 1500; // Máxima dimensión (ancho o alto)
+                        
+                        if (width > height) {
+                            if (width > maxDimension) {
+                                height *= maxDimension / width;
+                                width = maxDimension;
+                            }
+                        } else {
+                            if (height > maxDimension) {
+                                width *= maxDimension / height;
+                                height = maxDimension;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // Dibujar imagen redimensionada
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Calcular calidad inicial (0.7 = 70%)
+                        let quality = 0.7;
+                        let compressedDataUrl;
+                        
+                        // Función recursiva para ajustar calidad hasta alcanzar el tamaño objetivo
+                        function attemptCompression() {
+                            compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                            const size = (compressedDataUrl.length * 3/4); // Tamaño aproximado en bytes
+                            
+                            // Si el tamaño es mayor al objetivo y podemos reducir más la calidad
+                            if (size > TARGET_FILE_SIZE && quality > 0.5) {
+                                quality -= 0.05; // Reducir calidad en 5%
+                                attemptCompression();
+                            } else {
+                                // Mostrar información de compresión
+                                document.getElementById('originalSize').textContent = (originalFileSize / 1000000).toFixed(2);
+                                document.getElementById('compressedSize').textContent = (size / 1000000).toFixed(2);
+                                document.getElementById('fileInfo').style.display = 'block';
+                                
+                                resolve({
+                                    base64: compressedDataUrl,
+                                    size: size,
+                                    width: width,
+                                    height: height,
+                                    quality: quality
+                                });
+                            }
+                        }
+                        
+                        attemptCompression();
+                    };
+                };
+            });
+        }
+
+        // Manejo del input de archivo
+        document.getElementById('userPhoto').addEventListener('change', async function(e) {
+            const fileNameDisplay = document.getElementById('fileName');
+            const imagePreview = document.getElementById('imagePreview');
+            
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                originalFileSize = file.size;
+                
+                // Validar tamaño máximo (5MB)
+                if (file.size > MAX_FILE_SIZE) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Archivo demasiado grande',
+                        text: `La imagen no debe exceder los ${MAX_FILE_SIZE/1000000}MB`,
+                        confirmButtonColor: '#1c1948'
+                    });
+                    this.value = '';
+                    return;
+                }
+
+                // Validar tipo de archivo
+                if (!file.type.match('image.*')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tipo de archivo no válido',
+                        text: 'Por favor selecciona una imagen (JPG, PNG, etc.)',
+                        confirmButtonColor: '#1c1948'
+                    });
+                    this.value = '';
+                    return;
+                }
+
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.style.display = 'block';
+
+                // Mostrar carga mientras se procesa
+                Swal.fire({
+                    title: 'Procesando imagen...',
+                    html: 'Estamos optimizando tu imagen para mejor calidad',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                try {
+                    // Comprimir la imagen
+                    const compressedImage = await compressImage(file);
+                    imageBase64 = compressedImage.base64;
+                    
+                    // Mostrar vista previa
+                    imagePreview.src = imageBase64;
+                    imagePreview.style.display = 'block';
+                    
+                    Swal.close();
+                } catch (error) {
+                    console.error('Error al procesar la imagen:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al procesar la imagen',
+                        text: 'No se pudo comprimir la imagen seleccionada',
+                        confirmButtonColor: '#1c1948'
+                    });
+                }
+            } else {
+                fileNameDisplay.style.display = 'none';
+                imagePreview.style.display = 'none';
+                document.getElementById('fileInfo').style.display = 'none';
+                imageBase64 = null;
+            }
+        });
+
+        // Validación de RFC
+        function validarRFC(rfc) {
+            const regex = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{2}[0-9A]$/i;
+            return regex.test(rfc);
+        }
+
+        // Validación de email
+        function validarEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+
+        // Manejo del formulario
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const address = document.getElementById('userAddress').value.trim();
+            const rfc = document.getElementById('userRFC').value.trim().toUpperCase();
+            const taxRegime = document.getElementById('taxRegime').value;
+            const cfdiUse = document.getElementById('cfdiUse').value;
+            const photoFile = document.getElementById('userPhoto').files[0];
+
+            // Validación de campos
+            if (!name || !email || !address || !rfc || !taxRegime || !cfdiUse || !photoFile) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Atención!',
+                    text: 'Por favor completa todos los campos obligatorios del formulario',
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#1c1948'
+                });
+                return;
+            }
+
+            // Validación de email
+            if (!validarEmail(email)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Correo inválido',
+                    text: 'Por favor ingresa un correo electrónico válido',
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#ff0000'
+                });
+                return;
+            }
+
+            // Validación de RFC
+            if (!validarRFC(rfc)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'RFC inválido',
+                    text: 'Por favor ingresa un RFC válido',
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#ff0000'
+                });
+                return;
+            }
+
+            // Mostrar carga mientras se procesa
+            Swal.fire({
+                title: 'Procesando...',
+                html: 'Estamos guardando tu información',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                // Obtener la descripción del régimen fiscal seleccionado
+                const taxRegimeSelect = document.getElementById('taxRegime');
+                const taxRegimeText = taxRegimeSelect.options[taxRegimeSelect.selectedIndex].text;
+                
+                // Obtener la descripción del uso CFDI seleccionado
+                const cfdiUseSelect = document.getElementById('cfdiUse');
+                const cfdiUseText = cfdiUseSelect.options[cfdiUseSelect.selectedIndex].text;
+
+                // Crear objeto con todos los datos del formulario
+                const facturaData = {
+                    nombreRazonSocial: name,
+                    email: email,
+                    direccionFiscal: address,
+                    rfc: rfc,
+                    regimenFiscal: {
+                        clave: taxRegime,
+                        descripcion: taxRegimeText
+                    },
+                    usoCFDI: {
+                        clave: cfdiUse,
+                        descripcion: cfdiUseText
+                    },
+                    fotoBase64: imageBase64,
+                    nombreArchivo: photoFile.name,
+                    tipoArchivo: photoFile.type,
+                    tamañoOriginal: originalFileSize,
+                    tamañoComprimido: (imageBase64.length * 3/4), // Tamaño aproximado
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    estado: 'pendiente',
+                    fechaProcesamiento: null,
+                    notas: ''
+                };
+
+                // Enviar a Firebase
+                const docRef = await db.collection('facturas').add(facturaData);
+
+                // Confirmación y redirección
+                await Swal.fire({
+                    icon: 'success',
+                    title: '¡Solicitud recibida!',
+                    html: `Tu información se ha enviado correctamente.<br><br>
+                          <strong>Folio:</strong> ${docRef.id}<br><br>
+                          La factura será procesada y enviada al correo electrónico proporcionado en un plazo de 48 horas hábiles.`,
+                    showConfirmButton: true,
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#1c1948'
+                });
+
+                // Redireccionar a la página principal después de 3 segundos
+                setTimeout(() => {
+                    window.location.href = "https://rsienterprise.web.app/";
+                }, 3000);
+
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al enviar tu solicitud: ' + error.message,
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#ff0000'
+                });
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+

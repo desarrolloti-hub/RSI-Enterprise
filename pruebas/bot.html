@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador de Interacción Ética</title>
+    <style>
+        :root {
+            --color-bot: #2c3e50;
+            --color-active: #27ae60;
+            --color-error: #e74c3c;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: #f5f6fa;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .bot-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: var(--color-bot);
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #botContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .bot-frame {
+            border: 2px solid var(--color-bot);
+            border-radius: 8px;
+            height: 150px;
+            overflow: hidden;
+        }
+
+        #activityLog {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Simulador de Bots Éticos</h2>
+        
+        <div class="bot-controls">
+            <input type="url" id="targetUrl" placeholder="https://tu-dominio.com" required>
+            <input type="number" id="botCount" value="3" min="1" max="5" placeholder="N° de Bots">
+            <input type="number" id="duration" value="30" min="10" max="60" placeholder="Duración (seg)">
+        </div>
+        
+        <button onclick="startBots()" id="startBtn">Iniciar Simulación</button>
+        <button onclick="stopBots()" id="stopBtn" disabled>Detener</button>
+        
+        <div id="botContainer"></div>
+        <div id="activityLog"></div>
+    </div>
+
+    <script>
+        let bots = new Map();
+        const userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15',
+            'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36'
+        ];
+
+        function logEvent(message, type = 'info') {
+            const log = document.getElementById('activityLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.style.borderColor = {
+                info: '#3498db',
+                success: '#2ecc71',
+                error: '#e74c3c'
+            }[type];
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function createBotFrame(url, botId) {
+            return new Promise((resolve) => {
+                const iframe = document.createElement('iframe');
+                iframe.className = 'bot-frame';
+                iframe.sandbox = "allow-scripts allow-same-origin";
+                iframe.style.display = 'none';
+
+                iframe.onload = () => {
+                    logEvent(`Bot ${botId} cargado`, 'success');
+                    iframe.style.display = 'block';
+                    resolve(iframe);
+                };
+
+                iframe.onerror = () => {
+                    logEvent(`Bot ${botId} error de carga`, 'error');
+                    resolve(null);
+                };
+
+                iframe.src = url;
+                document.getElementById('botContainer').appendChild(iframe);
+                bots.set(botId, iframe);
+            });
+        }
+
+        async function simulateBehavior(iframe, duration, botId) {
+            const startTime = Date.now();
+            
+            const actions = [
+                { type: 'scroll', delay: 2000 },
+                { type: 'click', delay: 4000 },
+                { type: 'navigate', delay: 6000 }
+            ];
+
+            while (Date.now() - startTime < duration * 1000) {
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                
+                try {
+                    const action = actions[Math.floor(Math.random() * actions.length)];
+                    switch(action.type) {
+                        case 'scroll':
+                            iframe.contentWindow.scrollTo({
+                                top: Math.random() * iframe.contentDocument.body.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                            break;
+                        case 'click':
+                            const links = iframe.contentDocument.links;
+                            if (links.length > 0) {
+                                links[Math.floor(Math.random() * links.length)].click();
+                            }
+                            break;
+                    }
+                    logEvent(`Bot ${botId}: ${action.type} realizado`, 'success');
+                } catch (error) {
+                    logEvent(`Bot ${botId}: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function startBots() {
+            const url = document.getElementById('targetUrl').value;
+            const botCount = parseInt(document.getElementById('botCount').value);
+            const duration = parseInt(document.getElementById('duration').value);
+
+            if (!url.startsWith('http')) {
+                alert('URL debe comenzar con http:// o https://');
+                return;
+            }
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+
+            for (let i = 0; i < botCount; i++) {
+                const botId = `bot-${i + 1}`;
+                const iframe = await createBotFrame(url, botId);
+                
+                if (iframe) {
+                    simulateBehavior(iframe, duration, botId);
+                    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
+                }
+            }
+        }
+
+        function stopBots() {
+            bots.forEach((iframe, botId) => {
+                iframe.remove();
+                logEvent(`Bot ${botId} detenido`, 'info');
+            });
+            bots.clear();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,438 @@
+        :root {
+            --primary: #1c1948;
+            --secondary: #8f94fb;
+            --white: #ffffff;
+            --gray: #f5f5f5;
+            --text: #333333;
+            --light-blue: #e6e9ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--white);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section (se mantiene igual) */
+        .rsi-hero-section {
+            background: linear-gradient(135deg, var(--primary) 0%, #4e54c8 100%);
+            color: var(--white);
+            padding: 100px 0 120px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rsi-hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://rsienterprise.com/vista/css/img/quienesSomos/nosotros.png') center/cover no-repeat;
+            opacity: 0.15;
+            z-index: 1;
+        }
+
+        .rsi-hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .rsi-hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .rsi-hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease-out 0.2s forwards;
+            opacity: 0;
+        }
+
+        /* Core Values Section - MODIFICADO */
+        .rsi-values-section {
+            padding: 80px 0;
+            background-color: var(--white);
+        }
+
+        .rsi-section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .rsi-section-subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto 50px;
+        }
+
+        .rsi-values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .rsi-value-card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            z-index: 1;
+        }
+
+        .rsi-value-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .rsi-value-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .rsi-value-card:hover::after {
+            opacity: 0.1;
+        }
+
+        .rsi-value-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .rsi-value-card:hover .rsi-value-image {
+            transform: scale(1.05);
+        }
+
+        .rsi-value-content {
+            padding: 25px;
+        }
+
+        .rsi-value-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .rsi-value-text {
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        /* NUEVO ESTILO PARA LISTA DE VALORES (vertical) */
+        .rsi-values-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rsi-value-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .rsi-value-letter {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary);
+            color: var(--white);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: 600;
+            margin-right: 10px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .rsi-value-item:hover .rsi-value-letter {
+            background-color: var(--secondary);
+            transform: scale(1.1);
+        }
+
+        /* Certifications Section - MEJORADO */
+        .rsi-certifications-section {
+            padding: 80px 0;
+            background-color: var(--gray);
+        }
+
+        .rsi-certifications-grid {
+            display: grid;
+            justify-content: center; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            justify-items: center;
+            
+        }
+
+        .rsi-cert-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .rsi-cert-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            transition: height 0.4s ease;
+        }
+
+        .rsi-cert-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .rsi-cert-card:hover::before {
+            height: 6px;
+        }
+
+        .rsi-cert-image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            margin-bottom: 20px;
+        }
+
+        .rsi-cert-image {
+            max-width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+            transition: transform 0.4s ease;
+        }
+
+        .rsi-cert-card:hover .rsi-cert-image {
+            transform: scale(1.1);
+        }
+
+        .rsi-cert-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rsi-cert-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .rsi-cert-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        /* Stats Section (se mantiene igual) */
+        .rsi-stats-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--primary) 0%, #4e54c8 100%);
+            color: var(--white);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rsi-stats-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://rsienterprise.com/vista/css/img/quienesSomos/nosotros.png') center/cover no-repeat;
+            opacity: 0.1;
+            z-index: 1;
+        }
+
+        .rsi-stats-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .rsi-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .rsi-stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 40px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.4s ease;
+        }
+
+        .rsi-stat-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .rsi-stat-number {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .rsi-stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Animations (se mantienen igual) */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rsi-animate {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .rsi-delay-1 {
+            animation-delay: 0.2s;
+        }
+
+        .rsi-delay-2 {
+            animation-delay: 0.4s;
+        }
+
+        .rsi-delay-3 {
+            animation-delay: 0.6s;
+        }
+
+        /* Responsive Design - MEJORADO */
+        @media (max-width: 992px) {
+            .rsi-hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .rsi-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .rsi-certifications-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .rsi-hero-section {
+                padding: 80px 0 100px;
+            }
+            
+            .rsi-hero-title {
+                font-size: 2.2rem;
+            }
+            
+            .rsi-section-title {
+                font-size: 1.8rem;
+            }
+            
+            .rsi-stat-number {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .rsi-hero-title {
+                font-size: 1.8rem;
+            }
+            
+            .rsi-hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .rsi-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rsi-values-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rsi-certifications-grid {
+                grid-template-columns: 1fr;
+            }
+        }

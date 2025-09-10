@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png">
+    <!-- Meta Tags SEO para Blogs de Seguridad -->
+    <meta name="description" content="Blog especializado en seguridad electrónica | RSI Enterprise México. Artículos técnicos, guías de instalación, análisis de equipos y tendencias en videovigilancia, alarmas y controles de acceso.">
+    <meta name="keywords" content="blog seguridad electrónica, consejos cámaras vigilancia, tutoriales alarmas, análisis equipos seguridad, noticias videovigilancia, RSI Enterprise blog">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rsienterprise.com/blogs">
+    <meta property="og:title" content="Blog de Seguridad Electrónica | RSI Enterprise - Expertos en México">
+    <meta property="og:description" content="Conoce las últimas tendencias en seguridad electrónica. Artículos técnicos, guías prácticas y análisis de equipos profesionales.">
+    <meta property="og:image" content="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png">
+    <meta property="og:image:alt" content="Blog RSI Enterprise - Contenido técnico sobre seguridad">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rsienterprise.com/blogs">
+    <meta property="twitter:title" content="Blog de Seguridad Electrónica | RSI Enterprise - Expertos en México">
+    <meta property="twitter:description" content="Artículos especializados para profesionales e interesados en sistemas de seguridad electrónica. Actualizaciones semanales.">
+    <meta property="twitter:image" content="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png">
+
+    <!-- Schema Markup para Blog -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Blog de Seguridad Electrónica RSI Enterprise",
+    "description": "Contenido especializado en sistemas de seguridad para profesionales y usuarios finales",
+    "url": "https://rsienterprise.com/blogs",
+    "publisher": {
+        "@type": "Organization",
+        "name": "RSI Enterprise",
+        "logo": {
+        "@type": "ImageObject",
+        "url": "https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png"
+        }
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://rsienterprise.com/blogs"
+    },
+    "potentialAction": {
+        "@type": "SubscribeAction",
+        "target": "https://rsienterprise.com/suscripcion-blog"
+    }
+    }
+    </script>
+    <title>Blog de Seguridad Electrónica | Artículos Técnicos y Guías Prácticas - RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+    
+    <!-- Estilos unificados con blogs.css -->
+     <link href="blogs.css" rel="stylesheet">
+    <!-- Agregar la fuente Montserrat de Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="nan_reset">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+
+    <!-- Carga dinámica del navbar -->
+    <script src="../recursosDinamicos/nav.js"></script>
+    
+    <div class="luisitocomunica">
+        <h1>Contenido publicado por RSI</h1>
+        <p class="cert-description">
+            Descubre artículos técnicos, guías prácticas y las últimas tendencias en seguridad electrónica.
+        </p>
+        <div class="yuyacst" id="gridContainer"></div>
+
+        <!-- Paginación -->
+        <div class="pagination">
+            <button id="prevPage" class="disabled" disabled>Anterior</button>
+            <button id="nextPage">Siguiente</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-contenido">
+            <button class="modal-cerrar" id="modalCerrar">×</button>
+            <div class="modal-info-container" id="modalContenido"></div>
+            <iframe class="pdf-viewer" id="pdfViewer"></iframe>
+            <div id="textContent" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const gridContainer = document.getElementById('gridContainer');
+        const modal = document.getElementById('modal');
+        const modalContenido = document.getElementById('modalContenido');
+        const pdfViewer = document.getElementById('pdfViewer');
+        const textContent = document.getElementById('textContent');
+
+        let currentQuerySnapshot = null;
+        let lastVisible = null;
+        let firstQuery = null;
+        let lastQuery = null;
+
+        const cargarArticulos = async (querySnapshot) => {
+            gridContainer.innerHTML = '';
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                const fecha = data.fecha ? new Date(data.fecha.seconds * 1000).toLocaleDateString('es-ES') : 'Fecha no disponible';
+                
+                const card = document.createElement('div');
+                card.className = 'aldocivico';
+                card.innerHTML = `
+                    <div>
+                        <div class="benjashorts">${data.titulo}</div>
+                        <div class="robertopmartinez">${data.tipo.toUpperCase()} • ${fecha}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => mostrarModal(data, fecha));
+                gridContainer.appendChild(card);
+
+                setTimeout(() => {
+                    card.classList.add('show');
+                }, 100);
+            });
+        };
+
+        const fetchPage = async (pageQuery) => {
+            const querySnapshot = await getDocs(pageQuery);
+            currentQuerySnapshot = querySnapshot;
+            cargarArticulos(querySnapshot);
+        };
+
+        const setupPagination = () => {
+            document.getElementById('prevPage').addEventListener('click', async () => {
+                if (lastVisible) {
+                    const prevQuery = query(collection(db, "blogs"), orderBy("fecha", "desc"), limit(10), startAfter(lastVisible));
+                    await fetchPage(prevQuery);
+                    document.getElementById('nextPage').classList.remove('disabled');
+                    document.getElementById('nextPage').disabled = false;
+                }
+            });
+
+            document.getElementById('nextPage').addEventListener('click', async () => {
+                if (currentQuerySnapshot && !currentQuerySnapshot.empty) {
+                    const lastVisibleDoc = currentQuerySnapshot.docs[currentQuerySnapshot.docs.length - 1];
+                    const nextQuery = query(collection(db, "blogs"), orderBy("fecha", "desc"), limit(10), startAfter(lastVisibleDoc));
+                    await fetchPage(nextQuery);
+                    lastVisible = lastVisibleDoc;
+                    document.getElementById('prevPage').classList.remove('disabled');
+                    document.getElementById('prevPage').disabled = false;
+                }
+            });
+        };
+
+        const cargarPaginaInicial = async () => {
+            firstQuery = query(collection(db, "blogs"), orderBy("fecha", "desc"), limit(10));
+            await fetchPage(firstQuery);
+            setupPagination();
+        };
+
+        document.addEventListener('DOMContentLoaded', cargarPaginaInicial);
+
+        const mostrarModal = (data, fecha) => {
+            modalContenido.innerHTML = `
+                <h2>${data.titulo}</h2>
+                <span><strong>Tipo:</strong> ${data.tipo.toUpperCase()}</span>
+                <span><strong>Fecha:</strong> ${fecha}</span>
+            `;
+            if (data.tipo === 'pdf') {
+                pdfViewer.src = `data:application/pdf;base64,${data.contenido}`;
+                pdfViewer.style.display = 'block';
+                textContent.style.display = 'none';
+            } else {
+                textContent.style.display = 'block';
+                textContent.innerHTML = data.contenido;
+                pdfViewer.style.display = 'none';
+            }
+            modal.style.display = 'flex';
+        };
+
+        document.getElementById('modalCerrar').addEventListener('click', () => {
+            modal.style.display = 'none';
+            pdfViewer.style.display = 'none';
+            textContent.style.display = 'none';
+        });
+    </script>
+
+    <!-- Carga dinámica de botones flotantes -->
+    <script src="../recursosDinamicos/botones.js"></script>
+    
+    <!-- Carga dinámica del footer -->
+    <script src="../recursosDinamicos/footer.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+</body>
+</html>

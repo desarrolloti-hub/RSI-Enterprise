@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Producto | RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="detalleProducto.css">
+</head>
+<body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+
+    <!-- Carga dinámica del navbar -->
+    <script src="../recursosDinamicos/nav.js"></script>
+    
+    <!-- Carga dinámica de botones flotantes -->
+    <script src="../recursosDinamicos/botones.js"></script>
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="/">Inicio</a>
+            <span>/</span>
+            <a href="/vista/nav-visitantes/detalleProducto/detalleProducto.html">Productos</a>
+            <span>/</span>
+            <span id="breadcrumb-category">Categoría</span>
+            <span>/</span>
+            <span id="breadcrumb-product">Producto</span>
+        </div>
+
+        <!-- Product Detail -->
+        <div class="product-detail">
+            <div class="product-gallery">
+                <div class="main-image" id="main-image">
+                    <img src="" alt="" id="product-main-image">
+                </div>
+                <div class="thumbnail-container" id="thumbnail-container">
+                    <!-- Thumbnails se cargarán aquí -->
+                </div>
+            </div>
+            
+            <div class="product-info">
+                <h1 class="product-title" id="product-title"></h1>
+                <div class="product-brand" id="product-brand"></div>
+                <div class="product-sku">SKU: <span id="product-sku"></span></div>
+                
+                <div class="product-price-container">
+                    <span class="product-price" id="product-price"></span>
+                    <span class="product-original-price" id="product-original-price"></span>
+                    <span class="product-discount" id="product-discount"></span>
+                </div>
+                
+                <div class="product-stock">
+                    Disponibilidad: <span class="stock-available" id="product-stock">En stock</span>
+                </div>
+                
+                <div class="product-actions">
+                    <div class="quantity-selector">
+                        <button class="quantity-btn" id="decrease-qty">-</button>
+                        <input type="number" class="quantity-input" id="quantity" value="1" min="1">
+                        <button class="quantity-btn" id="increase-qty">+</button>
+                    </div>
+                    <button class="add-to-cart-btn" id="add-to-cart">
+                        <i class="fas fa-shopping-cart"></i> Añadir al carrito
+                    </button>
+                </div>
+                
+                <div class="product-tabs">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="description">Descripción</button>
+                        <button class="tab-btn" data-tab="features">Características</button>
+                        <button class="tab-btn" data-tab="specs">Especificaciones</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="description-tab">
+                        <div class="product-description" id="product-description"></div>
+                    </div>
+                    
+                    <div class="tab-content" id="features-tab">
+                        <ul class="product-features" id="product-features">
+                            <!-- Características se cargarán aquí -->
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="specs-tab">
+                        <table id="product-specs">
+                            <!-- Especificaciones se cargarán aquí -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Products -->
+        <div class="related-products">
+            <h2 class="section-title">Productos relacionados</h2>
+            <div class="products-grid" id="related-products">
+                <!-- Productos relacionados se cargarán aquí -->
+                <div class="loader-container" style="grid-column: 1 / -1;">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const collectionName = urlParams.get('collection');
+        const productId = urlParams.get('id');
+        const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+
+        // Cargar detalles del producto
+        async function loadProductDetails() {
+            try {
+                if (!collectionName || !productId) {
+                    throw new Error("Parámetros de URL inválidos");
+                }
+
+                const docRef = doc(db, collectionName, productId);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    throw new Error("Producto no encontrado");
+                }
+
+                const product = docSnap.data();
+                displayProductDetails(product);
+                loadRelatedProducts(product);
+            } catch (error) {
+                console.error("Error cargando detalles del producto:", error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo cargar el producto. Por favor intenta nuevamente.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/vista/nav-visitantes/productos/productos.html';
+                });
+            }
+        }
+
+        // Mostrar detalles del producto
+        function displayProductDetails(product) {
+            // Extraer información del producto
+            const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+            const descuento = Number(product.Descuento) || 0;
+            const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+            const imagenes = product.Imagenes || [defaultImage];
+            const categoria = collectionName.replace('productos', '').replace(/([A-Z])/g, ' $1').trim();
+
+            // Actualizar breadcrumb
+            document.getElementById('breadcrumb-category').textContent = categoria;
+            document.getElementById('breadcrumb-product').textContent = product['Nombre Producto'] || 'Producto';
+
+            // Actualizar información del producto
+            document.getElementById('product-title').textContent = product['Nombre Producto'] || 'Producto sin nombre';
+            document.getElementById('product-brand').textContent = product.Marca || 'Marca no especificada';
+            document.getElementById('product-sku').textContent = product.SKU || 'N/A';
+            
+            // Precios
+            document.getElementById('product-price').textContent = `$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+            
+            if (descuento > 0) {
+                document.getElementById('product-original-price').textContent = `$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                document.getElementById('product-discount').textContent = `${descuento}% OFF`;
+            } else {
+                document.getElementById('product-original-price').style.display = 'none';
+                document.getElementById('product-discount').style.display = 'none';
+            }
+
+            // Stock
+            if (product.Stock === 0 || product.Stock === '0') {
+                document.getElementById('product-stock').textContent = 'Agotado';
+                document.getElementById('product-stock').className = 'stock-unavailable';
+                document.getElementById('add-to-cart').disabled = true;
+            }
+
+            // Imágenes
+            const mainImage = document.getElementById('product-main-image');
+            mainImage.src = imagenes[0] || defaultImage;
+            mainImage.alt = product['Nombre Producto'] || 'Producto';
+            mainImage.onerror = function() { this.src = defaultImage; };
+
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            thumbnailContainer.innerHTML = '';
+
+            imagenes.forEach((img, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'thumbnail' + (index === 0 ? ' active' : '');
+                thumbnail.innerHTML = `<img src="${img || defaultImage}" alt="Miniatura ${index + 1}">`;
+                
+                thumbnail.addEventListener('click', () => {
+                    // Cambiar imagen principal
+                    mainImage.src = img || defaultImage;
+                    
+                    // Actualizar thumbnails activos
+                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+                    thumbnail.classList.add('active');
+                });
+                
+                thumbnailContainer.appendChild(thumbnail);
+            });
+
+            // Descripción
+            document.getElementById('product-description').textContent = product.Descripción || 'No hay descripción disponible.';
+
+            // Características
+            const featuresList = document.getElementById('product-features');
+            featuresList.innerHTML = '';
+
+            if (product.Características) {
+                const features = product.Características.split('\n').filter(f => f.trim() !== '');
+                features.forEach(feature => {
+                    const li = document.createElement('li');
+                    li.textContent = feature;
+                    featuresList.appendChild(li);
+                });
+            } else {
+                featuresList.innerHTML = '<li>No hay características disponibles</li>';
+            }
+
+            // Especificaciones
+            const specsTable = document.getElementById('product-specs');
+            specsTable.innerHTML = '';
+
+            if (product.Especificaciones) {
+                const specs = product.Especificaciones.split('\n').filter(s => s.trim() !== '');
+                specs.forEach(spec => {
+                    const [key, value] = spec.split(':').map(s => s.trim());
+                    if (key && value) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="padding: 8px; font-weight: 600; border-bottom: 1px solid #eee;">${key}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${value}</td>
+                        `;
+                        specsTable.appendChild(row);
+                    }
+                });
+            } else {
+                specsTable.innerHTML = '<tr><td>No hay especificaciones disponibles</td></tr>';
+            }
+        }
+
+        // Cargar productos relacionados
+        async function loadRelatedProducts(currentProduct) {
+            try {
+                const relatedProductsContainer = document.getElementById('related-products');
+                
+                // Obtener productos de la misma categoría
+                const querySnapshot = await getDocs(collection(db, collectionName));
+                const allProducts = [];
+                
+                querySnapshot.forEach((doc) => {
+                    if (doc.id !== productId) { // Excluir el producto actual
+                        const product = doc.data();
+                        product.id = doc.id;
+                        product.collection = collectionName;
+                        allProducts.push(product);
+                    }
+                });
+                
+                // Mostrar hasta 4 productos relacionados
+                const relatedProducts = allProducts.slice(0, 4);
+                
+                if (relatedProducts.length === 0) {
+                    relatedProductsContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay productos relacionados disponibles</p>';
+                    return;
+                }
+                
+                relatedProductsContainer.innerHTML = '';
+                
+                relatedProducts.forEach(product => {
+                    createRelatedProductCard(product);
+                });
+            } catch (error) {
+                console.error("Error cargando productos relacionados:", error);
+                document.getElementById('related-products').innerHTML = 
+                    '<p style="grid-column: 1 / -1; text-align: center;">Error al cargar productos relacionados</p>';
+            }
+        }
+
+        // Crear tarjeta de producto relacionado
+        function createRelatedProductCard(product) {
+            const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+            const descuento = Number(product.Descuento) || 0;
+            const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+            
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            
+            card.innerHTML = `
+                <div class="product-image-container">
+                    <img src="${product.Imagenes?.[0] || defaultImage}" 
+                         alt="${product['Nombre Producto'] || 'Producto'}" 
+                         class="product-image"
+                         onerror="this.src='${defaultImage}'">
+                </div>
+                <div class="product-content">
+                    <h3 class="product-title">${product['Nombre Producto'] || 'Producto sin nombre'}</h3>
+                    
+                    ${descuento > 0 ? `
+                        <div>
+                            <span class="product-original-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            <span class="product-discount">${descuento}% OFF</span>
+                        </div>
+                        <p class="product-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                    ` : `
+                        <p class="product-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                    `}
+                    
+                    <div class="product-actions">
+                        <button class="view-details-btn" data-product-id="${product.id}" data-collection="${product.collection}">
+                            Ver detalles
+                        </button>
+                        <button class="add-to-cart-btn-sm" data-product='${JSON.stringify(product).replace(/"/g, '&quot;')}'>
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Evento para ver detalles
+            card.querySelector('.view-details-btn').addEventListener('click', (e) => {
+                const productId = e.target.getAttribute('data-product-id');
+                const collection = e.target.getAttribute('data-collection');
+                window.location.href = `/vista/nav-visitantes/detalleProducto/detalleProducto.html?collection=${collection}&id=${productId}`;
+            });
+            
+            // Evento para añadir al carrito
+            card.querySelector('.add-to-cart-btn-sm').addEventListener('click', (e) => {
+                const productData = e.target.getAttribute('data-product');
+                addToCart(productData);
+            });
+            
+            document.getElementById('related-products').appendChild(card);
+        }
+
+        // Función para añadir al carrito
+        function addToCart(productData, quantity = 1) {
+            const product = JSON.parse(productData.replace(/&quot;/g, '"'));
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            
+            const existingProductIndex = cart.findIndex(item => item.id === (product.id || product['Nombre Producto']));
+            
+            if (existingProductIndex !== -1) {
+                cart[existingProductIndex].cantidad += quantity;
+            } else {
+                const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                const descuento = Number(product.Descuento) || 0;
+                const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                
+                cart.push({
+                    imagen: product.Imagenes?.[0] || defaultImage,
+                    nombre: product['Nombre Producto'] || 'Producto sin nombre',
+                    precio: precioFinal,
+                    precioOriginal: precioBase,
+                    descuento: descuento,
+                    cantidad: quantity,
+                    id: product.id || product['Nombre Producto'],
+                    sku: product.SKU || product.id
+                });
+            }
+            
+            localStorage.setItem("cart", JSON.stringify(cart));
+            updateCartCount();
+            
+            // Mostrar notificación
+            Swal.fire({
+                title: '¡Producto agregado!',
+                text: `${product['Nombre Producto'] || 'El producto'} se ha añadido al carrito`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                timer: 2000
+            });
+        }
+
+        // Actualizar contador del carrito
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            const totalItems = cart.reduce((total, item) => total + item.cantidad, 0);
+            document.getElementById("cart-count").textContent = totalItems;
+        }
+
+        // Eventos
+        document.getElementById('decrease-qty').addEventListener('click', () => {
+            const qtyInput = document.getElementById('quantity');
+            if (parseInt(qtyInput.value) > 1) {
+                qtyInput.value = parseInt(qtyInput.value) - 1;
+            }
+        });
+
+        document.getElementById('increase-qty').addEventListener('click', () => {
+            const qtyInput = document.getElementById('quantity');
+            qtyInput.value = parseInt(qtyInput.value) + 1;
+        });
+
+        document.getElementById('add-to-cart').addEventListener('click', () => {
+            const productData = JSON.stringify({
+                id: productId,
+                'Nombre Producto': document.getElementById('product-title').textContent,
+                'Precio MXN': parseFloat(document.getElementById('product-price').textContent.replace('$', '').replace(',', '')),
+                Descuento: document.getElementById('product-discount').textContent.replace('% OFF', '') || 0,
+                Imagenes: [document.getElementById('product-main-image').src],
+                Marca: document.getElementById('product-brand').textContent,
+                SKU: document.getElementById('product-sku').textContent
+            });
+            
+            const quantity = parseInt(document.getElementById('quantity').value);
+            addToCart(productData, quantity);
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Actualizar botones de pestaña
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Actualizar contenido de pestaña
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProductDetails();
+            updateCartCount();
+        });
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../recursosDinamicos/footer.js"></script>
+</body>
+</html>

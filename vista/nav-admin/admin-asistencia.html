@@ -1,0 +1,2481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Asistencias | Administrador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS para Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- Firebase App (el core de Firebase) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
+    <!-- Firebase Firestore (si usas Firestore) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <!-- Firebase Realtime Database (si usas RTDB) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --black: #121212;
+            --dark-black: #0a0a0a;
+            --light-black: #1e1e1e;
+            --gold: #FFD700;
+            --dark-gold: #b8860b;
+            --light-gold: #fffacd;
+            --white: #f5f5f5;
+            --gray: #888;
+            --light-gray: #e0e0e0;
+            --primary: #4a6bff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--black);
+            color: var(--white);
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--dark-black);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 215, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 30px;
+            color: var(--gold);
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .gold-icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .user-profile {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 10px;
+            border: 2px solid var(--gold);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-info .name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .user-info .role {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        /* Mobile Menu Button */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background-color: var(--gold);
+            color: var(--black);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            background-color: var(--black);
+            transition: margin-left 0.3s ease;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: var(--light-black);
+            border-radius: 30px;
+            padding: 8px 10px;
+            flex-grow: 1;
+            max-width: 200px;
+            min-width: 100px;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: var(--white);
+            padding: 2px 5px;
+            width: 80%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .search-bar button {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-filter {
+            background-color: var(--light-black);
+            color: var(--white);
+        }
+
+        .btn-export {
+            background-color: var(--gold);
+            color: var(--dark-black);
+            position: relative;
+        }
+
+        .export-options {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: var(--light-black);
+            border-radius: 8px;
+            padding: 10px 0;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .export-options.show {
+            display: block;
+        }
+
+        .export-option {
+            padding: 10px 20px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .export-option:hover {
+            background-color: rgba(255, 215, 0, 0.1);
+            color: var(--gold);
+        }
+
+        .export-option i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-filter:hover {
+            background-color: rgba(255, 215, 0, 0.1);
+            color: var(--gold);
+        }
+
+        .btn-export:hover {
+            background-color: var(--dark-gold);
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--light-black);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .bg-primary {
+            background-color: rgba(74, 107, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .bg-success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--success);
+        }
+
+        .bg-warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: var(--warning);
+        }
+
+        .bg-danger {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: var(--danger);
+        }
+
+        .card-info h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .card-info p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background-color: var(--light-black);
+            color: var(--white);
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .filter-group select:focus, .filter-group input:focus {
+            border-color: var(--gold);
+        }
+
+        /* Attendance Table */
+        .attendance-table {
+            background-color: var(--light-black);
+            border-radius: 10px;
+            overflow: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            display: table;
+        }
+
+        th, td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background-color: rgba(255, 215, 0, 0.1);
+            color: var(--gold);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        td {
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 215, 0, 0.03);
+        }
+
+        .employee-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .employee-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--success);
+        }
+
+        .status-inactive {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: var(--danger);
+        }
+
+        .btn-action {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 5px;
+            transition: color 0.3s ease;
+            padding: 5px;
+        }
+
+        .btn-action:hover {
+            color: var(--gold);
+        }
+
+        /* Mobile Cards (replaces table on small screens) */
+        .mobile-card {
+            display: none;
+            background-color: var(--light-black);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--gold);
+        }
+
+        .mobile-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .mobile-card-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 15px;
+            border: 2px solid var(--gold);
+        }
+
+        .mobile-card-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-card-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .mobile-card-email {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .mobile-card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .mobile-card-detail {
+            margin-bottom: 8px;
+        }
+
+        .mobile-card-detail-label {
+            font-size: 12px;
+            color: var(--gray);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .mobile-card-detail-value {
+            font-size: 14px;
+        }
+
+        .mobile-card-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-pagination {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--light-black);
+            border: none;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-pagination:hover {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+
+        .page-number {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Modal de exportación */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--light-black);
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gold);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px 20px 0;
+        }
+
+        .modal-header h2 {
+            color: var(--gold);
+            font-size: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--gold);
+        }
+
+        .export-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 0 20px 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px 15px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background-color: var(--black);
+            color: var(--white);
+            outline: none;
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--gold);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background-color: var(--light-black);
+            color: var(--white);
+            border: 1px solid var(--gray);
+        }
+
+        .btn-export-confirm {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+
+        /* Modal de detalles/edición */
+        .detail-modal-content {
+            padding: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .detail-label {
+            width: 120px;
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .detail-value {
+            flex-grow: 1;
+            font-size: 14px;
+        }
+
+        .detail-value input, .detail-value select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background-color: var(--black);
+            color: var(--white);
+            outline: none;
+        }
+
+        .detail-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Modal de confirmación */
+        .confirm-modal-content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .confirm-text {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-confirm {
+            min-width: 100px;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-map {
+    color: #4CAF50; /* Verde para el icono del mapa */
+}
+
+.btn-map:hover {
+    color: #45a049; /* Verde más oscuro al pasar el mouse */
+}
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .filters {
+                flex-direction: row;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                height: 100vh;
+                top: 0;
+                z-index: 999;
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            table {
+                display: none;
+            }
+            
+            .mobile-card {
+                display: block;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+            }
+            
+            .btn-filter, .btn-export {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .export-options {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .mobile-card-details {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 24px;
+            }
+            
+            .search-bar {
+                max-width: 100%;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-label {
+                margin-bottom: 5px;
+                width: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 20px 15px;
+                padding-top: 70px;
+            }
+            
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
+            
+            .menu-toggle {
+                top: 15px;
+                left: 15px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+            
+            .form-group input, .form-group select {
+                padding: 10px 12px;
+            }
+
+            .confirm-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-confirm {
+                width: 100%;
+            }
+        }
+
+        /* Estilos para las tarjetas de reportes */
+#report-cards {
+    margin-bottom: 30px;
+}
+
+#report-cards .card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#report-cards .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+}
+
+#reports-section {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+        /* Asegurar que los links de la barra lateral sean clickeables en toda su área */
+nav ul li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: var(--gray);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+/* Estilo para el link activo */
+nav ul li.active a {
+    color: var(--gold);
+    background-color: rgba(255, 215, 0, 0.1);
+    border-left: 3px solid var(--gold);
+}
+
+/* Estilos del navbar */
+.nan_header {
+    background-color: rgb(29, 28, 28);
+    color: rgb(252, 252, 252);
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nan_navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nan_logo img {
+    height: 90px;
+}
+
+.nan_menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nan_menu li {
+    margin-left: 20px;
+}
+
+.nan_menu a {
+    color: rgb(255, 255, 255);
+    text-decoration: none;
+    font-size: 16px;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.nan_menu a:hover {
+    color: var(--white);
+    transform: scale(1.05);
+}
+
+.nan_menu .fa-home,
+.nan_menu .fa-check,
+.nan_menu .fa-xmark,
+.nan_menu .fa-chart-pie {
+    color: white;
+    margin-right: 8px;
+    align-items: center;
+    color: rgb(252, 252, 252);  
+}
+
+/* Estilos para el menú de hamburguesa */
+.nan_hamburger {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+@media (max-width: 992px) {
+    .nan_hamburger {
+        display: block;
+    }
+
+    .nan_close {
+        display: none;
+        font-size: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: white;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        z-index: 1001;
+    }
+
+    .nan_active + .nan_close {
+        display: block;
+    }
+
+    .nan_active ~ .nan_hamburger {
+        display: none;
+    }
+}
+
+.nan_navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.nan_menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    margin-left: flex-end;
+}
+
+.nan_menu li {
+    margin-left: 20px;
+}
+
+/* Ajustar el contenido principal para el nuevo navbar */
+.dashboard {
+    padding-top: 70px;
+}
+
+/* Eliminar el menú toggle anterior */
+.menu-toggle {
+    display: none !important;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px 30px;
+    background-color: var(--black);
+    transition: margin-left 0.3s ease;
+    margin-left: 0; /* Asegúrate que no hay margen izquierdo */
+}
+
+/* Agregar al final del CSS existente */
+.retardo {
+    color: var(--danger);
+    font-weight: bold;
+}
+
+.horas-extras {
+    color: var(--primary);
+    font-weight: bold;
+}
+
+/* Estilos para Excel */
+.sheetjs-table td.retardo {
+    background-color: rgba(220, 53, 69, 0.2);
+}
+
+.sheetjs-table td.horas-extras {
+    background-color: rgba(74, 107, 255, 0.2);
+}
+
+/* Ajustes para la tabla */
+table {
+    table-layout: fixed; /* Forzar anchos fijos */
+    width: 100%;
+}
+
+th, td {
+    padding: 12px 8px; /* Reducir padding vertical y horizontal */
+    text-align: left;
+    white-space: nowrap; /* Evitar saltos de línea */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Puntos suspensivos si el texto es largo */
+}
+
+/* Anchuras específicas para columnas */
+th:nth-child(1), td:nth-child(1) { width: 60px; } /* Foto */
+th:nth-child(2), td:nth-child(2) { width: 180px; } /* Nombre */
+th:nth-child(3), td:nth-child(3) { width: 200px; } /* Correo */
+th:nth-child(4), td:nth-child(4) { width: 120px; } /* Área */
+th:nth-child(5), td:nth-child(5) { width: 120px; } /* Ubicación */
+th:nth-child(6), td:nth-child(6) { width: 100px; } /* Fecha */
+th:nth-child(7), td:nth-child(7) { width: 70px; } /* Entrada */
+th:nth-child(8), td:nth-child(8) { width: 70px; } /* Salida */
+th:nth-child(9), td:nth-child(9) { width: 80px; } /* Estado */
+th:nth-child(10), td:nth-child(10) { width: 80px; } /* Acciones */
+
+/* Ajustar avatar */
+.employee-avatar {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto; /* Centrar la foto */
+}
+
+/* Alinear texto al centro en columnas específicas */
+td:nth-child(7), td:nth-child(8), td:nth-child(10) {
+    text-align: center;
+}
+
+    </style>
+</head>
+<body>
+<header class="nan_header">
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <img src="https://rsienterprise.web.app/vista/css/img/LOGO%20BLANCO.png" alt="Logo">
+        </div>
+        <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+        <ul class="nan_menu">
+            <li><i class="fa-solid fa-ticket-simple"></i><a href="/vista/nav-operadores/gestion_Tickets.html">Ver mis tickets</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+        </ul>
+    </nav>
+</header>
+
+            <br><div class="user-profile">
+                <div class="avatar">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Admin">
+                </div>
+                <div class="user-info">
+                    <span class="name">Admin</span>
+                    <span class="role">Administrador</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                <h1>Registro de Asistencias</h1>
+                <div class="header-actions">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Buscar colaborador..." id="search-input">
+                        <button id="search-button"><i class="fas fa-search"></i></button>
+                    </div>
+                    <button class="btn btn-filter" id="show-all-btn">
+                        <i class="fas fa-list"></i> Ver todas
+                    </button>
+                    <button class="btn btn-export" id="export-btn">
+                        <i class="fas fa-file-export"></i> Exportar
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="card">
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3 id="weekly-attendance">0</h3>
+                        <p>Asistencias esta semana</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3 id="office-attendance">0</h3>
+                        <p>Oficina Principal</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3 id="iztapaluca-attendance">0</h3>
+                        <p>Oficina Iztapaluca</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon bg-danger">
+                        <i class="fas fa-laptop-house"></i>
+                    </div>
+                    <div class="card-info">
+                        <h3 id="onsite-attendance">0</h3>
+                        <p>En Sitio</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Table (hidden on mobile) -->
+            <div class="attendance-table">
+                <table id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Foto</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Área</th>
+                            <th>Ubicación</th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-data">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+
+
+            <!-- Mobile Cards (shown on mobile) -->
+            <div id="mobile-attendance-data">
+                <!-- Data will be populated by JavaScript -->
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="btn-pagination"><i class="fas fa-chevron-left"></i></button>
+                <span class="page-number">1</span>
+                <button class="btn-pagination"><i class="fas fa-chevron-right"></i></button>
+            </div>
+
+
+    <!-- Modal de exportación -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Exportar Asistencias</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="export-form">
+                <div class="form-group">
+                    <label for="export-range">Rango de fechas:</label>
+<select id="export-range">
+    <option value="week">Esta semana</option>
+    <option value="month">Este mes</option>
+    <option value="all">Todas las asistencias</option>
+    <option value="custom">Personalizado</option>
+</select>
+                </div>
+                <div class="form-group" id="custom-dates" style="display: none;">
+                    <label for="start-date">Desde:</label>
+                    <input type="date" id="start-date">
+                    <label for="end-date">Hasta:</label>
+                    <input type="date" id="end-date">
+                </div>
+                <div class="form-group">
+                    <label for="export-format">Formato:</label>
+                    <select id="export-format">
+                        <option value="excel">Excel (.xlsx)</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-cancel" id="cancel-export">Cancelar</button>
+                    <button class="btn btn-export-confirm" id="confirm-export">Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div id="detail-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="detail-modal-title">Detalles del Registro</h2>
+            <span class="close" onclick="closeModal('detail-modal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="detail-content"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal('detail-modal')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para el mapa -->
+<div class="modal" id="map-modal">
+    <div class="modal-content" style="width: 90%; max-width: 800px; height: 70vh;">
+        <div class="modal-header">
+            <h2>Ubicación del Registro</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div id="map-container" style="width: 100%; height: calc(100% - 60px);"></div>
+    </div>
+</div>
+
+<!-- Agregar esto justo después del div con clase "filters" -->
+<div id="no-results-message" style="display: none; background-color: var(--light-black); padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+    <i class="fas fa-info-circle" style="font-size: 24px; color: var(--gold); margin-bottom: 10px;"></i>
+    <p style="color: var(--white);">No se encontraron registros con los filtros aplicados</p>
+</div>
+
+
+<script>
+// Configuración de Firebase (mantener igual)
+const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+    projectId: "rsienterprise",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+    measurementId: "G-38F2DBG9HE"
+};
+
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Variables globales
+let attendanceRecords = [];
+let filteredRecords = [];
+let currentPage = 1;
+const recordsPerPage = 10;
+
+// Función para formatear fecha como YYYY-MM-DD
+function formatDate(date) {
+    if (!date) return 'Sin fecha';
+    
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return date;
+    }
+    
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    if (isNaN(dateObj.getTime())) {
+        return 'Fecha inválida';
+    }
+    
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Función para procesar timestamp de Firebase
+function processFirestoreTimestamp(timestamp) {
+    if (!timestamp) return { date: 'Sin fecha', time: 'Sin hora' };
+    
+    let date;
+    
+    if (timestamp.toDate) {
+        date = timestamp.toDate();
+    }
+    else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+    }
+    else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else {
+        return { date: 'Sin fecha', time: 'Sin hora' };
+    }
+    
+    const formattedDate = formatDate(date);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
+    
+    return {
+        date: formattedDate,
+        time: formattedTime,
+        dateObj: date
+    };
+}
+
+// Función para obtener registros paginados
+function getPaginatedRecords(data) {
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    return data.slice(startIndex, endIndex);
+}
+
+// Función para actualizar la paginación
+function updatePagination(totalRecords) {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    const paginationContainer = document.querySelector('.pagination');
+    
+    if (!paginationContainer) return;
+    
+    // Limpiar paginación existente
+    paginationContainer.innerHTML = '';
+    
+    // Botón Anterior
+    const prevButton = document.createElement('button');
+    prevButton.className = 'btn-pagination';
+    prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderAttendanceTable(filteredRecords);
+        }
+    });
+    paginationContainer.appendChild(prevButton);
+    
+    // Números de página
+    const pageInfo = document.createElement('span');
+    pageInfo.className = 'page-number';
+    pageInfo.textContent = `${currentPage} de ${totalPages}`;
+    paginationContainer.appendChild(pageInfo);
+    
+    // Botón Siguiente
+    const nextButton = document.createElement('button');
+    nextButton.className = 'btn-pagination';
+    nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderAttendanceTable(filteredRecords);
+        }
+    });
+    paginationContainer.appendChild(nextButton);
+}
+
+// Modificar la función setupFirebaseListener para mantener todos los registros individuales
+function setupFirebaseListener() {
+    db.collection("asistencias").onSnapshot((querySnapshot) => {
+        attendanceRecords = [];
+        
+        querySnapshot.forEach((doc) => {
+            const registro = doc.data();
+            const { date: fecha, time: hora, dateObj } = registro.detalles?.fecha ? 
+                processFirestoreTimestamp(registro.detalles.fecha) : 
+                processFirestoreTimestamp(registro.fecha);
+            
+            attendanceRecords.push({
+                id: doc.id,
+                nombre: registro.nombre || registro.colaboradorNombre ||"Sin nombre", // Cambiado de registro.nombre a registro.colaboradorNombre
+                email: registro.email || 'Sin email', // Simplificado para usar solo email
+                area: registro.area || 'Sin área',
+                tipo: registro.tipo || 'office',
+                tipoRegistro: registro.tipo === 'salida' ? 'salida' : 'entrada',
+                activo: registro.activo !== undefined ? registro.activo : true,
+                fecha: fecha,
+                hora: hora,
+                ubicacion: registro.ubicacion || null,
+                photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(registro.nombre || 'Usuario')}&background=random`,
+                rawData: registro,
+                dateObj: dateObj
+            });
+        });
+        
+        // Ordenar por fecha más reciente primero
+        attendanceRecords.sort((a, b) => b.dateObj - a.dateObj);
+        
+        // Mostrar todos los registros al cargar
+        filteredRecords = [...attendanceRecords];
+        renderAttendanceTable(filteredRecords);
+        updateStatsCards();
+    }, (error) => {
+        console.error("Error al leer datos:", error);
+    });
+}
+
+// Función para agrupar entradas y salidas por persona
+function groupEntriesAndExits(records) {
+    const grouped = {};
+    
+    records.forEach(record => {
+        if (!grouped[record.nombre]) {
+            grouped[record.nombre] = {
+                ...record,
+                entradas: [],
+                salidas: []
+            };
+        }
+        
+        if (record.tipoRegistro === 'entrada') {
+            grouped[record.nombre].entradas.push(record);
+        } else {
+            grouped[record.nombre].salidas.push(record);
+        }
+    });
+    
+    // Ordenar entradas y salidas por fecha
+    return Object.values(grouped).map(person => {
+        person.entradas.sort((a, b) => a.dateObj - b.dateObj);
+        person.salidas.sort((a, b) => a.dateObj - b.dateObj);
+        return person;
+    });
+}
+
+// Función para buscar registros
+function searchRecords() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    if (!searchTerm) {
+        filteredRecords = [...attendanceRecords];
+    } else {
+        filteredRecords = attendanceRecords.filter(record => {
+            return record.nombre.toLowerCase().includes(searchTerm) ||
+                   record.email.toLowerCase().includes(searchTerm) ||
+                   record.area.toLowerCase().includes(searchTerm);
+        });
+    }
+    
+    currentPage = 1; // Resetear a la primera página al buscar
+    renderAttendanceTable(filteredRecords);
+    updateStatsCards();
+}
+
+// Actualizar las tarjetas de estadísticas
+function updateStatsCards() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = formatDate(today);
+    
+    // Usar filteredRecords si hay datos, de lo contrario usar attendanceRecords
+    const recordsToUse = filteredRecords.length > 0 ? filteredRecords : attendanceRecords;
+    
+    // Asistencias hoy
+    const todayCount = recordsToUse.filter(record => 
+        formatDate(record.fecha) === todayStr
+    ).length;
+    
+    // Asistencias por ubicación
+    const officeCount = recordsToUse.filter(record => 
+        record.tipo === 'office'
+    ).length;
+    
+    const iztapalucaCount = recordsToUse.filter(record => 
+        record.tipo === 'iztapaluca'
+    ).length;
+    
+    const onsiteCount = recordsToUse.filter(record => 
+        record.tipo === 'site'
+    ).length;
+    
+    // Actualizar los valores en las tarjetas
+    document.getElementById('weekly-attendance').textContent = recordsToUse.length;
+    document.getElementById('office-attendance').textContent = officeCount;
+    document.getElementById('iztapaluca-attendance').textContent = iztapalucaCount;
+    document.getElementById('onsite-attendance').textContent = onsiteCount;
+}
+
+// Función para renderizar la tabla de asistencias
+function renderAttendanceTable(data) {
+    const tableBody = document.getElementById('attendance-data');
+    const mobileContainer = document.getElementById('mobile-attendance-data');
+    const noResultsMessage = document.getElementById('no-results-message');
+    
+    if (!tableBody || !mobileContainer) return;
+    
+    // Limpiar tablas
+    tableBody.innerHTML = '';
+    mobileContainer.innerHTML = '';
+
+    if (data.length === 0) {
+        noResultsMessage.style.display = 'block';
+        
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="10" style="text-align: center; padding: 30px; color: var(--gray);">
+                <i class="fas fa-info-circle" style="font-size: 24px; display: block; margin-bottom: 10px; color: var(--gold);"></i>
+                No se encontraron registros
+            </td>
+        `;
+        tableBody.appendChild(emptyRow);
+        
+        const emptyCard = document.createElement('div');
+        emptyCard.className = 'mobile-card';
+        emptyCard.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: var(--gray);">
+                <i class="fas fa-info-circle" style="font-size: 24px; display: block; margin-bottom: 10px; color: var(--gold);"></i>
+                No se encontraron registros
+            </div>
+        `;
+        mobileContainer.appendChild(emptyCard);
+        
+        return;
+    }
+
+    noResultsMessage.style.display = 'none';
+    
+    // Obtener registros para la página actual
+    const paginatedData = getPaginatedRecords(data);
+    
+    // Actualizar paginación
+    updatePagination(data.length);
+    
+    // Renderizar cada registro individual
+    paginatedData.forEach(record => {
+        const ubicacionTexto = getLocationText(record.tipo);
+        const estadoTexto = record.activo ? 'Activo' : 'Inactivo';
+        const estadoClase = record.activo ? 'active' : 'inactive';
+        
+        // Determinar si es retardo o horas extras
+        const esRetardo = record.tipoRegistro !== 'salida' && isRetardo(record.hora);
+        const esHorasExtras = record.tipoRegistro === 'salida' && isHorasExtras(record.hora);
+        
+        // Render para desktop (table)
+        const row = document.createElement('tr');
+        row.setAttribute('data-id', record.id);
+        row.innerHTML = `
+            <td>
+                <div class="employee-avatar">
+                    <img src="${record.photo}" alt="${record.nombre}">
+                </div>
+            </td>
+            <td>${record.nombre}</td>
+            <td>${record.email}</td>
+            <td>${record.area}</td>
+            <td>${ubicacionTexto}</td>
+            <td>${record.fecha}</td>
+            <td>${record.tipoRegistro === 'salida' ? 'Salida' : 'Entrada'}</td>
+            <td class="${esRetardo ? 'retardo' : ''}${esHorasExtras ? 'horas-extras' : ''}">${record.hora}</td>
+            <td><span class="status status-${estadoClase}">${estadoTexto}</span></td>
+            <td>
+                <button class="btn-action btn-view" title="Ver detalles" data-id="${record.id}">
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${record.ubicacion ? `
+                <button class="btn-action btn-map" title="Ver ubicación" 
+                    data-lat="${record.ubicacion.latitude}" 
+                    data-lng="${record.ubicacion.longitude}">
+                    <i class="fas fa-map-marker-alt"></i>
+                </button>` : ''}
+            </td>
+        `;
+        tableBody.appendChild(row);
+
+        // Render para mobile (cards)
+        const card = document.createElement('div');
+        card.className = 'mobile-card';
+        card.setAttribute('data-id', record.id);
+        card.innerHTML = `
+            <div class="mobile-card-header">
+                <div class="mobile-card-avatar">
+                    <img src="${record.photo}" alt="${record.nombre}">
+                </div>
+                <div>
+                    <div class="mobile-card-name">${record.nombre}</div>
+                    <div class="mobile-card-email">${record.email}</div>
+                    <span class="status status-${estadoClase}">${estadoTexto}</span>
+                </div>
+            </div>
+            <div class="mobile-card-details">
+                <div class="mobile-card-detail">
+                    <span class="mobile-card-detail-label">Área</span>
+                    <span class="mobile-card-detail-value">${record.area}</span>
+                </div>
+                <div class="mobile-card-detail">
+                    <span class="mobile-card-detail-label">Ubicación</span>
+                    <span class="mobile-card-detail-value">${ubicacionTexto}</span>
+                </div>
+                <div class="mobile-card-detail">
+                    <span class="mobile-card-detail-label">Tipo</span>
+                    <span class="mobile-card-detail-value">${record.tipoRegistro === 'salida' ? 'Salida' : 'Entrada'}</span>
+                </div>
+                <div class="mobile-card-detail">
+                    <span class="mobile-card-detail-label">Fecha</span>
+                    <span class="mobile-card-detail-value">${record.fecha}</span>
+                </div>
+                <div class="mobile-card-detail">
+                    <span class="mobile-card-detail-label">Hora</span>
+                    <span class="mobile-card-detail-value ${esRetardo ? 'retardo' : ''}${esHorasExtras ? 'horas-extras' : ''}">
+                        ${record.hora}
+                    </span>
+                </div>
+                ${record.ubicacion ? `
+                <div class="mobile-card-detail">
+                    <span class="mobile-card-detail-label">Coordenadas</span>
+                    <span class="mobile-card-detail-value">
+                        ${record.ubicacion.latitude}, ${record.ubicacion.longitude}
+                    </span>
+                </div>` : ''}
+            </div>
+            <div class="mobile-card-actions">
+                <button class="btn-action btn-view" title="Ver detalles" data-id="${record.id}">
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${record.ubicacion ? `
+                <button class="btn-action btn-map" title="Ver ubicación" 
+                    data-lat="${record.ubicacion.latitude}" 
+                    data-lng="${record.ubicacion.longitude}">
+                    <i class="fas fa-map-marker-alt"></i>
+                </button>` : ''}
+            </div>
+        `;
+        mobileContainer.appendChild(card);
+    });
+
+    // Agregar listeners a los botones
+    addActionButtonsListeners();
+}
+
+function isRetardo(hora) {
+    if (!hora) return false;
+    const [hours, minutes] = hora.split(':').map(Number);
+    return hours > 8 || (hours === 8 && minutes > 45);
+}
+
+// Función para determinar horas extras (después de 6:00 pm)
+function isHorasExtras(hora) {
+    if (!hora) return false;
+    const [hours, minutes] = hora.split(':').map(Number);
+    return hours > 18 || (hours === 18 && minutes > 0);
+}
+
+// Función para agregar listeners a los botones de acción
+function addActionButtonsListeners() {
+    document.querySelectorAll('.btn-view').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const recordId = this.getAttribute('data-id');
+            showRecordDetails(recordId, false);
+        });
+    });
+
+    document.querySelectorAll('.btn-map').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const lat = parseFloat(this.getAttribute('data-lat'));
+            const lng = parseFloat(this.getAttribute('data-lng'));
+            showMapModal(lat, lng);
+        });
+    });
+}
+
+// Reemplazar la función showRecordDetails con esta versión corregida
+function showRecordDetails(recordId) {
+    const record = attendanceRecords.find(r => r.id === recordId);
+    if (!record) return;
+
+    const modal = document.getElementById('detail-modal');
+    const modalTitle = document.getElementById('detail-modal-title');
+    const detailContent = document.getElementById('detail-content');
+    
+    modalTitle.textContent = `Detalles de ${record.nombre}`;
+    
+    let detallesHTML = `
+        <div class="detail-row">
+            <div class="detail-label">Nombre:</div>
+            <div class="detail-value">${record.nombre}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Correo:</div>
+            <div class="detail-value">${record.email}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Área:</div>
+            <div class="detail-value">${record.area}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Estado:</div>
+            <div class="detail-value">${record.activo ? 'Activo' : 'Inactivo'}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Fecha:</div>
+            <div class="detail-value">${record.fecha}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Hora:</div>
+            <div class="detail-value ${isRetardo(record.hora) ? 'retardo' : ''}${isHorasExtras(record.hora) ? 'horas-extras' : ''}">
+                ${record.hora}
+            </div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Tipo:</div>
+            <div class="detail-value">${record.tipoRegistro === 'salida' ? 'Salida' : 'Entrada'}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Ubicación:</div>
+            <div class="detail-value">${getLocationText(record.tipo)}</div>
+        </div>
+    `;
+    
+    if (record.ubicacion) {
+        detallesHTML += `
+            <div class="detail-row">
+                <div class="detail-label">Coordenadas:</div>
+                <div class="detail-value">
+                    ${record.ubicacion.latitude}, ${record.ubicacion.longitude}
+                    <button class="btn-action btn-map" style="margin-left: 10px;" 
+                        title="Ver ubicación" 
+                        data-lat="${record.ubicacion.latitude}" 
+                        data-lng="${record.ubicacion.longitude}">
+                        <i class="fas fa-map-marker-alt"></i> Ver en mapa
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    detailContent.innerHTML = detallesHTML;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Agregar listener al botón de mapa en los detalles
+    detailContent.querySelector('.btn-map')?.addEventListener('click', function() {
+        const lat = parseFloat(this.getAttribute('data-lat'));
+        const lng = parseFloat(this.getAttribute('data-lng'));
+        showMapModal(lat, lng);
+    });
+}
+
+// Función para mostrar el mapa
+function showMapModal(lat, lng) {
+    const modal = document.getElementById('map-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        const container = document.getElementById('map-container');
+        container.innerHTML = '<div id="map" style="width: 100%; height: 100%;"></div>';
+        
+        const map = L.map('map').setView([lat, lng], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        L.marker([lat, lng]).addTo(map)
+            .bindPopup('Ubicación del registro')
+            .openPopup();
+    }, 100);
+    
+    modal.querySelector('.close-modal').onclick = function() {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+}
+
+// Función para cerrar modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Event listeners cuando el DOM está cargado
+document.addEventListener('DOMContentLoaded', function() {
+    // Iniciar Firebase
+    setupFirebaseListener();
+    
+    // Botón de búsqueda
+    const searchButton = document.getElementById('search-button');
+    const searchInput = document.getElementById('search-input');
+    
+    if (searchButton && searchInput) {
+        searchButton.addEventListener('click', searchRecords);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') searchRecords();
+        });
+    }
+    
+    // Botón para ver todas las asistencias
+    const showAllBtn = document.getElementById('show-all-btn')?.addEventListener('click', function() {
+    filteredRecords = [...attendanceRecords];
+    currentPage = 1;
+    document.getElementById('search-input').value = ''; // Limpiar campo de búsqueda
+    renderAttendanceTable(filteredRecords);
+    updateStatsCards();
+});
+    
+    // Botón de exportación
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+    document.getElementById('export-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+});
+    }
+
+    // Configurar el botón de confirmación de exportación
+document.getElementById('confirm-export').addEventListener('click', function() {
+    const exportRange = document.getElementById('export-range').value;
+    const exportFormat = document.getElementById('export-format').value;
+    
+    if (exportFormat === 'excel') {
+        exportToExcel(exportRange);
+    } else {
+        alert("Exportación a PDF aún no implementada");
+    }
+    
+    // Cerrar el modal
+    document.getElementById('export-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+});
+
+// Mostrar/ocultar campos de fecha personalizada
+document.getElementById('export-range').addEventListener('change', function() {
+    const customDates = document.getElementById('custom-dates');
+    customDates.style.display = this.value === 'custom' ? 'block' : 'none';
+});
+    
+    // Cerrar modales
+    document.querySelectorAll('.close-modal, .close').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+    });
+});
+
+// Cerrar modal haciendo clic fuera del contenido
+window.addEventListener('click', function(event) {
+    if (event.target.className === 'modal') {
+        event.target.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+});
+
+// Función mejorada para exportar a Excel
+document.getElementById('generate-report-btn').addEventListener('click', function() {
+    try {
+        // Obtener el tipo de reporte seleccionado
+        const reportType = document.getElementById('report-type').value;
+        const reportRange = document.getElementById('report-range').value;
+        
+        if (reportType === 'excel') {
+            exportToExcel(reportRange);
+        } else {
+            // Aquí puedes agregar la lógica para exportar a PDF
+            alert("Exportación a PDF aún no implementada");
+        }
+    } catch (error) {
+        console.error("Error al generar reporte:", error);
+        alert("Error al generar reporte: " + error.message);
+    }
+});
+
+function exportToExcel(range) {
+    try {
+        // Filtrar registros según el rango seleccionado
+        let dataToExport = filteredRecords.length > 0 ? [...filteredRecords] : [...attendanceRecords];
+        
+        if (range === 'week') {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            dataToExport = dataToExport.filter(record => {
+                return record.dateObj >= oneWeekAgo;
+            });
+        } else if (range === 'month') {
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            dataToExport = dataToExport.filter(record => {
+                return record.dateObj >= oneMonthAgo;
+            });
+        } else if (range === 'custom') {
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            
+            if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                alert("Por favor seleccione un rango de fechas válido");
+                return;
+            }
+            
+            // Ajustar endDate para incluir todo el día
+            endDate.setHours(23, 59, 59, 999);
+            
+            dataToExport = dataToExport.filter(record => {
+                return record.dateObj >= startDate && record.dateObj <= endDate;
+            });
+        }    } catch (error) {
+        console.error("Error al exportar", error);
+        alert("Error al exportar: " + error.message);
+    }
+}
+
+// Configurar el botón de confirmación de exportación
+document.getElementById('confirm-export')?.addEventListener('click', function() {
+    const exportRange = document.getElementById('export-range').value;
+    const exportFormat = document.getElementById('export-format').value;
+    
+    if (exportFormat === 'excel') {
+        exportToExcel(exportRange);
+    } else {
+        alert("Exportación a PDF aún no implementada");
+    }
+    
+    // Cerrar el modal
+    document.getElementById('export-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+});
+
+// Cancelar exportación
+document.getElementById('cancel-export')?.addEventListener('click', function() {
+    document.getElementById('export-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+});
+
+// Mostrar/ocultar campos de fecha personalizada
+document.getElementById('export-range')?.addEventListener('change', function() {
+    const customDates = document.getElementById('custom-dates');
+    if (customDates) {
+        customDates.style.display = this.value === 'custom' ? 'block' : 'none';
+    }
+});
+        
+function exportToExcel(range) {
+    try {
+        // Filtrar registros según el rango seleccionado
+        let dataToExport = [];
+        
+        if (range === 'all') {
+            // Obtener TODOS los registros directamente de Firestore
+            db.collection("asistencias").get().then((querySnapshot) => {
+                const allRecords = [];
+                querySnapshot.forEach((doc) => {
+                    const registro = doc.data();
+                    const { date: fecha, time: hora } = registro.detalles?.fecha ? 
+                        processFirestoreTimestamp(registro.detalles.fecha) : 
+                        processFirestoreTimestamp(registro.fecha);
+                    
+                    allRecords.push({
+                        'Nombre': registro.nombre || "Sin nombre", 
+                        'Área': registro.area || 'Sin área',
+                        'Tipo': registro.tipo === 'salida' ? 'Salida' : 'Entrada',
+                        'Ubicación': getLocationText(registro.tipo),
+                        'Fecha': fecha,
+                        'Hora': hora,
+                        'Retardo': registro.tipo !== 'salida' && isRetardo(hora) ? 'Sí' : 'No',
+                        'Horas Extras': registro.tipo === 'salida' && isHorasExtras(hora) ? 'Sí' : 'No',
+                        'Estado': registro.activo !== false ? 'Activo' : 'Inactivo',
+                    });
+                });
+                
+                generateExcelFile(allRecords, range);
+            });
+            return;
+        } else {
+            // Para otros rangos usar los datos ya cargados
+            dataToExport = range === 'current' ? 
+                (filteredRecords.length > 0 ? [...filteredRecords] : [...attendanceRecords]) : 
+                [...attendanceRecords];
+            
+            if (range === 'week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                dataToExport = dataToExport.filter(record => record.dateObj >= oneWeekAgo);
+            } else if (range === 'month') {
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                dataToExport = dataToExport.filter(record => record.dateObj >= oneMonthAgo);
+            } else if (range === 'custom') {
+                const startDate = new Date(document.getElementById('start-date').value);
+                const endDate = new Date(document.getElementById('end-date').value);
+                
+                if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    alert("Por favor seleccione un rango de fechas válido");
+                    return;
+                }
+                
+                endDate.setHours(23, 59, 59, 999);
+                dataToExport = dataToExport.filter(record => 
+                    record.dateObj >= startDate && record.dateObj <= endDate
+                );
+            }
+            
+            if (dataToExport.length === 0) {
+                alert("No hay datos para exportar con el rango seleccionado");
+                return;
+            }
+            
+            // Preparar datos para Excel
+            const excelData = dataToExport.map(record => ({
+                'Nombre': record.nombre,
+                'Área': record.area,
+                'Tipo': record.tipoRegistro === 'salida' ? 'Salida' : 'Entrada',
+                'Ubicación': getLocationText(record.tipo),
+                'Fecha': record.fecha,
+                'Hora': record.hora,
+                'Retardo': record.tipoRegistro !== 'salida' && isRetardo(record.hora) ? 'Sí' : 'No',
+                'Horas Extras': record.tipoRegistro === 'salida' && isHorasExtras(record.hora) ? 'Sí' : 'No',
+                'Estado': record.activo ? 'Activo' : 'Inactivo',
+            }));
+            
+            generateExcelFile(excelData, range);
+        }
+    } catch (error) {
+        console.error("Error en exportToExcel:", error);
+        alert("Error al exportar: " + error.message);
+    }
+}
+
+function getLocationText(tipo) {
+    switch(tipo) {
+        case 'office': return 'Oficina Principal';
+        case 'iztapaluca': return 'Oficina Iztapaluca';
+        case 'site': return 'En Sitio';
+        default: return 'Sin ubicación';
+    }
+}
+
+function generateExcelFile(data, range) {
+    // Crear libro de Excel
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    
+    // Ajustar anchos de columnas
+    const wscols = [
+        {wch: 25}, // Nombre
+        {wch: 25}, // Correo
+        {wch: 20}, // Área
+        {wch: 10}, // Tipo
+        {wch: 20}, // Ubicación
+        {wch: 12}, // Fecha
+        {wch: 10}, // Hora
+        {wch: 10}, // Retardo
+        {wch: 12}, // Horas Extras
+        {wch: 10}, // Estado
+        {wch: 25}  // Coordenadas
+    ];
+    worksheet['!cols'] = wscols;
+    
+    // Aplicar estilos condicionales
+    const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4A6BFF" } },
+        alignment: { horizontal: "center" }
+    };
+    
+    // Estilo para encabezados
+    for (let col = 0; col < wscols.length; col++) {
+        const cell = XLSX.utils.encode_cell({r: 0, c: col});
+        if (!worksheet[cell]) worksheet[cell] = {};
+        worksheet[cell].s = headerStyle;
+    }
+    
+    // Estilos para datos
+    data.forEach((row, index) => {
+        const rowNum = index + 1; // +1 por el encabezado
+        
+        // Estilo para retardos (rojo)
+        if (row.Retardo === 'Sí') {
+            const cellHora = XLSX.utils.encode_cell({r: rowNum, c: 6}); // Columna G (Hora)
+            if (!worksheet[cellHora]) worksheet[cellHora] = {};
+            worksheet[cellHora].s = {
+                fill: { fgColor: { rgb: "FFCCCC" } },
+                font: { color: { rgb: "FF0000" }, bold: true }
+            };
+            
+            const cellRetardo = XLSX.utils.encode_cell({r: rowNum, c: 7}); // Columna H (Retardo)
+            if (!worksheet[cellRetardo]) worksheet[cellRetardo] = {};
+            worksheet[cellRetardo].s = {
+                fill: { fgColor: { rgb: "FFCCCC" } },
+                font: { color: { rgb: "FF0000" }, bold: true }
+            };
+        }
+        
+        // Estilo para horas extras (azul)
+        if (row['Horas Extras'] === 'Sí') {
+            const cellHoraSalida = XLSX.utils.encode_cell({r: rowNum, c: 6}); // Columna G (Hora)
+            if (!worksheet[cellHoraSalida]) worksheet[cellHoraSalida] = {};
+            worksheet[cellHoraSalida].s = {
+                fill: { fgColor: { rgb: "CCE5FF" } },
+                font: { color: { rgb: "0000FF" }, bold: true }
+            };
+            
+            const cellHorasExtras = XLSX.utils.encode_cell({r: rowNum, c: 8}); // Columna I (Horas Extras)
+            if (!worksheet[cellHorasExtras]) worksheet[cellHorasExtras] = {};
+            worksheet[cellHorasExtras].s = {
+                fill: { fgColor: { rgb: "CCE5FF" } },
+                font: { color: { rgb: "0000FF" }, bold: true }
+            };
+        }
+    });
+    
+    // Agregar hoja al libro
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+    
+    // Generar nombre de archivo
+    const now = new Date();
+    let fileName = `Asistencias_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}`;
+    
+    if (range === 'week') fileName = `Asistencias_Semana_${fileName}`;
+    else if (range === 'month') fileName = `Asistencias_Mes_${fileName}`;
+    else if (range === 'custom') {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        fileName = `Asistencias_${start}_a_${end}`;
+    }
+    else if (range === 'all') fileName = `Asistencias_Completas_${fileName}`;
+    
+    fileName += '.xlsx';
+
+    // Descargar archivo
+    XLSX.writeFile(workbook, fileName);
+}
+
+function addGeneratedReportCard(filename, type, date) {
+    const reportCards = document.getElementById('report-cards');
+    
+    // Limpiar tarjetas anteriores (opcional)
+    // reportCards.innerHTML = '';
+    
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+        <div class="card-icon ${type === 'excel' ? 'bg-success' : 'bg-danger'}">
+            <i class="fas fa-file-${type === 'excel' ? 'excel' : 'pdf'}"></i>
+        </div>
+        <div class="card-info">
+            <h3>${filename}</h3>
+            <p>Generado el ${date}</p>
+            <div style="margin-top: 10px;">
+                <button class="btn-action" title="Descargar" onclick="downloadReport('${filename}')">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="btn-action" title="Compartir">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    reportCards.appendChild(card);
+}
+
+function downloadReport(filename) {
+    // Aquí puedes implementar la lógica para descargar el reporte nuevamente
+    alert(`Descargando ${filename}`);
+}
+
+// Añadir esta función al inicio del script
+// Función mejorada para procesar timestamp de Firebase
+function processFirestoreTimestamp(timestamp) {
+    if (!timestamp) return { date: 'Sin fecha', time: 'Sin hora' };
+    
+    let date;
+    
+    // Si es un objeto de Firestore Timestamp
+    if (timestamp.toDate) {
+        date = timestamp.toDate();
+    }
+    // Si ya es una cadena de fecha
+    else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+    }
+    // Si es un objeto Date
+    else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else {
+        return { date: 'Sin fecha', time: 'Sin hora' };
+    }
+    
+    // Formatear fecha como YYYY-MM-DD
+    const formattedDate = formatDate(date);
+    
+    // Formatear hora como HH:MM (24 horas)
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
+    
+    return {
+        date: formattedDate,
+        time: formattedTime,
+        dateObj: date // Mantener el objeto Date para filtros
+    };
+}   
+
+function exportToPDF(range) {
+    try {
+        // Filtrar registros según el rango seleccionado
+        let dataToExport = filteredRecords.length > 0 ? [...filteredRecords] : [...attendanceRecords];
+        
+        if (range === 'week') {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            dataToExport = dataToExport.filter(record => record.dateObj >= oneWeekAgo);
+        } else if (range === 'month') {
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            dataToExport = dataToExport.filter(record => record.dateObj >= oneMonthAgo);
+        } else if (range === 'custom') {
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            
+            if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                alert("Por favor seleccione un rango de fechas válido");
+                return;
+            }
+            
+            endDate.setHours(23, 59, 59, 999);
+            dataToExport = dataToExport.filter(record => 
+                record.dateObj >= startDate && record.dateObj <= endDate
+            );
+        }
+        
+        if (dataToExport.length === 0) {
+            alert("No hay datos para exportar con el rango seleccionado");
+            return;
+        }
+        
+        // Crear el PDF
+        generatePDFFile(dataToExport, range);
+    } catch (error) {
+        console.error("Error en exportToPDF:", error);
+        alert("Error al exportar: " + error.message);
+    }
+}
+
+function generatePDFFile(data, range) {
+    // Configuración del PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm'
+    });
+    
+    // Margenes
+    const marginLeft = 10;
+    const marginRight = 10;
+    const marginTop = 20;
+    const marginBottom = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Logo de la empresa
+    const logoUrl = 'https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png';
+    
+    // Función para agregar el encabezado en cada página
+    const addHeader = () => {
+        // Logo
+        doc.addImage(logoUrl, 'PNG', marginLeft, 5, 40, 15);
+        
+        // Título del reporte
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reporte de Asistencias', pageWidth / 2, 15, { align: 'center' });
+        
+        // Subtítulo con rango de fechas
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        
+        let rangeText = '';
+        const now = new Date();
+        const formattedDate = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+        
+        if (range === 'week') {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            rangeText = `Semana del ${oneWeekAgo.getDate()}/${oneWeekAgo.getMonth()+1} al ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+        } else if (range === 'month') {
+            rangeText = `Mes de ${now.toLocaleString('es-MX', { month: 'long' })} ${now.getFullYear()}`;
+        } else if (range === 'custom') {
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            rangeText = `Del ${startDate.getDate()}/${startDate.getMonth()+1}/${startDate.getFullYear()} al ${endDate.getDate()}/${endDate.getMonth()+1}/${endDate.getFullYear()}`;
+        } else {
+            rangeText = `Todos los registros (hasta ${formattedDate})`;
+        }
+        
+        doc.text(rangeText, pageWidth / 2, 22, { align: 'center' });
+        
+        // Fecha de generación
+        doc.text(`Generado: ${formattedDate}`, pageWidth - marginRight, 15, { align: 'right' });
+        
+        // Línea divisoria
+        doc.setDrawColor(200, 200, 200);
+        doc.line(marginLeft, 25, pageWidth - marginRight, 25);
+    };
+    
+    // Configuración de la tabla
+    const columns = [
+        { header: 'Nombre', dataKey: 'nombre', width: 40 },
+        { header: 'Correo', dataKey: 'email', width: 50 },
+        { header: 'Área', dataKey: 'area', width: 30 },
+        { header: 'Tipo', dataKey: 'tipoRegistro', width: 20 },
+        { header: 'Ubicación', dataKey: 'tipo', width: 30 },
+        { header: 'Fecha', dataKey: 'fecha', width: 25 },
+        { header: 'Hora', dataKey: 'hora', width: 20 },
+        { header: 'Estado', dataKey: 'activo', width: 20 }
+    ];
+    
+    // Preparar datos para la tabla
+    const tableData = data.map(record => ({
+        nombre: record.nombre,
+        email: record.email,
+        area: record.area,
+        tipoRegistro: record.tipoRegistro === 'salida' ? 'Salida' : 'Entrada',
+        tipo: getLocationText(record.tipo),
+        fecha: record.fecha,
+        hora: record.hora,
+        activo: record.activo ? 'Activo' : 'Inactivo',
+        // Propiedades para estilos condicionales
+        isLate: record.tipoRegistro !== 'salida' && isRetardo(record.hora),
+        isExtra: record.tipoRegistro === 'salida' && isHorasExtras(record.hora)
+    }));
+    
+    // Configuración de estilos para la tabla
+    const tableConfig = {
+        startY: 30,
+        margin: { left: marginLeft, right: marginRight },
+        headStyles: {
+            fillColor: [74, 107, 255], // Azul corporativo
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 10
+        },
+        bodyStyles: {
+            textColor: 0,
+            fontSize: 9
+        },
+        alternateRowStyles: {
+            fillColor: [240, 240, 240]
+        },
+        columnStyles: {
+            hora: {
+                cellWidth: 'auto'
+            }
+        },
+        // Función para estilos personalizados
+        didDrawCell: (data) => {
+            // Resaltar retardos en rojo
+            if (data.column.dataKey === 'hora' && data.row.isLate) {
+                doc.setTextColor(220, 53, 69);
+                doc.setFontStyle('bold');
+            }
+            // Resaltar horas extras en azul
+            else if (data.column.dataKey === 'hora' && data.row.isExtra) {
+                doc.setTextColor(74, 107, 255);
+                doc.setFontStyle('bold');
+            }
+        },
+        // Restaurar estilos después de dibujar la celda
+        willDrawCell: (data) => {
+            doc.setTextColor(0);
+            doc.setFontStyle('normal');
+        }
+    };
+    
+    // Agregar encabezado en la primera página
+    addHeader();
+    
+    // Generar la tabla
+    doc.autoTable(columns, tableData, tableConfig);
+    
+    // Agregar pie de página en cada página
+    const addFooter = () => {
+        const pageCount = doc.internal.getNumberOfPages();
+        
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            // Línea divisoria
+            doc.setDrawColor(200, 200, 200);
+            doc.line(marginLeft, pageHeight - 15, pageWidth - marginRight, pageHeight - 15);
+            
+            // Copyright
+            doc.setFontSize(8);
+            doc.setTextColor(100);
+            doc.text('© 2023 RSI Enterprise - Todos los derechos reservados', 
+                    pageWidth / 2, pageHeight - 10, { align: 'center' });
+            
+            // Página actual
+            doc.text(`Página ${i} de ${pageCount}`, 
+                    pageWidth - marginRight, pageHeight - 10, { align: 'right' });
+            
+            // URL
+            doc.text('https://rsienterprise.web.app/', 
+                    marginLeft, pageHeight - 10, { align: 'left' });
+        }
+    };
+    
+    // Agregar el pie de página
+    addFooter();
+    
+    // Generar nombre de archivo
+    const now = new Date();
+    let fileName = `Asistencias_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}`;
+    
+    if (range === 'week') fileName = `Asistencias_Semana_${fileName}`;
+    else if (range === 'month') fileName = `Asistencias_Mes_${fileName}`;
+    else if (range === 'custom') {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        fileName = `Asistencias_${start}_a_${end}`;
+    }
+    
+    fileName += '.pdf';
+    
+    // Guardar el PDF
+    doc.save(fileName);
+}
+
+document.getElementById('confirm-export').addEventListener('click', function() {
+    const exportRange = document.getElementById('export-range').value;
+    const exportFormat = document.getElementById('export-format').value;
+    
+    if (exportFormat === 'excel') {
+        exportToExcel(exportRange);
+    } else {
+        exportToPDF(exportRange);
+    }
+    
+    // Cerrar el modal
+    document.getElementById('export-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+});
+
+</script>
+</body>
+</html>

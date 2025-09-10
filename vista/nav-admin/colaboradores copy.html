@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Colaboradores RSI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        /* Estilos para los botones */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background-color: #333;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: #444;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.2);
+        }
+        
+        button i {
+            font-size: 18px;
+            color: #FFD700;
+        }
+        
+        /* Estilos para el selector de vista */
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .view-toggle button {
+            background: none;
+            color: #FFD700;
+            padding: 8px 20px;
+            border-radius: 4px;
+            border: 1px solid #FFD700;
+        }
+        
+        .view-toggle button.active {
+            background-color: #FFD700;
+            color: #1a1a1a;
+            border-color: #FFD700;
+        }
+        
+        /* Estilos para la tabla */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin: 20px 0;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+            border-radius: 8px;
+            background: #2a2a2a;
+            display: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+        
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+            font-size: 16px;
+            vertical-align: middle;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        th {
+            background-color: #333;
+            color: #FFD700;
+            font-weight: 600;
+            font-size: 17px;
+        }
+        
+        tr:hover {
+            background-color: #333;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 70px;
+        }
+        
+        .action-buttons i {
+            cursor: pointer;
+            font-size: 20px;
+            color: #FFD700;
+            transition: all 0.2s;
+            padding: 8px;
+            background: #333;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #FFD700;
+            flex-shrink: 0;
+        }
+        
+        .action-buttons i:hover {
+            color: #1a1a1a;
+            background-color: #FFD700;
+            transform: scale(1.05);
+        }
+        
+        /* Estilos para las tarjetas */
+        .cards-container {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin: 20px 0;
+        }
+        
+        .card {
+            background: #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            border: 1px solid #FFD700;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(255, 215, 0, 0.2);
+        }
+        
+        .card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-bottom: 2px solid #FFD700;
+        }
+        
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #FFD700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .card-text {
+            font-size: 15px;
+            color: #e0e0e0;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-height: 1.4;
+            min-height: 60px;
+            max-height: 60px;
+        }
+        
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-top: 1px solid #444;
+            background: #333;
+        }
+        
+        .card-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .status-activo {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .status-inactivo {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        /* Barra de scroll */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #333;
+            border-radius: 4px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: #FFD700;
+            border-radius: 4px;
+        }
+        
+        /* Formulario */
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            border: 1px solid #FFD700;
+        }
+        
+        .form-section h4 {
+            margin-bottom: 15px;
+            color: #FFD700;
+            border-bottom: 1px solid #FFD700;
+            padding-bottom: 8px;
+            font-size: 18px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #FFD700;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #FFD700;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #e0e0e0;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: #FFD700;
+        }
+        
+        .image-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .image-upload img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #FFD700;
+            margin-bottom: 15px;
+            background: #2a2a2a;
+            padding: 5px;
+        }
+        
+        .image-upload label {
+            background-color: #333;
+            color: #FFD700;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #FFD700;
+        }
+        
+        .image-upload label:hover {
+            background-color: #444;
+        }
+        
+        .loading, .no-data {
+            text-align: center;
+            padding: 20px;
+            grid-column: 1 / -1;
+            color: #FFD700;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+            
+            th, td {
+                padding: 12px 15px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Colaboradores RSI</h1>
+        
+        <div class="button-group">
+            <button onclick="agregarColaborador()">
+                <i class="fas fa-plus"></i> Nuevo Colaborador
+            </button>
+
+            <a href="colaboradoresInactivos.html">
+                <button>
+                    <i class="fas fa-user-slash"></i> Ver colaboradores inactivos
+                </button>
+            </a>
+        </div>
+        
+        <div class="view-toggle">
+            <button id="view-table" class="active" onclick="toggleView('table')">
+                <i class="fas fa-table"></i> Vista de Tabla
+            </button>
+            <button id="view-cards" onclick="toggleView('cards')">
+                <i class="fas fa-th-large"></i> Vista de Tarjetas
+            </button>
+        </div>
+        
+        <div class="table-container" id="table-view">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Acciones</th>
+                        <th>NIT</th>
+                        <th>NOMBRE</th>
+                        <th>CURP</th>
+                        <th>NSS</th>
+                        <th>RFC</th>
+                        <th>FECHA INGRESO</th>
+                        <th>CORREO PERSONAL</th>
+                        <th>CORREO EMPRESARIAL</th>
+                        <th>ESTADO CIVIL</th>
+                        <th>FECHA NACIMIENTO</th>
+                        <th>TELÉFONO FIJO</th>
+                        <th>TELÉFONO MÓVIL</th>
+                        <th>ACTIVIDAD</th>
+                        <th>ÁREA</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-colaboradores"></tbody>
+            </table>
+        </div>
+        
+        <div class="cards-container" id="cards-view"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const DEFAULT_IMAGE = 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
+        const FALLBACK_IMAGE = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+        let base64Image = '';
+
+        function toggleView(viewType) {
+            if (viewType === 'table') {
+                document.getElementById('table-view').style.display = 'block';
+                document.getElementById('cards-view').style.display = 'none';
+                document.getElementById('view-table').classList.add('active');
+                document.getElementById('view-cards').classList.remove('active');
+            } else {
+                document.getElementById('table-view').style.display = 'none';
+                document.getElementById('cards-view').style.display = 'grid';
+                document.getElementById('view-table').classList.remove('active');
+                document.getElementById('view-cards').classList.add('active');
+            }
+        }
+
+        function comprimirYConvertirImagen(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    const QUALITY = 0.7;
+                    
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                        const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+                        width = Math.floor(width * ratio);
+                        height = Math.floor(height * ratio);
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const base64 = canvas.toDataURL('image/jpeg', QUALITY);
+                    callback(base64);
+                };
+                img.onerror = function() {
+                    callback(FALLBACK_IMAGE);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function verificarCampo(campo) {
+            return campo && campo !== '' ? campo : 'RSI';
+        }
+
+        async function moverEntreColecciones(docId, data, nuevoEstado) {
+            try {
+                const coleccionOrigen = nuevoEstado ? "colaboradoresInactivos" : "colaboradores";
+                const coleccionDestino = nuevoEstado ? "colaboradores" : "colaboradoresInactivos";
+
+                const docRefOrigen = db.collection(coleccionOrigen).doc(docId);
+                const docSnapshot = await docRefOrigen.get();
+
+                if (!docSnapshot.exists) {
+                    console.error("El documento no existe en la colección de origen");
+                    return false;
+                }
+
+                const batch = db.batch();
+                const docRefDestino = db.collection(coleccionDestino).doc(docId);
+                
+                batch.set(docRefDestino, data);
+                batch.delete(docRefOrigen);
+
+                await batch.commit();
+                return true;
+            } catch (error) {
+                console.error("Error moviendo documento:", error);
+                return false;
+            }
+        }
+
+        function generarEstructuraAreas(areaActual = '') {
+            const areas = {
+                'Dirección': ['Director C.E.O.', 'Representante Legal y Jurídico'],
+                'Gerencia Comercial': ['Gerente Comercial', 'Gerente de Planta', 'Ventas Mostrador', 'Ventas E-commerce', 'Ventas Sistemas de Seguridad', 'Encargado de Mercadotecnia'],
+                'Jefatura Operativa': ['Jefe Operativo', 'Documentador', 'Encargado Laboratorio', 'Monitoristas', 'Ingenieros/Técnicos'],
+                'Gestión de Talento': ['Jefe de Adquisición de Talento', 'Encargado de Comunicación', 'Jefe de Infraestructura', 'Ayudante General', 'Programador e-commerce'],
+                'Gerencia Financiera': ['Gerente Financiero', 'Contador', 'Auxiliar Administrativo', 'Encargado de Almacén']
+            };
+
+            let html = `
+                <div class="form-group">
+                    <label class="required-field">Área Principal</label>
+                    <select id="area-principal" class="form-control" onchange="actualizarSubAreas(this)">
+                        <option value="">Seleccione categoría principal</option>
+                        ${Object.keys(areas).map(a => `<option value="${a}" ${areaActual && areaActual.startsWith(a) ? 'selected' : ''}>${a}</option>`).join('')}
+                        <option value="Otro" ${areaActual && !Object.keys(areas).some(a => areaActual.startsWith(a)) ? 'selected' : ''}>Otro</option>
+                    </select>
+                </div>
+                <div class="form-group" id="sub-area-container">
+                    <label>Subárea</label>
+                    <select id="sub-area" class="form-control" onchange="mostrarOtroInput(this)">
+                        <option value="">Seleccione subárea</option>
+                    </select>
+                </div>
+                <div class="form-group" id="otro-area-container" style="display: none;">
+                    <label>Especifique el área</label>
+                    <input type="text" id="otro-area-input" class="form-control" placeholder="Escriba el área del colaborador" value="${areaActual && !Object.keys(areas).some(a => areaActual.startsWith(a)) ? areaActual : ''}">
+                </div>
+            `;
+
+            return html;
+        }
+
+        function actualizarSubAreas(select) {
+            const areas = {
+                'Dirección': ['Director C.E.O.', 'Representante Legal y Jurídico'],
+                'Gerencia Comercial': ['Gerente Comercial', 'Gerente de Planta', 'Ventas Mostrador', 'Ventas E-commerce', 'Ventas Sistemas de Seguridad', 'Encargado de Mercadotecnia'],
+                'Jefatura Operativa': ['Jefe Operativo', 'Documentador', 'Encargado Laboratorio', 'Monitoristas', 'Ingenieros/Técnicos'],
+                'Gestión de Talento': ['Jefe de Adquisición de Talento', 'Encargado de Comunicación', 'Jefe de Infraestructura', 'Ayudante General', 'Programador e-commerce'],
+                'Gerencia Financiera': ['Gerente Financiero', 'Contador', 'Auxiliar Administrativo', 'Encargado de Almacén']
+            };
+
+            const subSelect = document.getElementById('sub-area');
+            const otroContainer = document.getElementById('otro-area-container');
+            
+            subSelect.innerHTML = '<option value="">Seleccione subárea</option>';
+            otroContainer.style.display = 'none';
+
+            if (select.value === 'Otro') {
+                document.getElementById('sub-area-container').style.display = 'none';
+                otroContainer.style.display = 'block';
+            } else {
+                document.getElementById('sub-area-container').style.display = 'block';
+                if (areas[select.value]) {
+                    areas[select.value].forEach(opcion => {
+                        subSelect.innerHTML += `<option value="${opcion}">${opcion}</option>`;
+                    });
+                    subSelect.innerHTML += '<option value="Otro">Otro</option>';
+                }
+            }
+        }
+
+        function mostrarOtroInput(select) {
+            const otroContainer = document.getElementById('otro-area-container');
+            otroContainer.style.display = select.value === 'Otro' ? 'block' : 'none';
+        }
+
+        function obtenerAreaSeleccionada() {
+            const areaPrincipal = document.getElementById('area-principal').value;
+            const subArea = document.getElementById('sub-area').value;
+            const otroArea = document.getElementById('otro-area-input').value;
+            
+            if (areaPrincipal === 'Otro') return otroArea;
+            if (subArea === 'Otro') return otroArea;
+            return subArea || areaPrincipal;
+        }
+
+        function cargarAreaExistente(area) {
+            const areas = {
+                'Dirección': ['Director C.E.O.', 'Representante Legal y Jurídico'],
+                'Gerencia Comercial': ['Gerente Comercial', 'Gerente de Planta', 'Ventas Mostrador', 'Ventas E-commerce', 'Ventas Sistemas de Seguridad', 'Encargado de Mercadotecnia'],
+                'Jefatura Operativa': ['Jefe Operativo', 'Documentador', 'Encargado Laboratorio', 'Monitoristas', 'Ingenieros/Técnicos'],
+                'Gestión de Talento': ['Jefe de Adquisición de Talento', 'Encargado de Comunicación', 'Jefe de Infraestructura', 'Ayudante General', 'Programador e-commerce'],
+                'Gerencia Financiera': ['Gerente Financiero', 'Contador', 'Auxiliar Administrativo', 'Encargado de Almacén']
+            };
+
+            let principal = '';
+            let sub = '';
+            
+            if (area) {
+                for (const [key, values] of Object.entries(areas)) {
+                    if (values.includes(area)) {
+                        principal = key;
+                        sub = area;
+                        break;
+                    }
+                }
+                
+                if (!principal && Object.keys(areas).includes(area)) {
+                    principal = area;
+                }
+                
+                if (!principal && !sub) {
+                    principal = 'Otro';
+                    document.getElementById('otro-area-input').value = area;
+                }
+            }
+
+            if (principal) {
+                document.getElementById('area-principal').value = principal;
+                actualizarSubAreas(document.getElementById('area-principal'));
+                if (sub) {
+                    document.getElementById('sub-area').value = sub;
+                }
+                if (principal === 'Otro') {
+                    document.getElementById('sub-area-container').style.display = 'none';
+                    document.getElementById('otro-area-container').style.display = 'block';
+                }
+            }
+        }
+
+        function mostrarTarjeta(encodedData) {
+            const data = JSON.parse(decodeURIComponent(encodedData));
+            const imagen = data.imagen || DEFAULT_IMAGE;
+            
+            // Verificar si la imagen existe, si no, usar FALLBACK_IMAGE
+            const img = new Image();
+            img.onload = function() {
+                // La imagen existe, mostrarla
+                Swal.fire({
+                    title: `Detalles de ${data.NOMBRE || 'Colaborador'}`,
+                    html: `
+                        <div style="text-align: center;">
+                            <img src="${imagen}" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #FFD700; margin-bottom: 20px;">
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+                                <div>
+                                    <p><strong>Nombre:</strong> ${verificarCampo(data.NOMBRE)}</p>
+                                    <p><strong>Área:</strong> ${verificarCampo(data["ÁREA"])}</p>
+                                    <p><strong>Teléfono:</strong> ${verificarCampo(data["TELÉFONO MOVIL"])}</p>
+                                    <p><strong>Correo Personal:</strong> ${verificarCampo(data["CORREO ELECTRONICO PERSONAL"])}</p>
+                                </div>
+                                <div>
+                                    <p><strong>NIT:</strong> ${verificarCampo(data.NIT)}</p>
+                                    <p><strong>RFC:</strong> ${verificarCampo(data.RFC)}</p>
+                                    <p><strong>CURP:</strong> ${verificarCampo(data.CURP)}</p>
+                                    <p><strong>NSS:</strong> ${verificarCampo(data.NSS)}</p>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 20px; background: #2a2a2a; padding: 15px; border-radius: 8px; border: 1px solid #FFD700;">
+                                <h4 style="margin-top: 0; color: #FFD700;">Información Adicional</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <p><strong>Estado Civil:</strong> ${verificarCampo(data["ESTADO CIVIL"])}</p>
+                                    <p><strong>Fecha Nacimiento:</strong> ${verificarCampo(data["FECHA DE NACIMIENTO"])}</p>
+                                    <p><strong>Fecha Ingreso:</strong> ${verificarCampo(data["FECHA DE INGRESO"])}</p>
+                                    <p><strong>Correo Empresarial:</strong> ${verificarCampo(data["CORREO ELECTRÓNICO EMPRESARIAL"])}</p>
+                                    <p><strong>Teléfono Fijo:</strong> ${verificarCampo(data["TELÉFONO FIJO"])}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    width: '800px',
+                    background: '#1a1a1a',
+                    color: '#e0e0e0',
+                    confirmButtonText: 'Cerrar',
+                    customClass: {
+                        popup: 'swal2-popup-custom'
+                    }
+                });
+            };
+            img.onerror = function() {
+                // La imagen no existe, usar FALLBACK_IMAGE
+                Swal.fire({
+                    title: `Detalles de ${data.NOMBRE || 'Colaborador'}`,
+                    html: `
+                        <div style="text-align: center;">
+                            <img src="${FALLBACK_IMAGE}" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #FFD700; margin-bottom: 20px;">
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+                                <div>
+                                    <p><strong>Nombre:</strong> ${verificarCampo(data.NOMBRE)}</p>
+                                    <p><strong>Área:</strong> ${verificarCampo(data["ÁREA"])}</p>
+                                    <p><strong>Teléfono:</strong> ${verificarCampo(data["TELÉFONO MOVIL"])}</p>
+                                    <p><strong>Correo Personal:</strong> ${verificarCampo(data["CORREO ELECTRONICO PERSONAL"])}</p>
+                                </div>
+                                <div>
+                                    <p><strong>NIT:</strong> ${verificarCampo(data.NIT)}</p>
+                                    <p><strong>RFC:</strong> ${verificarCampo(data.RFC)}</p>
+                                    <p><strong>CURP:</strong> ${verificarCampo(data.CURP)}</p>
+                                    <p><strong>NSS:</strong> ${verificarCampo(data.NSS)}</p>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 20px; background: #2a2a2a; padding: 15px; border-radius: 8px; border: 1px solid #FFD700;">
+                                <h4 style="margin-top: 0; color: #FFD700;">Información Adicional</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <p><strong>Estado Civil:</strong> ${verificarCampo(data["ESTADO CIVIL"])}</p>
+                                    <p><strong>Fecha Nacimiento:</strong> ${verificarCampo(data["FECHA DE NACIMIENTO"])}</p>
+                                    <p><strong>Fecha Ingreso:</strong> ${verificarCampo(data["FECHA DE INGRESO"])}</p>
+                                    <p><strong>Correo Empresarial:</strong> ${verificarCampo(data["CORREO ELECTRÓNICO EMPRESARIAL"])}</p>
+                                    <p><strong>Teléfono Fijo:</strong> ${verificarCampo(data["TELÉFONO FIJO"])}</p>
+                                    <p><strong>Actividad:</strong> ${data.actividad ? '<span style="color: #2ecc71;">Activo</span>' : '<span style="color: #e74c3c;">Inactivo</span>'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    width: '800px',
+                    background: '#1a1a1a',
+                    color: '#e0e0e0',
+                    confirmButtonText: 'Cerrar',
+                    customClass: {
+                        popup: 'swal2-popup-custom'
+                    }
+                });
+            };
+            img.src = imagen;
+        }
+
+        async function editarColaborador(docId, encodedData, esInactivo = false) {
+            const data = JSON.parse(decodeURIComponent(encodedData));
+            const { value: formValues } = await Swal.fire({
+                title: 'Editar Colaborador',
+                html: `
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h4>Información Personal</h4>
+                            
+                            <div class="image-upload">
+                                <img src="${data.imagen || DEFAULT_IMAGE}" id="previewImagen">
+                                <label for="imagen">Cambiar Imagen</label>
+                                <input type="file" id="imagen" accept="image/*">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Nombre Completo</label>
+                                <input value="${data.NOMBRE || ''}" id="nombre" placeholder="Nombre completo" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>NIT</label>
+                                <input value="${data.NIT || ''}" id="nit" placeholder="Número de Identificación Tributaria">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>CURP</label>
+                                <input value="${data.CURP || ''}" id="curp" placeholder="Clave Única de Registro de Población">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>NSS</label>
+                                <input value="${data.NSS || ''}" id="nss" placeholder="Número de Seguridad Social">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>RFC</label>
+                                <input value="${data.RFC || ''}" id="rfc" placeholder="Registro Federal de Contribuyentes">
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>Información Laboral</h4>
+                            
+                            <div class="form-group">
+                                <label>Fecha de Ingreso</label>
+                                <input type="date" value="${data["FECHA DE INGRESO"] || ''}" id="fecha_ingreso">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Área</label>
+                                ${generarEstructuraAreas(data["ÁREA"])}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Actividad</label>
+                                <select id="actividad" class="form-control">
+                                    <option value="true" ${data.actividad === true ? 'selected' : ''}>Activo</option>
+                                    <option value="false" ${data.actividad === false ? 'selected' : ''}>Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>Información de Contacto</h4>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Correo Personal</label>
+                                <input type="email" value="${data["CORREO ELECTRONICO PERSONAL"] || ''}" id="correo_personal" placeholder="correo@personal.com" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Correo Empresarial</label>
+                                <input type="email" value="${data["CORREO ELECTRÓNICO EMPRESARIAL"] || ''}" id="correo_empresarial" placeholder="correo@empresa.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Teléfono Fijo</label>
+                                <input value="${data["TELÉFONO FIJO"] || ''}" id="telefono_fijo" placeholder="Teléfono fijo">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Teléfono Móvil</label>
+                                <input value="${data["TELÉFONO MOVIL"] || ''}" id="telefono_movil" placeholder="Teléfono móvil" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>Información Adicional</h4>
+                            
+                            <div class="form-group">
+                                <label>Estado Civil</label>
+                                <input value="${data["ESTADO CIVIL"] || ''}" id="estado_civil" placeholder="Estado civil">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Fecha de Nacimiento</label>
+                                <input type="date" value="${data["FECHA DE NACIMIENTO"] || ''}" id="fecha_nacimiento">
+                            </div>
+                        </div>
+                    </div>
+                `,
+                width: '900px',
+                background: '#1a1a1a',
+                color: '#e0e0e0',
+                focusConfirm: false,
+                didOpen: () => {
+                    cargarAreaExistente(data["ÁREA"]);
+                    document.getElementById('imagen').addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            comprimirYConvertirImagen(file, function(compressedBase64) {
+                                document.getElementById('previewImagen').src = compressedBase64;
+                                base64Image = compressedBase64;
+                            });
+                        }
+                    });
+                },
+                preConfirm: () => {
+                    const requiredFields = [
+                        document.getElementById('nombre').value,
+                        document.getElementById('correo_personal').value,
+                        document.getElementById('telefono_movil').value,
+                        obtenerAreaSeleccionada()
+                    ];
+                    
+                    if (requiredFields.some(field => !field)) {
+                        Swal.showValidationMessage('Los campos marcados con * son obligatorios');
+                        return false;
+                    }
+
+                    return {
+                        imagen: base64Image || data.imagen,
+                        NOMBRE: document.getElementById('nombre').value,
+                        NIT: document.getElementById('nit').value,
+                        CURP: document.getElementById('curp').value,
+                        NSS: document.getElementById('nss').value,
+                        RFC: document.getElementById('rfc').value,
+                        "FECHA DE INGRESO": document.getElementById('fecha_ingreso').value,
+                        "CORREO ELECTRONICO PERSONAL": document.getElementById('correo_personal').value,
+                        "CORREO ELECTRÓNICO EMPRESARIAL": document.getElementById('correo_empresarial').value,
+                        "ESTADO CIVIL": document.getElementById('estado_civil').value,
+                        "FECHA DE NACIMIENTO": document.getElementById('fecha_nacimiento').value,
+                        "TELÉFONO FIJO": document.getElementById('telefono_fijo').value,
+                        "TELÉFONO MOVIL": document.getElementById('telefono_movil').value,
+                        actividad: document.getElementById('actividad').value === 'true',
+                        "ÁREA": obtenerAreaSeleccionada()
+                    }
+                }
+            });
+
+            if (formValues) {
+                const nuevaActividad = formValues.actividad;
+                const cambioEstado = data.actividad !== nuevaActividad;
+                
+                if (cambioEstado) {
+                    const exito = await moverEntreColecciones(docId, formValues, nuevaActividad);
+                    if (exito) {
+                        Swal.fire({
+                            title: '¡Actualizado!',
+                            text: 'El colaborador ha sido movido correctamente',
+                            icon: 'success',
+                            background: '#1a1a1a',
+                            color: '#e0e0e0'
+                        });
+                        cargarColaboradores();
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo mover el colaborador',
+                            icon: 'error',
+                            background: '#1a1a1a',
+                            color: '#e0e0e0'
+                        });
+                    }
+                } else {
+                    const coleccion = esInactivo ? "colaboradoresInactivos" : "colaboradores";
+                    await db.collection(coleccion).doc(docId).update(formValues);
+                    Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Los cambios fueron guardados.',
+                        icon: 'success',
+                        background: '#1a1a1a',
+                        color: '#e0e0e0'
+                    });
+                    cargarColaboradores();
+                }
+            }
+        }
+
+        async function agregarColaborador() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Nuevo Colaborador',
+                html: `
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h4>Información Personal</h4>
+                            
+                            <div class="image-upload">
+                                <img src="${DEFAULT_IMAGE}" id="previewImagen">
+                                <label for="imagen">Subir Imagen</label>
+                                <input type="file" id="imagen" accept="image/*">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Nombre Completo</label>
+                                <input id="nombre" placeholder="Nombre completo" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>NIT</label>
+                                <input id="nit" placeholder="Número de Identificación Tributaria">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>CURP</label>
+                                <input id="curp" placeholder="Clave Única de Registro de Población">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>NSS</label>
+                                <input id="nss" placeholder="Número de Seguridad Social">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>RFC</label>
+                                <input id="rfc" placeholder="Registro Federal de Contribuyentes">
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>Información Laboral</h4>
+                            
+                            <div class="form-group">
+                                <label>Fecha de Ingreso</label>
+                                <input type="date" id="fecha_ingreso">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Área</label>
+                                ${generarEstructuraAreas()}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Actividad</label>
+                                <select id="actividad" class="form-control">
+                                    <option value="true" selected>Activo</option>
+                                    <option value="false">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>Información de Contacto</h4>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Correo Personal</label>
+                                <input type="email" id="correo_personal" placeholder="correo@personal.com" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Correo Empresarial</label>
+                                <input type="email" id="correo_empresarial" placeholder="correo@empresa.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Teléfono Fijo</label>
+                                <input id="telefono_fijo" placeholder="Teléfono fijo">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="required-field">Teléfono Móvil</label>
+                                <input id="telefono_movil" placeholder="Teléfono móvil" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h4>Información Adicional</h4>
+                            
+                            <div class="form-group">
+                                <label>Estado Civil</label>
+                                <input id="estado_civil" placeholder="Estado civil">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Fecha de Nacimiento</label>
+                                <input type="date" id="fecha_nacimiento">
+                            </div>
+                        </div>
+                    </div>
+                `,
+                width: '900px',
+                background: '#1a1a1a',
+                color: '#e0e0e0',
+                focusConfirm: false,
+                didOpen: () => {
+                    document.getElementById('imagen').addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            comprimirYConvertirImagen(file, function(compressedBase64) {
+                                document.getElementById('previewImagen').src = compressedBase64;
+                                base64Image = compressedBase64;
+                            });
+                        }
+                    });
+                },
+                preConfirm: () => {
+                    const requiredFields = [
+                        document.getElementById('nombre').value,
+                        document.getElementById('correo_personal').value,
+                        document.getElementById('telefono_movil').value,
+                        obtenerAreaSeleccionada()
+                    ];
+                    
+                    if (requiredFields.some(field => !field)) {
+                        Swal.showValidationMessage('Los campos marcados con * son obligatorios');
+                        return false;
+                    }
+
+                    return {
+                        imagen: base64Image || DEFAULT_IMAGE,
+                        NOMBRE: document.getElementById('nombre').value,
+                        NIT: document.getElementById('nit').value,
+                        CURP: document.getElementById('curp').value,
+                        NSS: document.getElementById('nss').value,
+                        RFC: document.getElementById('rfc').value,
+                        "FECHA DE INGRESO": document.getElementById('fecha_ingreso').value,
+                        "CORREO ELECTRONICO PERSONAL": document.getElementById('correo_personal').value,
+                        "CORREO ELECTRÓNICO EMPRESARIAL": document.getElementById('correo_empresarial').value,
+                        "ESTADO CIVIL": document.getElementById('estado_civil').value,
+                        "FECHA DE NACIMIENTO": document.getElementById('fecha_nacimiento').value,
+                        "TELÉFONO FIJO": document.getElementById('telefono_fijo').value,
+                        "TELÉFONO MOVIL": document.getElementById('telefono_movil').value,
+                        actividad: document.getElementById('actividad').value === 'true',
+                        "ÁREA": obtenerAreaSeleccionada()
+                    }
+                }
+            });
+
+            if (formValues) {
+                const coleccion = formValues.actividad ? "colaboradores" : "colaboradoresInactivos";
+                await db.collection(coleccion).add(formValues)
+                    .then(() => {
+                        Swal.fire({
+                            title: '¡Éxito!',
+                            text: 'Colaborador agregado correctamente',
+                            icon: 'success',
+                            background: '#1a1a1a',
+                            color: '#e0e0e0'
+                        });
+                        cargarColaboradores();
+                    })
+                    .catch((error) => {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Ocurrió un error al guardar: ' + error,
+                            icon: 'error',
+                            background: '#1a1a1a',
+                            color: '#e0e0e0'
+                        });
+                    });
+            }
+        }
+
+        function agregarFilaTabla(docId, data, encodedData, imagen) {
+            const tbody = document.getElementById('tabla-colaboradores');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><img src="${imagen}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;"></td>
+                <td class="action-buttons">
+                    <i class="fas fa-eye" onclick="mostrarTarjeta('${encodedData}')" title="Ver detalles"></i>
+                    <i class="fas fa-edit" onclick="editarColaborador('${docId}', '${encodedData}')" title="Editar"></i>
+                </td>
+                <td>${verificarCampo(data.NIT)}</td>
+                <td>${verificarCampo(data.NOMBRE)}</td>
+                <td>${verificarCampo(data.CURP)}</td>
+                <td>${verificarCampo(data.NSS)}</td>
+                <td>${verificarCampo(data.RFC)}</td>
+                <td>${verificarCampo(data["FECHA DE INGRESO"])}</td>
+                <td>${verificarCampo(data["CORREO ELECTRONICO PERSONAL"])}</td>
+                <td>${verificarCampo(data["CORREO ELECTRÓNICO EMPRESARIAL"])}</td>
+                <td>${verificarCampo(data["ESTADO CIVIL"])}</td>
+                <td>${verificarCampo(data["FECHA DE NACIMIENTO"])}</td>
+                <td>${verificarCampo(data["TELÉFONO FIJO"])}</td>
+                <td>${verificarCampo(data["TELÉFONO MOVIL"])}</td>
+                <td>${data.actividad ? 'Activo' : 'Inactivo'}</td>
+                <td>${verificarCampo(data["ÁREA"])}</td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        function agregarTarjeta(docId, data, encodedData, imagen) {
+            const cardsContainer = document.getElementById('cards-view');
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${imagen}" class="card-img" alt="${data.NOMBRE || 'Colaborador'}">
+                <div class="card-body">
+                    <h3 class="card-title">${verificarCampo(data.NOMBRE)}</h3>
+                    <p class="card-text"><strong>Área:</strong> ${verificarCampo(data["ÁREA"])}</p>
+                    <p class="card-text"><strong>Teléfono:</strong> ${verificarCampo(data["TELÉFONO MOVIL"])}</p>
+                    <p class="card-text"><strong>Correo:</strong> ${verificarCampo(data["CORREO ELECTRONICO PERSONAL"])}</p>
+                </div>
+                <div class="card-actions">
+                    <span class="card-status ${data.actividad ? 'status-activo' : 'status-inactivo'}">
+                        ${data.actividad ? 'Activo' : 'Inactivo'}
+                    </span>
+                    <div>
+                        <i class="fas fa-eye" onclick="mostrarTarjeta('${encodedData}')" title="Ver detalles"></i>
+                        <i class="fas fa-edit" onclick="editarColaborador('${docId}', '${encodedData}')" title="Editar"></i>
+                    </div>
+                </div>
+            `;
+            cardsContainer.appendChild(card);
+        }
+
+        function cargarColaboradores() {
+            const tbody = document.getElementById('tabla-colaboradores');
+            const cardsContainer = document.getElementById('cards-view');
+            
+            tbody.innerHTML = '';
+            cardsContainer.innerHTML = '<div class="loading">Cargando colaboradores...</div>';
+            
+            db.collection("colaboradores").orderBy("NOMBRE").get().then((querySnapshot) => {
+                tbody.innerHTML = '';
+                cardsContainer.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="16">No hay colaboradores activos</td></tr>';
+                    cardsContainer.innerHTML = '<p class="no-data">No hay colaboradores activos</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const encodedData = encodeURIComponent(JSON.stringify(data));
+                    const imagen = data.imagen || DEFAULT_IMAGE;
+                    
+                    const img = new Image();
+                    img.onerror = function() {
+                        agregarFilaTabla(doc.id, data, encodedData, FALLBACK_IMAGE);
+                        agregarTarjeta(doc.id, data, encodedData, FALLBACK_IMAGE);
+                    };
+                    img.onload = function() {
+                        agregarFilaTabla(doc.id, data, encodedData, imagen);
+                        agregarTarjeta(doc.id, data, encodedData, imagen);
+                    };
+                    img.src = imagen;
+                });
+            }).catch((error) => {
+                console.error("Error obteniendo documentos: ", error);
+                tbody.innerHTML = '<tr><td colspan="16">Error al cargar los colaboradores</td></tr>';
+                cardsContainer.innerHTML = '<p class="no-data" style="color: #e74c3c;">Error al cargar los colaboradores</p>';
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            cargarColaboradores();
+            toggleView('table');
+        });
+    </script>
+</body>
+</html>

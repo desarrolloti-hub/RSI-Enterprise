@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <link rel="stylesheet" href="../css/user.css">
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+
+</head>
+<body class="cuerpo">
+    <div class="usuarios-container">
+        <h1 class="titulo-usuarios">Gestión de Usuarios</h1>
+        <div class="usuarios-header"></div>
+        
+        <table class="tabla-usuarios">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Fecha Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Los datos se llenarán dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SDKs de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Formateador de fecha
+        function formatearFecha(timestamp) {
+            if (!timestamp) return 'Sin fecha';
+            const fecha = timestamp.toDate();
+            return fecha.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Cargar usuarios
+        async function cargarUsuarios() {
+            const tbody = document.querySelector('.tabla-usuarios tbody');
+            tbody.innerHTML = '';
+
+            try {
+                const snapshot = await db.collection('usuarios').get();
+                
+                snapshot.forEach(doc => {
+                    const usuario = doc.data();
+                    const rolActual = usuario.rol || 'user';
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${doc.id}</td>
+                            <td>${usuario.nombreCompleto || 'Sin nombre'}</td>
+                            <td>${usuario.email || 'Sin correo'}</td>
+                            <td>
+                                <select class="select-rol" data-id="${doc.id}">
+                                    <option value="admin" ${rolActual === 'admin' ? 'selected' : ''}>Admin</option>
+                                    <option value="puntoVenta" ${rolActual === 'puntoVenta' ? 'selected' : ''}>Punto de Venta</option>
+                                    <option value="facturas" ${rolActual === 'facturas' ? 'selected' : ''}>Facturas</option>
+                                    <option value="colaborador" ${rolActual === 'colaborador' ? 'selected' : ''}>Colaborador</option>
+                                    <option value="user" ${rolActual === 'user' ? 'selected' : ''}>Usuario</option>
+                                    <option value="admincolaborador" ${rolActual === 'admincolaborador' ? 'selected' : ''}>Admin Colaborador</option>
+                                </select>
+                            </td>
+                            <td>${formatearFecha(usuario.fechaRegistro)}</td>
+                            <td class="acciones-container">
+                                <button class="btn-detalles" data-id="${doc.id}" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-eliminar" data-id="${doc.id}" title="Eliminar usuario">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                agregarEventListeners();
+
+            } catch (error) {
+                console.error('Error cargando usuarios:', error);
+                Swal.fire('Error', 'No se pudieron cargar los usuarios', 'error');
+            }
+        }
+
+        // Actualizar rol de usuario
+        async function actualizarRol(id, nuevoRol) {
+            try {
+                await db.collection('usuarios').doc(id).update({
+                    rol: nuevoRol
+                });
+                Swal.fire({
+                    title: '¡Rol actualizado!',
+                    text: `El rol ha sido cambiado a ${nuevoRol}`,
+                    icon: 'success',
+                    confirmButtonColor: '#FFD700',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                console.error('Error actualizando rol:', error);
+                Swal.fire('Error', 'No se pudo actualizar el rol', 'error');
+            }
+        }
+
+        // Eliminar usuario
+        async function eliminarUsuario(id) {
+            try {
+                await db.collection('usuarios').doc(id).delete();
+                Swal.fire('¡Eliminado!', 'Usuario eliminado correctamente', 'success');
+            } catch (error) {
+                console.error('Error eliminando usuario:', error);
+                Swal.fire('Error', 'No se pudo eliminar el usuario', 'error');
+            }
+        }
+
+        // Mostrar detalles
+        async function mostrarDetalles(id) {
+            try {
+                const doc = await db.collection('usuarios').doc(id).get();
+                if (doc.exists) {
+                    const usuario = doc.data();
+                    Swal.fire({
+                        title: `<strong>${usuario.nombreCompleto || 'Usuario sin nombre'}</strong>`,
+                        html: `
+                            <div style="text-align: left; color: #333;">
+                                <p><b>ID:</b> ${doc.id}</p>
+                                <p><b>Email:</b> ${usuario.email || 'Sin correo'}</p>
+                                <p><b>Rol:</b> ${usuario.rol || 'Usuario'}</p>
+                                <p><b>Fecha Registro:</b> ${formatearFecha(usuario.fechaRegistro)}</p>
+                            </div>
+                        `,
+                        background: '#1d1d1d',
+                        color: '#FFD700',
+                        confirmButtonColor: '#FFD700',
+                        confirmButtonText: 'Cerrar'
+                    });
+                }
+            } catch (error) {
+                Swal.fire('Error', 'No se pudieron obtener los detalles', 'error');
+            }
+        }
+
+        // Event listeners
+        function agregarEventListeners() {
+            // Eliminar
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    Swal.fire({
+                        title: '¿Eliminar usuario?',
+                        text: 'Esta acción no se puede deshacer',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar',
+                        background: '#1d1d1d',
+                        color: '#FFD700'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            eliminarUsuario(id).then(() => cargarUsuarios());
+                        }
+                    });
+                });
+            });
+
+            // Detalles
+            document.querySelectorAll('.btn-detalles').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    mostrarDetalles(id);
+                });
+            });
+
+            // Cambio de rol
+            document.querySelectorAll('.select-rol').forEach(select => {
+                select.addEventListener('change', () => {
+                    const id = select.dataset.id;
+                    const nuevoRol = select.value;
+                    actualizarRol(id, nuevoRol);
+                });
+            });
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarUsuarios();
+            
+            // Escuchar cambios en tiempo real
+            db.collection('usuarios').onSnapshot(() => {
+                cargarUsuarios();
+            });
+        });
+    </script>
+</body>
+</html>

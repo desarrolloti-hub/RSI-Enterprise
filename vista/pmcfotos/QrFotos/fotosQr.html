@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Visualizador de Imágenes de Fiesta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+    <link rel="stylesheet" href="fotosQr.css">
+</head>
+<body>
+
+    <div id="loader" class="view"><h1>Loading images...</h1></div>
+    <div id="error-view" class="view hidden"><h1>Error</h1><p id="error-message"></p></div>
+
+    <div id="admin-view" class="view hidden">
+        <div class="container">
+            <div id="admin-header">
+                <h1 id="admin-title">Imágenes de la Fiesta</h1>
+                <div id="admin-header-buttons">
+                    <button id="download-button" class="btn btn-secondary">Download All</button>
+                    <button id="delete-button" class="btn btn-danger">Delete All</button>
+                    <button id="play-button" class="btn btn-primary">▶️ Reproduce</button>
+                </div>
+            </div>
+            <div id="admin-images">
+                <p class="loading-text">Loading images...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="fullscreen-carousel" class="hidden">
+        <div class="carousel-background"></div>
+        <p class="carousel-exit-text">Press Esc to exit</p>
+        <div class="carousel-controls">
+            <button class="prev">‹</button>
+            <button class="next">›</button>
+        </div>
+        
+        <div id="qr-code-container">
+            <p>QR to upload photos</p>
+            <div id="qr-code-canvas"></div>
+        </div>
+    </div>
+
+    <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+      authDomain: "rsienterprise.firebaseapp.com",
+      projectId: "rsienterprise",
+      storageBucket: "rsienterprise.appspot.com",
+      messagingSenderId: "1063117165770",
+      appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const views = {
+            loader: document.getElementById('loader'),
+            error: document.getElementById('error-view'),
+            admin: document.getElementById('admin-view')
+        };
+        const adminImagesContainer = document.getElementById('admin-images');
+        const adminTitle = document.getElementById('admin-title');
+        const playButton = document.getElementById('play-button');
+        const downloadButton = document.getElementById('download-button');
+        const deleteButton = document.getElementById('delete-button');
+        const carouselContainer = document.getElementById('fullscreen-carousel');
+        const carouselBackground = carouselContainer.querySelector('.carousel-background');
+        const prevButton = carouselContainer.querySelector('.prev');
+        const nextButton = carouselContainer.querySelector('.next');
+        
+        let partyId = null;
+        let images = [];
+        let currentIndex = 0;
+        let carouselInterval = null;
+
+        function showView(viewName) {
+            Object.values(views).forEach(view => view.classList.add('hidden'));
+            views[viewName].classList.remove('hidden');
+        }
+
+        function generateQrCode(partyId) {
+            const qrCanvasContainer = document.getElementById('qr-code-canvas');
+            qrCanvasContainer.innerHTML = '';
+            const canvas = document.createElement('canvas');
+            qrCanvasContainer.appendChild(canvas);
+
+            const uploadUrl = `https://pmcentertainment-899a1.web.app/Crud/fiestaQR?fiesta=${partyId}`;
+            
+            QRCode.toCanvas(canvas, uploadUrl, { width: 160, margin: 1, color: { dark: '#111111', light: '#FFFFFF' } }, function (error) {
+                if (error) console.error("Error al generar el QR:", error);
+                else console.log('Código QR generado para la URL:', uploadUrl);
+            });
+        }
+
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            partyId = urlParams.get('fiesta');
+            
+            if (!partyId) {
+                throw new Error("Parámetro 'fiesta' no encontrado en la URL. Asegúrate de que la URL termine con '?fiesta=nombre-de-la-fiesta'.");
+            }
+
+            const partyConfigDoc = await db.collection(partyId).doc('_config').get();
+            if (!partyConfigDoc.exists) {
+                throw new Error(`La fiesta con el ID "${partyId}" no existe en la base de datos.`);
+            }
+            
+            const partyName = partyConfigDoc.data().nombreOriginal;
+            adminTitle.textContent = `Images of ${partyName}`;
+            
+            showView('admin');
+            generateQrCode(partyId);
+            
+            db.collection(partyId).orderBy("timestamp", "desc").onSnapshot(snapshot => {
+                adminImagesContainer.innerHTML = '';
+                const newImages = [];
+                let hasImages = false;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.imageBase64) {
+                        newImages.push(data.imageBase64);
+                        const card = document.createElement('div');
+                        card.classList.add('admin-image-card');
+                        const img = document.createElement('img');
+                        img.src = data.imageBase64;
+                        img.alt = `Imagen ${doc.id}`;
+                        card.appendChild(img);
+                        adminImagesContainer.appendChild(card);
+                        hasImages = true;
+                    }
+                });
+
+                // Comparamos el número de imágenes para ver si se añadió una nueva.
+                const wasImageAdded = newImages.length > images.length;
+                images = newImages; // Actualizamos la lista global de imágenes.
+                
+                if (!hasImages) {
+                    adminImagesContainer.innerHTML = '<p class="loading-text">No hay imágenes subidas aún.</p>';
+                    playButton.disabled = true;
+                    downloadButton.disabled = true;
+                    deleteButton.disabled = true;
+                } else {
+                    playButton.disabled = false;
+                    downloadButton.disabled = false;
+                    deleteButton.disabled = false;
+                }
+                
+                // --- ✨ AQUÍ ESTÁ LA MAGIA ✨ ---
+                // Si el carrusel está activo y se añadió una nueva foto, lo actualizamos.
+                if (carouselContainer.classList.contains('active')) {
+                    // Si se añadió una imagen, la nueva estará al principio.
+                    // Incrementamos el índice para seguir viendo la misma imagen que estaba antes.
+                    if(wasImageAdded) {
+                        currentIndex++;
+                    }
+
+                    createCarouselElements(); // Volvemos a crear los slides con la lista actualizada.
+                    
+                    // Nos aseguramos que el índice no se salga de los límites.
+                    if (currentIndex >= images.length) {
+                        currentIndex = 0;
+                    }
+
+                    updateCarousel(); // Mostramos la imagen correcta.
+                }
+                // --- FIN DE LA MAGIA ---
+
+            }, error => {
+                console.error("Error al obtener las imágenes: ", error);
+                adminImagesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error al cargar las imágenes.</p>';
+                playButton.disabled = true; downloadButton.disabled = true; deleteButton.disabled = true;
+            });
+
+        } catch (error) {
+            document.getElementById('error-message').textContent = error.message;
+            showView('error');
+        }
+        
+        playButton.addEventListener('click', startCarousel);
+        downloadButton.addEventListener('click', downloadAllImages);
+        deleteButton.addEventListener('click', deleteAllData);
+        
+        async function downloadAllImages() {
+            if (images.length === 0) {
+                Swal.fire('Sin imágenes', 'No hay imágenes para descargar.', 'info');
+                return;
+            }
+            Swal.fire({
+                title: 'Preparando descarga...',
+                text: 'Comprimiendo las imágenes en un archivo .zip',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const zip = new JSZip();
+                images.forEach((base64Str, index) => {
+                    const base64Data = base64Str.split(',')[1];
+                    const mimeType = base64Str.match(/data:image\/(.+);/);
+                    const extension = mimeType ? mimeType[1] : 'jpg';
+                    const fileName = `PMC DJS${index + 1}.${extension}`;
+                    zip.file(fileName, base64Data, { base64: true });
+                });
+                const content = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `fotos_${partyId}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                Swal.close();
+            } catch (err) {
+                console.error("Error al crear el zip:", err);
+                Swal.fire('Error', 'No se pudo generar el archivo .zip.', 'error');
+            }
+        }
+
+        async function deleteAllData() {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `This will permanently delete all data for the party "${partyId}"!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, ¡delete all!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Eliminando...', text: 'Por favor, espera.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const querySnapshot = await db.collection(partyId).get();
+                    const batch = db.batch();
+                    querySnapshot.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    Swal.fire('¡Eliminado!', 'Todos los datos de la fiesta han sido eliminados.', 'success')
+                    .then(() => {
+                        adminTitle.textContent = "Fiesta eliminada";
+                        adminImagesContainer.innerHTML = '<p class="loading-text">Esta fiesta ha sido eliminada.</p>';
+                    });
+                } catch (err) {
+                    console.error("Error al eliminar la colección:", err);
+                    Swal.fire('Error', 'Ocurrió un error al intentar eliminar los datos.', 'error');
+                }
+            }
+        }
+
+        // --- Lógica del Carrusel ---
+        prevButton.addEventListener('click', () => changeImage(-1));
+        nextButton.addEventListener('click', () => changeImage(1));
+        
+        function startCarousel() {
+            if (images.length === 0) {
+                Swal.fire({ icon: 'info', title: '¡Espera!', text: 'No hay imágenes para mostrar.' });
+                return;
+            }
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+            carouselContainer.classList.remove('hidden'); 
+            // Usamos un pequeño delay para que la transición de entrada funcione correctamente
+            setTimeout(() => carouselContainer.classList.add('active'), 10);
+            createCarouselElements();
+            updateCarousel();
+            clearInterval(carouselInterval);
+            carouselInterval = setInterval(() => changeImage(1), 3000);
+        }
+
+        function createCarouselElements() {
+            const controls = carouselContainer.querySelector('.carousel-controls');
+            // Eliminamos solo los elementos de imagen, no los controles.
+            carouselContainer.querySelectorAll('.carousel-item').forEach(el => el.remove());
+            images.forEach((src) => {
+                const item = document.createElement('div');
+                item.classList.add('carousel-item');
+                const img = document.createElement('img');
+                img.src = src;
+                item.appendChild(img);
+                // Insertamos cada item antes del div de los controles.
+                carouselContainer.insertBefore(item, controls);
+            });
+        }
+        
+        function changeImage(direction) {
+            // Reiniciamos el intervalo para que la cuenta de 3 segundos comience de nuevo.
+            clearInterval(carouselInterval);
+            carouselInterval = setInterval(() => changeImage(1), 3000);
+            
+            currentIndex = (currentIndex + direction + images.length) % images.length;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const items = document.querySelectorAll('#fullscreen-carousel .carousel-item');
+            if(items.length === 0) return; // Si no hay imágenes, no hacemos nada.
+
+            // Asegurarnos de que el índice es válido
+            if (currentIndex < 0 || currentIndex >= items.length) {
+                currentIndex = 0;
+            }
+
+            const newImageSrc = items[currentIndex].querySelector('img').src;
+            carouselBackground.style.backgroundImage = `url(${newImageSrc})`;
+            items.forEach((item, index) => item.classList.toggle('active', index === currentIndex));
+        }
+        
+        function exitCarousel() {
+            clearInterval(carouselInterval);
+            carouselContainer.classList.remove('active'); 
+            setTimeout(() => carouselContainer.classList.add('hidden'), 500); // Esperamos a que la transición termine.
+            if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) exitCarousel();
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.fullscreenElement) exitCarousel();
+        });
+    });
+    </script>
+</body>
+</html>

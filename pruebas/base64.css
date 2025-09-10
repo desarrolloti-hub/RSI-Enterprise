@@ -1,0 +1,134 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000;
+            color: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 28rem;
+        }
+
+        .upload-card {
+            background-color: #1f2937;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            color: #d1d5db;
+            font-size: 1rem;
+        }
+
+        .upload-area {
+            position: relative;
+            border: 2px dashed #fbbf24;
+            border-radius: 0.5rem;
+            height: 8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            background-color: #374151;
+        }
+
+        .upload-content {
+            text-align: center;
+        }
+
+        .upload-icon {
+            color: #9ca3af;
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-content p {
+            color: #f3f4f6;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-type {
+            font-size: 0.75rem !important;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input:disabled {
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .message.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            display: block;
+        }
+
+        .message.success {
+            background-color: #dcfce7;
+            color: #15803d;
+            display: block;
+        }
+
+        .btn {
+            background-color: #fbbf24;
+            color: #111827;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #eab308;
+        }
+
+        .btn:disabled {
+            background-color: #6b7280;
+        }

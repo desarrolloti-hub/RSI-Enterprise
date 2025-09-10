@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entregas</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos exclusivos para la página de entregas */
+        .cuerpo {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .entregas-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            margin-top: 80px; /* Espacio para el título */
+        }
+
+        .entregas-header {
+            display: flex;
+            justify-content: flex-end; /* Alinea el botón a la derecha */
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative; /* Para posicionar el título */
+        }
+
+        .titulo-entregas {
+            text-align: center; /* Centra el texto */
+            width: 100%; /* Ocupa todo el ancho disponible */
+            margin-top: 20px; /* Espacio superior */
+            font-size: 28px;
+            color: #FFD700; /* Color dorado */
+            position: absolute; /* Posicionamiento absoluto */
+            top: 0; /* Lo coloca en la parte superior */
+            left: 50%; /* Lo mueve al centro horizontal */
+            transform: translateX(-50%); /* Ajusta el centrado */
+        }
+
+        .btn-nueva-entrega {
+            background-color: #FFD700; /* Color dorado */
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-nueva-entrega:hover {
+            background-color: #e6b800; /* Dorado más oscuro al hacer hover */
+        }
+
+        .tabla-entregas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .tabla-entregas th,
+        .tabla-entregas td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        .tabla-entregas th {
+            background-color: #1d1d1d;
+            color: #FFD700; /* Color dorado */
+        }
+
+        .tabla-entregas tr:hover {
+            background-color: #2d2d2d; /* Fondo más claro al hacer hover */
+        }
+
+        /* Estilos para los botones de acciones */
+        .btn-editar,
+        .btn-eliminar,
+        .btn-detalles {
+            background-color: transparent; /* Fondo transparente */
+            border: none; /* Sin borde */
+            color: #FFD700; /* Color dorado */
+            font-size: 20px; /* Tamaño más grande */
+            cursor: pointer;
+            margin: 0 5px; /* Espacio entre botones */
+            transition: color 0.3s ease; /* Transición suave del color */
+        }
+
+        .btn-editar:hover,
+        .btn-eliminar:hover,
+        .btn-detalles:hover {
+            color: #e6b800; /* Dorado más oscuro al hacer hover */
+        }
+
+        /* Centrar los botones en la celda */
+        .tabla-entregas td {
+            vertical-align: middle; /* Alinea verticalmente el contenido */
+            text-align: center; /* Centra horizontalmente el contenido */
+        }
+
+        .paginacion {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .paginacion button {
+            background-color: #1d1d1d;
+            color: #ffffff;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .paginacion button:hover {
+            background-color: #FFD700; /* Color dorado al hacer hover */
+            color: #000000;
+        }
+
+        .paginacion button.active {
+            background-color: #FFD700; /* Color dorado para la página activa */
+            color: #000000;
+        }
+    </style>
+</head>
+<body class="cuerpo">
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+
+    <div class="entregas-container">
+        <!-- Encabezado de la página -->
+        <div class="entregas-header">
+            <h2 class="titulo-entregas">Entregas</h2>
+        </div>
+        <br><br>
+        <!-- Tabla de Entregas -->
+        <table class="tabla-entregas">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Número de Entrega</th>
+                    <th>Cliente</th>
+                    <th>Producto</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Filas de ejemplo (se llenarán dinámicamente con la base de datos) -->
+                <tr>
+                    <td>1</td>
+                    <td>Entrega-001</td>
+                    <td>Cliente 1</td>
+                    <td>Producto A</td>
+                    <td>2023-10-01</td>
+                    <td>Entregado</td>
+                    <td>
+                        <button class="btn-detalles" data-id="1"><i class="fas fa-eye"></i></button>
+                        <button class="btn-editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Entrega-002</td>
+                    <td>Cliente 2</td>
+                    <td>Producto B</td>
+                    <td>2023-10-02</td>
+                    <td>Pendiente</td>
+                    <td>
+                        <button class="btn-detalles" data-id="2"><i class="fas fa-eye"></i></button>
+                        <button class="btn-editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div class="paginacion">
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script src="../../javascripts/includesVisita.js"></script>
+    <script src="../../javascripts/navScript.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Lógica para eliminar entregas
+            const botonesEliminar = document.querySelectorAll(".btn-eliminar");
+            botonesEliminar.forEach(boton => {
+                boton.addEventListener("click", function () {
+                    Swal.fire({
+                        title: "¿Eliminar entrega?",
+                        html: `
+                            <p>Esta acción no se puede deshacer.</p>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: "Sí, eliminar",
+                        cancelButtonText: "Cancelar",
+                        confirmButtonColor: "#d33",
+                        cancelButtonColor: "#3085d6",
+                        icon: "warning"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: "¡Eliminada!",
+                                html: `
+                                    <img src="https://cdn-icons-gif.flaticon.com/11186/11186844.gif" 
+                                        alt="Bote de basura animado" width="150" style="margin: 10px auto; display: block;">
+                                    La entrega ha sido eliminada.`
+                            });
+                            // Aquí puedes agregar la lógica para eliminar la entrega en la base de datos
+                        }
+                    });
+                });
+            });
+
+            // Lógica para ver detalles de la entrega
+            const botonesDetalles = document.querySelectorAll(".btn-detalles");
+            botonesDetalles.forEach(boton => {
+                boton.addEventListener("click", function () {
+                    const entregaId = boton.getAttribute("data-id"); // Obtener el ID de la entrega
+                    // Aquí puedes hacer una solicitud a la base de datos para obtener los detalles de la entrega
+                    const entrega = {
+                        id: entregaId,
+                        numeroEntrega: "Entrega-00" + entregaId,
+                        cliente: "Cliente " + entregaId,
+                        producto: "Producto " + (entregaId === 1 ? "A" : "B"),
+                        fecha: "2023-10-0" + entregaId,
+                        estado: entregaId === 1 ? "Entregado" : "Pendiente",
+                        detalles: "Detalles adicionales de la entrega."
+                    };
+
+                    // Mostrar los detalles en un modal de SweetAlert2
+                    Swal.fire({
+                        title: `<strong>Entrega ${entrega.numeroEntrega}</strong>`,
+                        html: `
+                            <div style="text-align: left;">
+                                <p><b>ID:</b> ${entrega.id}</p>
+                                <p><b>Cliente:</b> ${entrega.cliente}</p>
+                                <p><b>Producto:</b> ${entrega.producto}</p>
+                                <p><b>Fecha:</b> ${entrega.fecha}</p>
+                                <p><b>Estado:</b> ${entrega.estado}</p>
+                                <p><b>Detalles:</b> ${entrega.detalles}</p>
+                            </div>
+                        `,
+                        showCloseButton: true,
+                        showCancelButton: false,
+                        confirmButtonText: "Cerrar",
+                        confirmButtonColor: "#FFD700",
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

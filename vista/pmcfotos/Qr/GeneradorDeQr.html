@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador QR para Fiestas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <link rel="stylesheet" href="GeneradorDeQr.css">
+    <link rel="stylesheet" href="fotos.css">
+</head>
+
+<body>
+    <nav>
+    <div class="logo"> ADMIN</div>
+    <div class="nav-links">
+        <a href="../Admin/dashadmin.html">Admin Home</a>
+    </div>
+</nav>
+    <div class="view-toggle">
+        <button id="show-generator" class="active">QR Generator</button>
+        <button id="show-parties">List of Festivals</button>
+    </div>
+    
+    <div id="generator-view" class="container">
+        <h1>Party QR Generator</h1>
+        <div class="form-group">
+            <label for="party-name">Name of the party:</label>
+            <input type="text" id="party-name" placeholder="Ej: XV Años de Sofía">
+        </div>
+        <button id="generate-btn">Generate QR and Create Party</button>
+        <div id="qr-container">
+            <p>Enter the name of the party and click on "Generate QR""</p>
+            <div id="qr-code"></div>
+            <button id="download-btn" class="download-btn">Download QR</button>
+        </div>
+    </div>
+    
+    <div id="parties-view" class="container hidden">
+        <h1>Registered Parties</h1>
+        <div id="parties-list">
+            <p>Loading party list...</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+       const firebaseConfig = {
+      apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+      authDomain: "rsienterprise.firebaseapp.com",
+      projectId: "rsienterprise",
+      storageBucket: "rsienterprise.appspot.com",
+      messagingSenderId: "1063117165770",
+      appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        const neonAlertOptions = { 
+            customClass: { popup: 'neon-alert' }, 
+            confirmButtonText: 'Entendido',
+            allowOutsideClick: false
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos de la vista generador
+            const generateBtn = document.getElementById('generate-btn');
+            const partyNameInput = document.getElementById('party-name');
+            const qrContainer = document.getElementById('qr-container');
+            const downloadBtn = document.getElementById('download-btn');
+            
+            // Elementos de navegación
+            const showGeneratorBtn = document.getElementById('show-generator');
+            const showPartiesBtn = document.getElementById('show-parties');
+            const generatorView = document.getElementById('generator-view');
+            const partiesView = document.getElementById('parties-view');
+            const partiesList = document.getElementById('parties-list');
+            
+            // Manejar cambio de vistas
+            showGeneratorBtn.addEventListener('click', () => {
+                showGeneratorBtn.classList.add('active');
+                showPartiesBtn.classList.remove('active');
+                generatorView.classList.remove('hidden');
+                partiesView.classList.add('hidden');
+            });
+            
+            showPartiesBtn.addEventListener('click', async () => {
+                showPartiesBtn.classList.add('active');
+                showGeneratorBtn.classList.remove('active');
+                generatorView.classList.add('hidden');
+                partiesView.classList.remove('hidden');
+                
+                // Cargar las fiestas al mostrar la vista
+                await loadParties();
+            });
+            
+            // Función para cargar todas las fiestas
+            async function loadParties() {
+                try {
+                    partiesList.innerHTML = '<p>Cargando listado de fiestas...</p>';
+                    
+                    const collections = await getCollections();
+                    
+                    if (collections.length === 0) {
+                        partiesList.innerHTML = '<p>No hay fiestas registradas aún.</p>';
+                        return;
+                    }
+                    
+                    // Obtener la configuración de cada fiesta
+                    const partiesData = [];
+                    for (const collectionId of collections) {
+                        if (collectionId.startsWith('_')) continue; // Ignorar colecciones del sistema
+                        
+                        const configDoc = await db.collection(collectionId).doc('_config').get();
+                        if (configDoc.exists) {
+                            partiesData.push({
+                                id: collectionId,
+                                ...configDoc.data()
+                            });
+                        }
+                    }
+                    
+                    // Ordenar por fecha de creación (más recientes primero)
+                    partiesData.sort((a, b) => (b.creadoEn?.toDate() || 0) - (a.creadoEn?.toDate() || 0));
+                    
+                    // Mostrar en tarjetas
+                    renderPartyCards(partiesData);
+                } catch (error) {
+                    console.error("Error al cargar fiestas:", error);
+                    partiesList.innerHTML = `<p class="error">Error al cargar las fiestas: ${error.message}</p>`;
+                }
+            }
+            
+            // Función para obtener todas las colecciones (usando el documento _metadata)
+            async function getCollections() {
+                try {
+                    const partiesDoc = await db.collection('_metadata').doc('parties').get();
+                    if (partiesDoc.exists) {
+                        return partiesDoc.data().collections || [];
+                    }
+                    return [];
+                } catch (error) {
+                    console.error("Error al obtener colecciones:", error);
+                    return [];
+                }
+            }
+            
+            // Función para renderizar las tarjetas de fiestas (CORREGIDA)
+            function renderPartyCards(parties) {
+                if (parties.length === 0) {
+                    partiesList.innerHTML = '<p>No hay fiestas registradas aún.</p>';
+                    return;
+                }
+                
+                const cardsHTML = parties.map(party => {
+                    // Usamos el ID de la fiesta como alternativa si 'nombreOriginal' no existe
+                    const partyName = party.nombreOriginal || party.id; 
+                    const escapedPartyName = partyName.replace(/'/g, "\\'"); // Escapamos las comillas
+
+                    return `
+                        <div class="party-card" onclick="goToPartyDetails('${party.id}')">
+                            <h3>${partyName}</h3>
+                            <p>ID: ${party.id}</p>
+                            <p>Creado: ${party.creadoEn?.toDate().toLocaleDateString() || 'Fecha desconocida'}</p>
+                            <div class="card-qr" style="background-image: url('${party.qrBase64 || ''}')"></div>
+                            <div class="card-actions">
+                                <button onclick="event.stopPropagation(); downloadQR('${party.id}', '${escapedPartyName}')">Descargar QR</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                partiesList.innerHTML = `<div class="parties-grid">${cardsHTML}</div>`;
+            }
+
+            
+            // Función para redirigir a la página de detalles de la fiesta
+            window.goToPartyDetails = function(partyId) {
+                window.location.href = `../QrFotos/fotosQr.html?fiesta=${partyId}`;
+            };
+
+            // Función global para descargar QR (desde las tarjetas)
+            window.downloadQR = async function(partyId, partyName) {
+                try {
+                    // Obtener la URL del QR directamente desde Firestore para asegurar que es la correcta
+                    const configDoc = await db.collection(partyId).doc('_config').get();
+                    if (!configDoc.exists || !configDoc.data().qrBase64) {
+                         Swal.fire({ ...neonAlertOptions, icon: 'error', title: 'Error', text: 'No se pudo encontrar el QR para descargar.' });
+                         return;
+                    }
+                    
+                    const qrBase64 = configDoc.data().qrBase64;
+                    
+                    const link = document.createElement('a');
+                    link.download = `QR-${partyName.replace(/\s+/g, '-')}.png`;
+                    link.href = qrBase64;
+                    link.click();
+                } catch(error) {
+                    console.error("Error descargando QR desde tarjeta:", error);
+                    Swal.fire({ ...neonAlertOptions, icon: 'error', title: 'Error', text: 'Ocurrió un problema al descargar el QR.' });
+                }
+            };
+            
+            // Generador de QR
+            generateBtn.addEventListener('click', async () => {
+                const partyName = partyNameInput.value.trim();
+                if (!partyName) {
+                    Swal.fire({ ...neonAlertOptions, icon: 'error', title: 'Campo Vacío', text: 'Por favor, ingresa el nombre de la fiesta.' });
+                    return;
+                }
+                
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Procesando...';
+                
+                try {
+                    document.getElementById('qr-code').innerHTML = '';
+                    downloadBtn.style.display = 'none';
+                    
+                    const partyId = partyName.toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-z0-9-]/g, '');
+                    
+const qrUrl = `https://rsienterprise.com/fiestaQR.html?fiesta=${partyId}`;
+                    const qrCodeElement = document.getElementById('qr-code');
+                    new QRCode(qrCodeElement, { 
+                        text: qrUrl, 
+                        width: 200, 
+                        height: 200,
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const canvas = qrCodeElement.querySelector('canvas');
+                    const qrBase64 = canvas.toDataURL('image/png');
+                    
+                    await db.collection(partyId).doc('_config').set({
+                        nombreOriginal: partyName,
+                        creadoEn: new Date(),
+                        qrBase64: qrBase64,
+                        qrUrl: qrUrl,
+                        ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    await updateCollectionsList(partyId);
+                    
+                    downloadBtn.style.display = 'inline-block';
+                    qrContainer.querySelector('p').textContent = `QR para: ${partyName}`;
+                    
+                    Swal.fire({ 
+                        ...neonAlertOptions, 
+                        icon: 'success', 
+                        title: 'Party Created!', 
+                        html: `La fiesta <strong>"${partyName}"</strong>has been successfully created.<br><br>
+                               <small>ID: ${partyId}</small>`,
+                        showConfirmButton: true,
+                        confirmButtonText: 'YES'
+                    });
+                } catch (error) {
+                    console.error("Error al crear fiesta:", error);
+                    Swal.fire({ 
+                        ...neonAlertOptions, 
+                        icon: 'error', 
+                        title: 'Error', 
+                        text: 'No se pudo crear la fiesta.',
+                        footer: error.message
+                    });
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generar QR y Crear Fiesta';
+                }
+            });
+            
+            // Función para actualizar el listado de colecciones
+            async function updateCollectionsList(newCollectionId) {
+                try {
+                    const partiesRef = db.collection('_metadata').doc('parties');
+                    const doc = await partiesRef.get();
+                    
+                    if (doc.exists) {
+                        const currentCollections = doc.data().collections || [];
+                        if (!currentCollections.includes(newCollectionId)) {
+                            await partiesRef.update({
+                                collections: firebase.firestore.FieldValue.arrayUnion(newCollectionId)
+                            });
+                        }
+                    } else {
+                        await partiesRef.set({
+                            collections: [newCollectionId]
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error al actualizar listado de colecciones:", error);
+                }
+            }
+            
+            // Descargar QR como imagen
+            downloadBtn.addEventListener('click', () => {
+                const canvas = document.querySelector('#qr-code canvas');
+                if (!canvas) {
+                    Swal.fire({ ...neonAlertOptions, icon: 'warning', title: 'No hay QR', text: 'Primero genera un código QR para descargar.' });
+                    return;
+                }
+                const partyName = partyNameInput.value.trim() || 'fiesta';
+                const link = document.createElement('a');
+                link.download = `QR-${partyName.replace(/\s+/g, '-')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        });
+    </script>
+</body>
+</html>

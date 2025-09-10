@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/estilos-nav.css">
+    <style>
+        @media (max-width: 768px) {
+    .form-row, .zipcode-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .zipcode-group, .password-btn-group {
+        flex: 1;
+        width: 100%;
+    }
+    
+    .profile-container {
+        padding: 20px;
+        margin-top: 30px; /* Espacio reducido en móviles */
+    }
+}
+        :root {
+            --primary-color: #1c1948;
+            --secondary-color: #3a36a8;
+            --accent-color: #ff6b6b;
+            --color-boton: #0f0594;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #495057;
+            --text-color: #2b2d42;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        /* Contenedor del perfil con diseño mejorado */
+        .profile-container {
+            max-width: 900px;
+            margin: 110px auto 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        /* Estilo para el título "Mi Perfil" */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .profile-header h1 {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 1.8rem;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-picture-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+        }
+
+        .profile-picture {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--primary-color);
+            cursor: pointer;
+            background-color: var(--light-gray);
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .profile-picture:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .profile-picture i {
+            font-size: 70px;
+            line-height: 140px;
+            color: var(--dark-gray);
+            display: block;
+            text-align: center;
+        }
+
+        .profile-picture-edit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid white;
+            transition: var(--transition);
+        }
+
+        .profile-picture-edit:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        #profile-image-input {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--medium-gray);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: var(--transition);
+            background-color: white;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(28, 25, 72, 0.2);
+            outline: none;
+        }
+
+        /* Estilo para campo de correo no editable */
+        .form-group input[readonly] {
+            background-color: var(--light-gray);
+            cursor: not-allowed;
+            border-color: #ddd;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .zipcode-row {
+            display: flex;
+            gap: 25px;
+            align-items: flex-end;
+        }
+
+        .zipcode-group {
+            flex: 0.5;
+        }
+
+        .password-btn-group {
+            flex: 0.5;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            border: none;
+            padding: 14px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-save:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-save i {
+            font-size: 18px;
+        }
+
+        .btn-change-password {
+            background-color: var(--color-boton);
+            color: white;
+            width: 100%;
+            height: 48px;
+        }
+
+        .btn-change-password:hover {
+            background-color: #0e108d;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .form-row, .zipcode-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .zipcode-group, .password-btn-group {
+                flex: 1;
+                width: 100%;
+            }
+            
+            .profile-container {
+                padding: 20px;
+                margin-top: 90px;
+            }
+        }
+
+        /* Estilos mejorados para el modal de cambio de contraseña */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1050;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 8% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            animation: slideDown 0.4s ease forwards;
+            position: relative;
+            border: none;
+        }
+
+        @keyframes slideDown {
+            to { transform: translateY(0); }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--dark-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+
+        .close-modal:hover {
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .modal-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .password-strength {
+            height: 4px;
+            background: var(--medium-gray);
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .password-strength::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: #ff4757;
+            transition: width 0.3s ease;
+        }
+
+        .password-strength.weak::before {
+            width: 30%;
+            background: #ff4757;
+        }
+
+        .password-strength.medium::before {
+            width: 60%;
+            background: #ffa502;
+        }
+
+        .password-strength.strong::before {
+            width: 100%;
+            background: #2ed573;
+        }
+
+        .password-hint {
+            font-size: 0.8rem;
+            color: var(--dark-gray);
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Estilos para el carrito */
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: -2px 0 15px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .cart-sidebar.open {
+            right: 0;
+        }
+
+        .floating-cart-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: var(--transition);
+        }
+
+        .floating-cart-btn:hover {
+            transform: scale(1.1);
+            background-color: var(--secondary-color);
+        }
+
+        .floating-cart-btn i {
+            font-size: 26px;
+        }
+
+        #cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="nan_reset">
+<header class="nan_header">
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <a href="dashUser.html"><img src="../../../vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a>
+        </div>
+        <button class="nan_hamburger" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+         <ul class="nan_menu">
+            <li><a href="productos-usuario.html"><i class="fas fa-box"></i> Productos</a></li>&emsp; &emsp;
+            <li><a href="historial-de-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>&emsp;&emsp;
+            <li><a href="lista-de-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>&emsp; &emsp;
+            <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>&emsp; &emsp;
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>&emsp; &emsp;
+            <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>&emsp; &emsp;
+            <li class="nan_language">
+                <select id="languageSelect" class="language-select">
+                    <option value="es" data-flag="../css/img/flag-mexico.png">🇲🇽</option>
+                    <option value="en" data-flag="../css/img/flag-usa.png">🇺🇸</option>
+                </select>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-picture-container">
+            <label for="profile-image-input">
+                <div class="profile-picture" id="profile-picture">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="profile-picture-edit">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </label>
+            <input type="file" id="profile-image-input" accept="image/*">
+        </div>
+        <h1>Mi Perfil</h1>
+    </div>
+
+    <form id="profile-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nombreCompleto">Nombre completo</label>
+                <input type="text" id="nombreCompleto" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" readonly>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" placeholder="Ej. 5551234567">
+            </div>
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <input type="text" id="direccion" placeholder="Ej. Calle Principal #123">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="ciudad">Ciudad</label>
+                <input type="text" id="ciudad" placeholder="Ej. Ciudad de México">
+            </div>
+            <div class="form-group">
+                <label for="estado">Estado</label>
+                <input type="text" id="estado" placeholder="Ej. CDMX">
+            </div>
+        </div>
+
+        <div class="zipcode-row">
+            <div class="form-group zipcode-group">
+                <label for="codigoPostal">Código Postal</label>
+                <input type="text" id="codigoPostal" placeholder="Ej. 12345" maxlength="5">
+            </div>
+            <div class="password-btn-group">
+                <button type="button" id="change-password-btn" class="btn btn-change-password">
+                    <i class="fas fa-lock"></i> Cambiar Contraseña
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-save">
+            <i class="fas fa-save"></i> Guardar Cambios
+        </button>
+    </form>
+</div>
+
+<!-- Modal mejorado para cambiar contraseña -->
+<div id="password-modal" class="modal">
+    <div class="modal-content">
+        <button class="close-modal">&times;</button>
+        <div class="modal-header">
+            <h2>Cambiar Contraseña</h2>
+        </div>
+        <form id="password-form">
+            <div class="form-group">
+                <label for="current-password">Contraseña Actual</label>
+                <input type="password" id="current-password" required placeholder="Ingresa tu contraseña actual">
+            </div>
+            
+            <div class="form-group">
+                <label for="new-password">Nueva Contraseña</label>
+                <input type="password" id="new-password" required minlength="6" placeholder="Mínimo 6 caracteres">
+                <div class="password-strength" id="password-strength"></div>
+                <span class="password-hint">La contraseña debe tener al menos 6 caracteres</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                <input type="password" id="confirm-password" required placeholder="Repite tu nueva contraseña">
+            </div>
+            
+            <button type="submit" class="btn btn-save" style="width: 100%;">
+                <i class="fas fa-key"></i> Actualizar Contraseña
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Inicializar Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar autenticación
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Cargar datos del usuario
+                loadUserData(user.uid);
+                // Establecer el correo electrónico del usuario
+                document.getElementById('email').value = user.email;
+            } else {
+                // Redirigir si no está autenticado
+                window.location.href = 'inicio-de-sesion.html';
+            }
+        });
+
+        // Evento para cambiar la imagen de perfil
+        document.getElementById('profile-image-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) { // 2MB máximo
+                    Swal.fire({
+                        title: "Archivo muy grande",
+                        text: "La imagen debe ser menor a 2MB",
+                        icon: "error"
+                    });
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imgElement = document.getElementById('profile-picture');
+                    imgElement.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.className = 'profile-picture';
+                    imgElement.appendChild(img);
+                    
+                    // Guardar la imagen en Firestore
+                    saveProfileImage(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Evento para guardar los cambios del perfil
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveProfileData();
+        });
+
+        // Eventos para el modal de cambio de contraseña
+        const modal = document.getElementById('password-modal');
+        const btn = document.getElementById('change-password-btn');
+        const closeBtn = document.querySelector('.close-modal');
+
+        // Abrir modal al hacer clic en el botón
+        btn.addEventListener('click', function() {
+            modal.style.display = "block";
+            document.body.style.overflow = "hidden";
+        });
+
+        // Cerrar modal al hacer clic en la X
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = "none";
+            document.body.style.overflow = "auto";
+        });
+
+        // Cerrar modal al hacer clic fuera del contenido
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                document.body.style.overflow = "auto";
+            }
+        });
+
+        // Manejar el envío del formulario de cambio de contraseña
+        document.getElementById('password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            changePassword();
+        });
+
+        // Validar fortaleza de la contraseña en tiempo real
+        document.getElementById('new-password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('password-strength');
+            
+            // Reset classes
+            strengthBar.className = 'password-strength';
+            
+            if (password.length > 0) {
+                if (password.length < 6) {
+                    strengthBar.classList.add('weak');
+                } else if (password.length < 10) {
+                    strengthBar.classList.add('medium');
+                } else {
+                    strengthBar.classList.add('strong');
+                }
+            }
+        });
+    });
+
+    function loadUserData(userId) {
+        db.collection('usuarios').doc(userId).get().then(doc => {
+            if (doc.exists) {
+                const userData = doc.data();
+                
+                // Llenar los campos del formulario
+                document.getElementById('nombreCompleto').value = userData.nombreCompleto || '';
+                document.getElementById('telefono').value = userData.telefono || '';
+                document.getElementById('direccion').value = userData.direccion || '';
+                document.getElementById('ciudad').value = userData.ciudad || '';
+                document.getElementById('estado').value = userData.estado || '';
+                document.getElementById('codigoPostal').value = userData.codigoPostal || '';
+                
+                // Cargar imagen de perfil si existe
+                if (userData.fotoPerfil) {
+                    const imgElement = document.getElementById('profile-picture');
+                    imgElement.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = userData.fotoPerfil;
+                    img.className = 'profile-picture';
+                    imgElement.appendChild(img);
+                }
+            }
+        }).catch(error => {
+            console.error("Error al cargar datos del usuario:", error);
+            Swal.fire({
+                title: "Error",
+                text: "No se pudieron cargar los datos del perfil.",
+                icon: "error",
+                confirmButtonColor: "#1c1948"
+            });
+        });
+    }
+
+    function saveProfileImage(imageBase64) {
+        const user = auth.currentUser;
+        if (user) {
+            db.collection('usuarios').doc(user.uid).update({
+                fotoPerfil: imageBase64,
+                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                Swal.fire({
+                    title: "¡Éxito!",
+                    text: "Foto de perfil actualizada correctamente.",
+                    icon: "success",
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: "#fff",
+                    backdrop: `
+                        rgba(28,25,72,0.4)
+                        left top
+                        no-repeat
+                    `
+                });
+            }).catch(error => {
+                console.error("Error al guardar la imagen:", error);
+                Swal.fire({
+                    title: "Error",
+                    text: "No se pudo guardar la foto de perfil.",
+                    icon: "error",
+                    confirmButtonColor: "#1c1948"
+                });
+            });
+        }
+    }
+
+    function saveProfileData() {
+        const user = auth.currentUser;
+        if (user) {
+            const profileData = {
+                nombreCompleto: document.getElementById('nombreCompleto').value,
+                telefono: document.getElementById('telefono').value,
+                direccion: document.getElementById('direccion').value,
+                ciudad: document.getElementById('ciudad').value,
+                estado: document.getElementById('estado').value,
+                codigoPostal: document.getElementById('codigoPostal').value,
+                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Validación básica
+            if (!profileData.nombreCompleto) {
+                Swal.fire({
+                    title: "Campo requerido",
+                    text: "Nombre completo es obligatorio",
+                    icon: "warning",
+                    confirmButtonColor: "#1c1948"
+                });
+                return;
+            }
+
+            db.collection('usuarios').doc(user.uid).update(profileData)
+                .then(() => {
+                    Swal.fire({
+                        title: "¡Éxito!",
+                        text: "Perfil actualizado correctamente.",
+                        icon: "success",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: "#fff",
+                        backdrop: `
+                            rgba(28,25,72,0.4)
+                            left top
+                            no-repeat
+                        `
+                    });
+                })
+                .catch(error => {
+                    console.error("Error al actualizar perfil:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se pudo actualizar el perfil.",
+                        icon: "error",
+                        confirmButtonColor: "#1c1948"
+                    });
+                });
+        }
+    }
+
+    function changePassword() {
+        const user = auth.currentUser;
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const modal = document.getElementById('password-modal');
+
+        // Validaciones
+        if (newPassword !== confirmPassword) {
+            Swal.fire({
+                title: "Error",
+                text: "Las contraseñas no coinciden.",
+                icon: "error",
+                confirmButtonColor: "#1c1948"
+            });
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            Swal.fire({
+                title: "Error",
+                text: "La contraseña debe tener al menos 6 caracteres.",
+                icon: "error",
+                confirmButtonColor: "#1c1948"
+            });
+            return;
+        }
+
+        // Reautenticar al usuario antes de cambiar la contraseña
+        const credential = firebase.auth.EmailAuthProvider.credential(
+            user.email, 
+            currentPassword
+        );
+
+        Swal.fire({
+            title: "Actualizando contraseña...",
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        user.reauthenticateWithCredential(credential)
+            .then(() => {
+                // Actualizar la contraseña
+                return user.updatePassword(newPassword);
+            })
+            .then(() => {
+                Swal.fire({
+                    title: "¡Éxito!",
+                    text: "Contraseña actualizada correctamente.",
+                    icon: "success",
+                    confirmButtonColor: "#1c1948"
+                });
+                // Limpiar el formulario y cerrar el modal
+                document.getElementById('password-form').reset();
+                document.getElementById('password-strength').className = 'password-strength';
+                modal.style.display = "none";
+                document.body.style.overflow = "auto";
+            })
+            .catch(error => {
+                console.error("Error al cambiar contraseña:", error);
+                let errorMessage = "Ocurrió un error al cambiar la contraseña.";
+                
+                if (error.code === "auth/wrong-password") {
+                    errorMessage = "La contraseña actual es incorrecta.";
+                } else if (error.code === "auth/weak-password") {
+                    errorMessage = "La nueva contraseña es demasiado débil.";
+                } else if (error.code === "auth/requires-recent-login") {
+                    errorMessage = "Por seguridad, debes iniciar sesión nuevamente para cambiar tu contraseña.";
+                }
+                
+                Swal.fire({
+                    title: "Error",
+                    text: errorMessage,
+                    icon: "error",
+                    confirmButtonColor: "#1c1948"
+                });
+            });
+    }
+</script>
+    <div id="cart-sidebar" class="cart-sidebar">
+        <h2>Carrito de Compras <button id="close-cart">&times;</button></h2>
+        <div id="cart-items"></div>
+        <div class="cart-subtotal">
+            <span>Subtotal:</span>
+            <span id="cart-subtotal">$0.00</span>
+        </div>
+        <button id="checkout" class="openpay-button">Finalizar Compra</button>
+    </div>
+
+    <!-- Botón flotante del carrito -->
+    <div id="floating-cart-btn" class="floating-cart-btn">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count">0</span>
+    </div>
+    <script src="../../javascripts/navScript.js"></script>
+    <script src="../../javascripts/user/carritoUserLogin.js"></script>
+    <script type="module">
+        import { initAuthCheck } from '../../javascripts/user/auth-check.js';
+        // Inicializar la verificación de autenticación para usuarios normales
+        initAuthCheck("user");
+    </script>
+</body>
+</html>

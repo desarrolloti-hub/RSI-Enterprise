@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Deseos - RSI Enterprise</title>
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/estilos-nav.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .wishlist-header {
+            margin-top: 98px;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .panel-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 0.5rem;
+        }
+
+        .wishlist-count {
+            font-size: 1rem;
+            color: #718096;
+        }
+
+        .wishlist-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .wishlist-table thead {
+            background-color: #1a365d;
+            color: white;
+        }
+
+        .wishlist-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .wishlist-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #edf2f7;
+            vertical-align: middle;
+        }
+
+        .wishlist-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .wishlist-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 0.25rem;
+            background: #f8fafc;
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .product-category {
+            font-size: 0.875rem;
+            color: #718096;
+        }
+
+        .price-original {
+            text-decoration: line-through;
+            color: #718096;
+            font-size: 0.875rem;
+        }
+
+        .price-final {
+            font-weight: 600;
+            color: #2f855a;
+        }
+
+        .discount-badge {
+            background-color: #f56565;
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #1a365d;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #15325a;
+        }
+
+        .btn-danger {
+            background-color: #e53e3e;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .panel-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        /* Estilos responsive */
+        @media (max-width: 768px) {
+            .wishlist-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .product-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .wishlist-header {
+                margin-top: 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .wishlist-table th, 
+            .wishlist-table td {
+                padding: 0.75rem;
+            }
+            
+            .product-image {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body class="nan_reset">
+    <!-- Header y navegación -->
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <a href="dashUser.html"><img src="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a>
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+            <li><a href="productos-usuario.html"><i class="fas fa-box"></i> Productos</a></li>&emsp; &emsp;
+            <li><a href="historial-de-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>&emsp;&emsp;
+            <li><a href="lista-de-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>&emsp; &emsp;
+            <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>&emsp; &emsp;
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>&emsp; &emsp;
+            <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>&emsp; &emsp;
+            <li class="nan_language">
+                <select id="languageSelect" class="language-select">
+                    <option value="es" data-flag="../css/img/flag-mexico.png">🇲🇽</option>
+                    <option value="en" data-flag="../css/img/flag-usa.png">🇺🇸</option>
+                </select>
+            </li>
+        </ul>
+        </nav>
+    </header>
+
+    <!-- Botón de WhatsApp -->
+    <a href="https://wa.me/5551391533" class="whatsapp-float" target="_blank">
+        <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" alt="WhatsApp">
+    </a>
+
+    <!-- Contenido principal -->
+    <div class="dashboard-container">
+        <div class="wishlist-header">
+            <h1 class="panel-title"><i class="fas fa-heart"></i> Mi Lista de Deseos</h1>
+            <div id="wishlist-count" class="wishlist-count">0 productos</div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="wishlist-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="wishlist-items">
+                    <!-- Los productos se cargarán aquí dinámicamente -->
+                </tbody>
+            </table>
+            <div id="empty-wishlist" class="empty-state hidden">
+                <div class="empty-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h3>Tu lista de deseos está vacía</h3>
+                <p class="text-gray-600">Agrega productos que te interesen desde el catálogo</p>
+                <a href="productosUsuario" class="btn btn-primary">
+                    <i class="fas fa-box"></i> Ver productos
+                </a>
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <button id="checkout-wishlist" class="btn btn-primary hidden">
+                <i class="fas fa-shopping-cart"></i> Comprar todos los productos
+            </button>
+        </div>
+    </div>
+
+    <!-- Carrito de compras -->
+    <div id="cart-sidebar" class="cart-sidebar">
+        <h2>Carrito de Compras <button id="close-cart">&times;</button></h2>
+        <div id="cart-items"></div>
+        <div class="cart-subtotal">
+            <span>Subtotal:</span>
+            <span id="cart-subtotal">$0.00</span>
+        </div>
+        <button id="checkout" class="openpay-button">Finalizar Compra</button>
+    </div>
+
+    <!-- Botón flotante del carrito -->
+    <div id="floating-cart-btn" class="floating-cart-btn">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count">0</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+
+    // Variable para controlar si ya mostramos el alert
+    let alertShown = false;
+
+    // Cargar wishlist del usuario
+    async function loadWishlist() {
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = "inicio-de-sesion";
+            return;
+        }
+        
+        try {
+            const wishlistRef = db.collection("wishlists").doc(user.uid);
+            const docSnap = await wishlistRef.get();
+            
+            const wishlistItems = document.getElementById("wishlist-items");
+            const emptyWishlist = document.getElementById("empty-wishlist");
+            const checkoutBtn = document.getElementById("checkout-wishlist");
+            
+            wishlistItems.innerHTML = "";
+            
+            if (docSnap.exists && docSnap.data().products?.length > 0) {
+                const products = docSnap.data().products;
+                document.getElementById("wishlist-count").textContent = `${products.length} ${products.length === 1 ? 'producto' : 'productos'}`;
+                
+                emptyWishlist.classList.add("hidden");
+                checkoutBtn.classList.remove("hidden");
+                
+                products.forEach((product, index) => {
+                    const productRow = createWishlistItemRow(product, index, user.uid);
+                    wishlistItems.appendChild(productRow);
+                });
+            } else {
+                document.getElementById("wishlist-count").textContent = "0 productos";
+                emptyWishlist.classList.remove("hidden");
+                checkoutBtn.classList.add("hidden");
+                
+                // Mostrar SweetAlert solo si no está vacío y no lo hemos mostrado antes
+                if (!alertShown && wishlistItems.children.length === 0) {
+                    alertShown = true;
+                    Swal.fire({
+                        title: 'Lista de deseos vacía',
+                        text: 'No tienes productos en tu lista de deseos',
+                        icon: 'info',
+                        confirmButtonText: 'Ir a productos',
+                        timer: 5000,
+                        timerProgressBar: true,
+                        willClose: () => {
+                            window.location.href = "productos-usuario.html";
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = "productos-usuario.html";
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error al cargar lista de deseos:", error);
+            Swal.fire("Error", "No se pudo cargar tu lista de deseos", "error");
+        }
+    }
+
+    // Crear fila de producto para la tabla
+    function createWishlistItemRow(product, index, userId) {
+        const row = document.createElement("tr");
+        
+        const price = parseFloat(product.price) || 0;
+        const discount = parseFloat(product.discount) || 0;
+        const finalPrice = discount > 0 ? price * (1 - discount/100) : price;
+        
+        row.innerHTML = `
+            <td>
+                <div class="product-info">
+                    <img src="${product.image || defaultImage}" alt="${product.name}" class="product-image" onerror="this.src='${defaultImage}'">
+                    <div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-category">${product.category || 'Sin categoría'}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <span class="price-final">$${finalPrice.toFixed(2)}</span>
+                    ${discount > 0 ? `
+                        <div class="price-original">$${price.toFixed(2)}</div>
+                        <span class="discount-badge">${discount}% OFF</span>
+                    ` : ''}
+                </div>
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-add-cart" data-product='${JSON.stringify(product)}'>
+                        <i class="fas fa-cart-plus"></i> Carrito
+                    </button>
+                    <button class="btn btn-danger btn-remove-wishlist">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        // Evento para eliminar de la wishlist
+        row.querySelector(".btn-remove-wishlist").addEventListener("click", async () => {
+            try {
+                const { isConfirmed } = await Swal.fire({
+                    title: '¿Eliminar producto?',
+                    text: "¿Estás seguro de que quieres eliminar este producto de tu lista de deseos?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (isConfirmed) {
+                    const wishlistRef = db.collection("wishlists").doc(userId);
+                    await wishlistRef.update({
+                        products: firebase.firestore.FieldValue.arrayRemove(product),
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    // Recargar la lista
+                    await loadWishlist();
+                    Swal.fire("Eliminado", "Producto removido de tu lista de deseos", "success");
+                }
+            } catch (error) {
+                console.error("Error al eliminar de wishlist:", error);
+                Swal.fire("Error", "No se pudo eliminar el producto", "error");
+            }
+        });
+        
+        // Evento para añadir al carrito
+        row.querySelector(".btn-add-cart").addEventListener("click", async (e) => {
+            const productData = JSON.parse(e.target.closest('button').dataset.product);
+            const wishlistRef = db.collection("wishlists").doc(userId);
+            
+            try {
+                // Añadir al carrito
+                addToCart(productData);
+                
+                // Eliminar de la wishlist
+                await wishlistRef.update({
+                    products: firebase.firestore.FieldValue.arrayRemove(productData),
+                    updatedAt: new Date().toISOString()
+                });
+                
+                // Mostrar confirmación
+                await Swal.fire({
+                    title: "¡Producto agregado!",
+                    text: `${productData.name} se ha añadido al carrito`,
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                
+                // Recargar la lista
+                await loadWishlist();
+                updateCartUI();
+            } catch (error) {
+                console.error("Error al mover al carrito:", error);
+                Swal.fire("Error", "No se pudo mover el producto al carrito", "error");
+            }
+        });
+        
+        return row;
+    }
+
+    // Función para añadir al carrito (localStorage)
+    function addToCart(product) {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const existingProductIndex = cart.findIndex(item => item.id === product.id);
+        
+        const price = parseFloat(product.price) || 0;
+        const discount = parseFloat(product.discount) || 0;
+        const finalPrice = discount > 0 ? price * (1 - discount/100) : price;
+
+        if (existingProductIndex !== -1) {
+            cart[existingProductIndex].cantidad += 1;
+        } else {
+            cart.push({
+                id: product.id,
+                imagen: product.image || defaultImage,
+                nombre: product.name,
+                precio: finalPrice.toFixed(2),
+                precioOriginal: price.toFixed(2),
+                descuento: discount,
+                cantidad: 1,
+                sku: product.sku || product.id
+            });
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCartUI();
+    }
+
+    // Actualizar la UI del carrito
+    function updateCartUI() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const cartItemsContainer = document.getElementById("cart-items");
+        const cartCount = document.getElementById("cart-count");
+        const cartSubtotal = document.getElementById("cart-subtotal");
+        
+        let subtotal = 0;
+        cartItemsContainer.innerHTML = "";
+
+        cart.forEach((item, index) => {
+            const price = parseFloat(item.precio) || 0;
+            const totalItem = price * item.cantidad;
+            subtotal += totalItem;
+
+            const cartItem = document.createElement("div");
+            cartItem.classList.add("cart-item");
+            cartItem.innerHTML = `
+                <img src="${item.imagen}" alt="${item.nombre}" style="width: 50px; height: 50px;">
+                <span class="product-name">${item.nombre}</span>
+                <div class="quantity-controls">
+                    <button onclick="updateQuantity(${index}, ${item.cantidad - 1})">-</button>
+                    <input type="number" value="${item.cantidad}" min="1" onchange="updateQuantity(${index}, this.value)">
+                    <button onclick="updateQuantity(${index}, ${item.cantidad + 1})">+</button>
+                </div>
+                <button class="remove-btn" onclick="removeFromCart(${index})"><i class="fas fa-trash"></i></button>
+            `;
+            cartItemsContainer.appendChild(cartItem);
+        });
+
+        cartCount.textContent = cart.length;
+        cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+    }
+
+    // Función para comprar toda la lista de deseos
+    async function checkoutWishlist() {
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = "inicio-de-sesion";
+            return;
+        }
+        
+        try {
+            const wishlistRef = db.collection("wishlists").doc(user.uid);
+            const docSnap = await wishlistRef.get();
+            
+            if (!docSnap.exists || !docSnap.data().products?.length) {
+                Swal.fire("Lista vacía", "No hay productos en tu lista de deseos", "warning");
+                return;
+            }
+            
+            // Confirmar con el usuario
+            const { isConfirmed } = await Swal.fire({
+                title: "¿Comprar lista completa?",
+                text: "Se vaciará tu carrito actual y se agregarán todos los productos de tu lista de deseos",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Sí, continuar",
+                cancelButtonText: "Cancelar"
+            });
+            
+            if (!isConfirmed) return;
+            
+            // Vaciar carrito actual
+            localStorage.setItem("cart", JSON.stringify([]));
+            
+            // Agregar todos los productos de la wishlist al carrito
+            const products = docSnap.data().products;
+            products.forEach(product => {
+                addToCart(product);
+            });
+            
+            // Eliminar todos los productos de la wishlist
+            await wishlistRef.update({
+                products: [],
+                updatedAt: new Date().toISOString()
+            });
+            
+            // Redirigir a pago.html
+            window.location.href = "pago.html";
+            
+        } catch (error) {
+            console.error("Error al procesar lista de deseos:", error);
+            Swal.fire("Error", "No se pudo procesar tu lista de deseos", "error");
+        }
+    }
+
+    // Verificar autenticación y cargar wishlist al cargar la página
+    document.addEventListener("DOMContentLoaded", () => {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadWishlist();
+                updateCartUI();
+                
+                // Configurar botón de comprar lista de deseos
+                document.getElementById("checkout-wishlist").addEventListener("click", checkoutWishlist);
+                
+                // Configurar botón de cerrar sesión
+                document.getElementById("cerrarSesion").addEventListener("click", () => {
+                    auth.signOut().then(() => {
+                        window.location.href = "inicio-de-sesion";
+                    });
+                });
+                
+                // Configurar carrito flotante
+                document.getElementById("floating-cart-btn").addEventListener("click", () => {
+                    document.getElementById("cart-sidebar").classList.toggle("open");
+                });
+                
+                document.getElementById("close-cart").addEventListener("click", () => {
+                    document.getElementById("cart-sidebar").classList.remove("open");
+                });
+                
+                // Configurar botón de finalizar compra
+                document.getElementById("checkout").addEventListener("click", () => {
+                    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+                    if (cart.length === 0) {
+                        Swal.fire("Carrito vacío", "Agrega productos al carrito antes de finalizar la compra", "warning");
+                    } else {
+                        window.location.href = "pago.html";
+                    }
+                });
+            } else {
+                window.location.href = "inicio-de-sesion";
+            }
+        });
+    });
+
+    // Funciones globales para el carrito
+    window.updateQuantity = function(index, newQuantity) {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        if (newQuantity < 1) newQuantity = 1;
+        cart[index].cantidad = parseInt(newQuantity, 10);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCartUI();
+    };
+
+    window.removeFromCart = function(index) {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        cart.splice(index, 1);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCartUI();
+    };
+</script>
+<script type="module">
+        import { initAuthCheck } from '../../javascripts/user/auth-check.js';
+        // Inicializar la verificación de autenticación para usuarios normales
+        initAuthCheck("user");
+    </script>
+</body>
+</html>

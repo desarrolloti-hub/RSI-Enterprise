@@ -1,0 +1,250 @@
+
+    /* Estilos base */
+    body.cuerpo {
+        background-color: #121212;
+        color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+    }
+
+    /* Contenedor principal */
+    .usuarios-container {
+        padding: 20px;
+        width: 98%;
+        margin: 80px auto 0;
+        box-sizing: border-box;
+    }
+
+    /* Título */
+    .titulo-usuarios {
+        text-align: center;
+        font-size: 2.2rem;
+        color: #FFD700;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+    }
+
+    /* Tabla - Estructura principal */
+    .tabla-usuarios {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 auto;
+        table-layout: fixed;
+    }
+
+    /* Cabecera de tabla */
+    .tabla-usuarios thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .tabla-usuarios th {
+        background-color: #1A1A1A;
+        color: #FFD700;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #FFD700;
+    }
+
+    /* Celdas y filas */
+    .tabla-usuarios td {
+        padding: 1rem;
+        color: #E0E0E0;
+        border-bottom: 1px solid #333;
+        vertical-align: middle;
+    }
+
+    .tabla-usuarios tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .tabla-usuarios tr:hover {
+        background-color: #252525;
+    }
+
+    .tabla-usuarios tr:nth-child(even) {
+        background-color: #1E1E1E;
+    }
+
+    .tabla-usuarios tr:nth-child(even):hover {
+        background-color: #282828;
+    }
+
+    /* Selector de rol */
+    .select-rol {
+        background-color: #2D2D2D;
+        color: #FFFFFF;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 0.5rem;
+        width: 100%;
+        max-width: 180px;
+        transition: all 0.2s;
+    }
+
+    .select-rol:focus {
+        outline: none;
+        border-color: #FFD700;
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    }
+
+    /* Botones de acción */
+    .acciones-container {
+        display: flex;
+        gap: 0.8rem;
+        justify-content: center;
+    }
+
+    .btn-detalles, .btn-eliminar {
+        background: none;
+        border: none;
+        color: #FFD700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+
+    .btn-detalles:hover, .btn-eliminar:hover {
+        background-color: rgba(255, 215, 0, 0.1);
+        transform: scale(1.1);
+    }
+
+    /* Scroll para tabla */
+    .tabla-contenedor {
+        width: 100%;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Personalización del scroll */
+    .tabla-contenedor::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .tabla-contenedor::-webkit-scrollbar-track {
+        background: #1E1E1E;
+    }
+
+    .tabla-contenedor::-webkit-scrollbar-thumb {
+        background-color: #FFD700;
+        border-radius: 10px;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .usuarios-container {
+            padding: 15px;
+            width: 95%;
+        }
+        
+        .tabla-usuarios {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        .select-rol {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .titulo-usuarios {
+            font-size: 1.8rem;
+        }
+        
+        .tabla-usuarios th,
+        .tabla-usuarios td {
+            padding: 0.8rem;
+        }
+    }
+    /* Estilos para el modal de detalles */
+.swal2-popup {
+    background: #1e1e1e !important;
+    border: 1px solid #FFD700 !important;
+    border-radius: 10px !important;
+    color: #ffffff !important;
+    max-width: 600px !important;
+}
+
+.swal2-title {
+    color: #FFD700 !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 1.5rem !important;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3) !important;
+}
+
+.swal2-html-container {
+    text-align: left !important;
+    color: #e0e0e0 !important;
+    font-size: 1.1rem !important;
+    margin: 0 1.5rem !important;
+    padding: 0 !important;
+}
+
+.swal2-html-container div {
+    margin-bottom: 1rem !important;
+}
+
+.swal2-html-container p {
+    margin: 0.8rem 0 !important;
+    line-height: 1.6 !important;
+}
+
+.swal2-html-container b {
+    color: #FFD700 !important;
+    font-weight: 500 !important;
+}
+
+.swal2-confirm {
+    background-color: #FFD700 !important;
+    color: #121212 !important;
+    font-weight: 600 !important;
+    padding: 0.7rem 2rem !important;
+    border-radius: 5px !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.swal2-confirm:hover {
+    background-color: #e6c200 !important;
+    transform: translateY(-2px) !important;
+}
+
+.swal2-confirm:focus {
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3) !important;
+}
+
+/* Línea divisoria */
+.swal2-html-container hr {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 1.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .swal2-popup {
+        width: 90% !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.5rem !important;
+    }
+    
+    .swal2-html-container {
+        font-size: 1rem !important;
+    }
+}

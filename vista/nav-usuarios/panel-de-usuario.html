@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise Usuario</title>
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/estilos-nav.css">
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/pago.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos generales */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        /* Contenedor principal */
+        .main-container {
+            margin-top: 80px; /* Margen superior para el nav */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centrar verticalmente */
+            align-items: center; /* Centrar horizontalmente */
+            min-height: calc(100vh - 80px); /* Altura completa menos el nav */
+        }
+
+        /* Mensaje de bienvenida */
+        .welcome-message {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .welcome-message span {
+            color: #333;
+        }
+
+        /* Grid de tarjetas */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        /* Tarjetas */
+        .card-item {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .card-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Íconos */
+        .card-item .icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+
+        /* Títulos */
+        .card-item h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* Descripciones */
+        .card-item p {
+            font-size: 16px;
+            color: #666;
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .main-container {
+                margin-top: 5px; /* Margen superior reducido en responsive */
+                min-height: calc(100vh - 5px); /* Ajuste para responsive */
+            }
+
+            .card-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+            }
+
+            .card-item .icon {
+                font-size: 40px;
+            }
+
+            .card-item h2 {
+                font-size: 20px;
+            }
+
+            .card-item p {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="nan_reset">
+<header class="nan_header">
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <a href="dashUser.html"><img src="https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a>
+        </div>
+        <!-- Botón de hamburguesa para móviles -->
+        <button class="nan_hamburger" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+        <!-- Botón de cierre (X) -->
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+         <ul class="nan_menu">
+            <li><a href="productos-usuario.html"><i class="fas fa-box"></i> Productos</a></li>&emsp; &emsp;
+            <li><a href="historial-de-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>&emsp;&emsp;
+            <li><a href="lista-de-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>&emsp; &emsp;
+            <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>&emsp; &emsp;
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>&emsp; &emsp;
+            <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>&emsp; &emsp;
+            <li class="nan_language">
+                <select id="languageSelect" class="language-select">
+                    <option value="es" data-flag="../css/img/flag-mexico.png">🇲🇽</option>
+                    <option value="en" data-flag="../css/img/flag-usa.png">🇺🇸</option>
+                </select>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<!-- Contenido principal -->
+<div class="main-container">
+    <!-- Mensaje de bienvenida -->
+    <div id="welcome-message" class="welcome-message">
+        ¡Bienvenido, <span id="user-name"></span>!
+    </div>
+
+    <!-- Grid de tarjetas -->
+    <div class="card-grid">
+        <!-- Tarjeta de Lista de deseos -->
+        <a href="lista-deseos.html" class="card-item">
+            <div class="icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <h2>Lista de deseos</h2>
+            <p>Revisa y gestiona tus productos favoritos.</p>
+        </a>
+
+        <!-- Tarjeta de Historial de compras -->
+        <a href="historial-compras.html" class="card-item">
+            <div class="icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <h2>Historial de compras</h2>
+            <p>Consulta tus compras anteriores.</p>
+        </a>
+    </div>
+</div>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/5551391533" class="whatsapp-float" target="_blank">
+    <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" alt="WhatsApp">
+</a>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase si no está inicializado
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Bandera para controlar el cierre de sesión
+        let isLoggingOut = false;
+        // Variable para almacenar datos del usuario
+        let currentUserData = null;
+
+        // Evitar que el usuario retroceda con las flechas del navegador
+        window.history.pushState(null, document.title, window.location.href);
+        window.addEventListener('popstate', function (event) {
+            window.history.pushState(null, document.title, window.location.href);
+        });
+
+        // Verificación de autenticación
+        auth.onAuthStateChanged(async (user) => {
+            if (isLoggingOut) {
+                return;
+            }
+
+            if (!user) {
+                Swal.fire({
+                    title: "Acceso denegado",
+                    text: "Para continuar aquí, debes iniciar sesión.",
+                    icon: "warning",
+                    timer: 3000,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
+                });
+
+                setTimeout(() => {
+                    window.location.replace("inicio-de-sesion");
+                }, 3000);
+                return;
+            }
+
+            try {
+                const userRef = db.collection("usuarios").doc(user.uid);
+                const doc = await userRef.get();
+
+                if (!doc.exists) {
+                    Swal.fire({
+                        title: "Usuario no encontrado",
+                        text: "No se encontró tu información en la base de datos.",
+                        icon: "error",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("inicio-de-sesion");
+                    }, 2000);
+                    return;
+                }
+
+                const userData = doc.data();
+                if (userData.rol !== "user") {
+                    Swal.fire({
+                        title: "Acceso denegado",
+                        text: "No tienes permisos para acceder a esta página.",
+                        icon: "warning",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("inicio-de-sesion");
+                    }, 2000);
+                } else {
+                    currentUserData = userData;
+                    const userNameElement = document.getElementById("user-name");
+                    if (userNameElement) {
+                        userNameElement.textContent = userData.nombreCompleto;
+                    }
+                }
+            } catch (error) {
+                console.error("Error al verificar usuario:", error);
+                Swal.fire({
+                    title: "Error",
+                    text: "Ocurrió un problema al verificar el usuario.",
+                    icon: "error",
+                    timer: 2000,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
+                });
+
+                setTimeout(() => {
+                    window.location.replace("inicio-de-sesion");
+                }, 2000);
+            }
+        });
+
+        // Cerrar sesión
+        document.getElementById("cerrarSesion").addEventListener("click", function (event) {
+            event.preventDefault();
+            isLoggingOut = true;
+
+            auth.signOut().then(() => {
+                Swal.fire({
+                    title: "Sesión cerrada",
+                    text: "Has cerrado sesión correctamente. ¡Hasta luego!",
+                    icon: "success",
+                    timer: 3000,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
+                });
+
+                setTimeout(() => {
+                    window.location.replace("inicio-de-sesion");
+                }, 3000);
+            }).catch((error) => {
+                Swal.fire({
+                    title: "Error",
+                    text: "Ocurrió un problema al cerrar sesión.",
+                    icon: "error",
+                    timer: 2000,
+                    showConfirmButton: false,
+                    allowOutsideClick: false
+                });
+            });
+        });
+    });
+</script>
+<div id="cart-sidebar" class="cart-sidebar">
+        <h2>Carrito de Compras <button id="close-cart">&times;</button></h2>
+        <div id="cart-items"></div>
+        <div class="cart-subtotal">
+            <span>Subtotal:</span>
+            <span id="cart-subtotal">$0.00</span>
+        </div>
+        <button id="checkout" class="openpay-button">Finalizar Compra</button>
+    </div>
+
+    <!-- Botón flotante del carrito -->
+    <div id="floating-cart-btn" class="floating-cart-btn">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count">0</span>
+    </div>
+<script src="https://rsienterprise.web.app/javascripts/navScript.js"></script>
+<script src="../../javascripts/user/carritoUserLogin.js"></script>
+<script type="module">
+        import { initAuthCheck } from '../../javascripts/user/auth-check.js';
+        // Inicializar la verificación de autenticación para usuarios normales
+        initAuthCheck("user");
+    </script>
+</body>
+</html>

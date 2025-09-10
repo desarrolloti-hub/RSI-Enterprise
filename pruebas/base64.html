@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertidor Base64 a Imagen</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: monospace;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        #imageContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        #convertedImage {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .download-btn {
+            background-color: #27ae60;
+            margin-top: 10px;
+        }
+        
+        .download-btn:hover {
+            background-color: #219653;
+        }
+        
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convertidor de Base64 a Imagen</h1>
+        
+        <p>Pega tu cadena Base64 de una imagen en el área de texto a continuación:</p>
+        
+        <textarea id="base64Input" placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."></textarea>
+        
+        <button id="convertBtn">Convertir a Imagen</button>
+        <button id="downloadBtn" class="download-btn" disabled>Descargar Imagen</button>
+        
+        <div id="errorMsg" class="error"></div>
+        
+        <div id="imageContainer">
+            <!-- Aquí se mostrará la imagen convertida -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const base64Input = document.getElementById('base64Input');
+            const convertBtn = document.getElementById('convertBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const imageContainer = document.getElementById('imageContainer');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            let currentImageUrl = null;
+            
+            // Convertir Base64 a imagen
+            convertBtn.addEventListener('click', function() {
+                const base64String = base64Input.value.trim();
+                
+                // Limpiar estado anterior
+                errorMsg.textContent = '';
+                imageContainer.innerHTML = '';
+                downloadBtn.disabled = true;
+                
+                if (!base64String) {
+                    errorMsg.textContent = 'Por favor, ingresa una cadena Base64.';
+                    return;
+                }
+                
+                try {
+                    // Crear elemento de imagen
+                    const img = document.createElement('img');
+                    img.id = 'convertedImage';
+                    img.src = base64String;
+                    
+                    img.onload = function() {
+                        imageContainer.appendChild(img);
+                        downloadBtn.disabled = false;
+                        
+                        // Guardar la URL de la imagen para descargar
+                        if (currentImageUrl) {
+                            URL.revokeObjectURL(currentImageUrl);
+                        }
+                        currentImageUrl = base64String;
+                    };
+                    
+                    img.onerror = function() {
+                        errorMsg.textContent = 'La cadena Base64 no es válida o no representa una imagen soportada.';
+                    };
+                } catch (e) {
+                    errorMsg.textContent = 'Error al procesar la cadena Base64: ' + e.message;
+                }
+            });
+            
+            // Descargar la imagen
+            downloadBtn.addEventListener('click', function() {
+                if (!currentImageUrl) return;
+                
+                try {
+                    // Extraer el tipo de imagen de la cadena Base64
+                    const match = currentImageUrl.match(/^data:(image\/\w+);base64,/);
+                    if (!match || match.length < 2) {
+                        errorMsg.textContent = 'No se pudo determinar el tipo de imagen.';
+                        return;
+                    }
+                    
+                    const imageType = match[1];
+                    const extension = imageType.split('/')[1] || 'png';
+                    
+                    // Crear enlace de descarga
+                    const link = document.createElement('a');
+                    link.href = currentImageUrl;
+                    link.download = `imagen-convertida.${extension}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    errorMsg.textContent = 'Error al descargar la imagen: ' + e.message;
+                }
+            });
+            
+            // Ejemplo de cadena Base64 (opcional, puedes eliminarlo)
+            base64Input.placeholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg==";
+        });
+    </script>
+</body>
+</html>

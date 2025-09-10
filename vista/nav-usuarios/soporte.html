@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise Usuario - Soporte</title>
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/estilos-nav.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos específicos para la página de soporte */
+        .support-container {
+            max-width: 800px;
+            margin: 80px auto 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .support-title {
+            text-align: center;
+            color: #0c0752;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .support-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group i {
+            color: #0c0752;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .form-group input, 
+        .form-group textarea {
+            padding: 12px 15px 12px 35px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, 
+        .form-group textarea:focus {
+            border-color: #0c0752;
+            outline: none;
+        }
+        
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+            padding-left: 15px;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 38px;
+            color: #666;
+        }
+        
+        .submit-btn {
+            background-color: #0c0752;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .submit-btn:hover {
+            background-color: #120a7a;
+        }
+        
+        .support-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #0c0752;
+        }
+        
+        .contact-list {
+            margin-bottom: 40px;
+        }
+        
+        .contact-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #0c0752;
+        }
+        
+        .contact-title {
+            color: #0c0752;
+            font-size: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .contact-detail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #555;
+        }
+        
+        @media (max-width: 768px) {
+            .support-container {
+                margin: 30px 15px;
+                padding: 20px;
+            }
+            
+            .support-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body class="nan_reset">
+<header class="nan_header">
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <a href="dashUser.html"><img src="../../../vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a>
+        </div>
+        <!-- Botón de hamburguesa para móviles -->
+        <button class="nan_hamburger" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+        <!-- Botón de cierre (X) -->
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+         <ul class="nan_menu">
+            <li><a href="productos-usuario.html"><i class="fas fa-box"></i> Productos</a></li>&emsp; &emsp;
+            <li><a href="historial-de-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>&emsp;&emsp;
+            <li><a href="lista-de-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>&emsp; &emsp;
+            <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>&emsp; &emsp;
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>&emsp; &emsp;
+            <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>&emsp; &emsp;
+            <li class="nan_language">
+                <select id="languageSelect" class="language-select">
+                    <option value="es" data-flag="../css/img/flag-mexico.png">🇲🇽</option>
+                    <option value="en" data-flag="../css/img/flag-usa.png">🇺🇸</option>
+                </select>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <div class="support-container">
+        <h1 class="support-title"><i class="fas fa-headset"></i> Soporte Técnico</h1>
+        
+        <div class="contact-list">
+            <div class="contact-card">
+                <h3 class="contact-title"><i class="fas fa-shopping-cart"></i> Ventas</h3>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <i class="fas fa-user"></i>
+                        <span>Ismael Rodriguez Murillo</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-envelope"></i>
+                        <span>ventas@rafhasoluciones.com</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>555 954 998</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-card">
+                <h3 class="contact-title"><i class="fas fa-tools"></i> Soporte Técnico</h3>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <i class="fas fa-user"></i>
+                        <span>Equipo de Soporte RSI</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-envelope"></i>
+                        <span>soporte@rafhasoluciones.com</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>555 123 4567</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-card">
+                <h3 class="contact-title"><i class="fas fa-code"></i> Desarrollo</h3>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <i class="fas fa-user"></i>
+                        <span>Departamento de Desarrollo</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-envelope"></i>
+                        <span>desarrollo@rafhasoluciones.com</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>555 765 4321</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h2 style="text-align: center; color: #0c0752; margin-bottom: 20px;"><i class="fas fa-paper-plane"></i> Formulario de Contacto</h2>
+        
+        <form id="supportForm" class="support-form">
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Nombre completo:</label>
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="name" placeholder="Ingresa tu nombre completo" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Correo electrónico:</label>
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" placeholder="Ingresa tu correo electrónico" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-phone"></i> Número telefónico:</label>
+                <i class="fas fa-phone input-icon"></i>
+                <input type="tel" id="phone" placeholder="Ingresa tu número telefónico" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-question-circle"></i> Describe tu problema:</label>
+                <textarea id="message" placeholder="Describe detalladamente tu problema o consulta..." required></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane"></i> Enviar solicitud
+            </button>
+        </form>
+        
+        <div class="support-info">
+            <h3><i class="fas fa-info-circle"></i> Información importante</h3>
+            <p>Nuestro equipo de soporte revisará tu solicitud y te contactará en un plazo máximo de 24 horas hábiles.</p>
+            <p>Para emergencias técnicas, por favor llama a nuestro número directo: <strong><i class="fas fa-phone"></i> 55 1234 5678</strong></p>
+        </div>
+    </div>
+</main>
+
+    <div id="cart-sidebar" class="cart-sidebar">
+        <h2>Carrito de Compras <button id="close-cart">&times;</button></h2>
+        <div id="cart-items"></div>
+        <div class="cart-subtotal">
+            <span>Subtotal:</span>
+            <span id="cart-subtotal">$0.00</span>
+        </div>
+        <button id="checkout" class="openpay-button">Finalizar Compra</button>
+    </div>
+
+    <!-- Botón flotante del carrito -->
+    <div id="floating-cart-btn" class="floating-cart-btn">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count">0</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="../../javascripts/navScript.js"></script>
+    <script src="../../javascripts/user/carritoUserLogin.js"></script>
+    
+    <script>
+        // Configuración de Firebase (debe coincidir con tu configuración)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Obtener datos del usuario autenticado
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // El usuario está autenticado
+                document.getElementById('name').value = user.displayName || 'Usuario RSI';
+                document.getElementById('email').value = user.email || '';
+                
+                // Obtener el número de teléfono si está disponible
+                if (user.phoneNumber) {
+                    document.getElementById('phone').value = user.phoneNumber;
+                } else {
+                    document.getElementById('phone').placeholder = "Actualiza tu número en tu perfil";
+                }
+            } else {
+                // El usuario no está autenticado, redirigir al login
+                window.location.href = "login.html";
+            }
+        });
+
+        // Simulación de envío de formulario de soporte
+        document.getElementById('supportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Obtener los valores del formulario
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const message = document.getElementById('message').value;
+            
+            // Mostrar confirmación con SweetAlert
+            Swal.fire({
+                title: '¡Solicitud enviada!',
+                html: `
+                    <p>Hemos recibido tu solicitud de soporte correctamente.</p>
+                    <div style="text-align: left; margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                        <p><strong>Nombre:</strong> ${name}</p>
+                        <p><strong>Correo:</strong> ${email}</p>
+                        <p><strong>Teléfono:</strong> ${phone || 'No proporcionado'}</p>
+                        <p><strong>Consulta:</strong> ${message}</p>
+                    </div>
+                `,
+                icon: 'success',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#0c0752'
+            }).then(() => {
+                // Limpiar el campo de mensaje después de enviar
+                document.getElementById('message').value = '';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+\<!DOCTYPE html>
+<html lang="es">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda de Electrónica</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/responsiv.css">
+    <link rel="stylesheet" href="../css/estilos-nav.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+ 
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <a href="https://rsienterprise.com/"><img src="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a> &emsp; &emsp;
+            </div>
+    
+            <!-- Botón de hamburguesa para móviles -->
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú">&times;</button>
+    
+            <ul class="nan_menu">
+                <li><a href="productos.html"><i class="fas fa-box"></i> Productos</a></li> &emsp;&emsp;
+                <li><a href="servicios.html"><i class="fas fa-tools"></i> Servicios</a></li>&emsp;&emsp;
+                <li><a href="nosotros.html"><i class="fas fa-users"></i> ¿Quiénes somos?</a></li>&emsp;&emsp;
+                <li><a href="contacto-&-comentarios.html"><i class="fas fa-envelope"></i> Contáctanos</a></li>&emsp;&emsp;
+                <li><a href="blogs.html"><i class="fas fa-pencil"></i> Blogs</a></li>&emsp;&emsp;
+                <li><a href="inicio-de-sesion.html"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a></li>&emsp;&emsp;
+                <li class="nan_language">
+                    <select id="languageSelect" class="language-select">
+                        <option value="es" data-flag="https://rsienterprise.com/vista/css/img/flag-mexico.png">🇲🇽</option>
+                        <option value="en" data-flag="https://rsienterprise.com/vista/css/img/flag-usa.png">🇺🇸</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <script src="../../javascripts/nav.js"></script>
+<body>
+    <header id="nav"></header>
+<br><br><br>
+    <!-- Bloque de Servicios de Seguridad Electrónica -->
+    <div class="bloque">
+        <h1>Servicios de Infraestructura</h1>
+
+        <div class="pregunta ironman2" onclick="toggleRespuesta(this)">
+            Demolición
+        </div>
+        <div class="respuesta">
+        Demolición de muros de block, tabique o colados, demolición de losas y construcciones viejas.
+        </div>
+
+        <div class="pregunta capitanamerica2" onclick="toggleRespuesta(this)">
+            Construcción       
+        </div>
+        <div class="respuesta">
+            Ayudamos a la ejecución de tu obra, desde CIMENTACIÓN, FIRMES, LOZA, PEGADO DE BLOCK, TRABES, CASTILLOS etc.        </div>
+
+        <div class="pregunta thor2" onclick="toggleRespuesta(this)">
+            Colocación de azulejo/Lozeta       
+         </div>
+        <div class="respuesta">
+            Dale vida a tus ambientes con nuestra impecable colocación de azulejos/lozetas. Expertos en diseño y calidad para tu hogar o negocio.        </div>
+    </div>
+
+    <!-- Bloque de Rastreo Satelital -->
+   
+
+
+    <script>
+        function toggleRespuesta(pregunta) {
+            pregunta.classList.toggle('activa');
+        }
+    </script>
+<div id="footer-wrapper"></div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+<script src="../../javascripts/includesVisita.js"></script>
+<script src="../../javascripts/funcionalidades.js"></script>
+<script src="../../javascripts/navScript.js"></script>
+</body>
+</html>

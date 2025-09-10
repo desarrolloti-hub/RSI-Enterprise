@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario RSI Ixtapaluca</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .detail-row {
+      @apply py-3 px-4 border-b border-gray-100;
+    }
+    .detail-label {
+      @apply font-semibold text-gray-600 min-w-[150px] inline-block;
+    }
+    .detail-value {
+      @apply text-gray-800;
+    }
+    .barcode-badge {
+      @apply bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-mono;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="fixed top-0 left-0 w-full z-50 shadow-md bg-white">
+    <nav class="flex justify-between items-center p-4 container mx-auto">
+      <div class="flex items-center">
+        <a href="https://rsienterprise.web.app/index.html" class="mr-4">
+          <img src="https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo RSI" class="h-10">
+        </a>
+        <h1 class="text-2xl font-bold">
+          <span class="text-blue-900">RSI</span> 
+          <span class="text-yellow-600">IXTAPALUCA</span>
+        </h1>
+      </div>
+      <button id="logoutBtn" class="text-red-600 hover:text-red-800">
+        <i class="fas fa-sign-out-alt mr-2"></i> Cerrar sesión
+      </button>
+    </nav>
+  </header>
+
+  <main class="container mx-auto px-4 pt-24 pb-8">
+    <!-- Buscador y Botones -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+      <div class="relative w-full max-w-md">
+        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        <input type="text" id="searchInput" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Buscar productos...">
+      </div>
+      
+      <div class="flex gap-3 w-full md:w-auto">
+        <button id="newProductBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2">
+          <i class="fas fa-plus"></i> Nuevo Producto
+        </button>
+        
+        
+      </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="flex flex-col items-center justify-center py-12">
+      <div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-600">Cargando productos...</p>
+    </div>
+
+    <!-- Sin resultados -->
+    <div id="noResults" class="hidden text-center py-12">
+      <i class="fas fa-search fa-3x text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-600">No se encontraron resultados</h3>
+      <p class="text-gray-500">Intenta con otros términos de búsqueda</p>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div id="productsContainer" class="hidden bg-white rounded-xl shadow overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gradient-to-r from-green-600 to-blue-900 text-white">
+            <tr>
+              <th class="px-6 py-4 text-left"><i class="fas fa-image mr-2"></i>Imagen</th>
+              <th class="px-6 py-4 text-left"><i class="fas fa-box mr-2"></i>Producto</th>
+              <th class="px-6 py-4 text-left"><i class="fas fa-tag mr-2"></i>Marca</th>
+              <th class="px-6 py-4 text-left"><i class="fas fa-dollar-sign mr-2"></i>Precio</th>
+              <th class="px-6 py-4 text-left"><i class="fas fa-layer-group mr-2"></i>Cantidad</th>
+              <th class="px-6 py-4 text-left"><i class="fas fa-barcode mr-2"></i>Código</th>
+              <th class="px-6 py-4 text-right"><i class="fas fa-ellipsis-h mr-2"></i>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productsTable" class="bg-white divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal CRUD -->
+  <div id="crudModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+        <h2 class="text-lg font-semibold flex items-center gap-2" id="modalTitle">
+          <i class="fas fa-box"></i> Nuevo Producto
+        </h2>
+        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-500 text-xl">&times;</button>
+      </div>
+      
+      <form id="productForm" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-image"></i> Imagen del Producto
+          </label>
+          <div class="flex items-center gap-4">
+            <label class="cursor-pointer">
+              <div class="w-32 h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center hover:border-green-500">
+                <div id="imageUploadPlaceholder" class="text-center p-4">
+                  <i class="fas fa-camera text-3xl text-gray-400 mb-2"></i>
+                  <p class="text-xs text-gray-500">Haz clic para subir una imagen</p>
+                </div>
+                <img id="imagePreview" class="w-full h-full object-cover hidden rounded-md">
+              </div>
+              <input type="file" id="imageUpload" accept="image/*" class="hidden">
+            </label>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500">Recomendamos imágenes cuadradas de al menos 500x500 px</p>
+            </div>
+          </div>
+          <input type="hidden" id="productImages" name="images">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-box text-green-600"></i> * Producto
+          </label>
+          <input type="text" id="productName" name="product" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-tag text-blue-900"></i> * Marca
+          </label>
+          <input type="text" id="productBrand" name="brand" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-cog text-yellow-600"></i> Modelo
+          </label>
+          <input type="text" id="productModel" name="model" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-dollar-sign text-green-600"></i> * Precio (MXN)
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-gray-500">$</span>
+            <input type="number" id="productPrice" name="price" step="0.01" required class="w-full pl-8 p-2 border rounded-md focus:ring-2 focus:ring-green-500">
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-layer-group text-blue-600"></i> * Cantidad
+          </label>
+          <input type="number" id="productQuantity" name="quantity" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <i class="fas fa-barcode text-purple-600"></i> * Código Principal
+          </label>
+          <div class="relative">
+            <input type="text" id="productBarcode" name="mainBarcode" required 
+                   class="w-full p-2 pl-8 border rounded-md font-mono focus:ring-2 focus:ring-green-500"
+                   placeholder="Escanear código">
+            <i class="fas fa-qrcode absolute left-2 top-3 text-gray-400"></i>
+          </div>
+        </div>
+
+        <div class="col-span-2 flex justify-end space-x-2 mt-4 border-t pt-4">
+          <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center gap-1">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1">
+            <i class="fas fa-save"></i> Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para ver detalles del producto -->
+  <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+        <h2 class="text-lg font-semibold flex items-center gap-2">
+          <i class="fas fa-info-circle text-blue-600"></i> Detalles del Producto
+        </h2>
+        <button id="closeDetailModalBtn" class="text-gray-400 hover:text-gray-500 text-xl">&times;</button>
+      </div>
+      
+      <div class="p-6">
+        <div class="flex flex-col md:flex-row gap-6 mb-6">
+          <div class="w-full md:w-1/3 flex justify-center">
+            <img id="detailImage" src="" class="w-64 h-64 object-contain rounded-lg border border-gray-200 bg-gray-50">
+          </div>
+          <div class="w-full md:w-2/3">
+            <h3 id="detailName" class="text-2xl font-bold text-gray-800 mb-2"></h3>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span id="detailBrand" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"></span>
+              <span id="detailModel" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"></span>
+              <span id="detailStock" class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"></span>
+              <span id="detailPrice" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-bold"></span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <h4 class="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <i class="fas fa-barcode text-gray-500"></i> Códigos
+                </h4>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                  <div class="mb-2">
+                    <div class="text-xs text-gray-500">Principal:</div>
+                    <div id="detailMainBarcode" class="font-mono text-sm"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-gray-500">Únicos:</div>
+                    <div id="detailUniqueBarcodes" class="flex flex-wrap gap-1 mt-1"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 class="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <i class="fas fa-calendar-alt text-gray-500"></i> Fechas
+                </h4>
+                <div class="bg-gray-50 p-3 rounded-lg">
+                  <div class="mb-2">
+                    <div class="text-xs text-gray-500">Creación:</div>
+                    <div id="detailCreatedAt" class="text-sm"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-gray-500">Actualización:</div>
+                    <div id="detailUpdatedAt" class="text-sm"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg overflow-hidden">
+          <table class="w-full">
+            <tbody>
+              <tr class="detail-row">
+                <td class="detail-label">Descripción</td>
+                <td id="detailDescription" class="detail-value">No especificado</td>
+              </tr>
+              <tr class="detail-row">
+                <td class="detail-label">Categoría</td>
+                <td id="detailCategory" class="detail-value">No especificado</td>
+              </tr>
+              <tr class="detail-row">
+                <td class="detail-label">Proveedor</td>
+                <td id="detailSupplier" class="detail-value">No especificado</td>
+              </tr>
+              <tr class="detail-row">
+                <td class="detail-label">Ubicación</td>
+                <td id="detailLocation" class="detail-value">No especificado</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="p-4 border-t flex justify-end">
+        <button id="closeDetailModalBtn2" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase y app scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+      authDomain: "rsienterprise.firebaseapp.com",
+      projectId: "rsienterprise",
+      storageBucket: "rsienterprise.appspot.com",
+      messagingSenderId: "1063117165770",
+      appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const productosRef = collection(db, "productosIxtapaluca");
+
+    // Variables de estado
+    let editingProductId = null;
+    let allProducts = [];
+
+    // Elementos del DOM
+    const loader = document.getElementById('loader');
+    const productsContainer = document.getElementById('productsContainer');
+    const productsTable = document.getElementById('productsTable');
+    const noResults = document.getElementById('noResults');
+    const searchInput = document.getElementById('searchInput');
+    const crudModal = document.getElementById('crudModal');
+    const detailModal = document.getElementById('detailModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const closeDetailModalBtn = document.getElementById('closeDetailModalBtn');
+    const closeDetailModalBtn2 = document.getElementById('closeDetailModalBtn2');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const newProductBtn = document.getElementById('newProductBtn');
+    const productForm = document.getElementById('productForm');
+
+    // Funciones de UI
+    const showAlert = (title, icon = 'success') => {
+      Swal.fire({
+        position: 'top-end',
+        icon: icon,
+        title: title,
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true,
+        background: '#f0fdf4',
+        iconColor: icon === 'success' ? '#02ac16' : '#ef4444'
+      });
+    };
+
+    const renderProducts = (products) => {
+      productsTable.innerHTML = '';
+      
+      if (products.length === 0) {
+        productsContainer.classList.add('hidden');
+        noResults.classList.remove('hidden');
+        return;
+      }
+      
+      productsContainer.classList.remove('hidden');
+      noResults.classList.add('hidden');
+      
+      products.forEach(product => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        row.innerHTML = `
+          <td class="px-6 py-4">
+            <img src="${product.Imagenes?.[0] || 'https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png'}" 
+                 class="w-12 h-12 object-cover rounded-md">
+          </td>
+          <td class="px-6 py-4 font-medium">${product.Producto}</td>
+          <td class="px-6 py-4">${product.Marca || '-'}</td>
+          <td class="px-6 py-4 text-green-600 font-semibold">
+            $${product.Precio?.toFixed(2) || '0.00'}
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-1 rounded-full text-xs ${product.Cantidad > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${product.Cantidad}
+            </span>
+          </td>
+          <td class="px-6 py-4 font-mono text-sm">${product.mainBarcode || '-'}</td>
+          <td class="px-6 py-4 text-right space-x-2">
+            <button onclick="showProductDetails('${product.id}')" class="text-green-600 hover:text-green-800" title="Ver detalles">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button onclick="editProduct('${product.id}')" class="text-blue-600 hover:text-blue-800" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        `;
+        productsTable.appendChild(row);
+      });
+    };
+
+    // Funciones de Firebase
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(productosRef);
+        allProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderProducts(allProducts);
+        loader.classList.add('hidden');
+      } catch (error) {
+        showAlert(`Error al cargar productos: ${error.message}`, 'error');
+        loader.classList.add('hidden');
+      }
+    };
+
+    const saveProduct = async (productData) => {
+      try {
+        const product = {
+          Producto: productData.product,
+          Marca: productData.brand,
+          Modelo: productData.model || '',
+          Precio: parseFloat(productData.price),
+          Cantidad: parseInt(productData.quantity),
+          mainBarcode: productData.mainBarcode,
+          Imagenes: productData.images ? [productData.images] : [],
+          updatedAt: new Date()
+        };
+
+        if (editingProductId) {
+          await updateDoc(doc(productosRef, editingProductId), product);
+          showAlert('Producto actualizado correctamente');
+        } else {
+          product.createdAt = new Date();
+          await addDoc(productosRef, product);
+          showAlert('Producto creado correctamente');
+        }
+
+        closeModal();
+        await fetchProducts();
+      } catch (error) {
+        showAlert(`Error al guardar: ${error.message}`, 'error');
+      }
+    };
+
+    const deleteProduct = async (id) => {
+      try {
+        await deleteDoc(doc(productosRef, id));
+        showAlert('Producto eliminado correctamente');
+        await fetchProducts();
+      } catch (error) {
+        showAlert(`Error al eliminar: ${error.message}`, 'error');
+      }
+    };
+
+    // Funciones de modal
+    const openModal = (product = null) => {
+      document.getElementById('modalTitle').textContent = product ? 'Editar Producto' : 'Nuevo Producto';
+      document.getElementById('productForm').reset();
+      document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('imageUploadPlaceholder').classList.remove('hidden');
+      
+      if (product) {
+        document.getElementById('productName').value = product.Producto;
+        document.getElementById('productBrand').value = product.Marca;
+        document.getElementById('productModel').value = product.Modelo || '';
+        document.getElementById('productPrice').value = product.Precio || '';
+        document.getElementById('productQuantity').value = product.Cantidad || '';
+        document.getElementById('productBarcode').value = product.mainBarcode || '';
+        
+        if (product.Imagenes?.[0]) {
+          document.getElementById('imagePreview').src = product.Imagenes[0];
+          document.getElementById('imagePreview').classList.remove('hidden');
+          document.getElementById('imageUploadPlaceholder').classList.add('hidden');
+          document.getElementById('productImages').value = product.Imagenes[0];
+        }
+        
+        editingProductId = product.id;
+      } else {
+        editingProductId = null;
+      }
+      
+      crudModal.classList.remove('hidden');
+    };
+
+    const closeModal = () => {
+      crudModal.classList.add('hidden');
+    };
+
+    // Funciones para el modal de detalles
+    window.showProductDetails = (productId) => {
+      const product = allProducts.find(p => p.id === productId);
+      if (!product) return;
+      
+      // Mostrar imagen
+      const detailImage = document.getElementById('detailImage');
+      detailImage.src = product.Imagenes?.[0] || 'https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png';
+      
+      // Información básica
+      document.getElementById('detailName').textContent = product.Producto || 'Sin nombre';
+      document.getElementById('detailBrand').textContent = product.Marca || 'Sin marca';
+      document.getElementById('detailModel').textContent = product.Modelo || 'Sin modelo';
+      document.getElementById('detailPrice').textContent = product.Precio ? `$${product.Precio.toFixed(2)}` : '$0.00';
+      document.getElementById('detailStock').textContent = product.Cantidad ? `${product.Cantidad} unidades` : 'Sin stock';
+      
+      // Códigos
+      document.getElementById('detailMainBarcode').textContent = product.mainBarcode || 'No especificado';
+      
+      const uniqueBarcodesContainer = document.getElementById('detailUniqueBarcodes');
+      uniqueBarcodesContainer.innerHTML = '';
+      if (product.uniqueBarcodes?.length > 0) {
+        product.uniqueBarcodes.forEach(barcode => {
+          const badge = document.createElement('span');
+          badge.className = 'barcode-badge';
+          badge.textContent = barcode;
+          uniqueBarcodesContainer.appendChild(badge);
+        });
+      } else {
+        uniqueBarcodesContainer.textContent = 'No especificados';
+      }
+      
+      // Fechas (formateadas)
+      const formatDate = (date) => {
+        if (!date) return 'No disponible';
+        const d = date.toDate ? date.toDate() : new Date(date);
+        return d.toLocaleDateString('es-MX', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      };
+      
+      document.getElementById('detailCreatedAt').textContent = formatDate(product.createdAt);
+      document.getElementById('detailUpdatedAt').textContent = formatDate(product.updatedAt);
+      
+      // Campos adicionales
+      document.getElementById('detailDescription').textContent = product.Descripcion || 'No especificado';
+      document.getElementById('detailCategory').textContent = product.Categoria || 'No especificado';
+      document.getElementById('detailSupplier').textContent = product.Proveedor || 'No especificado';
+      document.getElementById('detailLocation').textContent = product.Ubicacion || 'No especificado';
+      
+      // Mostrar modal
+      detailModal.classList.remove('hidden');
+    };
+    
+    window.closeDetailModal = () => {
+      detailModal.classList.add('hidden');
+    };
+
+    // Event listeners
+    newProductBtn.addEventListener('click', () => openModal());
+    closeModalBtn.addEventListener('click', closeModal);
+    closeDetailModalBtn.addEventListener('click', closeDetailModal);
+    closeDetailModalBtn2.addEventListener('click', closeDetailModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = allProducts.filter(product => 
+        product.Producto?.toLowerCase().includes(searchTerm) ||
+        product.Marca?.toLowerCase().includes(searchTerm) ||
+        product.mainBarcode?.toLowerCase().includes(searchTerm));
+      renderProducts(filtered);
+    });
+
+    productForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        product: document.getElementById('productName').value,
+        brand: document.getElementById('productBrand').value,
+        model: document.getElementById('productModel').value,
+        price: document.getElementById('productPrice').value,
+        quantity: document.getElementById('productQuantity').value,
+        mainBarcode: document.getElementById('productBarcode').value,
+        images: document.getElementById('productImages').value
+      };
+
+      await saveProduct(formData);
+    });
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProducts();
+      
+      // Configurar imagen upload
+      document.getElementById('imageUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            document.getElementById('productImages').value = e.target.result;
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreview').classList.remove('hidden');
+            document.getElementById('imageUploadPlaceholder').classList.add('hidden');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+
+    // Funciones globales para los botones en la tabla
+    window.editProduct = (id) => {
+      const product = allProducts.find(p => p.id === id);
+      if (product) openModal(product);
+    };
+
+    window.deleteProduct = async (id) => {
+      const { isConfirmed } = await Swal.fire({
+        title: '¿Eliminar producto?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+      
+      if (isConfirmed) {
+        await deleteProduct(id);
+      }
+    };
+  </script>
+</body>
+</html>

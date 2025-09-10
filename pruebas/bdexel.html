@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Exportación a Firebase</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.6/dist/sweetalert2.min.css">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        /* Estilos para el contenedor principal */
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid #ffd700;
+        }
+
+        /* Estilos para el contenido del uploader */
+        .container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-card {
+            background-color: #252525;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid #ffd700;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 0.875rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #ffd700;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            position: relative;
+            background-color: #2a2a2a;
+        }
+
+        .upload-area:hover {
+            border-color: #c0a040;
+        }
+
+        .upload-content {
+            pointer-events: none;
+        }
+
+        .upload-icon {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .file-type {
+            color: #808080;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            background-color: #ffd700;
+            color: #121212;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background-color: #c0a040;
+            color: #121212;
+        }
+
+        .btn:disabled {
+            background-color: #606060;
+            color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b71c1c;
+            color: white;
+        }
+
+        .message {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #a0a0a0;
+        }
+
+        .count {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #ffd700;
+        }
+
+        .timer {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #2a2a2a;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #333;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #ffd700;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Estilos para el título de la página */
+        .page-title {
+            text-align: center;
+            color: #ffd700;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Estilos para los desarrolladores */
+        .developers {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #808080;
+        }
+
+        .developers strong {
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-title">Sistema de Importación a Firebase</h1>
+    
+    <div class="main-container">
+        <div class="container">
+            <div class="upload-card">
+                <div class="header">
+                    <h1>Importar Excel a Base de datos</h1>
+                    <p>Seleccione un archivo Excel para importar a la colección Productos</p>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p><strong>Click para seleccionar</strong> o arrastre y suelte</p>
+                        <p class="file-type">Excel (.xlsx, .xls)</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" class="file-input">
+                </div>
+
+                <button id="uploadButton" class="btn" disabled>Confirmar y Subir Archivo</button>
+                <button id="deleteButton" class="btn btn-danger">Eliminar todos los datos</button>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="timer" class="timer"></div>
+                <div id="message" class="message"></div>
+                <div id="productCount" class="count"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="developers">
+        Desarrollado por <strong>Emanuel Campa</strong> y <strong>Victor Ramirez</strong>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.6/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+           // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };;
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Elementos del DOM
+        const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
+        const deleteButton = document.getElementById('deleteButton');
+        const uploadArea = document.getElementById('uploadArea');
+        const messageDiv = document.getElementById('message');
+        const timerDiv = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
+
+        // Estado de carga
+        let isLoading = false;
+        let file;
+        let startTime;
+
+        // Función para mostrar mensajes con SweetAlert
+        function showMessage(text, isError = false) {
+            Swal.fire({
+                title: isError ? '¡Error!' : '¡Éxito!',
+                text: text,
+                icon: isError ? 'error' : 'success',
+                confirmButtonText: 'Aceptar',
+                background: '#1e1e1e',
+                color: '#e0e0e0',
+                confirmButtonColor: '#ffd700'
+            });
+        }
+
+        // Función para mostrar el gif de carga
+        function showLoading() {
+            Swal.fire({
+                title: "Procesando...",
+                text: "Desarrollado por Emanuel Campa y Victor Ramirez",
+                allowOutsideClick: false,
+                background: '#1e1e1e',
+                color: '#e0e0e0',
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        // Función para actualizar el temporizador
+        function updateTimer() {
+            const currentTime = new Date();
+            const elapsedTime = (currentTime - startTime) / 1000; // en segundos
+            timerDiv.textContent = `Tiempo transcurrido: ${elapsedTime.toFixed(2)} segundos`;
+        }
+
+        // Función para mostrar la confirmación
+        function showConfirmation() {
+            Swal.fire({
+                title: "¿Estás seguro de que quieres subir este archivo?",
+                text: "La información se va a almacenar en la base de datos",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, subir",
+                cancelButtonText: "Cancelar",
+                background: '#1e1e1e',
+                color: '#e0e0e0',
+                confirmButtonColor: '#ffd700',
+                cancelButtonColor: '#d32f2f'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    startTime = new Date(); // Iniciar el temporizador
+                    const timerInterval = setInterval(updateTimer, 100);
+                    showLoading();
+                    handleFileUpload(file).then(() => {
+                        clearInterval(timerInterval);
+                    });
+                }
+            });
+        }
+
+        // Función para obtener el próximo ID disponible
+        async function getNextAvailableId() {
+            const productosRef = db.collection('clientes');
+            const snapshot = await productosRef.orderBy("__idNumber", "desc").limit(1).get();
+            
+            if (snapshot.empty) {
+                return 1; // Si no hay documentos, empezamos con 1
+            } else {
+                const lastDoc = snapshot.docs[0];
+                const lastId = lastDoc.data().__idNumber || 0;
+                return lastId + 1;
+            }
+        }
+
+        // Función para manejar la carga del archivo con IDs progresivos
+        async function handleFileUpload(file) {
+            if (!file) return;
+
+            try {
+                isLoading = true;
+                uploadButton.disabled = true;
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                const productosRef = db.collection('clientes');
+                const totalItems = jsonData.length;
+                let processedItems = 0;
+                
+                // Obtener el próximo ID disponible
+                let nextId = await getNextAvailableId();
+                
+                // Mostrar barra de progreso
+                progressBar.style.width = '0%';
+                
+                // Subir documentos en lotes
+                const batchSize = 100;
+                for (let i = 0; i < totalItems; i += batchSize) {
+                    const batch = db.batch();
+                    const batchEnd = Math.min(i + batchSize, totalItems);
+                    
+                    for (let j = i; j < batchEnd; j++) {
+                        const item = jsonData[j];
+                        const keys = Object.keys(item);
+                        
+                        // Crear objeto de datos incluyendo el ID numérico
+                        const dataToSave = {
+                            ...item,
+                            __idNumber: nextId // Añadimos el ID numérico como campo
+                        };
+                        
+                        // Usar el ID numérico como ID del documento
+                        const docRef = productosRef.doc(nextId.toString());
+                        batch.set(docRef, dataToSave);
+                        
+                        nextId++;
+                    }
+                    
+                    await batch.commit();
+                    processedItems = batchEnd;
+                    
+                    // Actualizar barra de progreso
+                    const progress = (processedItems / totalItems) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    
+                    // Actualizar temporizador
+                    updateTimer();
+                }
+
+                const endTime = new Date();
+                const totalTime = (endTime - startTime) / 1000;
+                
+                showMessage(`Se importaron ${totalItems} registros en ${totalTime.toFixed(2)} segundos.`);
+                updateProductCount();
+            } catch (error) {
+                console.error('Error al procesar el archivo:', error);
+                showMessage('Error al procesar el archivo. Por favor, intente nuevamente o contactese con los desarrolladores.', true);
+            } finally {
+                isLoading = false;
+                uploadButton.disabled = false;
+            }
+        }
+
+        // Función para eliminar todos los documentos de la colección
+        async function deleteAllDocuments() {
+            try {
+                startTime = new Date();
+                const timerInterval = setInterval(updateTimer, 100);
+                showLoading();
+                
+                const productosRef = db.collection('clientes');
+                const snapshot = await productosRef.get();
+                const totalItems = snapshot.size;
+                let deletedItems = 0;
+                
+                // Mostrar barra de progreso
+                progressBar.style.width = '0%';
+                
+                // Eliminar documentos en lotes
+                const batchSize = 100;
+                let batch = db.batch();
+                let operationsInBatch = 0;
+                
+                for (const doc of snapshot.docs) {
+                    batch.delete(doc.ref);
+                    operationsInBatch++;
+                    deletedItems++;
+                    
+                    if (operationsInBatch >= batchSize) {
+                        await batch.commit();
+                        batch = db.batch();
+                        operationsInBatch = 0;
+                        
+                        // Actualizar barra de progreso
+                        const progress = (deletedItems / totalItems) * 100;
+                        progressBar.style.width = `${progress}%`;
+                        updateTimer();
+                    }
+                }
+                
+                // Confirmar el último batch si quedan operaciones pendientes
+                if (operationsInBatch > 0) {
+                    await batch.commit();
+                }
+                
+                clearInterval(timerInterval);
+                
+                const endTime = new Date();
+                const totalTime = (endTime - startTime) / 1000;
+                
+                showMessage(`Se eliminaron ${totalItems} registros en ${totalTime.toFixed(2)} segundos.`);
+                updateProductCount();
+            } catch (error) {
+                console.error('Error al eliminar documentos:', error);
+                showMessage('Error al eliminar los datos. Por favor, intente nuevamente.', true);
+            }
+        }
+
+        // Función para obtener y mostrar el conteo de documentos
+        async function updateProductCount() {
+            const productosRef = db.collection('clientes');
+            const snapshot = await productosRef.get();
+            const count = snapshot.size;
+            document.getElementById('productCount').textContent = `Número de clientes en Firestore: ${count}`;
+        }
+
+        // Event Listeners
+        uploadButton.addEventListener('click', showConfirmation);
+
+        deleteButton.addEventListener('click', () => {
+            Swal.fire({
+                title: "¿Estás seguro de que quieres eliminar TODOS los datos?",
+                text: "Esta acción no se puede deshacer y eliminará permanentemente todos los registros.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, eliminar todo",
+                cancelButtonText: "Cancelar",
+                confirmButtonColor: "#d32f2f",
+                cancelButtonColor: "#ffd700",
+                background: '#1e1e1e',
+                color: '#e0e0e0',
+                dangerMode: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteAllDocuments();
+                }
+            });
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            file = event.target.files[0];
+            uploadButton.disabled = !file;
+        });
+
+        // Soporte para drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!isLoading) {
+                uploadArea.style.borderColor = '#c0a040';
+            }
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            if (!isLoading) {
+                uploadArea.style.borderColor = '#ffd700';
+            }
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (!isLoading) {
+                uploadArea.style.borderColor = '#ffd700';
+                file = e.dataTransfer.files[0];
+                if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+                    uploadButton.disabled = false;
+                } else {
+                    showMessage('Por favor, seleccione un archivo Excel válido (.xlsx o .xls)', true);
+                }
+            }
+        });
+
+        // Actualizar el conteo al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            updateProductCount();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSI Enterprise - Papelera de Tickets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8/dist/sweetalert2.min.css">    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/gestiontickets.css">
+        <link rel="stylesheet" href="../css/gestionT.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="user-profile">
+            <img src="../css/img/default-avatar.jpg" alt="Foto de perfil" class="user-avatar" id="userAvatar">
+            <h2 class="user-name" id="userName">Cargando...</h2>
+            <p class="user-area" id="userArea">Cargando área...</p>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-title">
+                    <i class="fas fa-trash"></i>
+                    <span>Tickets en Papelera</span>
+                </div>
+                <div class="stat-value" id="totalTicketsPapelera">0</div>
+            </div>
+        </div>
+        
+       <button class="cerrar-sesion-btn action-btn" id="logoutBtn">
+    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+</button>
+
+        <button class="action-btn" onclick="window.location.href='gestion-tickets.html'" style="margin-top: 15px; width: 100%;">
+            <i class="fas fa-arrow-left"></i> Volver a Tickets
+        </button>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <div class="crud-header">
+            <h2 class="page-title">Papelera de Tickets</h2>
+            <div class="buttons-container">
+                <button class="action-btn delete" onclick="emptyTrash()">
+                    <i class="fas fa-trash"></i> Vaciar Papelera
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Área</th>
+                        <th>Fecha Eliminación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsPapeleraTable">
+                    <!-- Los tickets de la papelera se cargarán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles del ticket -->
+    <div id="viewTicketModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTicketTitle">Detalles del Ticket</h2>
+                <span class="close" onclick="closeModal('viewTicketModal')">&times;</span>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Información del Ticket</strong>
+                <p><span class="detail-label">Estado:</span> <span id="modalTicketStatus"></span></p>
+                <p><span class="detail-label">Prioridad:</span> <span id="modalTicketPriority"></span></p>
+                <p><span class="detail-label">Área:</span> <span id="modalTicketArea"></span></p>
+                <p><span class="detail-label">Responsable:</span> <span id="modalTicketResponsible"></span></p>
+                <p><span class="detail-label">Fecha eliminación:</span> <span id="modalTicketDeletedDate"></span></p>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Información del Cliente</strong>
+                <p><span class="detail-label">Cuenta:</span> <span id="modalTicketAccount"></span></p>
+                <p><span class="detail-label">Dirección Fiscal:</span> <span id="modalTicketAddress"></span></p>
+                <p><span class="detail-label">RFC:</span> <span id="modalTicketRFC"></span></p>
+                <p><span class="detail-label">Atención a:</span> <span id="modalTicketAttention"></span></p>
+                <p><span class="detail-label">Correo:</span> <span id="modalTicketEmail"></span></p>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Información del Servicio</strong>
+                <p><span class="detail-label">Proyecto:</span> <span id="modalTicketProject"></span></p>
+                <p><span class="detail-label">Servicio:</span> <span id="modalTicketService"></span></p>
+                <p><span class="detail-label">Sistemas:</span> <span id="modalTicketSystems"></span></p>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Descripción de Actividades</strong>
+                <div class="description-text" id="modalTicketDescription"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="action-btn restore" onclick="restoreSelectedTicket()">
+                    <i class="fas fa-undo"></i> Restaurar
+                </button>
+                <button class="action-btn delete" onclick="permanentlyDeleteSelectedTicket()">
+                    <i class="fas fa-trash"></i> Eliminar Permanentemente
+                </button>
+                <button class="action-btn cancel-btn" onclick="closeModal('viewTicketModal')">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+<div class="hamburger-btn" id="hamburgerBtn">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Variables globales
+        let currentUser = null;
+        let currentSelectedTicketId = null;
+
+        // Función para cargar el perfil del usuario
+        function loadUserProfile() {
+            const user = auth.currentUser;
+            
+            if (user) {
+                db.collection("colaboradores").where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get()
+                    .then((querySnapshot) => {
+                        if (!querySnapshot.empty) {
+                            const doc = querySnapshot.docs[0];
+                            const userData = doc.data();
+                            
+                            document.getElementById('userAvatar').src = userData.imagen || '../css/img/default-avatar.jpg';
+                            document.getElementById('userName').textContent = userData.NOMBRE || 'Usuario';
+                            document.getElementById('userArea').textContent = userData.ÁREA || 'Sin área asignada';
+                            
+                            currentUser = {
+                                id: doc.id,
+                                nombre: userData.NOMBRE,
+                                area: userData.ÁREA,
+                                imagen: userData.imagen || '../css/img/default-avatar.jpg'
+                            };
+                        } else {
+                            document.getElementById('userAvatar').src = '../css/img/default-avatar.jpg';
+                            document.getElementById('userName').textContent = 'Usuario no registrado';
+                            document.getElementById('userArea').textContent = 'Sin área asignada';
+                            
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Perfil incompleto',
+                                text: 'Tu correo no está registrado en la base de colaboradores. Contacta al administrador.',
+                                confirmButtonText: 'Entendido'
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error al obtener datos del usuario:", error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al cargar tu perfil'
+                        });
+                    });
+            } else {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            }
+        }
+
+        // Función para cargar tickets de la papelera en la tabla
+        function loadTrashTickets() {
+            db.collection('ticketsmesaPapelera').orderBy('fechaEliminacion', 'desc').onSnapshot(snapshot => {
+                const tableBody = document.getElementById('ticketsPapeleraTable');
+                tableBody.innerHTML = '';
+                let totalTickets = 0;
+
+                snapshot.forEach(doc => {
+                    const ticket = { id: doc.id, ...doc.data() };
+                    totalTickets++;
+                    renderTicketRow(ticket, tableBody);
+                });
+
+                document.getElementById('totalTicketsPapelera').textContent = totalTickets;
+
+                if (totalTickets === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="no-tickets">
+                                <i class="fas fa-trash"></i>
+                                <h3>La papelera está vacía</h3>
+                                <p>No hay tickets eliminados para mostrar</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        // Función para renderizar una fila de ticket en la tabla
+        function renderTicketRow(ticket, tableBody) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>#${ticket.id.substring(0, 8)}</td>
+                <td>${ticket.titulo}</td>
+                <td>
+                    <span class="badge ${getBadgeClass(ticket.estado)}">
+                        <i class="fas ${getStatusIcon(ticket.estado)}"></i>
+                        ${formatStatus(ticket.estado)}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge ${getPriorityBadgeClass(ticket.prioridad)}">
+                        <i class="fas ${getPriorityIcon(ticket.prioridad)}"></i>
+                        ${formatPriority(ticket.prioridad)}
+                    </span>
+                </td>
+                <td>${ticket.area || 'N/A'}</td>
+                <td>${formatDateTime(ticket.fechaEliminacion)}</td>
+                <td class="actions-cell">
+                    <button class="action-btn view" onclick="viewTicket('${ticket.id}')">
+                        <i class="fas fa-eye"></i> Ver
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        // Función para ver detalles de un ticket
+        async function viewTicket(id) {
+            try {
+                const doc = await db.collection('ticketsmesaPapelera').doc(id).get();
+                if (doc.exists) {
+                    const ticket = doc.data();
+                    currentSelectedTicketId = id;
+                    
+                    // Llenar el modal con los datos del ticket
+                    document.getElementById('modalTicketTitle').textContent = ticket.titulo;
+                    document.getElementById('modalTicketStatus').innerHTML = `
+                        <span class="badge ${getBadgeClass(ticket.estado)}">
+                            ${formatStatus(ticket.estado)}
+                        </span>
+                    `;
+                    document.getElementById('modalTicketPriority').innerHTML = `
+                        <span class="badge ${getPriorityBadgeClass(ticket.prioridad)}">
+                            ${formatPriority(ticket.prioridad)}
+                        </span>
+                    `;
+                    document.getElementById('modalTicketArea').textContent = ticket.area || 'N/A';
+                    document.getElementById('modalTicketResponsible').textContent = ticket.responsableNombre || 'Sin asignar';
+                    document.getElementById('modalTicketDeletedDate').textContent = formatDateTime(ticket.fechaEliminacion);
+                    
+                    // Información del cliente
+                    document.getElementById('modalTicketAccount').textContent = ticket.cuenta || 'N/A';
+                    document.getElementById('modalTicketAddress').textContent = ticket.direccionFiscal || 'N/A';
+                    document.getElementById('modalTicketRFC').textContent = ticket.rfc || 'N/A';
+                    document.getElementById('modalTicketAttention').textContent = ticket.atencionA || 'N/A';
+                    document.getElementById('modalTicketEmail').textContent = ticket.correo || 'N/A';
+                    
+                    // Información del servicio
+                    document.getElementById('modalTicketProject').textContent = ticket.proyecto || 'N/A';
+                    document.getElementById('modalTicketService').textContent = ticket.servicio || 'N/A';
+                    document.getElementById('modalTicketSystems').textContent = ticket.sistemas?.join(', ') || 'Ninguno';
+                    
+                    // Descripción
+                    document.getElementById('modalTicketDescription').textContent = ticket.descripcionActividades || 'Sin descripción';
+                    
+                    // Mostrar el modal
+                    openModal('viewTicketModal');
+                }
+            } catch (error) {
+                console.error('Error al cargar ticket:', error);
+                Swal.fire('Error', 'No se pudo cargar el ticket', 'error');
+            }
+        }
+
+async function restoreSelectedTicket() {
+    if (!currentSelectedTicketId) return;
+    
+    try {
+        const { value: result } = await Swal.fire({
+            title: '¿Restaurar ticket?',
+            text: 'El ticket será restaurado a la lista principal de tickets',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            confirmButtonText: 'Sí, restaurar',
+            cancelButtonText: 'Cancelar',
+            background: '#ffffff',
+            color: '#000000'
+        });
+
+        if (result) {
+            const doc = await db.collection('ticketsmesaPapelera').doc(currentSelectedTicketId).get();
+            if (doc.exists) {
+                const ticketData = doc.data();
+                
+                delete ticketData.fechaEliminacion;
+                
+                await db.collection('ticketsmesa').doc(currentSelectedTicketId).set(ticketData);
+                await db.collection('ticketsmesaPapelera').doc(currentSelectedTicketId).delete();
+                
+                await Swal.fire({
+                    title: '¡Restaurado!',
+                    text: 'El ticket ha sido restaurado',
+                    icon: 'success',
+                    background: '#ffffff',
+                    color: '#000000'
+                });
+                closeModal('viewTicketModal');
+            }
+        }
+    } catch (error) {
+        console.error('Error al restaurar ticket:', error);
+        await Swal.fire({
+            title: 'Error',
+            text: 'No se pudo restaurar el ticket',
+            icon: 'error',
+            background: '#ffffff',
+            color: '#000000'
+        });
+    }
+}
+
+        // Función para eliminar permanentemente un ticket
+        async function permanentlyDeleteSelectedTicket() {
+            if (!currentSelectedTicketId) return;
+            
+            try {
+                const result = await Swal.fire({
+                    title: '¿Eliminar permanentemente?',
+                    text: 'Esta acción no se puede deshacer. El ticket será eliminado para siempre.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (result.isConfirmed) {
+                    await db.collection('ticketsmesaPapelera').doc(currentSelectedTicketId).delete();
+                    Swal.fire('¡Eliminado!', 'El ticket ha sido eliminado permanentemente', 'success');
+                    closeModal('viewTicketModal');
+                }
+            } catch (error) {
+                console.error('Error al eliminar ticket:', error);
+                Swal.fire('Error', 'No se pudo eliminar el ticket', 'error');
+            }
+        }
+
+        // Función para vaciar la papelera
+        async function emptyTrash() {
+            try {
+                const result = await Swal.fire({
+                    title: '¿Vaciar la papelera?',
+                    text: 'Todos los tickets en la papelera serán eliminados permanentemente',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, vaciar papelera',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (result.isConfirmed) {
+                    // Obtener todos los tickets en la papelera
+                    const snapshot = await db.collection('ticketsmesaPapelera').get();
+                    
+                    // Eliminar cada documento
+                    const batch = db.batch();
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    await batch.commit();
+                    
+                    Swal.fire('¡Papelera vaciada!', 'Todos los tickets han sido eliminados permanentemente', 'success');
+                }
+            } catch (error) {
+                console.error('Error al vaciar la papelera:', error);
+                Swal.fire('Error', 'No se pudo vaciar la papelera', 'error');
+            }
+        }
+
+        // Funciones auxiliares
+        function getBadgeClass(status) {
+            switch(status) {
+                case 'finalizado': return 'badge-success';
+                case 'en_proceso': return 'badge-warning';
+                case 'pendiente': return 'badge-danger';
+                case 'cancelado': return 'badge-secondary';
+                default: return 'badge-info';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'finalizado': return 'fa-check-circle';
+                case 'en_proceso': return 'fa-spinner';
+                case 'pendiente': return 'fa-exclamation-circle';
+                case 'cancelado': return 'fa-times-circle';
+                default: return 'fa-question-circle';
+            }
+        }
+
+        function getPriorityBadgeClass(priority) {
+            switch(priority) {
+                case 'alta': return 'badge-danger';
+                case 'media': return 'badge-warning';
+                case 'baja': return 'badge-success';
+                default: return 'badge-info';
+            }
+        }
+
+        function getPriorityIcon(priority) {
+            switch(priority) {
+                case 'alta': return 'fa-exclamation-triangle';
+                case 'media': return 'fa-exclamation';
+                case 'baja': return 'fa-arrow-down';
+                default: return 'fa-question';
+            }
+        }
+
+        function formatStatus(status) {
+            return status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        function formatPriority(priority) {
+            return priority.charAt(0).toUpperCase() + priority.slice(1);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate();
+            return date.toLocaleDateString('es-MX');
+        }
+
+        function formatDateTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate();
+            return date.toLocaleDateString('es-MX') + ' ' + date.toLocaleTimeString('es-MX');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Inicialización de la aplicación
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loadUserProfile();
+                loadTrashTickets();
+            } else {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            }
+        });
+
+        // Manejar cierre de sesión
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    sessionStorage.removeItem('currentUser');
+                    window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                })
+                .catch((error) => {
+                    console.error("Error al cerrar sesión:", error);
+                    Swal.fire('Error', 'No se pudo cerrar la sesión', 'error');
+                });
+        });
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const viewModal = document.getElementById('viewTicketModal');
+            if (event.target === viewModal) {
+                closeModal('viewTicketModal');
+            }
+        }
+
+/**
+ * Utilidades JavaScript para componentes responsivos
+ */
+
+class ResponsiveUtils {
+  constructor() {
+    this.breakpoints = {
+      xs: 360,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280
+    };
+    
+    this.currentBreakpoint = this.getCurrentBreakpoint();
+    this.init();
+  }
+
+  init() {
+    this.setupSidebarToggle();
+    this.setupResponsiveImages();
+    this.setupTouchEvents();
+    this.setupOrientationChange();
+    this.setupViewportUnits();
+    
+    // Escuchar cambios de tamaño
+    window.addEventListener('resize', this.debounce(() => {
+      this.handleResize();
+    }, 250));
+  }
+
+  getCurrentBreakpoint() {
+    const width = window.innerWidth;
+    
+    if (width < this.breakpoints.sm) return 'xs';
+    if (width < this.breakpoints.md) return 'sm';
+    if (width < this.breakpoints.lg) return 'md';
+    if (width < this.breakpoints.xl) return 'lg';
+    return 'xl';
+  }
+
+  setupSidebarToggle() {
+    // Crear botón toggle si no existe
+    if (!document.querySelector('.sidebar-toggle')) {
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'sidebar-toggle';
+      toggleBtn.innerHTML = `
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      `;
+      document.body.appendChild(toggleBtn);
+    }
+
+    // Crear overlay si no existe
+    if (!document.querySelector('.sidebar-overlay')) {
+      const overlay = document.createElement('div');
+      overlay.className = 'sidebar-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.querySelector('.sidebar-toggle');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const hamburger = document.querySelector('.hamburger');
+
+    if (sidebar && toggleBtn && overlay) {
+      toggleBtn.addEventListener('click', () => {
+        this.toggleSidebar();
+      });
+
+      overlay.addEventListener('click', () => {
+        this.closeSidebar();
+      });
+
+      // Cerrar sidebar con tecla Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          this.closeSidebar();
+        }
+      });
+    }
+  }
+
+  toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const hamburger = document.querySelector('.hamburger');
+    const body = document.body;
+
+    if (sidebar && overlay && hamburger) {
+      const isActive = sidebar.classList.contains('active');
+      
+      if (isActive) {
+        this.closeSidebar();
+      } else {
+        this.openSidebar();
+      }
+    }
+  }
+
+  openSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const hamburger = document.querySelector('.hamburger');
+    const body = document.body;
+
+    sidebar?.classList.add('active');
+    overlay?.classList.add('active');
+    hamburger?.classList.add('active');
+    body.classList.add('sidebar-open');
+    
+    // Prevenir scroll del body cuando el sidebar está abierto
+    body.style.overflow = 'hidden';
+  }
+
+  closeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const hamburger = document.querySelector('.hamburger');
+    const body = document.body;
+
+    sidebar?.classList.remove('active');
+    overlay?.classList.remove('active');
+    hamburger?.classList.remove('active');
+    body.classList.remove('sidebar-open');
+    
+    // Restaurar scroll del body
+    body.style.overflow = '';
+  }
+
+  setupResponsiveImages() {
+    const images = document.querySelectorAll('img[data-responsive]');
+    
+    images.forEach(img => {
+      if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              this.loadResponsiveImage(entry.target);
+              imageObserver.unobserve(entry.target);
+            }
+          });
+        });
+        
+        imageObserver.observe(img);
+      } else {
+        // Fallback para navegadores sin IntersectionObserver
+        this.loadResponsiveImage(img);
+      }
+    });
+  }
+
+  loadResponsiveImage(img) {
+    const breakpoint = this.getCurrentBreakpoint();
+    const baseSrc = img.dataset.responsive;
+    
+    // Cargar imagen apropiada según el breakpoint
+    const responsiveSrc = this.getResponsiveImageSrc(baseSrc, breakpoint);
+    
+    if (responsiveSrc && responsiveSrc !== img.src) {
+      img.src = responsiveSrc;
+    }
+  }
+
+  getResponsiveImageSrc(baseSrc, breakpoint) {
+    // Lógica para obtener la URL de imagen apropiada
+    // según el breakpoint actual
+    const srcParts = baseSrc.split('.');
+    const extension = srcParts.pop();
+    const name = srcParts.join('.');
+    
+    switch (breakpoint) {
+      case 'xs':
+      case 'sm':
+        return `${name}-mobile.${extension}`;
+      case 'md':
+        return `${name}-tablet.${extension}`;
+      default:
+        return baseSrc;
+    }
+  }
+
+  setupTouchEvents() {
+    // Mejorar la experiencia táctil en dispositivos móviles
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    document.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      
+      // Detectar swipe horizontal para sidebar
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX > 0 && touchStartX < 50) {
+          // Swipe right desde el borde izquierdo
+          this.openSidebar();
+        } else if (deltaX < 0 && document.querySelector('.sidebar.active')) {
+          // Swipe left cuando sidebar está abierto
+          this.closeSidebar();
+        }
+      }
+    }, { passive: true });
+  }
+
+  setupOrientationChange() {
+    window.addEventListener('orientationchange', () => {
+      // Pequeño delay para permitir que el viewport se ajuste
+      setTimeout(() => {
+        this.handleOrientationChange();
+      }, 100);
+    });
+  }
+
+  handleOrientationChange() {
+    // Cerrar sidebar al cambiar orientación
+    this.closeSidebar();
+    
+    // Recalcular elementos que dependen del viewport
+    this.updateViewportUnits();
+    
+    // Ajustar modales si están abiertos
+    this.adjustModalsForOrientation();
+  }
+
+  setupViewportUnits() {
+    this.updateViewportUnits();
+    
+    window.addEventListener('resize', this.debounce(() => {
+      this.updateViewportUnits();
+    }, 100));
+  }
+
+  updateViewportUnits() {
+    // Fix para viewport units en móviles
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    const vw = window.innerWidth * 0.01;
+    document.documentElement.style.setProperty('--vw', `${vw}px`);
+  }
+
+  adjustModalsForOrientation() {
+    const modals = document.querySelectorAll('.modal[style*="display: block"]');
+    
+    modals.forEach(modal => {
+      const content = modal.querySelector('.modal-content');
+      if (content) {
+        // Ajustar altura máxima del modal
+        const maxHeight = window.innerHeight * 0.9;
+        content.style.maxHeight = `${maxHeight}px`;
+      }
+    });
+  }
+
+  handleResize() {
+    const newBreakpoint = this.getCurrentBreakpoint();
+    
+    if (newBreakpoint !== this.currentBreakpoint) {
+      this.currentBreakpoint = newBreakpoint;
+      this.onBreakpointChange(newBreakpoint);
+    }
+    
+    this.updateViewportUnits();
+  }
+
+  onBreakpointChange(newBreakpoint) {
+    // Emitir evento personalizado para otros componentes
+    const event = new CustomEvent('breakpointChange', {
+      detail: { breakpoint: newBreakpoint }
+    });
+    document.dispatchEvent(event);
+    
+    // Cerrar sidebar en breakpoints grandes
+    if (newBreakpoint === 'lg' || newBreakpoint === 'xl') {
+      this.closeSidebar();
+    }
+    
+    // Ajustar grids y layouts
+    this.adjustLayoutForBreakpoint(newBreakpoint);
+  }
+
+  adjustLayoutForBreakpoint(breakpoint) {
+    const ticketsGrid = document.querySelector('.tickets-grid');
+    
+    if (ticketsGrid) {
+      switch (breakpoint) {
+        case 'xs':
+          ticketsGrid.style.gridTemplateColumns = '1fr';
+          break;
+        case 'sm':
+          ticketsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+          break;
+        case 'md':
+          ticketsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+          break;
+        default:
+          ticketsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(350px, 1fr))';
+      }
+    }
+  }
+
+  // Utilidad para debounce
+  debounce(func, wait, immediate) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        timeout = null;
+        if (!immediate) func(...args);
+      };
+      const callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func(...args);
+    };
+  }
+
+  // Utilidad para detectar características del dispositivo
+  getDeviceInfo() {
+    const userAgent = navigator.userAgent;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isTablet = /iPad|Android(?!.*Mobile)/i.test(userAgent);
+    const isDesktop = !isMobile && !isTablet;
+    
+    return {
+      isMobile,
+      isTablet,
+      isDesktop,
+      hasTouch: 'ontouchstart' in window,
+      supportsHover: window.matchMedia('(hover: hover)').matches,
+      breakpoint: this.currentBreakpoint
+    };
+  }
+
+  // Utilidad para animaciones suaves
+  smoothScrollTo(element, duration = 300) {
+    const targetPosition = element.offsetTop;
+    const startPosition = window.pageYOffset;
+    const distance = targetPosition - startPosition;
+    let startTime = null;
+
+    function animation(currentTime) {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const run = this.easeInOutQuad(timeElapsed, startPosition, distance, duration);
+      window.scrollTo(0, run);
+      if (timeElapsed < duration) requestAnimationFrame(animation);
+    }
+
+    requestAnimationFrame(animation.bind(this));
+  }
+
+  easeInOutQuad(t, b, c, d) {
+    t /= d / 2;
+    if (t < 1) return c / 2 * t * t + b;
+    t--;
+    return -c / 2 * (t * (t - 2) - 1) + b;
+  }
+
+  // Utilidad para notificaciones responsive
+  showResponsiveNotification(message, type = 'info', duration = 5000) {
+    const notification = document.createElement('div');
+    notification.className = `responsive-notification responsive-notification-${type}`;
+    notification.textContent = message;
+    
+    // Posicionar según el dispositivo
+    const deviceInfo = this.getDeviceInfo();
+    if (deviceInfo.isMobile) {
+      notification.style.position = 'fixed';
+      notification.style.bottom = '20px';
+      notification.style.left = '20px';
+      notification.style.right = '20px';
+    } else {
+      notification.style.position = 'fixed';
+      notification.style.top = '20px';
+      notification.style.right = '20px';
+      notification.style.maxWidth = '400px';
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove después del duration
+    setTimeout(() => {
+      notification.remove();
+    }, duration);
+  }
+}
+
+// Inicializar utilidades responsive cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.responsiveUtils = new ResponsiveUtils();
+  });
+} else {
+  window.responsiveUtils = new ResponsiveUtils();
+}
+
+// Exportar para uso como módulo
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = ResponsiveUtils;
+}
+
+</script>
+</body>
+</html>

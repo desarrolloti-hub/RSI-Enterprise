@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <title>Editar Categoría</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+    <style>
+        /* Estilos generales */
+        .registro-body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navbar fixed */
+        .nan_header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px; /* Altura del navbar */
+            background-color: #1d1d1d;
+            z-index: 1000;
+        }
+
+        /* Contenedor del formulario */
+        .registro-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 80px auto 20px; /* Margen superior igual a la altura del navbar + 20px */
+            padding: 20px;
+        }
+
+        /* Estilos para el formulario */
+        .registro-form {
+            background-color: #1d1d1d;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            position: relative;
+            margin-top: 40px; /* Espacio para el círculo */
+        }
+
+        /* Círculo superior */
+        .registro-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: -40px; /* Mitad fuera, mitad dentro */
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .registro-circle i {
+            font-size: 36px;
+            color: #000;
+        }
+
+        /* Título dentro del formulario */
+        .registro-title {
+            color: #FFD700;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 30px; /* Espacio debajo del círculo */
+            margin-bottom: 20px;
+        }
+
+        /* Campos del formulario */
+        .registro-form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .registro-form-group i {
+            color: #FFD700;
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .registro-input,
+        .registro-file {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .registro-file {
+            cursor: pointer;
+        }
+
+        /* Botón de enviar */
+        .registro-button {
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .registro-button i {
+            margin-left: 8px;
+        }
+
+        .registro-button:hover {
+            background-color: #e6b800;
+        }
+
+        /* Imagen actual */
+        .imagen-actual {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body class="registro-body">
+    <!-- Navbar -->
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contenedor del formulario -->
+    <div class="registro-container">
+        <!-- Formulario -->
+        <form id="editar-categoria-form" class="registro-form">
+            <!-- Círculo superior -->
+            <div class="registro-circle">
+                <i class="fas fa-folder"></i>
+            </div>
+
+            <!-- Título dentro del formulario -->
+            <h2 class="registro-title">Editar Categoría</h2>
+
+            <!-- Campos del formulario con iconos -->
+            <div class="registro-form-group">
+                <i class="fas fa-tag"></i>
+                <input type="text" id="nombreCategoria" class="registro-input" placeholder="Nombre de la categoría" required>
+            </div>
+
+            <!-- Imagen actual -->
+            <div id="imagen-actual-container">
+                <img id="imagen-actual" class="imagen-actual" src="" alt="Imagen actual">
+                <button type="button" id="eliminar-imagen" class="registro-button" style="margin-top: 10px;">
+                    Eliminar Imagen <i class="fas fa-trash"></i>
+                </button>
+            </div>
+
+            <!-- Campo para nueva imagen -->
+            <div class="registro-form-group">
+                <i class="fas fa-image"></i>
+                <input type="file" id="imagenCategoria" class="registro-file" accept="image/*">
+            </div>
+
+            <button type="submit" class="registro-button">
+                Guardar Cambios <i class="fas fa-save"></i>
+            </button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Obtener el ID de la categoría de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoriaId = urlParams.get('id');
+
+        // Referencia a la categoría
+        const categoriaRef = doc(db, "categorias", categoriaId);
+
+        // Elementos del DOM
+        const nombreCategoriaInput = document.getElementById("nombreCategoria");
+        const imagenActual = document.getElementById("imagen-actual");
+        const imagenActualContainer = document.getElementById("imagen-actual-container");
+        const eliminarImagenBtn = document.getElementById("eliminar-imagen");
+        const imagenCategoriaInput = document.getElementById("imagenCategoria");
+
+        // Cargar datos de la categoría
+        const cargarCategoria = async () => {
+            const categoriaDoc = await getDoc(categoriaRef);
+            if (categoriaDoc.exists()) {
+                const categoriaData = categoriaDoc.data();
+                nombreCategoriaInput.value = categoriaData.nombre;
+
+                // Mostrar imagen actual si existe
+                if (categoriaData.imagen) {
+                    imagenActual.src = categoriaData.imagen;
+                    imagenActualContainer.style.display = "block";
+                } else {
+                    imagenActualContainer.style.display = "none";
+                }
+
+                // Verificar si hay productos asociados
+                const productosQuery = query(collection(db, "Productos"), where("Categoria", "==", categoriaData.nombre));
+                const productosSnapshot = await getDocs(productosQuery);
+
+                if (!productosSnapshot.empty) {
+                    nombreCategoriaInput.disabled = true;
+                    Swal.fire({
+                        icon: "info",
+                        title: "Categoría en uso",
+                        text: "Hay productos asociados a esta categoría. Solo puedes modificar la imagen.",
+                        confirmButtonColor: "#FFD700"
+                    });
+                }
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "La categoría no existe.",
+                    confirmButtonColor: "#FFD700"
+                }).then(() => {
+                    window.location.href = "categorias.html";
+                });
+            }
+        };
+
+        // Eliminar imagen
+        eliminarImagenBtn.addEventListener("click", async () => {
+            const confirmacion = await Swal.fire({
+                icon: "warning",
+                title: "¿Eliminar imagen?",
+                text: "¿Estás seguro de que deseas eliminar la imagen actual?",
+                showCancelButton: true,
+                confirmButtonColor: "#FFD700",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Sí, eliminar"
+            });
+
+            if (confirmacion.isConfirmed) {
+                await updateDoc(categoriaRef, { imagen: null });
+                imagenActual.src = "";
+                imagenActualContainer.style.display = "none";
+                Swal.fire({
+                    icon: "success",
+                    title: "Imagen eliminada",
+                    text: "La imagen ha sido eliminada correctamente.",
+                    confirmButtonColor: "#FFD700"
+                });
+            }
+        });
+
+        // Manejar el envío del formulario
+        document.getElementById("editar-categoria-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const nombre = nombreCategoriaInput.value;
+            const imagen = imagenCategoriaInput.files[0];
+
+            try {
+                let imagenBase64 = null;
+                if (imagen) {
+                    imagenBase64 = await toBase64(imagen);
+                }
+
+                const updateData = { nombre };
+                if (imagenBase64) {
+                    updateData.imagen = imagenBase64;
+                }
+
+                await updateDoc(categoriaRef, updateData);
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Éxito",
+                    text: "Categoría actualizada correctamente.",
+                    confirmButtonColor: "#FFD700"
+                }).then(() => {
+                    // Redirigir a categorias.html
+                    window.location.href = "categorias.html";
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "No se pudo actualizar la categoría.",
+                    confirmButtonColor: "#FFD700"
+                });
+                console.error("Error al actualizar la categoría:", error);
+            }
+        });
+
+        // Convertir imagen a base64
+        const toBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+
+        // Cargar datos al iniciar
+        cargarCategoria();
+    </script>
+</body>
+</html>

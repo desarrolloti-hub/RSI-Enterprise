@@ -1,0 +1,504 @@
+    /* --- ESTILOS DEL NAVBAR --- */
+    .nan_header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000; /* Asegura que esté por encima del contenido */
+      background-color: white; /* Fondo para que el contenido no se vea detrás */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: sombra para separar visualmente */
+    }
+
+    /* --- ESPACIO PARA EL NAVBAR --- */
+    main {
+      margin-top: 80px; /* Ajusta este valor según la altura de tu nav */
+      padding-top: 20px; /* Espacio adicional si es necesario */
+    }
+
+    /* --- ESTILOS DE LAS TARJETAS --- */
+    .product-card {
+      transition: all 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    /* --- ESTILOS DEL QUICK-VIEW MODAL --- */
+    #quick-view-modal {
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      position: fixed; /* Asegura que el modal esté fijo en la pantalla */
+      top: 80px; /* Respeta el espacio del navbar */
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 80px); /* Altura menos la altura del navbar */
+      background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+      z-index: 1001; /* Asegura que esté por encima del navbar */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px; /* Espacio interno */
+      overflow-y: auto; /* Permite el scroll si el contenido es largo */
+    }
+
+    #quick-view-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* --- ESTILOS DEL DETAIL-VIEW --- */
+    #detail-view {
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      position: fixed; /* Asegura que el modal esté fijo en la pantalla */
+      top: 0;
+      left: 0;
+      width: 100%; /* Ocupa todo el ancho */
+      height: 100vh; /* Ocupa toda la altura */
+      background-color: white;
+      z-index: 1001; /* Asegura que esté por encima del navbar */
+      overflow-y: auto; /* Permite el scroll si el contenido es largo */
+      padding-top: 80px; /* Respeta el espacio del navbar */
+    }
+
+    #detail-view.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* --- ESTILOS DEL BOTÓN DE CERRAR EN DETAIL-VIEW --- */
+    #close-detail {
+      position: fixed; /* Fijo en la pantalla */
+      top: 84px; /* 80px del navbar + 4px de margen */
+      right: 16px; /* Margen derecho */
+      background-color: #f3f4f6; /* Fondo gris claro */
+      padding: 8px; /* Espacio interno */
+      border-radius: 50%; /* Forma circular */
+      cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+      transition: background-color 0.3s ease; /* Transición suave */
+      z-index: 1002; /* Asegura que esté por encima del contenido */
+    }
+
+    #close-detail:hover {
+      background-color: #e5e7eb; /* Cambia el color al pasar el cursor */
+    }
+
+    /* --- ESTILOS DEL LOADER --- */
+    .loader {
+      border-top-color: #6366f1;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- BOTÓN DE VISTA RÁPIDA --- */
+    .quick-view-btn {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .product-card:hover .quick-view-btn {
+      opacity: 1;
+    }
+
+    /* --- COLOR PERSONALIZADO --- */
+    .text-custom-green {
+      color: #02ac16;
+    }
+
+        /* Estilos para el botón flotante del carrito */
+            .floating-cart-btn span {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background-color: red;
+                color: white;
+                border-radius: 50%;
+                width: 30px; 
+                height: 30px; 
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                padding: 0; 
+            }
+
+            .floating-cart-btn i {
+                font-size: 24px;
+            }
+
+            .floating-cart-btn span {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background-color: red;
+                color: white;
+                border-radius: 50%;
+                padding: 5px;
+                font-size: 12px;
+            }
+            /* /vista/css/carrito.css */
+
+    /* ===== BOTÓN FLOTANTE ===== */
+    .floating-cart-btn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background-color: #1e40af;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out;
+    z-index: 9999;
+    cursor: pointer;
+    }
+
+    .floating-cart-btn:hover {
+    transform: scale(1.1);
+    }
+
+    .floating-cart-btn i {
+    font-size: 24px;
+    }
+
+    .floating-cart-btn span {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    }
+
+    /* ===== MENÚ DEL CARRITO ===== */
+    .cart-sidebar {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 400px;
+        height: 100vh;
+        background-color: white;
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .cart-sidebar.open {
+        right: 0;
+    }
+
+    .cart-sidebar h2 {
+        padding: 20px;
+        margin: 0;
+        background-color: #1e40af;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.2rem;
+    }
+
+    .cart-sidebar h2 button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    #cart-items {
+        padding: 20px;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+
+    .cart-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+        gap: 15px;
+    }
+
+    .cart-item img {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        border-radius: 4px;
+        border: 1px solid #eee;
+    }
+
+    .cart-item .product-name {
+        flex-grow: 1;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .quantity-controls button {
+        width: 25px;
+        height: 25px;
+        background-color: #f3f4f6;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quantity-controls button:hover {
+        background-color: #e5e7eb;
+    }
+
+    .quantity-controls input {
+        width: 40px;
+        text-align: center;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 2px;
+    }
+
+    .remove-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 5px;
+    }
+
+    .remove-btn:hover {
+        color: #dc2626;
+    }
+
+    .cart-subtotal {
+        display: flex;
+        justify-content: space-between;
+        padding: 20px 0;
+        font-weight: bold;
+        font-size: 1.1rem;
+        border-top: 1px solid #eee;
+        margin-top: 10px;
+    }
+
+    #checkout {
+        background-color: #1e40af;
+        color: white;
+        border: none;
+        padding: 15px;
+        margin: 20px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    #checkout:hover {
+        background-color: #1e3a8a;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .cart-sidebar {
+            width: 100%;
+            right: -100%;
+        }
+    }
+
+    @media (max-width: 600px) {
+    .floating-cart-btn {
+        width: 50px;
+        height: 50px;
+        right: 15px;
+        bottom: 15px;
+    }
+    .floating-cart-btn i {
+        font-size: 20px;
+    }
+    .floating-cart-btn span {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+    }
+        main {
+            margin-top: 20px;
+            padding: 20px;
+        }
+        @media (min-width: 768px) {
+        main {
+            margin-top: 100px; 
+        }
+    }
+        .card {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            filter: blur(1px);
+            transition: filter 0.3s ease;
+        }
+
+        .card:hover .card-img {
+            filter: blur(0);
+        }
+
+        .card-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            width: 100%;
+            padding: 10px;
+            background: rgba(0,0,0,0.4);
+            margin: 0;
+            z-index: 1;
+        }
+
+        .product-card {
+            transition: all 0.3s ease;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: 550px; 
+        }
+        
+        @media (max-width: 767px) {
+            .product-card {
+                height: 400px; 
+            }
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        #quick-view-modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 20px);
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        #quick-view-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #detail-view {
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: white;
+            z-index: 1001;
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+
+        #detail-view.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .loader {
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quick-view-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .product-card:hover .quick-view-btn {
+            opacity: 1;
+        }
+
+        .text-custom-green {
+            color: #02ac16;
+        }
+
+        .thumbnail {
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail.active {
+            border: 2px solid #02ac16;
+        }
+
+        .image-nav-button {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(2px);
+        }

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png">
+    <title>RSI Enterprise</title>
+    <!-- Estilos para las alertas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Estilos para el inicio de sesion -->
+    <link rel="stylesheet" href="inicio-de-sesion.css"> 
+    <!-- Scripts para la funcionalidad del login Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+    <!-- carga dinamica del del navegador del sistema -->
+     <script src="../recursosDinamicos/nav.js"></script>
+    <!-- Contenedor principal -->
+    <div class="auth-container-wrapper">
+        <div class="auth-container">
+            <div class="form-section">
+                <!-- Formulario de Login -->
+                <div id="loginForm" class="containerForm active">
+                    <div class="form-header">
+                        <div class="form-title-container">
+                            <div class="icon-circle">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h2>Iniciar Sesión</h2>
+                        </div>
+                    </div>
+                    <form id="loginFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="forgot-password">
+                            <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+                        </div>
+                        <button type="submit" class="btn-primary">Ingresar</button>
+                    </form>
+                    <a href="#" class="form-link" id="goToSignup">¿No tienes cuenta? Regístrate</a>
+                </div>
+
+                <!-- Formulario de Registro -->
+                <div id="signupForm" class="containerForm">
+                    <div class="form-header">
+                        <div class="form-title-container">
+                            <div class="icon-circle">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h2>Crear Cuenta</h2>
+                        </div>
+                    </div>
+                    <form id="signupFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="fullName" placeholder="Nombre completo" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="signupEmail" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="signupPassword" placeholder="Contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('signupPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" name="rol" value="user">
+                        <button type="submit" class="btn-primary">Registrarse</button>
+                    </form>
+                    <a href="#" class="form-link" id="goToLogin">¿Ya tienes cuenta? Inicia sesión</a>
+                </div>
+            </div>
+            
+            <div class="image-section"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script>
+        // Función para mostrar/ocultar contraseña
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Función para navegar entre formularios
+        function setupFormNavigation() {
+            // De registro a login
+            document.getElementById('goToLogin')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('signupForm').classList.remove('active');
+                document.getElementById('loginForm').classList.add('active');
+            });
+
+            // De login a registro
+            document.getElementById('goToSignup')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('loginForm').classList.remove('active');
+                document.getElementById('signupForm').classList.add('active');
+            });
+        }
+
+        // Función para recuperación de contraseña
+        function setupPasswordRecovery() {
+            document.getElementById('forgotPasswordLink')?.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: 'Recuperar contraseña',
+                    input: 'email',
+                    inputPlaceholder: 'Ingresa tu correo electrónico',
+                    showCancelButton: true,
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    preConfirm: async (email) => {
+                        if (!email) {
+                            Swal.showValidationMessage('Por favor, ingresa un correo válido');
+                            return false;
+                        }
+
+                        try {
+                            await firebase.auth().sendPasswordResetEmail(email);
+                            return email;
+                        } catch (error) {
+                            Swal.showValidationMessage(`Error: ${error.message}`);
+                            return false;
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Correo enviado',
+                            text: 'Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.',
+                            icon: 'success'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Función para manejar el registro
+        async function handleSignup(fullName, email, password, confirmPassword, rol) {
+            try {
+                if (password !== confirmPassword) {
+                    throw new Error('Las contraseñas no coinciden');
+                }
+
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // Guardar información adicional en Firestore
+                await firebase.firestore().collection('usuarios').doc(user.uid).set({
+                    nombreCompleto: fullName,
+                    email: user.email,
+                    rol: rol,
+                    fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Enviar correo de verificación
+                await user.sendEmailVerification();
+
+                return user;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Función para manejar el login
+        async function handleLogin(email, password) {
+            try {
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                if (!user.emailVerified) {
+                    await firebase.auth().signOut();
+                    throw new Error('Por favor verifica tu correo electrónico antes de iniciar sesión');
+                }
+
+                const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    throw new Error('No se encontró información del usuario');
+                }
+
+                const userData = userDoc.data();
+                return userData.rol;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Configuración inicial cuando el DOM está listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar navegación entre formularios
+            setupFormNavigation();
+
+            // Configurar recuperación de contraseña
+            setupPasswordRecovery();
+
+            // Manejar el formulario de registro
+            document.getElementById('signupFormElement')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const rol = document.querySelector('input[name="rol"]').value;
+
+                try {
+                    Swal.showLoading();
+                    
+                    await handleSignup(fullName, email, password, confirmPassword, rol);
+                    
+                    Swal.fire({
+                        title: '¡Registro exitoso!',
+                        text: 'Se ha enviado un correo de verificación. Por favor verifica tu cuenta.',
+                        icon: 'success'
+                    });
+
+                    // Limpiar formulario y mostrar login
+                    this.reset();
+                    document.getElementById('signupForm').classList.remove('active');
+                    document.getElementById('loginForm').classList.add('active');
+
+                } catch (error) {
+                    let errorMessage = 'Error al registrar';
+                    
+                    switch(error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'El correo ya está registrado';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+                            break;
+                        default:
+                            errorMessage = error.message;
+                    }
+                    
+                    Swal.fire({
+                        title: 'Error',
+                        text: errorMessage,
+                        icon: 'error'
+                    });
+                }
+            });
+
+            // Manejar el formulario de login
+            document.getElementById('loginFormElement')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                try {
+                    Swal.showLoading();
+                    
+                    const rol = await handleLogin(email, password);
+                    
+                    Swal.fire({
+                        title: '¡Bienvenido!',
+                        text: 'Redirigiendo...',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Redirección basada en el rol
+                    setTimeout(() => {
+                        switch(rol) {
+                            case 'admin':
+                                window.location.href = '/vista/nav-admin/dashAdmin.html';
+                                break;
+                            case 'puntoVenta':
+                                window.location.href = '/vista/nav-puntoVenta/inicio.html';
+                                break;
+                            case 'facturas':
+                                window.location.href = '/vista/nav-operadores/prueba_asistencia.html';
+                                break;
+                            case 'colaborador':
+                                window.location.href = '/vista/nav-operadores/prueba_asistencia.html';
+                                break;
+                            case 'user':
+                                window.location.href = '/vista/nav-usuarios/dashUser.html';
+                                break;
+                            case 'admincolaborador':
+                                window.location.href = '/vista/nav-operadores/prueba_asistencia.html';
+                                break;
+                            default:
+                                window.location.href = '/vista/nav-usuarios/dashUser.html';
+                        }
+                    }, 1500);
+
+                } catch (error) {
+                    let errorMessage = 'Error al iniciar sesión';
+                    
+                    switch(error.code) {
+                        case 'auth/user-not-found':
+                        case 'auth/wrong-password':
+                            errorMessage = 'Correo o contraseña incorrectos';
+                            break;
+                        default:
+                            errorMessage = error.message;
+                    }
+                    
+                    Swal.fire({
+                        title: 'Error',
+                        text: errorMessage,
+                        icon: 'error'
+                    });
+                }
+            });
+        });
+    </script>
+    <!-- Scripts para la funcionalidad del login Firebase -->
+     <script src="../recursosDinamicos/footer.js"></script>
+</body>
+</html>

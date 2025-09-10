@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Tickets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/gestionT.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+    </head>
+<body>
+    <div class="sidebar">
+        <div class="user-profile">
+            <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="user-avatar" id="userAvatar">
+            <h2 class="user-name" id="userName">Cargando...</h2>
+            <p class="user-area" id="userArea">Cargando área...</p>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-title">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Total Tickets</span>
+                </div>
+                <div class="stat-value" id="totalTickets">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Pendientes</span>
+                </div>
+                <div class="stat-value" id="pendingTickets">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">
+                    <i class="fas fa-spinner"></i>
+                    <span>En Proceso</span>
+                </div>
+                <div class="stat-value" id="inProgressTickets">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Finalizados</span>
+                </div>
+                <div class="stat-value" id="completedTickets">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Cancelados</span>
+                </div>
+                <div class="stat-value" id="canceledTickets">0</div>
+            </div>
+        </div>
+        <div class="buttons-container">
+            <a href="../nav-operadores/gestion_Tickets.html" id="myTicketsBtn">
+                <i class="fas fa-ticket-alt"></i> Ver mis tickets
+            </a>
+            <a href="../nav-operadores/graficasdetickest.html" id="myTicketsBtn">
+                <i class="fas fa-eye"></i> Ver Estadisticas
+            </a>
+            <button id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+            <a href="../nav-admin/admin-asistencia.html"
+               id="botonEspecial"
+               class="special-btn">
+                <i class="fas fa-calendar-check"></i> Ver asistencias
+            </a>
+
+            <a href="../nav-facturas/coti.html"
+               id="botonEspecial2"
+               class="special-btn">
+                <i class="fas fa-file-invoice-dollar"></i> Cotizar
+            </a>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="main-c">
+        <div class="header">
+            <button class="burger-menu" id="burgerMenu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 class="title">Gestión de Tickets</h2>
+            <div class="header-controls">
+                <div class="filter-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar en todos los campos...">
+                </div>
+                <div class="filter-container">
+                    <i class="fas fa-user"></i>
+                    <select id="collaboratorFilter" class="form-control">
+                        <option value="">Filtrar por Colaborador</option>
+                    </select>
+                </div>
+                <div class="buttons-container">
+                    <button class="btn btn-info" onclick="openRsiTicketModal()">
+                        <i class="fas fa-building"></i>
+                        Ticket para Administracion
+                    </button>
+                    
+                    <button class="btn" onclick="openNewTicketModal()">
+                        <i class="fas fa-plus"></i>
+                        Nuevo Ticket
+                    </button>
+                    <button class="btn btn-danger" onclick="openTrash()">
+                        <i class="fas fa-trash"></i>
+                        Papelera
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Colaboradores</th>
+                        <th>Título</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Área</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div class="pagination-container"></div>
+    </div>
+
+  <div id="ticketModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Nuevo Ticket</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <form id="ticketForm" onsubmit="saveTicket(event)">
+        <input type="hidden" id="ticketId">
+
+        <div class="form-group">
+          <label for="titulo">TÍTULO DEL TICKET</label>
+          <input type="text" id="titulo" class="form-control">
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Información del Cliente</h3>
+          <div class="form-group">
+            <label for="cuenta">CUENTA</label>
+            <select id="cuenta" class="form-control" onchange="loadClientData(this.value)">
+              <option value="">Seleccione un cliente</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="direccionFiscal">DIRECCIÓN FISCAL</label>
+            <input type="text" id="direccionFiscal" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="rfc">RFC</label>
+            <input type="text" id="rfc" class="form-control">
+          </div>
+          <div class="form-row">
+            <div class="form-col">
+              <label for="atencionA">ATENCIÓN A</label>
+              <input type="text" id="atencionA" class="form-control">
+            </div>
+            <div class="form-col">
+              <label for="correo">CORREO</label>
+              <input type="text" id="correo" class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Información del Servicio</h3>
+          <div class="form-row">
+            <div class="form-col">
+              <label for="fecha">FECHA</label>
+              <input type="date" id="fecha" class="form-control">
+            </div>
+            <div class="form-col">
+              <label for="ordenServicio">ORDEN DE SERVICIO</label>
+              <input type="text" id="ordenServicio" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="proyecto">PROYECTO</label>
+            <input type="text" id="proyecto" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="servicio">SERVICIO</label>
+            <input type="text" id="servicio" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>SISTEMAS:</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" name="sistemas" value="CCTV"> CCTV</label>
+              <label class="checkbox-item"><input type="checkbox" name="sistemas" value="DH"> DH</label>
+              <label class="checkbox-item"><input type="checkbox" name="sistemas" value="CA"> CA</label>
+              <label class="checkbox-item"><input type="checkbox" name="sistemas" value="AI"> AI</label>
+              <label class="checkbox-item"><input type="checkbox" name="sistemas" value="SM"> MULTIMEDIA</label>
+              <label class="checkbox-item"><input type="checkbox" name="sistemas" value="OTRO"> OTRO</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcionActividades">DESCRIPCIÓN DE ACTIVIDADES</label>
+            <textarea id="descripcionActividades" class="form-control" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Asignación y Prioridad</h3>
+          <div class="form-group">
+            <label for="colaboradores">Colaboradores</label>
+            <select id="colaboradores" class="form-control" multiple></select>
+            <small class="text-muted">El primer colaborador seleccionado será el responsable del proyecto</small>
+          </div>
+          <div class="form-group">
+            <label for="area">Área</label>
+            <input type="text" id="area" class="form-control" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-col">
+              <label for="estado">Estado</label>
+              <select id="estado" class="form-control">
+                <option value="pendiente">Pendiente</option>
+                <option value="en_proceso">En Proceso</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="form-col">
+              <label for="prioridad">Prioridad</label>
+              <select id="prioridad" class="form-control">
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<div id="rsiTicketModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="rsiModalTitle">Nuevo Ticket para Admi</h3>
+        <button class="close-btn" onclick="closeRsiModal()">&times;</button>
+      </div>
+      <form id="rsiTicketForm" onsubmit="saveRsiTicket(event)">
+        <input type="hidden" id="rsiTicketId">
+
+        <div class="form-group">
+          <label for="rsiTitulo">TÍTULO DEL TICKET</label>
+          <input type="text" id="rsiTitulo" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="rsiDescripcionActividades">DESCRIPCIÓN DE ACTIVIDAD</label>
+            <textarea id="rsiDescripcionActividades" class="form-control" rows="4"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+              <label for="rsiFecha">FECHA</label>
+              <input type="date" id="rsiFecha" class="form-control">
+            </div>
+            <div class="form-col">
+              <label for="rsiFechaFinalizacion">FECHA DE FINALIZACIÓN</label>
+              <input type="date" id="rsiFechaFinalizacion" class="form-control">
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h3 class="form-section-title">Asignación y Prioridad</h3>
+            <div class="form-group">
+              <label for="rsiColaboradores">Responsable / CC (Copia a)</label>
+              <select id="rsiColaboradores" class="form-control" multiple></select>
+              <small class="text-muted">El primer colaborador seleccionado será el responsable.</small>
+            </div>
+            <div class="form-group">
+              <label for="rsiArea">Área del Responsable</label>
+              <input type="text" id="rsiArea" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="rsiPrioridad">Importancia</label>
+                <select id="rsiPrioridad" class="form-control">
+                  <option value="alta">Alta</option>
+                  <option value="media" selected>Media</option>
+                  <option value="baja">Baja</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeRsiModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Ticket RSI</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<div id="imageSelectionModal" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 id="modalTitle">Adjuntar a Reporte PDF</h3>
+      <button class="close-btn" onclick="closeImageSelectionModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px;">
+        <p>Seleccione una evidencia existente o suba un nuevo archivo (Imagen o PDF) para adjuntarlo al final del reporte.</p>
+
+        <div class="form-group" style="margin-top: 15px; margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+            <label style="font-weight: 500;">Subir un archivo nuevo para adjuntar</label>
+            <input type="file" id="featuredFileUpload" class="form-control" accept="image/*,.pdf" style="margin-top: 5px;">
+        </div>
+
+        <p>O seleccione una de las evidencias existentes:</p>
+        <div id="imageSelectionGrid">
+            </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeImageSelectionModal()">Cancelar</button>
+      <button type="button" id="generatePdfBtn" class="btn btn-primary">Generar PDF</button>
+    </div>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    /**
+     * FUNCIÓN DE AYUDA PARA CARGAR IMÁGENES
+     * Crea una promesa que se resuelve cuando la imagen se ha cargado completamente.
+     * @param {string} url - La URL de la imagen a cargar.
+     * @returns {Promise<HTMLImageElement>} - Una promesa que devuelve el elemento de la imagen.
+     */
+    function loadImage(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            // Esto es importante para poder usar la imagen en un canvas sin problemas de seguridad (CORS)
+            img.crossOrigin = 'Anonymous'; 
+            img.onload = () => resolve(img);
+            img.onerror = (err) => reject(new Error(`Falló la carga de la imagen en la URL: ${url}`));
+            img.src = url;
+        });
+    }
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // =================================================================================
+    // 1. MEJORA: Centralización del estado de la aplicación
+    // =================================================================================
+    const appState = {
+        currentUser: null,
+        currentTicketId: null,
+        colaboradores: [],
+        clientes: [],
+        tickets: [], // Almacenará los tickets de la página actual
+        allTickets: [], // Almacenará todos los tickets para búsqueda en el lado del cliente
+        filters: { // ++ NUEVO: Objeto para filtros
+            searchTerm: '',
+            collaboratorId: ''
+        },
+        pagination: {
+            currentPage: 1,
+            ticketsPerPage: 10,
+            lastVisible: null,
+            firstVisible: null,
+            pages: {}
+        },
+        unsubscribeTickets: null // Para detener el listener de Firestore al salir
+    };
+
+    // Variables de control para el estado del guardado
+    let isSaving = false;
+    let submitListenerAttached = false;
+    let pdfGenerationData = {
+        ticketData: null,
+        featuredItem: null
+    };
+    let featuredItemForPdf = null;
+    const imageSelectionModal = document.getElementById('imageSelectionModal');
+
+    // =================================================================================
+    // 2. MEJORA: Carga inicial de datos en paralelo
+    // =================================================================================
+    async function initialLoad() {
+        Swal.fire({ title: 'Cargando datos...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            await Promise.all([
+                loadUserProfile(),
+                loadClientes(),
+                loadCollaborators()
+            ]);
+            setupEventListeners();
+            loadTicketsPage(1); // Carga la primera página de tickets
+        } catch (error) {
+            console.error("Error en la carga inicial:", error);
+            Swal.fire('Error', 'No se pudieron cargar los datos iniciales.', 'error');
+        } finally {
+            Swal.close();
+        }
+    }
+
+    async function loadUserProfile() {
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            return;
+        }
+        const querySnapshot = await db.collection("colaboradores").where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email).get();
+        if (querySnapshot.empty) {
+            document.getElementById('userName').textContent = 'Usuario no registrado';
+            document.getElementById('userArea').textContent = 'Sin área';
+            Swal.fire('Perfil incompleto', 'Tu correo no está registrado. Contacta al administrador.', 'warning');
+        } else {
+            const doc = querySnapshot.docs[0];
+            const userData = doc.data();
+            appState.currentUser = {
+                id: doc.id,
+                nombre: userData.NOMBRE,
+                area: userData.ÁREA,
+                imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
+            };
+            document.getElementById('userAvatar').src = appState.currentUser.imagen;
+            document.getElementById('userName').textContent = appState.currentUser.nombre;
+            document.getElementById('userArea').textContent = appState.currentUser.area;
+            sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
+        }
+    }
+
+    async function loadClientes() {
+        const snapshot = await db.collection('clientes').get();
+        const selectCuenta = document.getElementById('cuenta');
+        selectCuenta.innerHTML = '<option value="">Seleccione un cliente</option>'; // Limpiar antes de llenar
+        appState.clientes = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const direccionCompleta = [data.Calle, data['No.Exterior'], data.Colonia, data['Codigo Postal'], data.Pais].filter(Boolean).join(', ');
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = data['Nombre Comercial'] || 'Cliente sin nombre comercial';
+            selectCuenta.appendChild(option);
+            return {
+                id: doc.id,
+                nombreComercial: data['Nombre Comercial'] || '',
+                rfc: data.RFC || '',
+                correo: data.Correo || '',
+                contacto: data.Nombre || '',
+                direccion: direccionCompleta
+            };
+        });
+    }
+
+    async function loadCollaborators() {
+        const snapshot = await db.collection('colaboradores').get();
+        appState.colaboradores = snapshot.docs.map(doc => ({
+            id: doc.id,
+            nombre: doc.data().NOMBRE,
+            area: doc.data().ÁREA
+        }));
+
+        // Popular el select del modal
+        $('#colaboradores').select2({
+            data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
+            placeholder: 'Seleccione colaboradores',
+            width: '100%'
+        });
+
+        // ++ NUEVO: Popular el select del filtro principal
+        const filterSelect = document.getElementById('collaboratorFilter');
+        filterSelect.innerHTML = '<option value="">Todos los Colaboradores</option>'; // Opción por defecto
+        appState.colaboradores.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col.id;
+            option.textContent = col.nombre;
+            filterSelect.appendChild(option);
+        });
+    }
+
+
+    // =================================================================================
+    // 3. MEJORA: Paginación y FILTRADO del lado del servidor
+    // =================================================================================
+    function loadTicketsPage(pageNumber) {
+        if (appState.unsubscribeTickets) {
+            appState.unsubscribeTickets();
+        }
+
+        // Primero, obtenemos los totales para las estadísticas generales (sin filtros)
+        db.collection('ticketsmesa').get().then(snapshot => {
+            const stats = { total: 0, pendiente: 0, en_proceso: 0, finalizado: 0, cancelado: 0 };
+            snapshot.forEach(doc => {
+                const ticket = doc.data();
+                stats.total++;
+                if (stats[ticket.estado] !== undefined) stats[ticket.estado]++;
+            });
+            updateStats(stats);
+        });
+
+        // Construir la consulta base con los filtros
+        let query = db.collection('ticketsmesa').orderBy('fechaCreacion', 'desc');
+
+        // ++ NUEVO: Aplicar filtro de colaborador si está seleccionado
+        if (appState.filters.collaboratorId) {
+            query = query.where('colaboradores', 'array-contains', appState.filters.collaboratorId);
+        }
+        
+        // Obtener el total de documentos que coinciden con el filtro para la paginación
+        query.get().then(snapshot => {
+            const totalFilteredTickets = snapshot.size;
+            setupPagination(totalFilteredTickets);
+
+            // Ahora, construimos la consulta para la página específica
+            let pageQuery = query;
+            if (pageNumber > 1 && appState.pagination.pages[pageNumber - 1]) {
+                pageQuery = pageQuery.startAfter(appState.pagination.pages[pageNumber - 1]);
+            }
+            pageQuery = pageQuery.limit(appState.pagination.ticketsPerPage);
+
+            appState.unsubscribeTickets = pageQuery.onSnapshot(pageSnapshot => {
+                if (pageSnapshot.empty && pageNumber > 1) return;
+
+                appState.allTickets = pageSnapshot.docs.map(doc => {
+                    const ticket = { id: doc.id, ...doc.data() };
+                    
+                    // Pre-calculamos los nombres de colaboradores para búsqueda y visualización
+                    if (ticket.colaboradores && ticket.colaboradores.length > 0) {
+                        ticket.nombresColaboradores = ticket.colaboradores.map(colabId => {
+                            const colaborador = appState.colaboradores.find(c => c.id === colabId);
+                            return colaborador ? colaborador.nombre : '';
+                        }).filter(Boolean).join(', ');
+                    } else {
+                        ticket.nombresColaboradores = 'Sin asignar';
+                    }
+                    return ticket;
+                });
+
+                appState.pagination.firstVisible = pageSnapshot.docs[0];
+                appState.pagination.lastVisible = pageSnapshot.docs[pageSnapshot.docs.length - 1];
+                appState.pagination.pages[pageNumber] = appState.pagination.lastVisible;
+                appState.pagination.currentPage = pageNumber;
+
+                // Aplicar filtro de búsqueda y mostrar
+                applySearchAndDisplay();
+                
+            }, error => {
+                console.error("Error al cargar tickets:", error);
+                Swal.fire('Error', 'No se pudieron cargar los tickets.', 'error');
+            });
+        });
+    }
+
+    // ++ FUNCIÓN MEJORADA: Aplica el filtro de búsqueda del lado del cliente y renderiza
+    function applySearchAndDisplay() {
+        const searchTerm = appState.filters.searchTerm.toLowerCase().trim();
+        if (!searchTerm) {
+            displayTickets(appState.allTickets); // Si no hay búsqueda, muestra todos los tickets cargados
+            return;
+        }
+
+        const filteredTickets = appState.allTickets.filter(ticket => {
+            // Concatena todos los campos relevantes en una sola cadena para buscar
+            const searchableString = [
+                ticket.nombresColaboradores, // Nombres de todos los colaboradores
+                ticket.titulo,
+                ticket.estado,
+                ticket.prioridad,
+                ticket.area,
+                formatDate(ticket.fechaCreacion),
+                ticket.cuentaNombre, // Nombre del cliente
+                ticket.proyecto,
+                ticket.servicio,
+                ticket.ordenServicio,
+                ticket.id
+            ].join(' ').toLowerCase();
+            
+            return searchableString.includes(searchTerm);
+        });
+
+        displayTickets(filteredTickets);
+    }
+    
+    function updateStats(stats) {
+        document.getElementById('totalTickets').textContent = stats.total;
+        document.getElementById('pendingTickets').textContent = stats.pendiente;
+        document.getElementById('inProgressTickets').textContent = stats.en_proceso;
+        document.getElementById('completedTickets').textContent = stats.finalizado;
+        document.getElementById('canceledTickets').textContent = stats.cancelado;
+    }
+    
+ // +++ CÓDIGO CORREGIDO Y MÁS INTELIGENTE +++
+    function displayTickets(tickets) {
+        const tbody = document.getElementById('ticketsTableBody');
+        tbody.innerHTML = ''; // Limpiar la tabla
+        if (!tickets || tickets.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No hay tickets para mostrar.</td></tr>`;
+            return;
+        }
+
+        const rowsHtml = tickets.map(ticket => {
+            // La clave está aquí: usamos el campo 'nombresColaboradores' que ya tiene la lista de nombres.
+            return `
+                <tr>
+                    <td data-label="Colaboradores">${ticket.nombresColaboradores || 'Sin asignar'}</td>
+                    <td data-label="Título">${ticket.titulo || ''}</td>
+                    <td data-label="Estado"><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></td>
+                    <td data-label="Prioridad">${ticket.prioridad || ''}</td>
+                    <td data-label="Área">${ticket.area || 'N/A'}</td>
+                    <td data-label="Fecha">${formatDate(ticket.fechaCreacion)}</td>
+                    <td data-label="Acciones">
+                        <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn pdf-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF"><i class="fas fa-file-pdf"></i></button>
+                        <button class="action-btn" onclick="openActivitiesManager('${ticket.id}')" title="Gestionar Actividades y Evidencias"><i class="fas fa-tasks"></i></button>
+                        <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.innerHTML = rowsHtml;
+    }
+
+    // =================================================================================
+// GESTOR DE ACTIVIDADES Y EVIDENCIAS (CRUD COMPLETO)
+// =================================================================================
+// =================================================================================
+    // FUNCIONES PARA EL NUEVO MODAL DE TICKETS RSI
+    // =================================================================================
+    
+    // Función para ABRIR el nuevo modal
+    function openRsiTicketModal() {
+        document.getElementById('rsiTicketForm').reset();
+        
+        // Inicializamos el selector de colaboradores para el nuevo modal
+        // Usamos los colaboradores ya cargados en appState
+        $('#rsiColaboradores').select2({
+            data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
+            placeholder: 'Seleccione responsable y copias',
+            width: '100%',
+            dropdownParent: $('#rsiTicketModal') // Importante para que el buscador funcione dentro del modal
+        });
+        
+        $('#rsiColaboradores').val(null).trigger('change');
+        document.getElementById('rsiTicketModal').style.display = 'block';
+    }
+
+    // Función para CERRAR el nuevo modal
+    function closeRsiModal() {
+        document.getElementById('rsiTicketModal').style.display = 'none';
+    }
+// Función para cerrar el modal de selección de imágenes para el PDF
+    function closeImageSelectionModal() {
+        document.getElementById('imageSelectionModal').style.display = 'none';
+    }
+    // Función para GUARDAR el ticket RSI
+    async function saveRsiTicket(event) {
+        event.preventDefault(); // Evitamos que la página se recargue
+
+        const submitButton = document.querySelector('#rsiTicketForm button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        const selectedCollaboratorsIds = $('#rsiColaboradores').val() || [];
+        const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
+
+        // Creamos el objeto del ticket con los nombres de campo que ya usas
+        const ticketData = {
+            // Campos del nuevo formulario
+            titulo: document.getElementById('rsiTitulo').value,
+            descripcionActividades: document.getElementById('rsiDescripcionActividades').value,
+            fecha: document.getElementById('rsiFecha').value,
+            fechaFinalizacion: document.getElementById('rsiFechaFinalizacion').value, // Nuevo campo
+            prioridad: document.getElementById('rsiPrioridad').value,
+            colaboradores: selectedCollaboratorsIds,
+            responsableNombre: responsable ? responsable.nombre : 'Sin asignar',
+            area: document.getElementById('rsiArea').value,
+            
+            // Campos fijos o nulos para mantener la compatibilidad
+            cuentaNombre: "Ticket Interno RSI",
+            estado: "pendiente", // Estado por defecto
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+            notificacion: false,
+            conclusion: "Pendiente de conclusión.",
+
+            // Campos del cliente que dejaremos vacíos o nulos
+            cuentaId: null,
+            direccionFiscal: '',
+            rfc: '',
+            atencionA: '',
+            correo: '',
+            ordenServicio: '',
+            proyecto: 'Interno',
+            servicio: 'Actividad Interna',
+            sistemas: ['OTRO']
+        };
+
+        try {
+            await db.collection('ticketsmesa').add(ticketData);
+            Swal.fire('¡Éxito!', 'Ticket interno creado correctamente', 'success');
+            closeRsiModal();
+        } catch (error) {
+            console.error('Error al guardar el ticket RSI:', error);
+            Swal.fire('Error', 'No se pudo guardar el ticket interno', 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Guardar Ticket RSI';
+        }
+    }
+// FUNCIÓN PRINCIPAL: Abre la ventana para gestionar todo
+async function openActivitiesManager(ticketId) {
+    Swal.fire({
+        title: 'Cargando Actividades...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    // 1. Obtenemos todas las evidencias/actividades de este ticket
+    const evidencesRef = db.collection('evidenciatickets').where('ticketId', '==', ticketId);
+    const snapshot = await evidencesRef.get();
+    let activitiesHtml = '';
+
+    // 2. Creamos el HTML para cada actividad existente
+    if (snapshot.empty) {
+        activitiesHtml = '<p class="text-center">No hay actividades registradas para este ticket.</p>';
+    } else {
+        snapshot.forEach(doc => {
+            const activity = doc.data();
+            const evidenceId = doc.id;
+            
+            // HTML para las imágenes de esta actividad
+            let imagesHtml = '';
+            if (activity.imagenes && activity.imagenes.length > 0) {
+                imagesHtml = activity.imagenes.map(url => `
+                    <div class="evidence-image-container">
+                        <img src="${url}" alt="Evidencia">
+                        <button class="delete-image-btn" onclick="deleteImage('${evidenceId}', '${url}')">&times;</button>
+                    </div>
+                `).join('');
+            }
+
+            // HTML para el bloque completo de la actividad
+            activitiesHtml += `
+                <div class="activity-block" id="block-${evidenceId}">
+                    <div class="activity-header">
+                        <h5>Descripción de la Actividad</h5>
+                        <div>
+                            <button class="btn-edit-desc" onclick="updateDescription('${evidenceId}')">Editar</button>
+                            <button class="btn-delete-activity" onclick="deleteActivity('${evidenceId}')">Eliminar</button>
+                        </div>
+                    </div>
+                    <p id="desc-${evidenceId}">${activity.descripcion || 'Sin descripción.'}</p>
+                    <div class="images-grid">${imagesHtml}</div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Añadir más imágenes a esta actividad:</label>
+                        <input type="file" class="form-control" onchange="addImages('${evidenceId}', this.files)" multiple>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // 3. Creamos el HTML para el formulario de AÑADIR NUEVA ACTIVIDAD
+    const newActivityFormHtml = `
+        <div class="activity-block new-activity">
+            <h4>Añadir Nueva Actividad</h4>
+            <div class="form-group">
+                <label for="new-description">Descripción</label>
+                <textarea id="new-description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="new-images">Imágenes</label>
+                <input type="file" id="new-images" class="form-control" multiple>
+            </div>
+            <button class="btn btn-primary" onclick="createNewActivity('${ticketId}')">Guardar Nueva Actividad</button>
+        </div>
+    `;
+
+    // 4. Mostramos todo en una ventana modal grande
+    Swal.fire({
+        title: 'Gestor de Actividades y Evidencias',
+        html: `
+            <div class="activities-container">
+                ${activitiesHtml}
+                <hr>
+                ${newActivityFormHtml}
+            </div>
+        `,
+        width: '90%',
+        confirmButtonText: 'Cerrar',
+        showConfirmButton: true,
+         customClass: {
+            popup: 'swal-dark-mode', // Aplica nuestro tema oscuro a la ventana
+            title: 'swal-dark-mode', // ...al título
+            confirmButton: 'swal-dark-mode' // ...y al botón de confirmar
+        }
+        
+    });
+}
+
+// --- FUNCIONES CRUD ---
+
+// CREATE: Crea una nueva actividad (descripción + imágenes)
+async function createNewActivity(ticketId) {
+    const description = document.getElementById('new-description').value;
+    const files = document.getElementById('new-images').files;
+
+    if (!description && files.length === 0) {
+        return Swal.fire('Error', 'Debes añadir una descripción o al menos una imagen.', 'error');
+    }
+
+    Swal.fire({ title: 'Guardando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    const imageUrls = [];
+    if (files.length > 0) {
+        // Aquí iría tu lógica para subir archivos a Firebase Storage
+        // Esto es un ejemplo, necesitarás el SDK de Storage
+        // for (const file of files) {
+        //    const storageRef = firebase.storage().ref(`evidencias/${ticketId}/${Date.now()}_${file.name}`);
+        //    await storageRef.put(file);
+        //    const url = await storageRef.getDownloadURL();
+        //    imageUrls.push(url);
+        // }
+        alert("La subida de imágenes es un ejemplo. Necesitas configurar Firebase Storage.");
+    }
+    
+    await db.collection('evidenciatickets').add({
+        ticketId: ticketId,
+        descripcion: description,
+        imagenes: imageUrls,
+        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Cerramos y volvemos a abrir la modal para refrescar
+    Swal.close();
+    openActivitiesManager(ticketId);
+}
+
+// UPDATE: Edita la descripción de una actividad existente
+async function updateDescription(evidenceId) {
+    const currentDescription = document.getElementById(`desc-${evidenceId}`).innerText;
+    
+    const { value: newDescription } = await Swal.fire({
+        title: 'Editar Descripción',
+        input: 'textarea',
+        inputValue: currentDescription,
+        confirmButtonText: 'Guardar',
+        showCancelButton: true
+    });
+
+    if (newDescription !== undefined && newDescription !== currentDescription) {
+        await db.collection('evidenciatickets').doc(evidenceId).update({
+            descripcion: newDescription
+        });
+        document.getElementById(`desc-${evidenceId}`).innerText = newDescription;
+        Swal.fire('¡Éxito!', 'Descripción actualizada.', 'success');
+    }
+}
+
+// DELETE: Elimina un bloque completo de actividad (descripción + imágenes)
+async function deleteActivity(evidenceId) {
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción eliminará la descripción y todas sus imágenes asociadas. No se puede revertir.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        await db.collection('evidenciatickets').doc(evidenceId).delete();
+        document.getElementById(`block-${evidenceId}`).remove();
+        Swal.fire('Eliminado', 'La actividad ha sido eliminada.', 'success');
+    }
+}
+
+// Funciones para gestionar imágenes (necesitarás Firebase Storage)
+function addImages(evidenceId, files) {
+    // Lógica para subir los nuevos archivos y añadir sus URLs al array 'imagenes' del documento
+    alert(`Aquí subirías ${files.length} imágenes al documento ${evidenceId}`);
+}
+
+function deleteImage(evidenceId, imageUrl) {
+     // Lógica para eliminar la URL del array 'imagenes' y borrar el archivo de Storage
+    alert(`Aquí eliminarías la imagen ${imageUrl} del documento ${evidenceId}`);
+}
+    function setupPagination(totalTickets) {
+        const paginationContainer = document.querySelector('.pagination-container');
+        
+        // Comprobación de seguridad para evitar errores si el div no existiera
+        if (!paginationContainer) {
+            console.error("Error: El contenedor de paginación (.pagination-container) no se encontró en el HTML.");
+            return;
+        }
+
+        paginationContainer.innerHTML = ''; // Limpiar botones anteriores
+        const totalPages = Math.ceil(totalTickets / appState.pagination.ticketsPerPage);
+        
+        // Si solo hay una página (o menos), no se necesita la barra de paginación
+        if (totalPages <= 1) {
+            return;
+        }
+
+        const { currentPage } = appState.pagination;
+        
+        // Botón "Anterior"
+        const prevButton = createPaginationButton('<', 'prev', currentPage === 1, () => loadTicketsPage(currentPage - 1));
+        paginationContainer.appendChild(prevButton);
+
+        // Botón con el número de la página actual
+        paginationContainer.appendChild(createPaginationButton(currentPage, 'active', false, () => {}));
+        
+        // Botón "Siguiente"
+        const nextButton = createPaginationButton('>', 'next', currentPage >= totalPages, () => loadTicketsPage(currentPage + 1));
+        paginationContainer.appendChild(nextButton);
+    }
+
+    function createPaginationButton(text, type, disabled, onClick) {
+        const button = document.createElement('button');
+        button.className = `pagination-btn ${type}`;
+        button.textContent = text;
+        button.disabled = disabled;
+        button.addEventListener('click', onClick);
+        return button;
+    }
+
+    // Funciones auxiliares
+    const getBadgeClass = (status) => ({ 'finalizado': 'success', 'en_proceso': 'warning', 'pendiente': 'danger', 'cancelado': 'secondary' })[status] || 'secondary';
+    const formatStatus = (status) => status ? status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1) : 'N/A';
+    const formatDate = (timestamp) => (timestamp && timestamp.toDate) ? timestamp.toDate().toLocaleDateString('es-MX') : 'N/A';
+
+    // Manejo del Modal de Ticket
+    function openNewTicketModal() {
+        appState.currentTicketId = null;
+        document.getElementById('modalTitle').textContent = 'Nuevo Ticket';
+        document.getElementById('ticketForm').reset();
+        $('#colaboradores').val(null).trigger('change');
+        $('#cuenta').val("").trigger('change');
+        document.getElementById('ticketModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        // Restaurar el botón de guardar por si estaba deshabilitado
+        const submitButton = document.querySelector('#ticketForm button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Guardar';
+        }
+        
+        document.getElementById('ticketModal').style.display = 'none';
+    }
+    
+    // =================================================================================
+    // ++ NUEVA FUNCIÓN: ARCHIVA TICKETS FINALIZADOS SEGÚN EL ÁREA
+    // =================================================================================
+    /**
+     * Copia un ticket a las colecciones correspondientes según su área y luego lo elimina de la colección original.
+     * @param {string} ticketId - El ID del ticket a archivar.
+     * @param {object} ticketDataToArchive - Los datos completos del ticket.
+     */
+    async function archiveFinalizedTicket(ticketId, ticketDataToArchive) {
+        const areaMappings = {
+            ticketsmesaAdministracion: [
+                'Auxiliar de Gestion de Talento Humano', 
+                'Auxiliar Administrativo', 
+                'Jefe Operativo', 
+                'Director C.E.O.', 
+                'Representante Legal y Jurídico', 
+                'Gerente Financiero'
+            ],
+            ticketsmesaOperativo: [
+                'Ventas', 
+                'Coordinador de proyectos', 
+                'Ayudante General', 
+                'Ingeniero en campo', 
+                'Ingenieros/Técnicos', 
+                'Jefe Operativo'
+            ],
+            ticketsmesaTI: ['Ti']
+        };
+
+        const ticketAreas = ticketDataToArchive.area ? ticketDataToArchive.area.split(',').map(a => a.trim()) : [];
+        
+        if (ticketAreas.length === 0) {
+            console.log(`Ticket ${ticketId} finalizado pero sin área definida. No se archivará.`);
+            return;
+        }
+
+        const targetCollections = new Set();
+        
+        // Determina a qué colecciones de destino pertenece el ticket
+        ticketAreas.forEach(area => {
+            for (const [collectionName, mappedAreas] of Object.entries(areaMappings)) {
+                if (mappedAreas.includes(area)) {
+                    targetCollections.add(collectionName);
+                }
+            }
+        });
+
+        if (targetCollections.size === 0) {
+            console.log(`Ticket ${ticketId} finalizado, pero sus áreas (${ticketAreas.join(', ')}) no coinciden con ninguna regla de archivado.`);
+            return;
+        }
+
+        try {
+            // Paso 1: Crear promesas para todas las operaciones de copiado
+            const copyPromises = [];
+            targetCollections.forEach(collectionName => {
+                const promise = db.collection(collectionName).doc(ticketId).set(ticketDataToArchive);
+                copyPromises.push(promise);
+                console.log(`Preparando para copiar ticket ${ticketId} a ${collectionName}`);
+            });
+
+            // Paso 2: Ejecutar todas las copias en paralelo
+            await Promise.all(copyPromises);
+            console.log(`Ticket ${ticketId} copiado exitosamente a: ${Array.from(targetCollections).join(', ')}`);
+
+            // Paso 3: Si todas las copias fueron exitosas, eliminar el documento original
+            await db.collection('ticketsmesa').doc(ticketId).delete();
+            console.log(`Ticket original ${ticketId} eliminado de ticketsmesa.`);
+
+        } catch (error) {
+            console.error(`Error crítico archivando el ticket ${ticketId}:`, error);
+            // Relanzamos el error para que la función que llama (saveTicket) lo capture y notifique al usuario.
+            // Esto previene que se muestre un mensaje de éxito incorrecto.
+            throw new Error('Ocurrió un error al archivar el ticket. La operación fue cancelada para prevenir pérdida de datos.');
+        }
+    }
+
+
+    // =================================================================================
+    // FUNCIÓN ACTUALIZADA: saveTicket con lógica de archivado
+    // =================================================================================
+    async function saveTicket(event) {
+        if (event) event.preventDefault();
+        if (isSaving) return;
+        if (!validateTicketForm()) return;
+
+        isSaving = true;
+        const submitButton = document.querySelector('#ticketForm button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        }
+
+        const selectedCollaboratorsIds = $('#colaboradores').val() || [];
+        const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
+
+        const ticketData = {
+            titulo: document.getElementById('titulo').value,
+            estado: document.getElementById('estado').value,
+            prioridad: document.getElementById('prioridad').value,
+            area: document.getElementById('area').value,
+            colaboradores: selectedCollaboratorsIds,
+            responsableNombre: responsable ? responsable.nombre : '',
+            cuentaId: document.getElementById('cuenta').value,
+            cuentaNombre: $("#cuenta option:selected").text(),
+            direccionFiscal: document.getElementById('direccionFiscal').value,
+            rfc: document.getElementById('rfc').value,
+            atencionA: document.getElementById('atencionA').value,
+            correo: document.getElementById('correo').value,
+            fecha: document.getElementById('fecha').value,
+            ordenServicio: document.getElementById('ordenServicio').value,
+            proyecto: document.getElementById('proyecto').value,
+            servicio: document.getElementById('servicio').value,
+            sistemas: Array.from(document.querySelectorAll('input[name="sistemas"]:checked')).map(cb => cb.value),
+            descripcionActividades: document.getElementById('descripcionActividades').value,
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+            notificacion: false
+        };
+
+        try {
+            if (appState.currentTicketId) { // --- LÓGICA DE ACTUALIZACIÓN ---
+                const ticketRef = db.collection('ticketsmesa').doc(appState.currentTicketId);
+                await ticketRef.update(ticketData);
+
+                if (ticketData.estado === 'finalizado') {
+                    // Si el ticket se marca como finalizado, iniciamos el proceso de archivado
+                    const ticketToArchiveDoc = await ticketRef.get(); // Obtenemos la versión más reciente
+                    if (ticketToArchiveDoc.exists) {
+                        await archiveFinalizedTicket(appState.currentTicketId, ticketToArchiveDoc.data());
+                        Swal.fire('¡Éxito!', 'Ticket finalizado y archivado correctamente.', 'success');
+                    }
+                } else {
+                    // Si solo es una actualización normal
+                    Swal.fire('¡Éxito!', 'Ticket actualizado correctamente.', 'success');
+                }
+            } else { // --- LÓGICA DE CREACIÓN ---
+                ticketData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
+                ticketData.conclusion = "El equipo queda instalado, configurado y operando correctamente.";
+                await db.collection('ticketsmesa').add(ticketData);
+                Swal.fire('¡Éxito!', 'Ticket creado correctamente.', 'success');
+            }
+            closeModal();
+        } catch (error) {
+            console.error('Error al guardar o archivar el ticket:', error);
+            Swal.fire('Error', `No se pudo completar la operación. ${error.message}`, 'error');
+        } finally {
+            // Siempre restaurar el estado, independientemente del resultado
+            isSaving = false;
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Guardar';
+            }
+        }
+    }
+
+    // =================================================================================
+    // 3. MEJORA: Validación del formulario
+    // =================================================================================
+    function validateTicketForm() {
+        const titulo = document.getElementById('titulo').value;
+        const cuenta = document.getElementById('cuenta').value;
+        
+        if (!titulo.trim()) {
+            Swal.fire('Error', 'El título del ticket es obligatorio', 'error');
+            return false;
+        }
+        
+        if (!cuenta) {
+            Swal.fire('Error', 'Debe seleccionar un cliente', 'error');
+            return false;
+        }
+        
+        return true;
+    }
+
+    // =================================================================================
+    // 4. MEJORA: Gestión de event listeners para evitar duplicados
+    // =================================================================================
+    function setupFormEventListener() {
+        const form = document.getElementById('ticketForm');
+        
+        // Eliminar listener anterior si existe
+        if (submitListenerAttached) {
+            form.removeEventListener('submit', saveTicket);
+        }
+        
+        // Agregar nuevo listener
+        form.addEventListener('submit', saveTicket);
+        submitListenerAttached = true;
+    }
+
+    // =================================================================================
+    // 5. MEJORA: Función openNewTicketModal actualizada
+    // =================================================================================
+    function openNewTicketModal() {
+        appState.currentTicketId = null;
+        document.getElementById('modalTitle').textContent = 'Nuevo Ticket';
+        document.getElementById('ticketForm').reset();
+        $('#colaboradores').val(null).trigger('change');
+        $('#cuenta').val("").trigger('change');
+        
+        // Asegurarse de que el estado de guardado se restablezca
+        isSaving = false;
+        
+        // Configurar el event listener del formulario
+        setupFormEventListener();
+        
+        document.getElementById('ticketModal').style.display = 'block';
+    }
+
+    // =================================================================================
+    // 6. MEJORA: Función closeModal actualizada
+    // =================================================================================
+    function closeModal() {
+        // Restaurar el botón de guardar por si estaba deshabilitado
+        const submitButton = document.querySelector('#ticketForm button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Guardar';
+        }
+        
+        // Restablecer el estado de guardado
+        isSaving = false;
+        
+        document.getElementById('ticketModal').style.display = 'none';
+    }
+
+    // =================================================================================
+    // MEJORA: Función centralizada para obtener TODOS los detalles de un ticket
+    // =================================================================================
+ async function getTicketDetails(id) {
+    const ticketDoc = await db.collection('ticketsmesa').doc(id).get();
+    if (!ticketDoc.exists) return null;
+
+    const ticketData = ticketDoc.data();
+    ticketData.id = id;
+
+    const evidenciasSnapshot = await db.collection('evidenciatickets').where('ticketId', '==', id).get();
+    ticketData.imagenes = [];
+    ticketData.descripcionesEvidencia = [];
+    evidenciasSnapshot.forEach(doc => {
+        const evidencia = doc.data();
+        if (evidencia.imagenes) ticketData.imagenes.push(...evidencia.imagenes);
+        if (evidencia.descripcion) ticketData.descripcionesEvidencia.push(evidencia.descripcion);
+    });
+
+    if (ticketData.colaboradores && ticketData.colaboradores.length > 0) {
+        ticketData.nombresColaboradores = ticketData.colaboradores.map(colabId => {
+            const colaborador = appState.colaboradores.find(c => c.id === colabId);
+            return colaborador ? colaborador.nombre : 'ID Desconocido';
+        }).join(', ');
+    } else {
+        ticketData.nombresColaboradores = 'Ninguno';
+    }
+
+    ticketData.detailedDescriptions = [];
+    const descriptionsMap = ticketData.descripcionActividades;
+
+    if (descriptionsMap && typeof descriptionsMap === 'object' && Object.keys(descriptionsMap).length > 0) {
+        const descriptionPromises = Object.keys(descriptionsMap).map(async (colabId) => {
+            const description = descriptionsMap[colabId];
+            let collaboratorName = 'Nombre no encontrado';
+            const colaborador = appState.colaboradores.find(c => c.id === colabId);
+            if (colaborador) {
+                collaboratorName = colaborador.nombre;
+            } else {
+                const colabDoc = await db.collection('colaboradores').doc(colabId).get();
+                if (colabDoc.exists) {
+                    collaboratorName = colabDoc.data().NOMBRE;
+                }
+            }
+            return { name: collaboratorName, description: description };
+        });
+        ticketData.detailedDescriptions = await Promise.all(descriptionPromises);
+    } else if (typeof descriptionsMap === 'string') {
+         ticketData.legacyDescription = descriptionsMap;
+    }
+    
+    // ===== MENSAJE DE DIAGNÓSTICO 2 =====
+    console.log('✅ DEBUG (Obteniendo Datos del Ticket):', ticketData);
+
+    return ticketData;
+}
+
+    // =================================================================================
+    // FUNCIÓN ACTUALIZADA: Con MODO OSCURO y PREVISUALIZACIÓN DE IMÁGENES
+    // =================================================================================
+ async function viewTicket(id) {
+    Swal.fire({ title: 'Cargando detalles...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    // Usaremos la función getTicketDetails original, que ya obtiene lo que necesitamos
+    const ticket = await getTicketDetails(id); 
+    Swal.close();
+
+    if (!ticket) {
+        return Swal.fire('Error', 'No se pudo encontrar el ticket.', 'error');
+    }
+
+    let descriptionsHtml = '';
+    if (ticket.detailedDescriptions && ticket.detailedDescriptions.length > 0) {
+        // Crea el HTML para la lista de descripciones individuales
+        descriptionsHtml = ticket.detailedDescriptions.map(item => `
+            <p class="section-subtitle"><strong>Actividades de ${item.name}:</strong></p>
+            <p class="text-block">${item.description || 'No hay descripción.'}</p>
+        `).join('');
+    } else if (ticket.legacyDescription) {
+        // Muestra el texto simple si el ticket aún no se ha convertido
+         descriptionsHtml = `<p class="section-subtitle"><strong>Descripción General:</strong></p><p class="text-block">${ticket.legacyDescription}</p>`;
+    } else {
+        descriptionsHtml = `<p class="section-subtitle"><strong>Actividades:</strong></p><p class="text-block">Aún no se han registrado actividades.</p>`;
+    }
+
+    const htmlContent = `
+        <div class="ticket-details-modal">
+            <h3 class="modal-section-title">Asignación y Estado</h3>
+            <div class="info-grid">
+                <p><strong>Estado:</strong> <span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></p>
+                <p><strong>Prioridad:</strong> ${ticket.prioridad || 'N/A'}</p>
+                <p><strong>Responsable:</strong> ${ticket.responsableNombre || 'Sin asignar'}</p>
+                <p><strong>Colaboradores:</strong> ${ticket.nombresColaboradores}</p>
+            </div>
+
+            <h3 class="modal-section-title">Actividades y Resultados</h3>
+            ${descriptionsHtml}
+            <p class="section-subtitle">Conclusión del Servicio:</p>
+            <p class="text-block">${ticket.conclusion || 'Aún no hay una conclusión registrada.'}</p>
+
+            <h3 class="modal-section-title">Evidencias (${ticket.imagenes.length})</h3>
+            ${ticket.imagenes.length > 0 ? `
+                <div class="evidence-grid">
+                    ${ticket.imagenes.map(imgUrl => `
+                        <img src="${imgUrl}" alt="Evidencia del ticket" onclick="showImage('${imgUrl}')" title="Haz clic para ver en grande">
+                    `).join('')}
+                </div>
+            ` : `
+                <p class="no-evidence-msg">Aún no se han cargado evidencias para este ticket.</p>
+            `}
+            
+             <h3 class="modal-section-title">Información del Cliente</h3>
+             <div class="info-grid">
+                <p><strong>Cuenta:</strong> ${ticket.cuentaNombre || 'N/A'}</p>
+                <p><strong>Dirección:</strong> ${ticket.direccionFiscal || 'N/A'}</p>
+             </div>
+        </div>
+    `;
+
+    Swal.fire({
+        title: `<span style="font-size: 1.2em;">${ticket.titulo}</span>`,
+        html: htmlContent,
+        width: '850px',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#8a63f5',
+        customClass: {
+            popup: 'swal-dark-mode'
+        }
+    });
+}
+
+    // =================================================================================
+    // NUEVA FUNCIÓN: Para mostrar imágenes en grande
+    // =================================================================================
+    function showImage(imageUrl) {
+        Swal.fire({
+            imageUrl: imageUrl,
+            imageAlt: 'Evidencia en tamaño completo',
+            background: '#1e1e1e', // Fondo oscuro para la vista previa
+            width: 'auto',
+            padding: '0.5em',
+            showConfirmButton: false, // Sin botón de "OK"
+            showCloseButton: true,
+            backdrop: `
+                rgba(0,0,0,0.8)
+            `
+        });
+    }
+
+    // =================================================================================
+    // FUNCIÓN ACTUALIZADA: preparePdfGeneration ahora usa la nueva función getTicketDetails
+    // =================================================================================
+    async function preparePdfGeneration(ticketId) {
+        Swal.fire({ title: 'Preparando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            // Reutilizamos la función para no repetir código
+            const ticketData = await getTicketDetails(ticketId);
+            if (!ticketData) throw new Error('Ticket no encontrado');
+            
+            pdfGenerationData.ticketData = ticketData;
+            pdfGenerationData.featuredItem = null;
+            
+            const grid = document.getElementById('imageSelectionGrid');
+            grid.innerHTML = '';
+            ticketData.imagenes.forEach(imgUrl => {
+                const imgElement = document.createElement('img');
+                imgElement.src = imgUrl;
+                imgElement.onclick = () => {
+                    grid.querySelector('.selected')?.classList.remove('selected');
+                    imgElement.classList.add('selected');
+                    document.getElementById('featuredFileUpload').value = '';
+                    pdfGenerationData.featuredItem = { type: 'image', data: imgUrl };
+                };
+                grid.appendChild(imgElement);
+            });
+            
+            document.getElementById('imageSelectionModal').style.display = 'block';
+        } catch (error) {
+            console.error("Error preparando PDF:", error);
+            Swal.fire('Error', 'No se pudo obtener la información para el PDF.', 'error');
+        } finally {
+            Swal.close();
+        }
+    }
+
+    async function editTicket(id) {
+        const ticket = await getTicketById(id);
+        if (ticket) {
+            appState.currentTicketId = id;
+            document.getElementById('modalTitle').textContent = 'Editar Ticket';
+            // Llenar formulario
+            document.getElementById('titulo').value = ticket.titulo || '';
+            $('#cuenta').val(ticket.cuentaId || '').trigger('change');
+            document.getElementById('direccionFiscal').value = ticket.direccionFiscal || '';
+            document.getElementById('rfc').value = ticket.rfc || '';
+            document.getElementById('atencionA').value = ticket.atencionA || '';
+            document.getElementById('correo').value = ticket.correo || '';
+            document.getElementById('fecha').value = ticket.fecha || '';
+            document.getElementById('ordenServicio').value = ticket.ordenServicio || '';
+            document.getElementById('proyecto').value = ticket.proyecto || '';
+            document.getElementById('servicio').value = ticket.servicio || '';
+            document.getElementById('descripcionActividades').value = ticket.descripcionActividades || '';
+            document.getElementById('estado').value = ticket.estado || 'pendiente';
+            document.getElementById('prioridad').value = ticket.prioridad || 'media';
+            document.getElementById('area').value = ticket.area || '';
+            document.querySelectorAll('input[name="sistemas"]').forEach(cb => {
+                cb.checked = ticket.sistemas?.includes(cb.value) || false;
+            });
+            $('#colaboradores').val(ticket.colaboradores || []).trigger('change');
+            document.getElementById('ticketModal').style.display = 'block';
+        }
+    }
+    
+    async function getTicketById(id) {
+        const doc = await db.collection('ticketsmesa').doc(id).get();
+        return doc.exists ? doc.data() : null;
+    }
+
+    async function deleteTicket(id) {
+        const result = await Swal.fire({
+            title: '¿Mover a la papelera?',
+            text: 'El ticket se moverá a la papelera.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#6C43E0',
+            cancelButtonColor: '#dc3545',
+            confirmButtonText: 'Sí, mover',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const docRef = db.collection('ticketsmesa').doc(id);
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const ticketData = doc.data();
+                    ticketData.fechaEliminacion = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('ticketsmesaPapelera').doc(id).set(ticketData);
+                    await docRef.delete();
+                    Swal.fire('Eliminado', 'El ticket está en la papelera.', 'success');
+                }
+            } catch (error) {
+                console.error("Error al mover a la papelera:", error);
+                Swal.fire('Error', 'No se pudo mover el ticket.', 'error');
+            }
+        }
+    }
+
+ 
+    // =================================================================================
+// CÓDIGO DEFINITIVO PARA GESTIONAR DESCRIPCIONES POR COLABORADOR
+// =================================================================================
+
+/**
+ * FUNCIÓN 1: EDITA O AÑADE LA DESCRIPCIÓN PARA UN COLABORADOR
+ * Esta función es la más importante: convierte el texto simple en un mapa la primera vez.
+ */
+async function editActivityDescription(ticketId) {
+    try {
+        const ticketRef = db.collection('ticketsmesa').doc(ticketId);
+        const ticketDoc = await ticketRef.get();
+        if (!ticketDoc.exists) return Swal.fire('Error', 'El ticket no fue encontrado.', 'error');
+
+        const ticketData = ticketDoc.data();
+        const collaboratorIds = ticketData.colaboradores || [];
+        if (collaboratorIds.length === 0) return Swal.fire('Aviso', 'No hay colaboradores asignados.', 'info');
+
+        // Prepara la lista de colaboradores para el menú desplegable
+        const collaboratorsMap = {};
+        for (const id of collaboratorIds) {
+            const colaborador = appState.colaboradores.find(c => c.id === id);
+            if (colaborador) collaboratorsMap[id] = colaborador.nombre;
+        }
+
+        const { value: selectedCollaboratorId } = await Swal.fire({
+            title: '¿Para quién es la descripción?',
+            input: 'select',
+            inputOptions: collaboratorsMap,
+            inputPlaceholder: 'Seleccionar colaborador...',
+            showCancelButton: true,
+            confirmButtonText: 'Siguiente &rarr;'
+        });
+
+        if (selectedCollaboratorId) {
+            const collaboratorName = collaboratorsMap[selectedCollaboratorId];
+            
+            // LÓGICA DE TRANSFORMACIÓN:
+            // Si 'descripcionActividades' es un texto simple (como en tu imagen), lo convierte en un mapa.
+            let currentDescriptions = ticketData.descripcionActividades || {};
+            if (typeof currentDescriptions === 'string') {
+                // Conserva el texto antiguo como la descripción del primer colaborador que se edite.
+                currentDescriptions = { [selectedCollaboratorId]: currentDescriptions };
+            }
+            
+            const currentDescription = currentDescriptions[selectedCollaboratorId] || '';
+
+            const { value: newDescription } = await Swal.fire({
+                title: `Actividades de ${collaboratorName}`,
+                input: 'textarea',
+                inputValue: currentDescription,
+                inputPlaceholder: 'Escriba la descripción detallada...',
+                showCancelButton: true,
+                confirmButtonText: 'Guardar'
+            });
+
+            if (newDescription !== undefined) {
+                // Actualiza el campo para el colaborador seleccionado dentro del mapa.
+                // Si el mapa no existe, lo crea.
+                await ticketRef.update({
+                    [`descripcionActividades.${selectedCollaboratorId}`]: newDescription
+                });
+                Swal.fire('¡Éxito!', 'La descripción ha sido guardada.', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Error al actualizar descripción:', error);
+        Swal.fire('Error', 'Ocurrió un problema al guardar.', 'error');
+    }
+}
+
+    // ================================================================================================
+    // ===== FUNCIÓN DE MARCA DE AGUA (DISEÑO BASADO EN IMAGEN DE MUESTRA) ==========
+    // ================================================================================================
+    async function addWatermark(imageUrl, address, time, logoImage) {
+        try {
+            const originalImage = await loadImage(imageUrl);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = originalImage.width;
+            canvas.height = originalImage.height;
+            ctx.drawImage(originalImage, 0, 0);
+
+            // --- Calcular dimensiones basadas en la altura de la imagen ---
+            const blockHeight = canvas.height * 0.12; // Altura del bloque de marca de agua
+            const padding = blockHeight * 0.1; // Relleno interno
+            const logoHeight = blockHeight - (padding * 2);
+            const logoWidth = logoImage ? logoImage.width * (logoHeight / logoImage.height) : 0;
+            
+            const fontSize = logoHeight / 2.5; // Tamaño de fuente proporcional al logo
+            ctx.font = `${fontSize}px Arial`;
+            
+            // Medir el texto para calcular el ancho del bloque
+            const timeWidth = ctx.measureText(time).width;
+            const addressWidth = ctx.measureText(address).width;
+            const textBlockWidth = Math.max(timeWidth, addressWidth);
+            const blockWidth = padding + logoWidth + padding + textBlockWidth + padding;
+
+            // --- Dibujar el fondo semi-transparente ---
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(0, canvas.height - blockHeight, blockWidth, blockHeight);
+
+            // --- Dibujar el logo ---
+            if (logoImage) {
+                const logoX = padding;
+                const logoY = canvas.height - blockHeight + padding;
+                ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
+            }
+
+            // --- Dibujar los textos ---
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            const textX = padding + logoWidth + padding;
+            let textY = canvas.height - blockHeight + padding + fontSize; // Posición de la primera línea
+
+            ctx.fillText(time, textX, textY);
+            textY += fontSize * 1.3; // Mover a la siguiente línea
+            ctx.fillText(address, textX, textY);
+            
+            return canvas.toDataURL('image/jpeg', 0.9);
+        } catch (error) {
+            console.error("Error al aplicar marca de agua:", error);
+            return imageUrl; // Devolver original si falla
+        }
+    }
+
+    function downloadFile(bytes, fileName, mimeType) {
+        const blob = new Blob([bytes], { type: mimeType });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+async function createAndSavePdf() {
+    // Validar que tenemos los datos necesarios
+    if (!pdfGenerationData.ticketData) {
+        console.error("Datos del ticket no disponibles");
+        Swal.fire('Error', 'No hay datos del ticket para generar el PDF.', 'error');
+        return;
+    }
+    
+    closeImageSelectionModal();
+    Swal.fire({ 
+        title: 'Generando PDF', 
+        html: 'Aplicando marcas de agua y creando documento...', 
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
+
+    const { ticketData, featuredItem } = pdfGenerationData;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const MARGIN = 10, 
+          PAGE_WIDTH = doc.internal.pageSize.getWidth(), 
+          PAGE_HEIGHT = doc.internal.pageSize.getHeight(), 
+          CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
+    const FONT_NORMAL = 'helvetica', 
+          FONT_BOLD = 'helvetica', 
+          COLOR_PRIMARY_BLUE = '#002D62', 
+          COLOR_ACCENT_GOLD = '#DAA520', 
+          COLOR_TEXT_DARK = '#000000', 
+          COLOR_BORDER = '#002D62';
+    let y = MARGIN;
+
+    // Cargar logo para la marca de agua UNA SOLA VEZ
+    const logoImageForWatermark = await loadImage('../css/img/Logo-RSI-OFICIAL.png').catch(e => { 
+        console.error(e); 
+        return null; 
+    });
+    
+    try {
+        const headerLogoUrl = await loadImage('../css/img/Logo-RSI-OFICIAL.png').then(img => img.src);
+        doc.addImage(headerLogoUrl, 'PNG', MARGIN, y, 25, 25);
+    } catch (error) { 
+        console.error("Error al cargar el logo del encabezado:", error); 
+    }
+
+    doc.setFont(FONT_BOLD, 'bold'); 
+    doc.setFontSize(14); 
+    doc.setTextColor(COLOR_PRIMARY_BLUE); 
+    doc.text('REPORTE FOTOGRÁFICO', PAGE_WIDTH / 2, y + 5, { align: 'center' });
+    doc.setFont(FONT_NORMAL, 'normal'); 
+    doc.setFontSize(10); 
+    doc.setTextColor(COLOR_TEXT_DARK); 
+    doc.text('ÁREA: INGENIERÍA DE PROYECTOS Y MANTENIMIENTO', PAGE_WIDTH / 2, y + 10, { align: 'center' });
+    doc.setFontSize(8); 
+    doc.text('Dirección: C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx. RFC:RSI1810319G0', PAGE_WIDTH / 2, y + 14, { align: 'center' });
+    y += 25;
+    
+    const blockStartY = y; 
+    const blockHeight = 45; 
+    doc.setDrawColor(COLOR_BORDER); 
+    doc.rect(MARGIN, y, CONTENT_WIDTH, blockHeight); 
+    doc.line(PAGE_WIDTH / 2, y, PAGE_WIDTH / 2, y + blockHeight);
+    
+    let y_left = y + 5; 
+    const x_left_label = MARGIN + 2; 
+    const x_left_value = MARGIN + 28;
+    
+    function addInfoField(label, value, x_label, x_value, current_y, end_x) { 
+        doc.setFontSize(8); 
+        doc.setFont(FONT_BOLD, 'bold'); 
+        doc.text(label, x_label, current_y); 
+        doc.setFont(FONT_NORMAL, 'normal'); 
+        const splitValue = doc.splitTextToSize(value || 'N/A', (end_x - x_value - 2)); 
+        doc.text(splitValue, x_value, current_y); 
+        doc.line(x_label - 2, current_y + 3, end_x, current_y + 3); 
+    }
+    
+    addInfoField('CLIENTE:', ticketData.cuentaNombre || 'N/A', x_left_label, x_left_value, y_left, PAGE_WIDTH / 2); 
+    y_left += 8; 
+    addInfoField('DIRECCIÓN FISCAL:', ticketData.direccionFiscal || 'N/A', x_left_label, x_left_value, y_left, PAGE_WIDTH / 2); 
+    y_left += 8; 
+    addInfoField('RFC:', ticketData.rfc || 'N/A', x_left_label, x_left_value, y_left, PAGE_WIDTH / 2); 
+    y_left += 8; 
+    addInfoField('ATENCIÓN A:', ticketData.atencionA || 'N/A', x_left_label, x_left_value, y_left, PAGE_WIDTH / 2); 
+    y_left += 8; 
+    addInfoField('CORREO:', ticketData.correo || 'N/A', x_left_label, x_left_value, y_left, PAGE_WIDTH / 2);
+    
+    let y_right = y + 5; 
+    const x_right_label = PAGE_WIDTH / 2 + 2; 
+    const x_right_value = PAGE_WIDTH / 2 + 35; 
+    addInfoField('FECHA:', ticketData.fecha || 'N/A', x_right_label, x_right_value, y_right, PAGE_WIDTH - MARGIN); 
+    y_right += 8; 
+    addInfoField('ORDEN DE SERVICIO:', ticketData.ordenServicio || 'N/A', x_right_label, x_right_value, y_right, PAGE_WIDTH - MARGIN); 
+    y_right += 8; 
+    addInfoField('PROYECTO:', ticketData.proyecto || 'N/A', x_right_label, x_right_value, y_right, PAGE_WIDTH - MARGIN); 
+    y_right += 8; 
+    addInfoField('SERVICIO:', ticketData.servicio || 'N/A', x_right_label, x_right_value, y_right, PAGE_WIDTH - MARGIN);
+    
+    y = blockStartY + blockHeight + 5;
+    const checkSystems = ['CCTV', 'DH', 'CA', 'AI', 'SM']; 
+    let x_check = MARGIN + 25; 
+    doc.setFontSize(8); 
+    doc.setFont(FONT_BOLD, 'bold'); 
+    doc.text('SISTEMAS:', MARGIN + 2, y + 4); 
+    checkSystems.forEach(sys => { 
+        doc.rect(x_check, y, 5, 5); 
+        if (ticketData.sistemas && ticketData.sistemas.includes(sys)) { 
+            doc.text('X', x_check + 1.5, y + 4); 
+        } 
+        doc.setFont(FONT_NORMAL, 'normal'); 
+        doc.text(sys, x_check + 7, y + 4); 
+        x_check += 25; 
+    }); 
+    y += 10;
+    
+    const addWrappedText = (text, options) => { 
+        const { fontSize, fontStyle, x, maxWidth, isTitle } = options; 
+        doc.setFontSize(fontSize); 
+        doc.setFont(FONT_NORMAL, fontStyle); 
+        const splitText = doc.splitTextToSize(text, maxWidth); 
+        const textHeight = splitText.length * (fontSize * 0.352778); 
+        if (y + textHeight > PAGE_HEIGHT - MARGIN) { 
+            doc.addPage(); 
+            y = MARGIN; 
+        } 
+        if (isTitle) doc.setFont(FONT_BOLD, 'bold'); 
+        doc.text(splitText, x, y); 
+        y += textHeight + (isTitle ? 3 : 2); 
+    };
+    
+    doc.setFillColor(COLOR_ACCENT_GOLD); 
+    doc.rect(MARGIN, y, CONTENT_WIDTH, 7, 'F'); 
+    doc.setFontSize(10); 
+    doc.setFont(FONT_BOLD, 'bold'); 
+    doc.setTextColor(COLOR_PRIMARY_BLUE); 
+    doc.text('DESCRIPCIÓN DE ACTIVIDADES', MARGIN + 2, y + 5); 
+    y += 7; 
+    doc.setTextColor(COLOR_TEXT_DARK); 
+    doc.setFont(FONT_NORMAL, 'normal'); 
+    doc.setFontSize(9); 
+    const descText = doc.splitTextToSize(ticketData.descripcionActividades || 'Sin descripción.', CONTENT_WIDTH - 4); 
+    const descHeight = descText.length * 4 + 4; 
+    doc.setDrawColor(COLOR_BORDER); 
+    doc.rect(MARGIN, y, CONTENT_WIDTH, descHeight); 
+    doc.text(descText, MARGIN + 2, y + 5); 
+    y += descHeight + 5;
+    
+    const addressText = ticketData.direccionFiscal || 'Dirección no disponible';
+    let descEvidenciaIndex = 0;
+    let initialDesc = (ticketData.descripcionesEvidencia && ticketData.descripcionesEvidencia.length > 0) ? 
+                      ticketData.descripcionesEvidencia[descEvidenciaIndex++] : 
+                      'Revisión general y evidencia fotográfica.';
+    addWrappedText(initialDesc, { fontSize: 9, fontStyle: 'bold', x: MARGIN, maxWidth: CONTENT_WIDTH, isTitle: true });
+    y += 2;
+    
+    // Verificar que tenemos imágenes para procesar
+    if (ticketData.imagenes && ticketData.imagenes.length > 0) {
+        const imgWidth = (CONTENT_WIDTH - 10) / 3; 
+        const imgHeight = imgWidth * 0.75; 
+        let imgX = MARGIN;
+        
+        for (let i = 0; i < ticketData.imagenes.length; i++) {
+            if (y + imgHeight + 10 > PAGE_HEIGHT - MARGIN) { 
+                doc.addPage(); 
+                y = MARGIN; 
+            }
+            
+            const timeText = (ticketData.horasImagenes && ticketData.horasImagenes[i]) ? 
+                             ticketData.horasImagenes[i] : 
+                             new Date().toLocaleString('es-MX');
+            const watermarkedImageUrl = await addWatermark(ticketData.imagenes[i], addressText, timeText, logoImageForWatermark);
+            
+            try { 
+                doc.addImage(watermarkedImageUrl, 'JPEG', imgX, y, imgWidth, imgHeight); 
+            } catch (e) { 
+                console.error("Error al añadir imagen con marca de agua al PDF:", e); 
+            }
+            
+            imgX += imgWidth + 5;
+            if ((i + 1) % 3 === 0) {
+                y += imgHeight + 10; 
+                imgX = MARGIN;
+                if(descEvidenciaIndex < ticketData.descripcionesEvidencia.length) {
+                    y += 3;
+                    addWrappedText(ticketData.descripcionesEvidencia[descEvidenciaIndex++], { fontSize: 9, fontStyle: 'bold', x: MARGIN, maxWidth: CONTENT_WIDTH, isTitle: true });
+                    y += 2;
+                }
+            }
+        }
+        
+        if (ticketData.imagenes.length % 3 !== 0) { 
+            y += imgHeight + 10; 
+        }
+        y += 5;
+    }
+    
+    doc.setFontSize(9); 
+    doc.text('RAFHA SOLUCION INTEGRALES SAS DE CV', PAGE_WIDTH / 2, y, { align: 'center' }); 
+    y += 15; 
+    doc.line(PAGE_WIDTH / 2 - 40, y, PAGE_WIDTH / 2 + 40, y); 
+    y += 4; 
+    doc.text(ticketData.responsableNombre || 'Técnico Responsable', PAGE_WIDTH / 2, y, { align: 'center' });
+
+    const fileName = `Reporte_Fotografico_${ticketData.ordenServicio || ticketData.id}.pdf`;
+
+    // Procesar elemento destacado si existe
+    if (featuredItem) {
+        if (featuredItem.type === 'image') {
+            const timeText = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+            const watermarkedFeaturedUrl = await addWatermark(featuredItem.data, addressText, timeText, logoImageForWatermark);
+            
+            doc.addPage();
+            doc.setFont(FONT_BOLD, 'bold'); 
+            doc.setFontSize(14); 
+            doc.setTextColor(COLOR_PRIMARY_BLUE);
+            doc.text('ORDEN DE SERVICIO', PAGE_WIDTH / 2, MARGIN, { align: 'center' });
+            
+            try {
+                const imgProps = doc.getImageProperties(watermarkedFeaturedUrl);
+                const maxImgWidth = PAGE_WIDTH - MARGIN * 2, 
+                      maxImgHeight = PAGE_HEIGHT - MARGIN * 2 - 10;
+                let imgFinalWidth = imgProps.width, 
+                    imgFinalHeight = imgProps.height; 
+                const ratio = imgFinalWidth / imgFinalHeight;
+                
+                if (imgFinalWidth > maxImgWidth) { 
+                    imgFinalWidth = maxImgWidth; 
+                    imgFinalHeight = imgFinalWidth / ratio; 
+                }
+                if (imgFinalHeight > maxImgHeight) { 
+                    imgFinalHeight = maxImgHeight; 
+                    imgFinalWidth = imgFinalHeight * ratio; 
+                }
+                
+                const imgX = (PAGE_WIDTH - imgFinalWidth) / 2, 
+                      imgY = MARGIN + 15 + (maxImgHeight - imgFinalHeight) / 2;
+                doc.addImage(watermarkedFeaturedUrl, 'JPEG', imgX, imgY, imgFinalWidth, imgFinalHeight);
+            } catch (e) {
+                console.error("Error al añadir imagen destacada:", e);
+            }
+        } else if (featuredItem.type === 'pdf') {
+            try {
+                const { PDFDocument } = window.PDFLib;
+                const basePdfBytes = doc.output('arraybuffer');
+                const mainDoc = await PDFDocument.load(basePdfBytes);
+                const attachedDoc = await PDFDocument.load(featuredItem.data);
+                const copiedPages = await mainDoc.copyPages(attachedDoc, attachedDoc.getPageIndices());
+                copiedPages.forEach(page => mainDoc.addPage(page));
+                const mergedPdfBytes = await mainDoc.save();
+                downloadFile(mergedPdfBytes, fileName, 'application/pdf');
+                
+                Swal.close();
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: '¡PDF Generado!', 
+                    text: `El archivo ${fileName} ha sido descargado.`, 
+                    timer: 3000, 
+                    showConfirmButton: false 
+                });
+                return; // Salir de la función ya que el archivo ya se descargó
+            } catch (e) {
+                console.error("Error al fusionar PDF:", e);
+                Swal.fire('Error', 'No se pudo fusionar el PDF adjunto.', 'error');
+                return;
+            }
+        }
+    }
+
+    // Guardar el PDF si no es un PDF fusionado
+    doc.save(fileName);
+
+    Swal.close();
+    Swal.fire({ 
+        icon: 'success', 
+        title: '¡PDF Generado!', 
+        text: `El archivo ${fileName} ha sido descargado.`, 
+        timer: 3000, 
+        showConfirmButton: false 
+    });
+}
+    // =================================================================================
+    // Setup de la aplicación
+    // =================================================================================
+    function setupEventListeners() {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                sessionStorage.clear();
+                if (appState.unsubscribeTickets) appState.unsubscribeTickets();
+                window.location.href = 'https://rsienterprise.com/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion';
+            });
+        });
+
+        setupFormEventListener();
+        document.getElementById('generatePdfBtn').addEventListener('click', createAndSavePdf);
+
+        // ++ NUEVOS LISTENERS PARA FILTROS ++
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            appState.filters.searchTerm = e.target.value;
+            applySearchAndDisplay(); // Filtra la vista actual sin recargar de la base de datos
+        });
+
+        document.getElementById('collaboratorFilter').addEventListener('change', (e) => {
+            appState.filters.collaboratorId = e.target.value;
+            // Reinicia la paginación y carga los datos filtrados desde la base de datos
+            appState.pagination = { ...appState.pagination, currentPage: 1, lastVisible: null, pages: {} };
+            loadTicketsPage(1);
+        });
+        // ++ FIN DE NUEVOS LISTENERS ++
+
+
+      // Función para actualizar el campo de área en CUALQUIER formulario
+    function actualizarAreas(selectorId, inputId) {
+        const selectedIds = $(selectorId).val() || [];
+        if (selectedIds.length > 0) {
+            // Usamos un Set para guardar solo las áreas únicas (sin repetir)
+            const areas = new Set();
+            selectedIds.forEach(id => {
+                const colaborador = appState.colaboradores.find(c => c.id === id);
+                if (colaborador && colaborador.area) {
+                    areas.add(colaborador.area);
+                }
+            });
+            // Unimos las áreas únicas con una coma y las mostramos
+            document.getElementById(inputId).value = Array.from(areas).join(', ');
+        } else {
+            document.getElementById(inputId).value = '';
+        }
+    }
+
+    // Asignamos la función a cada selector de colaboradores
+    $('#colaboradores').on('change', () => actualizarAreas('#colaboradores', 'area'));
+    $('#rsiColaboradores').on('change', () => actualizarAreas('#rsiColaboradores', 'rsiArea'));
+
+        document.getElementById('cuenta').onchange = (e) => {
+            const cliente = appState.clientes.find(c => c.id === e.target.value);
+            document.getElementById('direccionFiscal').value = cliente?.direccion || '';
+            document.getElementById('rfc').value = cliente?.rfc || '';
+            document.getElementById('atencionA').value = cliente?.contacto || '';
+            document.getElementById('correo').value = cliente?.correo || '';
+        };
+        
+        document.getElementById('featuredFileUpload').onchange = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.querySelector('#imageSelectionGrid .selected')?.classList.remove('selected');
+            const reader = new FileReader();
+            if (file.type.startsWith('image/')) {
+                reader.onload = () => pdfGenerationData.featuredItem = { type: 'image', data: reader.result };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                reader.onload = () => pdfGenerationData.featuredItem = { type: 'pdf', data: reader.result };
+                reader.readAsArrayBuffer(file);
+            } else {
+                Swal.fire('Error', 'Tipo de archivo no soportado.', 'error');
+            }
+        };
+
+        const burgerMenu = document.getElementById('burgerMenu');
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        burgerMenu.addEventListener('click', () => sidebar.classList.toggle('active'));
+        sidebarOverlay.addEventListener('click', () => sidebar.classList.remove('active'));
+    }
+
+    // Punto de entrada de la aplicación
+    document.addEventListener('DOMContentLoaded', () => {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                initialLoad();
+            } else {
+                window.location.href = 'https://rsienterprise.com/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion';
+            }
+        });
+        
+        // Estilos que dependen de JS pueden permanecer aquí
+        const style = document.createElement('style');
+        style.textContent = `
+            .header-controls { display: flex; align-items: center; gap: 15px; margin-left: auto; }
+            .filter-container { display: flex; align-items: center; border-radius: 5px; padding: 5px 10px; }
+            .filter-container i { color: #888; margin-right: 8px; }
+            .filter-container input, .filter-container select { border: none; background: transparent; outline: none; }
+            .pagination-container { display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 8px; } 
+            .pagination-btn { padding: 8px 16px; border: 1px solid #ddd; background-color: white; border-radius: 4px; cursor: pointer; } 
+            .pagination-btn.active { background-color: #6C43E0; color: white; border-color: #6C43E0; } 
+            .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; } 
+            #imageSelectionGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; } 
+            #imageSelectionGrid img { width: 100%; height: auto; border: 3px solid transparent; cursor: pointer; } 
+            #imageSelectionGrid img.selected { border-color: #002D62; }
+            .swal2-textarea-custom { height: 120px !important; }
+            .swal-dark-mode { background-color: #1e1e1e; color: #fff; }
+            .swal-dark-mode .swal2-title { color: #fff; }
+            .swal-dark-mode .swal2-content { color: #ccc; }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+ </body>
+ </html>

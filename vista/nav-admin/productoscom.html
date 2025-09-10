@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Productos Premium</title>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/productos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/productos.css">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+
+
+
+</head>
+<body>
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <img src="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png" alt="Logo">
+        </div>
+        <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+        <ul class="nan_menu">
+            <li><i class="fas fa-home"></i><a href="panel-administrador"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+        </ul>
+    </nav>
+    <div class="header">
+        <div class="header-buttons">
+        <a href="categorias.html"> <button class="add-category-btn" >Agregar Categoría</button> </a>
+            <button class="add-product-btn" onclick="showAddModal()">Agregar Producto</button>
+            <a href="categorias.html"> <button class="add-category-btn" >Ver productos del index</button> </a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar productos..." oninput="filterProducts()">
+        </div>
+        
+        <table id="productsTable">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Imágenes</th>
+                    <th>Precio</th>
+                    <th>Descuento</th>
+                    <th>Precio Final</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="productsBody">
+            </tbody>
+        </table>
+        
+        <div class="pagination">
+            <button id="prevPage" onclick="previousPage()">Anterior</button>
+            <span id="pageNumber">Página 1</span>
+            <button id="nextPage" onclick="nextPage()">Siguiente</button>
+        </div>
+        
+        <!-- Modal para Producto -->
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <h2>Gestión de Producto</h2>
+                <form id="productForm" onsubmit="saveProduct(event)">
+                    <input type="hidden" id="docId">
+                    
+                    <div class="form-columns">
+                        <div>
+                            <label>Nombre Producto:</label>
+                            <input type="text" id="nombre" required>
+                            
+                            <label>Precio MXN:</label>
+                            <input type="number" id="precio" step="0.01" required>
+                            
+                            <label>Descuento (%):</label>
+                            <input type="number" id="descuento" step="1" min="0" max="100" value="0" onchange="calcularPrecioFinal()">
+                            
+                            <label>Precio Final:</label>
+                            <input type="number" id="precioFinal" step="0.01" readonly>
+                            
+                            <label>SKU:</label>
+                            <input type="text" id="sku" required>
+                        </div>
+                        
+                        <div>
+                            <label>Marca:</label>
+                            <input type="text" id="marca" required>
+                            
+                            <label>Modelo:</label>
+                            <input type="text" id="modelo" required>
+                            
+                            <label>Categoría:</label>
+                            <select id="categoria" required>
+                                <!-- Las categorías se cargarán dinámicamente -->
+                            </select>
+                            
+                            <label>Tipo:</label>
+                            <input type="text" id="tipo" required>
+                        </div>
+                        
+                        <div>
+                            <label>Estructura:</label>
+                            <input type="text" id="estructura" required>
+                            
+                            <label>Link de producto:</label>
+                            <input type="url" id="link" required>
+                            
+                            <label>Especificaciones:</label>
+                            <textarea id="especificaciones" rows="4" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="discount-options">
+                        <label>Aplicar descuento:</label>
+                        <select id="applyDiscountTo">
+                            <option value="single">Solo a este producto</option>
+                            <option value="category">A productos de la misma categoría</option>
+                        </select>
+                        
+                        <div id="categorySelection" class="category-selection">
+                            <label>Seleccionar categoría:</label>
+                            <select id="selectedCategory">
+                                <!-- Las categorías se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <label>Imágenes (Máximo 3):</label>
+                    <div class="image-preview-container" id="imagePreviews"></div>
+                    <input type="file" id="imagenes" multiple accept="image/*" onchange="handleImages(this)">
+                    
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button type="submit">Guardar</button>
+                        <button type="button" onclick="closeModal()" class="cancel-btn">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Modal para Categorías -->
+        <div id="categoryModal" class="modal">
+            <div class="modal-content">
+                <h2>Gestión de Categorías</h2>
+                <form id="categoryForm" onsubmit="saveCategory(event)">
+                    <input type="hidden" id="categoryId">
+                    
+                    <div>
+                        <label>Nombre de Categoría:</label>
+                        <input type="text" id="categoryName" required>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button type="submit">Guardar</button>
+                        <button type="button" onclick="closeCategoryModal()" class="cancel-btn">Cancelar</button>
+                    </div>
+                </form>
+                
+                <h3 style="margin-top: 30px; border-bottom: 1px solid var(--color-secondary); padding-bottom: 10px;">Categorías Existentes</h3>
+                <ul id="categoriesList" style="list-style-type: none; padding: 0;">
+                    <!-- Las categorías se cargarán dinámicamente -->
+                </ul>
+            </div>
+        </div>
+        
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+            };
+        
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+        
+            // Configuración de caché
+            const CACHE_KEY = 'products_cache';
+            const CATEGORIES_KEY = 'categories_cache';
+            const CACHE_EXPIRATION = 5 * 60 * 1000; 
+        
+            let products = [];
+            let filteredProducts = [];
+            let categories = ['CCTV', 'Alarma', 'Intrusión', 'Multimedia']; // Categorías iniciales
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            let currentImages = [];
+            const MAX_IMAGES = 3;
+        
+            // Cargar categorías desde Firestore
+            async function loadCategories() {
+                try {
+                    const snapshot = await db.collection("categorias").get();
+                    const loadedCategories = snapshot.docs.map(doc => doc.data().nombre);
+                    if (loadedCategories.length > 0) {
+                        categories = loadedCategories;
+                        saveToCache(CATEGORIES_KEY, categories);
+                    }
+                    updateCategorySelects();
+                } catch (error) {
+                    console.error("Error cargando categorías:", error);
+                }
+            }
+        
+            // Actualizar los selects de categoría en los formularios
+            function updateCategorySelects() {
+                const categorySelects = [
+                    document.getElementById('categoria'),
+                    document.getElementById('selectedCategory')
+                ];
+                
+                categorySelects.forEach(select => {
+                    if (select) {
+                        select.innerHTML = categories.map(category => 
+                            `<option value="${category}">${category}</option>`
+                        ).join('');
+                    }
+                });
+                
+                // Actualizar lista de categorías en el modal
+                const categoriesList = document.getElementById('categoriesList');
+                if (categoriesList) {
+                    categoriesList.innerHTML = categories.map(category => `
+                        <li style="padding: 8px 0; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                            <span>${category}</span>
+                            <button onclick="deleteCategory('${category}')" style="background-color: #f44336; padding: 5px 10px;">Eliminar</button>
+                        </li>
+                    `).join('');
+                }
+            }
+        
+            async function loadProducts() {
+                const cachedData = getCachedProducts();
+                
+                if (cachedData) {
+                    products = cachedData;
+                    filteredProducts = [...products];
+                    await renderTable();
+                }
+        
+                try {
+                    const snapshot = await db.collection("Productos").get();
+                    const freshProducts = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        _timestamp: doc.data()._timestamp || Date.now()
+                    }));
+                    
+                    if (shouldUpdateCache(cachedData, freshProducts)) {
+                        products = freshProducts;
+                        filteredProducts = [...products];
+                        saveToCache(CACHE_KEY, freshProducts);
+                        await renderTable();
+                    }
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                    if (!cachedData) alert("Error cargando productos. Intenta recargar la página.");
+                }
+            }
+        
+            function getCachedProducts() {
+                try {
+                    const cache = localStorage.getItem(CACHE_KEY);
+                    if (!cache) return null;
+                    
+                    const { data, timestamp } = JSON.parse(cache);
+                    const isExpired = Date.now() - timestamp > CACHE_EXPIRATION;
+                    
+                    return isExpired ? null : data;
+                } catch (e) {
+                    console.warn("Error leyendo caché:", e);
+                    return null;
+                }
+            }
+        
+            function saveToCache(key, data) {
+                try {
+                    const cacheData = {
+                        data: data,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(key, JSON.stringify(cacheData));
+                } catch (e) {
+                    console.warn("Error guardando en caché:", e);
+                    localStorage.removeItem(key);
+                }
+            }
+        
+            function shouldUpdateCache(cachedData, freshData) {
+                if (!cachedData) return true;
+                if (cachedData.length !== freshData.length) return true;
+                
+                const lastCached = cachedData.reduce((acc, cur) => 
+                    Math.max(acc, cur._timestamp || 0), 0);
+                const lastFresh = freshData.reduce((acc, cur) => 
+                    Math.max(acc, cur._timestamp || 0), 0);
+                
+                return lastFresh > lastCached;
+            }
+        
+            async function renderTable() {
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const paginatedProducts = filteredProducts.slice(start, end);
+        
+                // Verificar qué productos están en el índice
+                const indexedProducts = await getIndexedProducts();
+                
+                const tbody = document.getElementById("productsBody");
+                
+                tbody.innerHTML = paginatedProducts.length === 0 
+                    ? `<tr><td colspan="9" style="text-align: center;">No se encontraron productos</td></tr>`
+                    : paginatedProducts.map(product => {
+                        const precioOriginal = parseFloat(product["Precio MXN"]) || 0;
+                        const descuento = parseFloat(product.Descuento) || 0;
+                        const precioFinal = descuento > 0 ? (precioOriginal * (1 - descuento/100)) : precioOriginal;
+                        const isIndexed = indexedProducts.some(p => p.productId === product.id);
+                        
+                        return `
+                            <tr>
+                                <td>${product["Nombre Producto"] || ''} ${isIndexed ? '★' : ''}</td>
+                                <td>${product.Categoria || ''}</td>
+                                <td class="image-indicator">
+                                    <span class="${product.Imagenes?.length ? 'has-images' : 'no-images'}">
+                                        ${product.Imagenes?.length ? '✓' : '✖'}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${descuento > 0 ? `<span class="original-price">$${precioOriginal.toFixed(2)}</span>` : `$${precioOriginal.toFixed(2)}`}
+                                </td>
+                                <td>
+                                    ${descuento > 0 ? `<span class="discount-badge">-${descuento}%</span>` : '0%'}
+                                </td>
+                                <td class="final-price">
+                                    $${precioFinal.toFixed(2)}
+                                </td>
+                                <td>${product.Marca || ''}</td>
+                                <td>${product.Modelo || ''}</td>
+                                <td>
+                                    <button onclick="editProduct('${product.id.replace(/'/g, "\\'")}')"><i class="fas fa-edit"></button></i>
+                                    <button onclick="deleteProduct('${product.id.replace(/'/g, "\\'")}')" class="cancel-btn"><i class="fas fa-trash"></button></i>
+                                    <button onclick="toggleIndex('${product.id.replace(/'/g, "\\'")}')" class="${isIndexed ? 'index-btn indexed' : 'index-btn'}" title="${isIndexed ? 'Quitar del índice' : 'Agregar al índice'}">
+                                        ${isIndexed ? '★' : '☆'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+        
+                document.getElementById("pageNumber").textContent = `Página ${currentPage}`;
+                document.getElementById("prevPage").disabled = currentPage === 1;
+                document.getElementById("nextPage").disabled = currentPage === Math.ceil(filteredProducts.length / itemsPerPage);
+            }
+        
+            // Obtener productos indexados
+            async function getIndexedProducts() {
+                try {
+                    const snapshot = await db.collection("Productos").get();
+                    return snapshot.docs.map(doc => doc.data());
+                } catch (error) {
+                    console.error("Error obteniendo productos indexados:", error);
+                    return [];
+                }
+            }
+        
+            // Alternar producto en el índice
+            async function toggleIndex(productId) {
+                const product = products.find(p => p.id === productId);
+                const indexedProducts = await getIndexedProducts();
+                const existingIndex = indexedProducts.find(p => p.productId === productId);
+                
+                if (existingIndex) {
+                    // Eliminar del índice
+                    const { isConfirmed } = await Swal.fire({
+                        title: '¿Quitar del índice?',
+                        text: `¿Deseas quitar "${product["Nombre Producto"]}" del índice de productos destacados?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, quitar',
+                        cancelButtonText: 'Cancelar'
+                    });
+        
+                    if (isConfirmed) {
+                        try {
+                            // Buscar y eliminar el documento correspondiente
+                            const querySnapshot = await db.collection("Productos")
+                                .where("productId", "==", productId)
+                                .get();
+                            
+                            const batch = db.batch();
+                            querySnapshot.forEach(doc => {
+                                batch.delete(doc.ref);
+                            });
+                            await batch.commit();
+                            
+                            Swal.fire({
+                                title: '¡Quitado!',
+                                text: 'El producto ha sido quitado del índice',
+                                icon: 'success'
+                            });
+                            await loadProducts(); // Refrescar la tabla
+                        } catch (error) {
+                            console.error("Error eliminando del índice:", error);
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'No se pudo quitar del índice: ' + error.message,
+                                icon: 'error'
+                            });
+                        }
+                    }
+                } else {
+                    // Agregar al índice
+                    const { isConfirmed } = await Swal.fire({
+                        title: 'Agregar al índice',
+                        text: `¿Deseas agregar "${product["Nombre Producto"]}" al índice de productos destacados?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, agregar',
+                        cancelButtonText: 'Cancelar'
+                    });
+        
+                    if (isConfirmed) {
+                        try {
+                            await db.collection("indexproductos").add({
+                                productId: productId,
+                                nombre: product["Nombre Producto"],
+                                categoria: product.Categoria,
+                                precio: product["Precio MXN"],
+                                descuento: product.Descuento,
+                                marca: product.Marca,
+                                modelo: product.Modelo,
+                                imagenes: product.Imagenes,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+        
+                            Swal.fire({
+                                title: '¡Agregado!',
+                                text: 'El producto ha sido agregado al índice',
+                                icon: 'success'
+                            });
+                            await loadProducts(); // Refrescar la tabla
+                        } catch (error) {
+                            console.error("Error agregando al índice:", error);
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'No se pudo agregar al índice: ' + error.message,
+                                icon: 'error'
+                            });
+                        }
+                    }
+                }
+            }
+        
+            function calcularPrecioFinal() {
+                const precio = parseFloat(document.getElementById("precio").value) || 0;
+                const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+                
+                if (descuento < 0) {
+                    document.getElementById("descuento").value = 0;
+                    return calcularPrecioFinal();
+                }
+                if (descuento > 100) {
+                    document.getElementById("descuento").value = 100;
+                    return calcularPrecioFinal();
+                }
+                
+                const precioFinal = precio * (1 - descuento/100);
+                document.getElementById("precioFinal").value = precioFinal.toFixed(2);
+            }
+        
+            function filterProducts() {
+                const query = document.getElementById('searchInput').value.toLowerCase();
+                filteredProducts = products.filter(product => 
+                    Object.values(product).some(value => 
+                        String(value).toLowerCase().includes(query)
+                    )
+                );
+                currentPage = 1;
+                renderTable();
+            }
+        
+            function previousPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            }
+        
+            function nextPage() {
+                const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                }
+            }
+        
+            function showAddModal() {
+                document.getElementById("productForm").reset();
+                document.getElementById("docId").value = '';
+                document.getElementById("descuento").value = 0;
+                document.getElementById("precioFinal").value = '';
+                document.getElementById("applyDiscountTo").value = "single";
+                document.getElementById("categorySelection").style.display = "none";
+                currentImages = [];
+                updateImagePreviews();
+                document.getElementById("productModal").style.display = "block";
+            }
+        
+            function closeModal() {
+                document.getElementById("productModal").style.display = "none";
+            }
+        
+            function closeCategoryModal() {
+                document.getElementById("categoryModal").style.display = "none";
+            }
+        
+            async function editProduct(id) {
+                const product = products.find(p => p.id === id);
+                document.getElementById("docId").value = id;
+                document.getElementById("nombre").value = product["Nombre Producto"] || '';
+                document.getElementById("precio").value = product["Precio MXN"] || '';
+                document.getElementById("descuento").value = product.Descuento || 0;
+                calcularPrecioFinal();
+                document.getElementById("sku").value = product.SKU || '';
+                document.getElementById("marca").value = product.Marca || '';
+                document.getElementById("modelo").value = product.Modelo || '';
+                document.getElementById("categoria").value = product.Categoria || '';
+                document.getElementById("tipo").value = product.Tipo || '';
+                document.getElementById("estructura").value = product.Estructura || '';
+                document.getElementById("link").value = product["Link de producto"] || '';
+                document.getElementById("especificaciones").value = product.Especificaciones || '';
+                document.getElementById("applyDiscountTo").value = "single";
+                document.getElementById("categorySelection").style.display = "none";
+                
+                currentImages = product.Imagenes || [];
+                updateImagePreviews();
+                
+                document.getElementById("productModal").style.display = "block";
+            }
+        
+            function handleImages(input) {
+                const files = Array.from(input.files).slice(0, MAX_IMAGES - currentImages.length);
+                
+                files.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        currentImages = [...currentImages, e.target.result];
+                        if(index === files.length - 1) updateImagePreviews();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        
+            function updateImagePreviews() {
+                const container = document.getElementById("imagePreviews");
+                container.innerHTML = currentImages
+                    .filter(img => img)
+                    .map((img, index) => `
+                        <div class="image-preview-item">
+                            <img src="${img}" class="img-thumbnail">
+                            <button class="delete-image-btn" onclick="deleteImage(${index})">×</button>
+                        </div>
+                    `)
+                    .join('');
+            }
+        
+            function deleteImage(index) {
+                currentImages = currentImages.filter((_, i) => i !== index);
+                updateImagePreviews();
+            }
+        
+            async function saveProduct(e) {
+                e.preventDefault();
+                
+                const applyTo = document.getElementById("applyDiscountTo").value;
+                const discountValue = parseFloat(document.getElementById("descuento").value) || 0;
+                const docId = document.getElementById("docId").value;
+                const productCategory = document.getElementById("categoria").value;
+                
+                // Preparar datos del producto
+                const productData = {
+                    "Nombre Producto": document.getElementById("nombre").value,
+                    "Precio MXN": parseFloat(document.getElementById("precio").value),
+                    "Descuento": discountValue,
+                    "SKU": document.getElementById("sku").value,
+                    "Marca": document.getElementById("marca").value,
+                    "Modelo": document.getElementById("modelo").value,
+                    "Categoria": productCategory,
+                    "Tipo": document.getElementById("tipo").value,
+                    "Estructura": document.getElementById("estructura").value,
+                    "Link de producto": document.getElementById("link").value,
+                    "Especificaciones": document.getElementById("especificaciones").value,
+                    "Imagenes": currentImages.filter(img => img),
+                    "_timestamp": Date.now()
+                };
+        
+                try {
+                    // Guardar primero el producto actual
+                    let productRef;
+                    if (docId) {
+                        productRef = db.collection("Productos").doc(docId);
+                        await productRef.update(productData);
+                    } else {
+                        productRef = await db.collection("Productos").add(productData);
+                    }
+        
+                    // Si se seleccionó aplicar a categoría o todos
+                    if ((applyTo === "category" || applyTo === "all") && discountValue > 0) {
+                        let confirmationText = '';
+                        let selectedCategory = '';
+                        
+                        if (applyTo === "category") {
+                            selectedCategory = document.getElementById("selectedCategory").value;
+                            confirmationText = `Se aplicará un descuento del ${discountValue}% a TODOS los productos de la categoría ${selectedCategory}.`;
+                        } else {
+                            confirmationText = `Se aplicará un descuento del ${discountValue}% a TODOS los productos.`;
+                        }
+                        
+                        const { isConfirmed } = await Swal.fire({
+                            title: '¿Aplicar descuento?',
+                            text: confirmationText + ' Esta acción no se puede deshacer.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Sí, aplicar',
+                            cancelButtonText: 'Cancelar'
+                        });
+                        
+                        if (!isConfirmed) {
+                            localStorage.removeItem(CACHE_KEY);
+                            closeModal();
+                            await loadProducts();
+                            return;
+                        }
+                        
+                        // Mostrar loading
+                        const swalInstance = Swal.fire({
+                            title: 'Aplicando descuentos',
+                            html: 'Por favor espera mientras se actualizan los productos...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        
+                        try {
+                            // Construir la consulta según el filtro
+                            let query = db.collection("Productos");
+                            
+                            // Excluir el producto actual
+                            query = query.where(firebase.firestore.FieldPath.documentId(), '!=', docId || productRef.id);
+                            
+                            // Aplicar filtro de categoría si es necesario
+                            if (applyTo === "category") {
+                                query = query.where("Categoria", "==", selectedCategory);
+                            }
+                            
+                            const querySnapshot = await query.get();
+                            
+                            // Preparar batch de actualizaciones
+                            const batch = db.batch();
+                            let updateCount = 0;
+                            
+                            querySnapshot.forEach(doc => {
+                                batch.update(doc.ref, {
+                                    "Descuento": discountValue,
+                                    "_timestamp": Date.now()
+                                });
+                                updateCount++;
+                            });
+                            
+                            // Ejecutar batch si hay productos para actualizar
+                            if (updateCount > 0) {
+                                await batch.commit();
+                            }
+                            
+                            await swalInstance.close();
+                            
+                            let successMessage = `Descuento del ${discountValue}% aplicado a ${updateCount} `;
+                            successMessage += applyTo === "category" 
+                                ? `productos de la categoría ${selectedCategory}.` 
+                                : 'productos.';
+                            
+                            Swal.fire({
+                                title: '¡Éxito!',
+                                text: successMessage,
+                                icon: 'success'
+                            });
+                            
+                        } catch (error) {
+                            console.error("Error aplicando descuento:", error);
+                            await swalInstance.close();
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Ocurrió un error al aplicar el descuento: ' + error.message,
+                                icon: 'error'
+                            });
+                        }
+                    }
+                    
+                    localStorage.removeItem(CACHE_KEY);
+                    closeModal();
+                    await loadProducts();
+                    
+                    Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Producto actualizado ' + 
+                            (applyTo === 'single' ? 'correctamente.' : 
+                             applyTo === 'category' ? 'y descuento aplicado a la categoría.' : 
+                             'y descuento aplicado a todos los productos.'),
+                        icon: 'success'
+                    });
+                    
+                } catch (error) {
+                    console.error("Error guardando producto:", error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Ocurrió un error al guardar: ' + error.message,
+                        icon: 'error'
+                    });
+                }
+            }
+        
+            async function saveCategory(e) {
+                e.preventDefault();
+                
+                const categoryName = document.getElementById("categoryName").value.trim();
+                const categoryId = document.getElementById("categoryId").value;
+                
+                if (!categoryName) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'El nombre de la categoría no puede estar vacío',
+                        icon: 'error'
+                    });
+                    return;
+                }
+                
+                try {
+                    // Verificar si la categoría ya existe
+                    if (!categoryId && categories.includes(categoryName)) {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Esta categoría ya existe',
+                            icon: 'error'
+                        });
+                        return;
+                    }
+                    
+                    // Guardar en Firestore
+                    if (categoryId) {
+                        // Actualizar categoría existente
+                        await db.collection("categorias").doc(categoryId).update({
+                            nombre: categoryName
+                        });
+                    } else {
+                        // Crear nueva categoría
+                        await db.collection("categorias").add({
+                            nombre: categoryName
+                        });
+                    }
+                    
+                    // Actualizar lista local de categorías
+                    if (!categories.includes(categoryName)) {
+                        categories.push(categoryName);
+                        saveToCache(CATEGORIES_KEY, categories);
+                    }
+                    
+                    // Actualizar los selects
+                    updateCategorySelects();
+                    
+                    // Cerrar modal y mostrar mensaje
+                    closeCategoryModal();
+                    
+                    Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Categoría actualizada correctamente',
+                        icon: 'success'
+                    });
+                    
+                } catch (error) {
+                    console.error("Error guardando categoría:", error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Ocurrió un error al guardar la categoría: ' + error.message,
+                        icon: 'error'
+                    });
+                }
+            }
+        
+            async function deleteCategory(categoryName) {
+                const { isConfirmed } = await Swal.fire({
+                    title: '¿Eliminar categoría?',
+                    text: `Esta acción eliminará la categoría "${categoryName}". ¿Estás seguro?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (isConfirmed) {
+                    try {
+                        // Buscar y eliminar la categoría en Firestore
+                        const querySnapshot = await db.collection("categorias").where("nombre", "==", categoryName).get();
+                        
+                        if (!querySnapshot.empty) {
+                            const batch = db.batch();
+                            querySnapshot.forEach(doc => {
+                                batch.delete(doc.ref);
+                            });
+                            await batch.commit();
+                        }
+                        
+                        // Actualizar lista local
+                        categories = categories.filter(cat => cat !== categoryName);
+                        saveToCache(CATEGORIES_KEY, categories);
+                        
+                        // Actualizar UI
+                        updateCategorySelects();
+                        
+                        Swal.fire({
+                            title: '¡Eliminada!',
+                            text: `La categoría "${categoryName}" ha sido eliminada.`,
+                            icon: 'success'
+                        });
+                        
+                    } catch (error) {
+                        console.error("Error eliminando categoría:", error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Ocurrió un error al eliminar la categoría: ' + error.message,
+                            icon: 'error'
+                        });
+                    }
+                }
+            }
+        
+            async function deleteProduct(id) {
+                const { isConfirmed } = await Swal.fire({
+                    title: '¿Eliminar producto?',
+                    text: "Esta acción no se puede deshacer",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (isConfirmed) {
+                    try {
+                        await db.collection("Productos").doc(id).delete();
+                        localStorage.removeItem(CACHE_KEY);
+                        await loadProducts();
+                        
+                        Swal.fire({
+                            title: '¡Eliminado!',
+                            text: 'El producto ha sido eliminado.',
+                            icon: 'success'
+                        });
+                    } catch (error) {
+                        console.error("Error eliminando producto:", error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo eliminar el producto: ' + error.message,
+                            icon: 'error'
+                        });
+                    }
+                }
+            }
+        
+            window.onclick = function(event) {
+                if (event.target.className === "modal") {
+                    event.target.style.display = "none";
+                }
+            }
+        
+            // Mostrar/ocultar selección de categoría
+            document.getElementById('applyDiscountTo').addEventListener('change', function() {
+                const categorySelect = document.getElementById('categorySelection');
+                categorySelect.style.display = this.value === 'category' ? 'block' : 'none';
+                
+                // Si es la categoría del producto actual
+                if (this.value === 'category') {
+                    document.getElementById('selectedCategory').value = document.getElementById('categoria').value;
+                }
+            });
+        
+            // Inicializar el cálculo del precio final
+            document.getElementById("precio").addEventListener('input', calcularPrecioFinal);
+            document.getElementById("descuento").addEventListener('input', calcularPrecioFinal);
+        
+            // Cargar datos al iniciar
+            document.addEventListener('DOMContentLoaded', function() {
+                loadProducts();
+                loadCategories();
+            });
+        </script>
+</body>
+</html>

@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise Quotation System</title>
+   <link rel="stylesheet" href="coti.css">
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    
+    </head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="container">
+                <h1>📋 Cotizaciones - RSI Enterprise</h1>
+                <button id="nuevaCotizacionBtn" class="btn btn-primary">
+                    <span>➕</span> Nueva Cotización
+                </button>
+                
+                <a href="../../404.html" id="descargarTodasBtn" class="btn btn-secondary" style="display: none;">
+                <span>💵</span> Cuentas por cobrar y pagar
+                </a>
+
+                <button id="resumenCuentasBtn" class="btn btn-info" style="display: none;">
+                    <span>📊</span> Resumen de Cuentas
+                </button>
+                <a href="../nav-operadores/gestion_Tickets.html">
+                <button class="btn btn-primary">
+                    <span>🎫</span> ver mis tickets
+                </button>
+
+
+                </a>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="container">
+                <div class="search-section">
+                    <input type="text" id="buscarInput" placeholder="🔍 Buscar cotizaciones por número o cliente..." class="search-input">
+                </div>
+
+                <div class="table-section">
+                    <div class="table-header">
+                        <h2>📊 Cotizaciones Generadas</h2>
+                    </div>
+                    <div class="table-container">
+                        
+                        <table class="cotizaciones-table">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Descripción</th>
+                                    <th>Generado por:</th>
+                                    <th>Estatus</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cotizacionesTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+
+                </div> <div id="pagination-controls" class="pagination-container"></div>
+                    </div>
+            </div>
+        </main>
+
+        <div id="modalCotizacion" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">✨ Nueva Cotización</h2>
+                    <button id="cerrarModalBtn" class="close-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="cotizacionForm" class="form-section">
+                        <div class="section-card empresa">
+                            <h3>🏢 Datos de la Empresa</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="empresaSelector">Sucursal</label>
+                                    <select id="empresaSelector" name="empresaSelector" required>
+                                        <option value="RSI NEZA">RSI NEZA</option>
+                                        <option value="RSI IXT">RSI IXT</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empresaRFC">RFC</label>
+                                    <input type="text" id="empresaRFC" name="empresaRFC" value="XAXX010101000" required>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="empresaDireccion">Dirección Fiscal</label>
+                                    <input type="text" id="empresaDireccion" name="empresaDireccion" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empresaTelefono">Teléfono</label>
+                                    <input type="tel" id="empresaTelefono" name="empresaTelefono" value="(55) 1234-5678" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card cliente">
+                            <h3>👤 Datos del Cliente</h3>
+                            
+                            <div class="cliente-search-container">
+                                <input type="text" id="clienteSearch" class="search-input" placeholder="🔍 Buscar cliente por nombre o RFC..." autocomplete="off">
+                                <div id="clienteDropdown" class="cliente-dropdown">
+                                    </div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="clienteNombre">Nombre del Cliente</label>
+                                    <input type="text" id="clienteNombre" name="clienteNombre" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="clienteRFC">RFC</label>
+                                    <input type="text" id="clienteRFC" name="clienteRFC">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="clienteDireccion">Dirección (Contacto 1)</label>
+                                    <input type="text" id="clienteDireccion" name="clienteDireccion" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="clienteTelefono">Teléfono</label>
+                                    <input type="tel" id="clienteTelefono" name="clienteTelefono" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card cotizacion">
+                            <h3>📄 Información de la Cotización</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="cotizacionNumero">Número de Cotización</label>
+                                    <input type="text" id="cotizacionNumero" name="cotizacionNumero" required readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tipoCotizacion">Tipo de Cotización</label>
+                                    <select id="tipoCotizacion" name="tipoCotizacion" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="implementacion">Implementación</option>
+                                        <option value="proyecto">Proyecto</option>
+                                        <option value="servicio">Servicio</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cotizacionFecha">Fecha</label>
+                                    <input type="date" id="cotizacionFecha" name="cotizacionFecha" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cotizacionVigencia">Vigencia (días)</label>
+                                    <input type="number" id="cotizacionVigencia" name="cotizacionVigencia" value="30" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cotizacionMoneda">Moneda</label>
+                                    <select id="cotizacionMoneda" name="cotizacionMoneda" required>
+                                        <option value="MXN">Peso Mexicano (MXN)</option>
+                                        <option value="USD">Dólar Americano (USD)</option>
+                                        <option value="EUR">Euro (EUR)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tipoCredito">Tipo de Pago</label>
+                                    <select id="tipoCredito" name="tipoCredito">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="contado">Contado</option>
+                                        <option value="credito">Crédito</option>
+                                        <option value="debido">Debido</option>
+                                        <option value="transferencia">Transferencia</option>
+                                    </select>
+                                
+                                </div>
+                                <div id="creditOptions" class="credit-options">
+                                    <h4>💳 Opciones de Crédito</h4>
+                                    <div class="credit-grid">
+                                        <div class="form-group">
+                                            <label for="diasCredito">Días de Crédito</label>
+                                            <select id="diasCredito" name="diasCredito">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="8">8 días</option>
+                                                <option value="15">15 días</option>
+                                                <option value="30">30 días</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="cotizacionDescripcion">Descripción (para búsquedas)</label>
+                                    <textarea id="cotizacionDescripcion" name="cotizacionDescripcion" rows="3" 
+                                        maxlength="500" 
+                                        placeholder="Descripción breve de la cotización para búsquedas internas (máximo 500 caracteres)..."></textarea>
+                                    <small id="contadorCaracteres" style="color: #6b7280; display: block; text-align: right;">0/500 caracteres</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card productos">
+                            <div class="section-header">
+                                <h3>🛍️ Productos / Servicios</h3>
+                                <button type="button" id="agregarItemBtn" class="btn btn-primary">
+                                    <span>➕</span> Agregar Item
+                                </button>
+                            </div>
+                            <div class="table-container">
+                                <table id="itemsTable" class="items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mover</th>
+                                            <th>Categoría</th>
+                                            <th>Unidad</th>
+                                            <th>Descripción</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio Unitario</th>
+                                            <th>Total</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsTableBody">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="section-card totales">
+                            <h3>💰 Totales</h3>
+                            <div class="totales-grid">
+                                <div class="totales-row">
+                                    <label>Subtotal:</label>
+                                    <span id="subtotal">$0.00</span>
+                                </div>
+                                <div class="totales-row">
+                                    <label for="descuento">Descuento (%):</label>
+                                    <input type="number" id="descuento" name="descuento" value="0" min="0" max="100" step="0.01">
+                                </div>
+                                <div class="totales-row">
+                                    <label for="impuesto">IVA (%):</label>
+                                    <input type="number" id="impuesto" name="impuesto" value="16" min="0" max="100" step="0.01">
+                                </div>
+                               <div class="totales-row total-final">
+    <label>Total:</label>
+    <span id="total">$0.00</span>
+</div>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <h3>📋 Términos y Condiciones</h3>
+                            <div class="form-group">
+                                <textarea id="terminos" name="terminos" rows="5" placeholder="Ingrese los términos y condiciones...">
+1. La presente cotización se realiza en base a los requerimientos necesarios para la solución tecnológica.
+2. Condiciones de pago, 70% de anticipo y 30% al término de la instalación y funcionamiento.
+3. En caso de cancelación tendrá una penalización del 20% en el total de la cotización.
+4. Trabajo adicional que no esté dentro de la cotización tendrá un costo extra.
+5. Los equipos tienen un año de garantía por defecto de fábrica.
+6. La instalación tendrá la garantía de 2 meses siempre y cuando no cuente con daños o manipulación.
+                                </textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="cancelarBtn" class="btn btn-secondary">❌ Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <span>💾</span> Generar Cotización PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmModal" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h2>⚠️ Confirmar Acción</h2>
+                    <button id="confirmCloseBtn" class="close-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage"></p>
+                    <div class="form-actions">
+                        <button id="confirmNo" class="btn btn-secondary">❌ No</button>
+                        <button id="confirmYes" class="btn btn-danger">✅ Sí</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>⏳ Procesando...</p>
+    </div>
+<div id="modalPDF" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2> Vista Previa del PDF - Cotización</h2>
+            <button id="cerrarPdfBtn" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="pdf-container">
+                </div>
+        </div>
+    </div>
+</div>
+    
+    <div id="modalResumenCuentas" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>📊 Resumen de Cuentas</h2>
+                <button id="cerrarResumenBtn" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="resumenFiltros" class="resumen-filtros">
+                    <button class="btn-filtro active" data-filtro="todos">Todos</button>
+                    <button class="btn-filtro" data-filtro="en proceso">En Proceso</button>
+                    <button class="btn-filtro" data-filtro="vendida">Vendidas</button>
+                    <button class="btn-filtro" data-filtro="rechazada">Rechazadas</button>
+                </div>
+                <div id="resumenTotales" class="resumen-totales">
+                    <h3 id="resumenTitulo">Total de Todas las Cotizaciones</h3>
+                    <p id="resumenSumaTotal" class="total-amount">$0.00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            doc, 
+            updateDoc, 
+            deleteDoc, 
+            query, 
+            orderBy,
+            setDoc,
+            getDoc,
+            where 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signOut 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Variables globales
+        let cotizaciones = [];
+        let filteredCotizaciones = []; 
+        let currentPage = 1;           
+        const rowsPerPage = 30;        
+        let clientes = [];
+        let items = [];
+        let contadores = {};
+        let isEditing = false;
+        let editingId = null;
+        let isManualEntry = false;
+        let contadorCotizaciones = 1;
+        let currentUser = null;
+
+
+
+//Funcion para la autenticacion de usuario
+async function inicializarApp() {
+    try {
+        // Configurar el observador de autenticación
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await cargarInformacionUsuario(user.email);
+                
+                // =======================================================
+                // --- CÓDIGO PARA MOSTRAR BOTONES DE REPORTES ---
+                // =======================================================
+                const botonReporte = document.getElementById('descargarTodasBtn');
+                const botonResumen = document.getElementById('resumenCuentasBtn'); // <-- NUEVO
+                const nombresAutorizados = [
+                    "Sergio Rodriguez Murillo",
+                    "Tomás Ismael Rodriguez Murillo",
+                    "Emanuel Jesus Campa Ramirez"
+                ];
+
+                // Comprueba si el nombre del usuario actual está en la lista
+                if (currentUser && nombresAutorizados.includes(currentUser.nombreCompleto)) {
+                    botonReporte.style.display = 'inline-block';
+                    botonResumen.style.display = 'inline-block'; // <-- NUEVO: Muestra el botón de resumen
+                }
+                // =======================================================
+                // --- FIN DEL CÓDIGO PARA BOTONES ---
+                // =======================================================
+
+                await cargarClientes();
+                await cargarCotizaciones();
+                await cargarContadores();
+                inicializarEmpresa();
+                
+                document.getElementById('tipoCotizacion').addEventListener('change', async function() {
+                    if (this.value) {
+                        await generarNumeroCotizacion();
+                    } else {
+                        document.getElementById('cotizacionNumero').value = '';
+                    }
+                });
+                
+                establecerFechaActual();
+                document.getElementById('cotizacionNumero').value = '';
+            } else {
+                Swal.fire({
+                    title: 'Acceso no autorizado',
+                    text: 'Debes iniciar sesión para acceder a esta función',
+                    icon: 'warning',
+                    confirmButtonText: 'Iniciar sesión'
+                }).then(() => {
+                    window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Error en inicialización:', error);
+        mostrarAlerta('Error al inicializar la aplicación', 'error');
+    }
+}
+
+
+
+        async function cargarInformacionUsuario(email) {
+            try {
+                const q = query(collection(db, 'colaboradores'), where("CORREO ELECTRÓNICO EMPRESARIAL", "==", email));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    currentUser.nombreCompleto = doc.data().NOMBRE || email;
+                } else {
+                    currentUser.nombreCompleto = email; 
+                }
+            } catch (error) {
+                console.error('Error al cargar información del usuario:', error);
+                currentUser.nombreCompleto = email; 
+            }
+        }
+        
+        const MAX_PDF_SIZE = 1024 * 1024; // 1MB en bytes
+
+        const empresasDirecciones = {
+            'RSI IXT': {
+                nombre: 'RSI ENTERPRISE IXTAPALUCA',
+                direccion: 'Av. Morelos 10, Pueblo San Francisco Acuautla, 56587 Ixtapaluca, Méx.',
+                telefono: '+52 1 55 7690 8248',
+                rfc: 'RSI1810319G0'
+            },
+            'RSI NEZA': {
+                nombre: 'RSI ENTERPRISE NEZAHUALCÓYOTL',
+                direccion: '31 MZ102 LT20 EL SOL 57200',
+                telefono: '+52 1 55 7690 8248',
+                rfc: 'RSI1810319G0'
+            }
+        };
+
+        // Elementos del DOM
+        const modalCotizacion = document.getElementById('modalCotizacion');
+        const modalPDF = document.getElementById('modalPDF');
+        const confirmModal = document.getElementById('confirmModal');
+        const cotizacionForm = document.getElementById('cotizacionForm');
+        const nuevaCotizacionBtn = document.getElementById('nuevaCotizacionBtn');
+        const cerrarModalBtn = document.getElementById('cerrarModalBtn');
+        const cancelarBtn = document.getElementById('cancelarBtn');
+        const cerrarPdfBtn = document.getElementById('cerrarPdfBtn');
+        const confirmCloseBtn = document.getElementById('confirmCloseBtn');
+        const itemsTableBody = document.getElementById('itemsTableBody');
+        const agregarItemBtn = document.getElementById('agregarItemBtn');
+        const cotizacionesTableBody = document.getElementById('cotizacionesTableBody');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+        const buscarInput = document.getElementById('buscarInput');
+        const modalTitle = document.getElementById('modalTitle');
+        const compressionStatus = document.getElementById('compressionStatus');
+        
+        // =======================================================
+        // --- NUEVOS ELEMENTOS DEL DOM PARA RESUMEN ---
+        // =======================================================
+        const resumenCuentasBtn = document.getElementById('resumenCuentasBtn');
+        const modalResumenCuentas = document.getElementById('modalResumenCuentas');
+        const cerrarResumenBtn = document.getElementById('cerrarResumenBtn');
+        const resumenFiltrosContainer = document.getElementById('resumenFiltros');
+        // =======================================================
+        // --- FIN DE NUEVOS ELEMENTOS DEL DOM ---
+        // =======================================================
+
+        cotizacionForm.addEventListener('input', guardarFormularioLocalmente);
+
+        const clienteSearch = document.getElementById('clienteSearch');
+        const clienteDropdown = document.getElementById('clienteDropdown');
+        const clienteNombre = document.getElementById('clienteNombre');
+        const clienteRFC = document.getElementById('clienteRFC');
+        const clienteDireccion = document.getElementById('clienteDireccion');
+        const clienteTelefono = document.getElementById('clienteTelefono');
+
+        const empresaSelector = document.getElementById('empresaSelector');
+        const empresaDireccion = document.getElementById('empresaDireccion');
+        const empresaRFC = document.getElementById('empresaRFC');
+        const empresaTelefono = document.getElementById('empresaTelefono');
+
+        const tipoCredito = document.getElementById('tipoCredito');
+        const creditOptions = document.getElementById('creditOptions');
+        const diasCredito = document.getElementById('diasCredito');
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', inicializarApp);
+        nuevaCotizacionBtn.addEventListener('click', mostrarModalNuevaCotizacion);
+        cerrarModalBtn.addEventListener('click', cerrarModal);
+        cancelarBtn.addEventListener('click', cerrarModal);
+        cerrarPdfBtn.addEventListener('click', cerrarModalPDF);
+        confirmCloseBtn.addEventListener('click', cerrarModalConfirm);
+        cotizacionForm.addEventListener('submit', manejarSubmitFormulario);
+        agregarItemBtn.addEventListener('click', agregarItem);
+        confirmNo.addEventListener('click', cerrarModalConfirm);
+        buscarInput.addEventListener('input', filtrarCotizaciones);
+
+        // =======================================================
+        // --- NUEVOS EVENT LISTENERS PARA RESUMEN ---
+        // =======================================================
+        resumenCuentasBtn.addEventListener('click', mostrarModalResumen);
+        cerrarResumenBtn.addEventListener('click', () => modalResumenCuentas.classList.remove('show'));
+        resumenFiltrosContainer.addEventListener('click', handleFiltroClick);
+        // =======================================================
+        // --- FIN DE NUEVOS EVENT LISTENERS ---
+        // =======================================================
+
+        empresaSelector.addEventListener('change', handleEmpresaChange);
+        tipoCredito.addEventListener('change', handleTipoCreditoChange);
+        document.getElementById('descuento').addEventListener('input', calcularTotales);
+        document.getElementById('impuesto').addEventListener('input', calcularTotales);
+        clienteSearch.addEventListener('input', buscarClientes);
+        clienteSearch.addEventListener('focus', mostrarDropdown);
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.cliente-search-container')) {
+                ocultarDropdown();
+            }
+        });
+
+        itemsTableBody.addEventListener('dragover', e => {
+            e.preventDefault(); 
+            const afterElement = getDragAfterElement(itemsTableBody, e.clientY);
+            const draggable = document.querySelector('.dragging');
+
+            if (draggable) { 
+                if (afterElement == null) {
+                    itemsTableBody.appendChild(draggable);
+                } else {
+                    itemsTableBody.insertBefore(draggable, afterElement);
+                }
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        modalCotizacion.addEventListener('click', function(e) {
+            if (e.target === modalCotizacion) {
+                // No cerrar el modal
+            }
+        });
+
+        window.addEventListener('beforeunload', (event) => {
+            if (modalCotizacion.classList.contains('show')) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+
+        modalCotizacion.addEventListener('click', function(e) {
+            if (e.target === modalCotizacion) {}
+        });
+
+        modalPDF.addEventListener('click', function(e) {
+            if (e.target === modalPDF) {}
+        });
+
+        confirmModal.addEventListener('click', function(e) {
+            if (e.target === confirmModal) {}
+        });
+       
+        async function cargarContadores() {
+            try {
+                const contadoresSnapshot = await getDocs(collection(db, 'contadoresCotizaciones'));
+                contadoresSnapshot.forEach((doc) => {
+                    contadores[doc.id] = doc.data().count || 0;
+                });
+            } catch (error) {
+                console.error('Error al cargar contadores:', error);
+            }
+        }
+
+        function inicializarEmpresa() {
+            handleEmpresaChange();
+        }
+
+        function handleEmpresaChange() {
+            const empresaSeleccionada = empresaSelector.value;
+            const empresaData = empresasDirecciones[empresaSeleccionada];
+            
+            empresaDireccion.value = empresaData.direccion;
+            empresaRFC.value = empresaData.rfc;
+            empresaTelefono.value = empresaData.telefono;
+        }
+
+        function handleTipoCreditoChange() {
+            const tipo = tipoCredito.value;
+            if (tipo === 'credito' || tipo === 'debido') {
+                creditOptions.classList.add('show');
+            } else {
+                creditOptions.classList.remove('show');
+                diasCredito.value = '';
+            }
+        }
+
+        function descargarTodas() {
+            Swal.fire({
+                title: 'Función en Desarrollo',
+                html: `
+                    <p>Generar un reporte consolidado o un archivo ZIP con todas las cotizaciones es una función avanzada.</p>
+                    <p>Requiere procesamiento adicional que se puede implementar en una siguiente fase con herramientas como <b>JSZip</b> para la compresión de archivos en el navegador.</p>
+                    <p><b>¡Próximamente!</b></p>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Entendido'
+            });
+        }
+
+        async function cargarClientes() {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'clientes'));
+                clientes = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const clienteData = doc.data();
+                    
+                    const limpiarValor = (valor) => {
+                        if (!valor || valor === 'N/A' || valor === 'undefined' || valor === 'null') {
+                            return '';
+                        }
+                        return String(valor).trim();
+                    };
+
+                    const direccionPartes = [
+                        limpiarValor(clienteData.Calle),
+                        limpiarValor(clienteData.Colonia),
+                        limpiarValor(clienteData['Codigo Postal'])
+                    ].filter(parte => parte.length > 0);
+
+                    const telefonoPartes = [
+                        limpiarValor(clienteData.Telefono),
+                        limpiarValor(clienteData.Movil)
+                    ].filter(tel => tel.length > 0);
+
+                    clientes.push({
+                        id: doc.id,
+                        nombre: limpiarValor(clienteData.Nombre) || 'Cliente sin nombre',
+                        nombreComercial: limpiarValor(clienteData['Nombre Comercial']),
+                        rfc: limpiarValor(clienteData.RFC),
+                        contacto1: direccionPartes.length > 0 ? direccionPartes.join(', ') : 'Dirección no disponible',
+                        telefono1: telefonoPartes.length > 0 ? telefonoPartes.join(' / ') : 'Teléfono no disponible'
+                    });
+                });
+
+               const clientesEspecificos = [
+                    {
+                        nombre: 'LATAMGYM S.A.P.I. DE C.V.',
+                        nombreComercial: 'LATAMGYM',
+                        rfc: 'LAT110824BJ4',
+                        contacto1: 'AV PASEO DE LA REFORMA 296 PISO 16 CUAUHTÉMOC, C.D.MX. CP: 06600',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'TIENDAS CHEDRAUI S.A.B. DE C.V.',
+                        nombreComercial: 'TIENDAS CHEDRAUI',
+                        rfc: 'TCH850701RM1',
+                        contacto1: 'AV. CONSTITUYENTES 1150 MIGUEL HIDALGO, C.D.MX. CP: 11950',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'GRUPO ZORRO ABARROTERO',
+                        nombreComercial: 'GRUPO ZORRO ABARROTERO',
+                        rfc: 'GZA9104307K6',
+                        contacto1: 'AV. CENTENARIO 2188 GUSTAVO A. MADERO, C.D. MX. CP: 07420',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'MILANO OPERADORA',
+                        nombreComercial: 'MILANO OPERADORA',
+                        rfc: 'DIS880803JW8',
+                        contacto1: 'PUEBLA 329 CUAUHTÉMOC, C.D.MX. CP: 06700',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'LILIA ALAVEZ MALDONADO',
+                        nombreComercial: 'LILIA ALAVEZ MALDONADO',
+                        rfc: 'AAML7804101K1',
+                        contacto1: 'RANCHO EL ENCANTO 35 CUAUTITLÁN IZCALLI, EDO. MÉX. CP: 54725',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'LOGISTICA DE COMERCIO EXTERIOR SHEKINAH',
+                        nombreComercial: 'LOGISTICA DE COMERCIO EXTERIOR SHEKINAH',
+                        rfc: 'LCE140605TJ2',
+                        contacto1: 'CALLE 3 194 NEZAHUALCÓYOTL, EDO. MÉX. CP: 57200',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'FLECHA ABARROTERA',
+                        nombreComercial: 'FLECHA ABARROTERA',
+                        rfc: 'FAB990222BG4',
+                        contacto1: 'CARRETERA XOCHIMILCO TULYEHUALCO 3024 XOCHIMILCO, C.D.MX. CP: 16429',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'EL CAZADOR COMERCIAL ABARROTERO',
+                        nombreComercial: 'EL CAZADOR COMERCIAL ABARROTERO',
+                        rfc: 'CCA910626QT9',
+                        contacto1: 'AV. ZONA 4 SECTOR 4 CP: 09040',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'CONSULTORIA INTEGRAL BETANZOS',
+                        nombreComercial: 'CONSULTORIA INTEGRAL BETANZOS',
+                        rfc: 'CIB220427H25',
+                        contacto1: 'MEXICA 523-16C CHIMALHUACÁN, EDO. MÉX. CP: 56366',
+                        telefono1: ''
+                    },
+                    {
+                        nombre: 'LEVADURAS Y AVIOS AZTECA',
+                        nombreComercial: 'LEVADURAS Y AVIOS AZTECA',
+                        rfc: 'LAA080513DE1',
+                        contacto1: 'CALLE 4 184 IZTAPALAPA, C.D.MX. CP: 09070',
+                        telefono1: ''
+                    }
+                    ];
+
+                clientesEspecificos.forEach(clienteEspecifico => {
+                    const existe = clientes.find(c => 
+                        c.nombre.toLowerCase() === clienteEspecifico.nombre.toLowerCase()
+                    );
+                    
+                    if (!existe) {
+                        clientes.unshift({
+                            id: `temp-${Date.now()}-${Math.random()}`,
+                            ...clienteEspecifico
+                        });
+                    }
+                });
+
+                const nombresEspecificos = [
+                    'TIENDAS CHEDRAUI',
+                    'GRUPO ZORRO ABARROTERO', 
+                    'LEVADURAS Y AVIOS AZTECA',
+                    'LATAMGYM'
+                ];
+
+                clientes.sort((a, b) => {
+                    const aEsEspecifico = nombresEspecificos.includes(a.nombre.toUpperCase());
+                    const bEsEspecifico = nombresEspecificos.includes(b.nombre.toUpperCase());
+                    
+                    if (aEsEspecifico && !bEsEspecifico) return -1;
+                    if (!aEsEspecifico && bEsEspecifico) return 1;
+                    
+                    if (aEsEspecifico && bEsEspecifico) {
+                        return nombresEspecificos.indexOf(a.nombre.toUpperCase()) - 
+                               nombresEspecificos.indexOf(b.nombre.toUpperCase());
+                    }
+                    
+                    return a.nombre.localeCompare(b.nombre);
+                });
+                
+            } catch (error) {
+                console.error('Error al cargar clientes:', error);
+                
+                clientes = [
+                     {
+                    nombre: 'LATAMGYM S.A.P.I. DE C.V.',
+                    nombreComercial: 'LATAMGYM',
+                    rfc: 'LAT110824BJ4',
+                    contacto1: 'AV PASEO DE LA REFORMA 296 PISO 16 CUAUHTÉMOC, C.D.MX. CP: 06600',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'TIENDAS CHEDRAUI S.A.B. DE C.V.',
+                    nombreComercial: 'TIENDAS CHEDRAUI',
+                    rfc: 'TCH850701RM1',
+                    contacto1: 'AV. CONSTITUYENTES 1150 MIGUEL HIDALGO, C.D.MX. CP: 11950',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'GRUPO ZORRO ABARROTERO',
+                    nombreComercial: 'GRUPO ZORRO ABARROTERO',
+                    rfc: 'GZA9104307K6',
+                    contacto1: 'AV. CENTENARIO 2188 GUSTAVO A. MADERO, C.D. MX. CP: 07420',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'MILANO OPERADORA',
+                    nombreComercial: 'MILANO OPERADORA',
+                    rfc: 'DIS880803JW8',
+                    contacto1: 'PUEBLA 329 CUAUHTÉMOC, C.D.MX. CP: 06700',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'LILIA ALAVEZ MALDONADO',
+                    nombreComercial: 'LILIA ALAVEZ MALDONADO',
+                    rfc: 'AAML7804101K1',
+                    contacto1: 'RANCHO EL ENCANTO 35 CUAUTITLÁN IZCALLI, EDO. MÉX. CP: 54725',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'LOGISTICA DE COMERCIO EXTERIOR SHEKINAH',
+                    nombreComercial: 'LOGISTICA DE COMERCIO EXTERIOR SHEKINAH',
+                    rfc: 'LCE140605TJ2',
+                    contacto1: 'CALLE 3 194 NEZAHUALCÓYOTL, EDO. MÉX. CP: 57200',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'FLECHA ABARROTERA',
+                    nombreComercial: 'FLECHA ABARROTERA',
+                    rfc: 'FAB990222BG4',
+                    contacto1: 'CARRETERA XOCHIMILCO TULYEHUALCO 3024 XOCHIMILCO, C.D.MX. CP: 16429',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'EL CAZADOR COMERCIAL ABARROTERO',
+                    nombreComercial: 'EL CAZADOR COMERCIAL ABARROTERO',
+                    rfc: 'CCA910626QT9',
+                    contacto1: 'AV. ZONA 4 SECTOR 4 CP: 09040',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'CONSULTORIA INTEGRAL BETANZOS',
+                    nombreComercial: 'CONSULTORIA INTEGRAL BETANZOS',
+                    rfc: 'CIB220427H25',
+                    contacto1: 'MEXICA 523-16C CHIMALHUACÁN, EDO. MÉX. CP: 56366',
+                    telefono1: ''
+                },
+                {
+                    nombre: 'LEVADURAS Y AVIOS AZTECA',
+                    nombreComercial: 'LEVADURAS Y AVIOS AZTECA',
+                    rfc: 'LAA080513DE1',
+                    contacto1: 'CALLE 4 184 IZTAPALAPA, C.D.MX. CP: 09070',
+                    telefono1: ''
+                }
+                ];
+                
+                mostrarAlerta('Error al cargar clientes de Firebase. Se han cargado clientes por defecto.', 'warning');
+            }
+        }
+
+       function buscarClientes() {
+    const termino = clienteSearch.value.toLowerCase().trim();
+    
+    if (termino.length === 0) {
+        mostrarDropdown();
+        return;
+    }
+
+    const clientesFiltrados = clientes.filter(cliente => {
+        return (
+            (cliente.nombre && cliente.nombre.toLowerCase().includes(termino)) ||
+            (cliente.rfc && cliente.rfc.toLowerCase().includes(termino)) ||
+            (cliente.contacto1 && cliente.contacto1.toLowerCase().includes(termino)) ||
+            (cliente.telefono1 && cliente.telefono1.toLowerCase().includes(termino)) ||
+            (cliente.nombreComercial && cliente.nombreComercial.toLowerCase().includes(termino))
+        );
+    });
+
+    mostrarOpcionesClientes(clientesFiltrados, termino);
+}
+
+        function mostrarDropdown() {
+            mostrarOpcionesClientes(clientes.slice(0, 10));
+        }
+
+        function ocultarDropdown() {
+            clienteDropdown.classList.remove('show');
+        }
+
+        function mostrarOpcionesClientes(clientesFiltrados, termino = '') {
+            clienteDropdown.innerHTML = '';
+
+            clientesFiltrados.forEach(cliente => {
+                const option = document.createElement('div');
+                option.className = 'cliente-option';
+                option.innerHTML = `
+                    <div><strong>${cliente.nombre}</strong></div>
+                    <div class="cliente-info">
+                        ${cliente.rfc ? 'RFC: ' + cliente.rfc : 'Sin RFC'}
+                    </div>
+                `;
+                option.addEventListener('click', () => seleccionarCliente(cliente));
+                clienteDropdown.appendChild(option);
+            });
+
+            const manualOption = document.createElement('div');
+            manualOption.className = 'cliente-option manual';
+            manualOption.innerHTML = `
+                <div><strong>✏️ Entrada Manual</strong></div>
+                <div class="cliente-info">Escribir datos del cliente manualmente</div>
+            `;
+            manualOption.addEventListener('click', activarEntradaManual);
+            clienteDropdown.appendChild(manualOption);
+
+            if (clientesFiltrados.length === 0 && termino) {
+                const noResultsOption = document.createElement('div');
+                noResultsOption.className = 'cliente-option';
+                noResultsOption.innerHTML = `
+                    <div style="color: #6b7280; font-style: italic;">
+                        No se encontraron clientes con "${termino}"
+                    </div>
+                `;
+                clienteDropdown.insertBefore(noResultsOption, manualOption);
+            }
+
+            clienteDropdown.classList.add('show');
+        }
+
+        function seleccionarCliente(cliente) {
+            isManualEntry = false;
+            clienteSearch.value = cliente.nombre;
+            
+            clienteNombre.value = cliente.nombre;
+            clienteRFC.value = cliente.rfc;
+            clienteDireccion.value = cliente.contacto1;
+            clienteTelefono.value = cliente.telefono1;
+
+            clienteNombre.readOnly = true;
+            clienteRFC.readOnly = true;
+            clienteDireccion.readOnly = true;
+            clienteTelefono.readOnly = true;
+
+            [clienteNombre, clienteRFC, clienteDireccion, clienteTelefono].forEach(field => {
+                field.style.backgroundColor = '#f0f9ff';
+                field.style.borderColor = '#3b82f6';
+            });
+
+            ocultarDropdown();
+            mostrarAlerta(`Cliente "${cliente.nombre}" seleccionado`, 'success');
+        }
+
+        function activarEntradaManual() {
+            isManualEntry = true;
+            clienteSearch.value = '';
+            
+            clienteNombre.value = '';
+            clienteRFC.value = '';
+            clienteDireccion.value = '';
+            clienteTelefono.value = '';
+
+            clienteNombre.readOnly = false;
+            clienteRFC.readOnly = false;
+            clienteDireccion.readOnly = false;
+            clienteTelefono.readOnly = false;
+
+            [clienteNombre, clienteRFC, clienteDireccion, clienteTelefono].forEach(field => {
+                field.style.backgroundColor = 'white';
+                field.style.borderColor = '#e5e7eb';
+            });
+
+            ocultarDropdown();
+            clienteNombre.focus();
+            mostrarAlerta('Entrada manual activada. Por favor, introduce los datos del cliente.', 'info');
+        }
+
+        function mostrarModalNuevaCotizacion() {
+            isEditing = false;
+            editingId = null;
+            resetearFormulario(); 
+            cargarFormularioLocal(); 
+            modalCotizacion.classList.add('show');
+        }
+
+        function resetearFormulario() {
+            cotizacionForm.reset();
+            items = [];
+            itemsTableBody.innerHTML = '';
+            
+            document.getElementById('tipoCotizacion').value = '';
+            document.getElementById('cotizacionNumero').value = '';
+            
+            inicializarEmpresa();
+            establecerFechaActual();
+            agregarItem();
+            
+            clienteSearch.value = '';
+            activarEntradaManual(); 
+            
+            creditOptions.classList.remove('show');
+            tipoCredito.value = '';
+            diasCredito.value = '';
+            
+            const submitBtn = cotizacionForm.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span>💾</span> Generar Cotización PDF';
+            
+            isEditing = false;
+            editingId = null;
+            modalTitle.textContent = '✨ Nueva Cotización';
+        }
+
+        function cerrarModal() {
+            modalCotizacion.classList.remove('show');
+        }
+
+        function cerrarModalPDF() {
+            modalPDF.classList.remove('show');
+        }
+
+        function cerrarModalConfirm() {
+            confirmModal.classList.remove('show');
+        }
+
+       async function generarNumeroCotizacion() {
+            try {
+                const tipoCotizacion = document.getElementById('tipoCotizacion').value;
+                
+                if (!tipoCotizacion) {
+                    document.getElementById('cotizacionNumero').value = '';
+                    return;
+                }
+
+                const contadorRef = doc(db, 'contadoresCotizaciones', tipoCotizacion);
+                const contadorDoc = await getDoc(contadorRef);
+                
+                let nuevoContador = 1;
+                if (contadorDoc.exists()) {
+                    nuevoContador = contadorDoc.data().count + 1;
+                } else {
+                    await setDoc(contadorRef, { count: 1 });
+                }
+
+                const hoy = new Date();
+                const fechaStr = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, '0')}${String(hoy.getDate()).padStart(2, '0')}`;
+                
+                const numeroCompleto = `RSI-${fechaStr}-${tipoCotizacion.toUpperCase()}-${nuevoContador}`;
+                document.getElementById('cotizacionNumero').value = numeroCompleto;
+                
+                contadores[tipoCotizacion] = nuevoContador;
+                
+                return numeroCompleto;
+                
+            } catch (error) {
+                console.error('Error al generar número de cotización:', error);
+                const fecha = new Date();
+                const numero = `RSI-${fecha.getFullYear()}${String(fecha.getMonth() + 1).padStart(2, '0')}${String(fecha.getDate()).padStart(2, '0')}-MANUAL-1`;
+                document.getElementById('cotizacionNumero').value = numero;
+                return numero;
+            }
+        }
+                
+        function establecerFechaActual() {
+            const hoy = new Date();
+            const fecha = hoy.toISOString().split('T')[0];
+            document.getElementById('cotizacionFecha').value = fecha;
+        }
+
+       function agregarItem() {
+            const row = document.createElement('tr');
+            row.draggable = true; 
+            
+            row.innerHTML = `
+                <td>
+                    <span class="drag-handle" title="Arrastrar para reordenar">⠿</span>
+                </td>
+                <td>
+                    <select class="item-categoria" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="CCTV">📹 CCTV</option>
+                        <option value="DH">🏠 DETECTOR DE HUMO</option>
+                        <option value="CA">🔐 CONTROL DE ACCESOS</option>
+                        <option value="AI">🚨 ALARMA INTRUSION</option>
+                        <option value="MULTIMEDIA">📺 MULTIMEDIA</option>
+                        <option value="REDES">🛜 REDES TRANSPORTE DE DATOS</option>
+                        <option value="OTRO">📦 OTRO</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="item-tipo-tecnologia" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="servicio">🔧 Servicio</option>
+                        <option value="pieza">⚙️ Pieza</option>
+                        <option value="kit">📦 Kit</option>
+                        <option value="par">👥 Par</option>
+                        <option value="cm">🐛 Centimetro</option>
+                        <option value="m">🚇 Metro</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="item-descripcion" placeholder="Descripción del producto/servicio" minlength="5" maxlength="200" required>
+                </td>
+                <td>
+                    <input type="number" class="item-cantidad" min="1" value="1" step="0.01" required>
+                </td>
+                <td>
+                    <input type="number" class="item-precio" min="0" step="0.01" placeholder="0.00" required>
+                </td>
+                <td class="item-total">$0.00</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-small eliminar-item">
+                        <span>🗑️</span>
+                    </button>
+                </td>
+            `;
+
+            itemsTableBody.appendChild(row);
+
+            row.addEventListener('dragstart', () => {
+                setTimeout(() => row.classList.add('dragging'), 0);
+            });
+            row.addEventListener('dragend', () => row.classList.remove('dragging'));
+
+            row.querySelector('.item-cantidad').addEventListener('input', () => calcularTotalItem(row));
+            row.querySelector('.item-precio').addEventListener('input', () => calcularTotalItem(row));
+            row.querySelector('.eliminar-item').addEventListener('click', () => eliminarItem(row));
+            
+            calcularTotalItem(row);
+        }
+        
+
+
+
+        
+        function calcularTotalItem(row) {
+            const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
+            const precio = parseFloat(row.querySelector('.item-precio').value) || 0;
+            const total = cantidad * precio;
+            
+            row.querySelector('.item-total').textContent = formatearMoneda(total);
+            calcularTotales();
+        }
+
+        function guardarFormularioLocalmente() {
+            if (!modalCotizacion.classList.contains('show')) return;
+
+            const datosFormulario = new FormData(cotizacionForm);
+            const cotizacionData = Object.fromEntries(datosFormulario.entries());
+
+            cotizacionData.items = Array.from(itemsTableBody.children).map(row => ({
+                categoria: row.querySelector('.item-categoria').value,
+                tipoTecnologia: row.querySelector('.item-tipo-tecnologia').value,
+                descripcion: row.querySelector('.item-descripcion').value,
+                cantidad: row.querySelector('.item-cantidad').value,
+                precio: row.querySelector('.item-precio').value,
+            }));
+
+            localStorage.setItem('cotizacionEnProgreso', JSON.stringify(cotizacionData));
+        }
+
+        function cargarFormularioLocal() {
+            const datosGuardados = localStorage.getItem('cotizacionEnProgreso');
+            if (datosGuardados) {
+                const cotizacionData = JSON.parse(datosGuardados);
+
+                Object.keys(cotizacionData).forEach(key => {
+                    const input = cotizacionForm.querySelector(`[name="${key}"]`);
+                    if (input && key !== 'items') {
+                        input.value = cotizacionData[key];
+                    }
+                });
+
+                itemsTableBody.innerHTML = ''; 
+                if (cotizacionData.items && cotizacionData.items.length > 0) {
+                    cotizacionData.items.forEach(item => {
+                        agregarItem(); 
+                        const nuevaFila = itemsTableBody.lastElementChild;
+                        nuevaFila.querySelector('.item-categoria').value = item.categoria;
+                        nuevaFila.querySelector('.item-tipo-tecnologia').value = item.tipoTecnologia;
+                        nuevaFila.querySelector('.item-descripcion').value = item.descripcion;
+                        nuevaFila.querySelector('.item-cantidad').value = item.cantidad;
+                        nuevaFila.querySelector('.item-precio').value = item.precio;
+                        calcularTotalItem(nuevaFila);
+                    });
+                }
+                
+                handleTipoCreditoChange();
+                mostrarAlerta('📝 Se recuperó una cotización no guardada.', 'info');
+            }
+        }
+
+        function limpiarFormularioLocal() {
+            localStorage.removeItem('cotizacionEnProgreso');
+        }
+
+        function eliminarItem(row) {
+            if (itemsTableBody.children.length > 1) {
+                row.remove();
+                calcularTotales();
+            } else {
+                mostrarAlerta('Debe mantener al menos un item en la cotización', 'warning');
+            }
+        }
+
+        function contarCaracteres(textarea) {
+            const contador = document.getElementById('contadorCaracteres');
+            const caracteres = textarea.value.length;
+            contador.textContent = `${caracteres}/500 caracteres`;
+            
+            if (caracteres >= 500) {
+                contador.style.color = '#ef4444';
+            } else {
+                contador.style.color = '#6b7280';
+            }
+        }
+
+        document.getElementById('cotizacionDescripcion').addEventListener('input', function() {
+            contarCaracteres(this);
+        });
+
+        function calcularTotales() {
+            let subtotal = 0;
+            
+            Array.from(itemsTableBody.children).forEach(row => {
+                const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
+                const precio = parseFloat(row.querySelector('.item-precio').value) || 0;
+                subtotal += cantidad * precio;
+            });
+
+            const descuentoPorcentaje = parseFloat(document.getElementById('descuento').value) || 0;
+            const impuestoPorcentaje = parseFloat(document.getElementById('impuesto').value) || 0;
+            
+            const descuentoMonto = subtotal * (descuentoPorcentaje / 100);
+            const subtotalConDescuento = subtotal - descuentoMonto;
+            const impuestoMonto = subtotalConDescuento * (impuestoPorcentaje / 100);
+            const total = subtotalConDescuento + impuestoMonto;
+
+            document.getElementById('subtotal').textContent = formatearMoneda(subtotal);
+            document.getElementById('total').textContent = formatearMoneda(total);
+        }
+
+        function formatearMoneda(cantidad) {
+            return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(cantidad);
+        }
+
+        function formatearTipoTecnologia(tipo) {
+            const tipos = {
+                'servicio': '🔧 Servicio', 'pieza': '⚙️ Pieza', 'kit': '📦 Kit',
+                'par': '👥 Par', 'cm': '🐛 Centímetro', 'm': '🚇 Metro'
+            };
+            return tipos[tipo] || tipo;
+        }
+
+        function agruparTecnologias(items) {
+            const grupos = {};
+            
+            items.forEach(item => {
+                const categoria = item.categoria || 'OTRO';
+                if (!grupos[categoria]) {
+                    grupos[categoria] = [];
+                }
+                grupos[categoria].push(item);
+            });
+
+            return grupos;
+        }
+
+        function descargarPDFLocal(pdfBlob, nombreArchivo) {
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function manejarSubmitFormulario(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                Swal.fire({
+                    title: 'Acceso no autorizado', text: 'Debes iniciar sesión para generar cotizaciones',
+                    icon: 'warning', confirmButtonText: 'Iniciar sesión'
+                }).then(() => { window.location.href = '../nav-visitantes/inicio-de-sesion.html'; });
+                return;
+            }
+
+            const tipoCotizacion = document.getElementById('tipoCotizacion').value;
+            if (!tipoCotizacion) {
+                mostrarAlerta('Debe seleccionar un tipo de cotización', 'error');
+                return;
+            }
+
+            mostrarLoading(true);
+            
+            try {
+                const datosFormulario = new FormData(cotizacionForm);
+                const cotizacionData = Object.fromEntries(datosFormulario.entries());
+                const empresaSeleccionada = empresaSelector.value;
+                const empresaInfo = empresasDirecciones[empresaSeleccionada];
+                
+                cotizacionData.empresaNombre = empresaInfo.nombre;
+                cotizacionData.empresaDireccion = empresaInfo.direccion;
+                cotizacionData.empresaTelefono = empresaInfo.telefono;
+                cotizacionData.empresaRFC = empresaInfo.rfc;
+                
+                const itemsData = Array.from(itemsTableBody.children).map(row => ({
+                    categoria: row.querySelector('.item-categoria').value,
+                    tipoTecnologia: row.querySelector('.item-tipo-tecnologia').value,
+                    descripcion: row.querySelector('.item-descripcion').value,
+                    cantidad: parseFloat(row.querySelector('.item-cantidad').value),
+                    precio: parseFloat(row.querySelector('.item-precio').value),
+                    total: parseFloat(row.querySelector('.item-cantidad').value) * parseFloat(row.querySelector('.item-precio').value)
+                }));
+                
+                if (itemsData.some(item => !item.descripcion || isNaN(item.cantidad) || isNaN(item.precio))) {
+                    mostrarAlerta('Todos los items deben tener descripción, cantidad y precio válidos', 'error');
+                    mostrarLoading(false);
+                    return;
+                }
+                
+                cotizacionData.items = itemsData;
+                cotizacionData.esEntradaManual = isManualEntry;
+                cotizacionData.tipoCotizacion = tipoCotizacion;
+                
+                const subtotal = itemsData.reduce((sum, item) => sum + item.total, 0);
+                const descuentoPorcentaje = parseFloat(cotizacionData.descuento) || 0;
+                const impuestoPorcentaje = parseFloat(cotizacionData.impuesto) || 0;
+                const descuentoMonto = subtotal * (descuentoPorcentaje / 100);
+                const subtotalConDescuento = subtotal - descuentoMonto;
+                const impuestoMonto = subtotalConDescuento * (impuestoPorcentaje / 100);
+                const totalFinal = subtotalConDescuento + impuestoMonto;
+                
+                cotizacionData.subtotal = subtotal;
+                cotizacionData.descuentoMonto = descuentoMonto;
+                cotizacionData.impuestoMonto = impuestoMonto;
+                cotizacionData.totalFinal = totalFinal;
+                
+                if (isEditing && editingId) {
+                    cotizacionData.generadoPor = cotizaciones.find(c => c.id === editingId).generadoPor;
+                    cotizacionData.fechaCreacion = cotizaciones.find(c => c.id === editingId).fechaCreacion;
+                    await updateDoc(doc(db, 'cotizacionPdf', editingId), cotizacionData);
+                    mostrarAlerta('✅ Cotización actualizada correctamente', 'success');
+                } else {
+                    cotizacionData.fechaCreacion = new Date().toISOString();
+                    cotizacionData.estatus = 'en proceso';
+                    cotizacionData.generadoPor = {
+                        uid: currentUser.uid, email: currentUser.email, nombre: currentUser.nombreCompleto,
+                        fechaGeneracion: new Date().toISOString()
+                    };
+                    const contadorRef = doc(db, 'contadoresCotizaciones', tipoCotizacion);
+                    await setDoc(contadorRef, { count: contadores[tipoCotizacion] }, { merge: true });
+                    const docRef = await addDoc(collection(db, 'cotizacionPdf'), cotizacionData);
+                    cotizacionData.id = docRef.id;
+                    mostrarAlerta('✅ Cotización creada correctamente', 'success');
+                }
+                
+                const pdfBlob = await generarPDF(cotizacionData);
+                const nombreArchivo = `cotizacion-${cotizacionData.cotizacionNumero}.pdf`;
+                descargarPDFLocal(pdfBlob, nombreArchivo);
+                
+                await cargarCotizaciones();
+                cerrarModal();
+                limpiarFormularioLocal();
+                
+            } catch (error) {
+                console.error('Error al guardar cotización:', error);
+                mostrarAlerta('❌ Error al guardar la cotización: ' + error.message, 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        async function verPDF(id) {
+            const cotizacion = cotizaciones.find(c => c.id === id);
+            if (!cotizacion) {
+                mostrarAlerta('No se encontró la cotización', 'warning');
+                return;
+            }
+
+            try {
+                mostrarLoading(true);
+                const pdfBlob = await generarPDF(cotizacion);
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                const modal = document.getElementById('modalPDF');
+                const pdfContainer = modal.querySelector('.pdf-container');
+                pdfContainer.innerHTML = '';
+                
+                const titulo = document.createElement('h3');
+                titulo.textContent = `Cotización: ${cotizacion.cotizacionNumero}`;
+                titulo.style.textAlign = 'center';
+                titulo.style.marginBottom = '15px';
+                titulo.style.color = '#1e3a8a';
+                
+                const iframe = document.createElement('iframe');
+                iframe.src = pdfUrl;
+                iframe.style.width = '100%';
+                iframe.style.height = 'calc(80vh - 60px)';
+                iframe.style.border = '1px solid #e5e7eb';
+                iframe.style.borderRadius = '8px';
+                
+                pdfContainer.appendChild(titulo);
+                pdfContainer.appendChild(iframe);
+                
+                modal.classList.add('show');
+                
+                document.getElementById('cerrarPdfBtn').onclick = () => {
+                    modal.classList.remove('show');
+                    URL.revokeObjectURL(pdfUrl);
+                };
+                
+            } catch (error) {
+                console.error('Error al generar PDF:', error);
+                mostrarAlerta('Error al generar el PDF: ' + error.message, 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+async function generarPDF(data) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    
+    try {
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        const textColor = '#000000';
+        const gray = '#6b7280';
+        const navy = '#0d2c54';
+        const lightGray = '#f5f5f5';
+        
+        const formatearNumero = (numero) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(numero).replace('MX', '').trim();
+
+        const colX = {
+            descripcion: margin, unidad: margin + 90, cantidad: margin + 110,
+            precio: margin + 130, total: margin + 160
+        };
+
+        let page = 1;
+        let y = 20;
+
+        const nuevaPagina = () => { pdf.addPage(); page++; y = 20; };
+        const agregarPiePagina = () => {
+            const footerY = pageHeight - 10;
+            pdf.setFontSize(8); pdf.setTextColor(gray);
+            pdf.text(`Cotización No. ${data.cotizacionNumero}  |  Página ${page}`, pageWidth / 2, footerY, { align: 'center' });
+        };
+
+        try {
+            const logoSize = 40;
+            pdf.addImage('../css/img/Logo-RSI-OFICIAL.png', 'PNG', pageWidth - margin - logoSize, margin, logoSize, logoSize);
+        } catch (error) { console.warn('No se pudo cargar el logo:', error); }
+
+        pdf.setFontSize(10); pdf.setTextColor(navy); pdf.text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
+        pdf.setFontSize(8); pdf.setTextColor(gray); pdf.text(data.empresaDireccion || "", margin, y + 10);
+        pdf.text(`RFC: ${data.empresaRFC || 'XAXX010101000'} | Tel: ${data.empresaTelefono || '(55) 1234-5678'}`, margin, y + 15);
+
+        y += 25;
+        pdf.setFontSize(14); pdf.setTextColor(navy); pdf.text("COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
+        pdf.setFontSize(9); pdf.setTextColor(gray); pdf.text(`No. ${data.cotizacionNumero}  |  Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, pageWidth / 2, y + 7, { align: 'center' });
+
+        y += 20;
+        pdf.setFontSize(9); pdf.setTextColor(textColor); pdf.text(`Cliente: ${data.clienteNombre}`, margin, y);
+        y += 5; pdf.text(`RFC: ${data.clienteRFC || 'N/E'}`, margin, y);
+        y += 5; pdf.text(`Dirección: ${data.clienteDireccion}`, margin, y);
+
+        y += 10;
+        pdf.setFontSize(9); pdf.setTextColor(navy); pdf.text("INFORMACIÓN DE LA COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
+        y += 6; pdf.setTextColor(textColor);
+        
+        let infoPago = `Pago: ${data.tipoCredito || 'No especificado'}`;
+        if (data.tipoCredito === 'credito' && data.diasCredito) { infoPago += ` (${data.diasCredito} días)`; }
+        const tipoCotizacionMap = { 'implementacion': 'Implementación', 'proyecto': 'Proyecto', 'servicio': 'Servicio' };
+        const tipoCotizacionTexto = tipoCotizacionMap[data.tipoCotizacion] || 'No especificado';
+        const info = [`Tipo: ${tipoCotizacionTexto}`, `Vigencia: ${data.cotizacionVigencia} días`, `Moneda: ${data.cotizacionMoneda}`, infoPago].filter(Boolean).join("   |   ");
+        pdf.text(info, margin, y);
+
+        if (data.cotizacionDescripcion && data.cotizacionDescripcion.trim()) {
+            y += 10;
+            pdf.setFontSize(9); pdf.setTextColor(navy); pdf.text("DESCRIPCIÓN DE LA COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
+            y += 5; pdf.setTextColor(textColor);
+            const descLines = pdf.splitTextToSize(data.cotizacionDescripcion, pageWidth - 2 * margin);
+            descLines.forEach(line => {
+                if (y > pageHeight - 20) { agregarPiePagina(); nuevaPagina(); y = 20; }
+                pdf.text(line, margin, y); y += 5;
+            });
+        }
+
+        y += 3;
+        const grupos = agruparTecnologias(data.items);
+
+        Object.entries(grupos).forEach(([categoria, items]) => {
+            if (y > pageHeight - 70) { agregarPiePagina(); nuevaPagina(); y = 20; }
+            const categoriaTexto = formatearCategoria(categoria);
+            const rectHeight = 12;
+            pdf.setFillColor(navy); pdf.rect(margin, y, pageWidth - 2 * margin, rectHeight, 'F');
+            pdf.setFontSize(12); pdf.setTextColor('#FFFFFF'); pdf.setFont('helvetica', 'bold');
+            pdf.text(categoriaTexto, pageWidth / 2, y + (rectHeight / 2) + 3, { align: 'center' });
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); y += rectHeight + 2;
+
+            pdf.setFillColor(navy); pdf.setTextColor('#FFFFFF');
+            pdf.rect(margin, y, pageWidth - 2 * margin, 8, 'F');
+            pdf.text("DESCRIPCIÓN", colX.descripcion, y + 5); pdf.text("UNIDAD", colX.unidad, y + 5, { align: 'center' });
+            pdf.text("CANT.", colX.cantidad, y + 5, { align: 'right' }); pdf.text("P. UNIT.", colX.precio, y + 5, { align: 'right' });
+            pdf.text("TOTAL", colX.total, y + 5, { align: 'right' });
+            y += 10;
+
+            items.forEach((item, index) => {
+                const descLines = pdf.splitTextToSize(item.descripcion, colX.unidad - colX.descripcion - 5);
+                const itemHeight = Math.max(descLines.length * 5, 10) + 2;
+                
+                if (y + itemHeight > pageHeight - 20) {
+                    agregarPiePagina(); nuevaPagina(); y = 20;
+                    pdf.setFillColor(navy); pdf.rect(margin, y, pageWidth - 2 * margin, 8, 'F');
+                    pdf.setTextColor('#FFFFFF');
+                    pdf.text("DESCRIPCIÓN", colX.descripcion, y + 5); pdf.text("UNIDAD", colX.unidad, y + 5, { align: 'center' });
+                    pdf.text("CANT.", colX.cantidad, y + 5, { align: 'right' }); pdf.text("P. UNIT.", colX.precio, y + 5, { align: 'right' });
+                    pdf.text("TOTAL", colX.total, y + 5, { align: 'right' }); y += 10;
+                }
+
+                if (index % 2 === 0) { pdf.setFillColor(lightGray); pdf.rect(margin, y, pageWidth - 2 * margin, itemHeight, 'F'); }
+                pdf.setTextColor(textColor); pdf.setFontSize(8);
+                descLines.forEach((line, i) => pdf.text(line, colX.descripcion, y + 5 + (i * 5)));
+                pdf.text(formatearUnidad(item.tipoTecnologia), colX.unidad, y + 5, { align: 'center' });
+                pdf.text(item.cantidad.toString(), colX.cantidad, y + 5, { align: 'right' });
+                pdf.text(formatearNumero(item.precio), colX.precio, y + 5, { align: 'right' });
+                pdf.text(formatearNumero(item.cantidad * item.precio), colX.total, y + 5, { align: 'right' });
+
+                pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.1);
+                pdf.line(margin, y + itemHeight, pageWidth - margin, y + itemHeight);
+                y += itemHeight;
+            });
+            y += 2;
+        });
+
+        y += 2;
+        const tableStartX = colX.total - 82;
+        const valueColX = tableStartX + 70;
+        
+        pdf.setFontSize(9); pdf.setTextColor(textColor);
+        pdf.text("Subtotal:", tableStartX, y + 5, { align: 'left' }); pdf.text(formatearNumero(data.subtotal), valueColX, y + 5, { align: 'left' });
+        y += 5;
+        if (data.descuentoMonto > 0) {
+            pdf.text(`Descuento (${data.descuento}%):`, tableStartX, y + 5, { align: 'left' });
+            pdf.text(`-${formatearNumero(data.descuentoMonto)}`, valueColX, y + 5, { align: 'left' }); y += 5;
+        }
+        pdf.text(`IVA (${data.impuesto}%):`, tableStartX, y + 5, { align: 'left' }); pdf.text(formatearNumero(data.impuestoMonto), valueColX, y + 5, { align: 'left' });
+        y += 7;
+
+        pdf.setFont('helvetica', 'bold'); pdf.setTextColor(navy);
+        pdf.text("TOTAL:", tableStartX, y + 5, { align: 'left' });
+        pdf.text(`${formatearNumero(data.totalFinal)} ${data.cotizacionMoneda}`, valueColX, y + 5, { align: 'left' });
+        pdf.setFont('helvetica', 'normal');
+
+        if (data.terminos) {
+            y += 15;
+            if (y > pageHeight - 50) { agregarPiePagina(); nuevaPagina(); y = 20; }
+            pdf.setFontSize(9); pdf.setTextColor(navy); pdf.text("TÉRMINOS Y CONDICIONES", margin, y);
+            y += 5; pdf.setTextColor(textColor);
+            data.terminos.split('\n').forEach(term => {
+                if (term.trim()) {
+                    pdf.splitTextToSize(term, pageWidth - 2 * margin).forEach(line => {
+                        if (y > pageHeight - 20) { agregarPiePagina(); nuevaPagina(); y = 20; }
+                        pdf.text(line, margin, y); y += 5;
+                    });
+                }
+            });
+        }
+        agregarPiePagina();
+        return pdf.output('blob');
+    } catch (error) {
+        console.error('Error en generarPDF:', error);
+        throw new Error('Error al generar el documento PDF');
+    }
+}
+
+
+function formatearCategoria(categoria) {
+    const categorias = { 'CCTV': 'CCTV', 'DH': 'DETECTOR DE HUMO', 'CA': 'CONTROL DE ACCESOS', 'AI': 'ALARMA INTRUSION', 'MULTIMEDIA': 'MULTIMEDIA', 'OTRO': 'OTRO' };
+    return categorias[categoria] || categoria;
+}
+
+function formatearUnidad(unidad) {
+    const unidades = { 'servicio': 'Serv', 'pieza': 'Pza', 'kit': 'Kit', 'par': 'Par', 'cm': 'cm', 'm': 'm' };
+    return unidades[unidad] || 'Pza';
+}
+
+async function cargarCotizaciones() {
+    try {
+        const q = query(collection(db, 'cotizacionPdf'), orderBy('fechaCreacion', 'desc'));
+        const querySnapshot = await getDocs(q);
+        
+        cotizaciones = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        filteredCotizaciones = [...cotizaciones];
+        currentPage = 1;
+        
+        renderizarTablaCotizaciones();
+        
+    } catch (error) {
+        console.error('Error al cargar cotizaciones:', error);
+        mostrarAlerta('❌ Error al cargar las cotizaciones', 'error');
+    }
+}
+
+function filtrarCotizaciones() {
+    const filtro = buscarInput.value.toLowerCase().trim();
+    
+    if (filtro) {
+        filteredCotizaciones = cotizaciones.filter(coti => {
+            const numero = coti.cotizacionNumero || '';
+            const cliente = coti.clienteNombre || '';
+            const descripcion = coti.cotizacionDescripcion || '';
+            return numero.toLowerCase().includes(filtro) || 
+                   cliente.toLowerCase().includes(filtro) ||
+                   descripcion.toLowerCase().includes(filtro);
+        });
+    } else {
+        filteredCotizaciones = [...cotizaciones];
+    }
+    
+    currentPage = 1; 
+    renderizarTablaCotizaciones();
+}
+
+function setupPagination() {
+    const paginationContainer = document.getElementById('pagination-controls');
+    paginationContainer.innerHTML = '';
+    const pageCount = Math.ceil(filteredCotizaciones.length / rowsPerPage);
+
+    if (pageCount <= 1) return;
+
+    const prevButton = document.createElement('button');
+    prevButton.className = 'pagination-button'; prevButton.innerText = 'Anterior';
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderizarTablaCotizaciones(); } });
+    paginationContainer.appendChild(prevButton);
+
+    for (let i = 1; i <= pageCount; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.className = 'pagination-button'; pageButton.innerText = i;
+        if (i === currentPage) { pageButton.classList.add('active'); }
+        pageButton.addEventListener('click', () => { currentPage = i; renderizarTablaCotizaciones(); });
+        paginationContainer.appendChild(pageButton);
+    }
+
+    const nextButton = document.createElement('button');
+    nextButton.className = 'pagination-button'; nextButton.innerText = 'Siguiente';
+    nextButton.disabled = currentPage === pageCount;
+    nextButton.addEventListener('click', () => { if (currentPage < pageCount) { currentPage++; renderizarTablaCotizaciones(); } });
+    paginationContainer.appendChild(nextButton);
+}
+
+function renderizarTablaCotizaciones() {
+    cotizacionesTableBody.innerHTML = '';
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const paginatedItems = filteredCotizaciones.slice(startIndex, endIndex);
+
+    const estatusInfo = {
+        'vendida': { color: '#22c55e', textoBase: '✅ Vendida' },
+        'en proceso': { color: '#f59e0b', textoBase: '⏳ En Proceso' },
+        'rechazada': { color: '#ef4444', textoBase: '❌ Rechazada' }
+    };
+
+    if (paginatedItems.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 8; td.textContent = 'No se encontraron cotizaciones.';
+        td.style.textAlign = 'center'; td.style.padding = '20px';
+        tr.appendChild(td); cotizacionesTableBody.appendChild(tr);
+        setupPagination();
+        return;
+    }
+
+    paginatedItems.forEach(cotizacion => {
+        const generadoPor = cotizacion.generadoPor?.nombre || cotizacion.generadoPor?.email || 'Desconocido';
+        const estatusActual = cotizacion.estatus || 'en proceso';
+        const infoEstatus = estatusInfo[estatusActual];
+        const getEstatusTextoCompleto = (coti) => {
+            if (coti.estatus === 'vendida') {
+                const pagoTexto = coti.pagoEstatus === 'pagada' ? 'Pagada' : 'Pendiente';
+                return `${estatusInfo.vendida.textoBase} - ${pagoTexto}`;
+            }
+            if (coti.estatus === 'rechazada' && coti.motivoRechazo) {
+                return `${estatusInfo.rechazada.textoBase}: ${coti.motivoRechazo}`;
+            }
+            return infoEstatus.textoBase;
+        };
+        
+        const row = document.createElement('tr');
+        row.style.borderLeft = `5px solid ${infoEstatus.color}`;
+
+        row.innerHTML = `
+            <td><strong>${cotizacion.cotizacionNumero}</strong></td>
+            <td>${cotizacion.clienteNombre}<br><small style="color: #6b7280;">${cotizacion.esEntradaManual ? '✏️ Manual' : '🔍 Base de datos'}</small></td>
+            <td>${new Date(cotizacion.cotizacionFecha).toLocaleDateString('es-MX')}</td>
+            <td><strong>${formatearMoneda(cotizacion.totalFinal)}</strong></td>
+            <td>${cotizacion.cotizacionDescripcion || 'Sin descripción'}</td>
+            <td><small>${generadoPor}</small></td>
+            <td>
+                <div class="estatus-container" style="background-color: ${infoEstatus.color}1A; border: 1px solid ${infoEstatus.color}; padding: 8px; border-radius: 8px;">
+                    <span style="color: ${infoEstatus.color}; font-weight: bold; font-size: 0.8rem; display: block; margin-bottom: 5px;">
+                        ${getEstatusTextoCompleto(cotizacion)}
+                    </span>
+                    <select class="estatus-select" data-id="${cotizacion.id}" style="width: 100%; border-radius: 4px;">
+                        <option value="en proceso" ${estatusActual === 'en proceso' ? 'selected' : ''}>En Proceso</option>
+                        <option value="vendida" ${estatusActual === 'vendida' ? 'selected' : ''}>Vendida</option>
+                        <option value="rechazada" ${estatusActual === 'rechazada' ? 'selected' : ''}>Rechazada</option>
+                    </select>
+                    <div id="vendida-options-${cotizacion.id}" class="additional-status-fields ${estatusActual === 'vendida' ? 'show' : ''}">
+                        <label style="font-size: 0.8rem; margin-top: 5px; display:block;">Estado del Pago:</label>
+                        <select class="pago-estatus-select" data-id="${cotizacion.id}" style="width: 100%; border-radius: 4px;">
+                            <option value="pendiente" ${cotizacion.pagoEstatus === 'pendiente' ? 'selected' : ''}>Pendiente de Pago</option>
+                            <option value="pagada" ${cotizacion.pagoEstatus === 'pagada' ? 'selected' : ''}>Pagada</option>
+                        </select>
+                    </div>
+                    <div id="rechazada-options-${cotizacion.id}" class="additional-status-fields ${estatusActual === 'rechazada' ? 'show' : ''}">
+                        <label style="font-size: 0.8rem; margin-top: 5px; display:block;">Motivo del Rechazo:</label>
+                        <textarea class="motivo-rechazo-input" data-id="${cotizacion.id}" placeholder="Escriba el motivo..." style="width: 100%; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ccc;">${cotizacion.motivoRechazo || ''}</textarea>
+                    </div>
+                </div>
+            </td>
+            <td class="acciones">
+                <button class="btn btn-small btn-primary ver-pdf" data-id="${cotizacion.id}"><span>👁️</span> Ver</button>
+                <button class="btn btn-small btn-success descargar-pdf" data-id="${cotizacion.id}"><span>⬇️</span> Descargar</button>
+                <button class="btn btn-small btn-secondary editar-cotizacion" data-id="${cotizacion.id}"><span>✏️</span> Editar</button>
+                <button class="btn btn-small btn-danger eliminar-cotizacion" data-id="${cotizacion.id}"><span>🗑️</span> Eliminar</button>
+            </td>
+        `;
+        cotizacionesTableBody.appendChild(row);
+    });
+    
+    document.querySelectorAll('.ver-pdf').forEach(btn => btn.addEventListener('click', (e) => verPDF(e.currentTarget.dataset.id)));
+    document.querySelectorAll('.descargar-pdf').forEach(btn => btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        const cotizacion = cotizaciones.find(c => c.id === id);
+        if (!cotizacion) return;
+        mostrarLoading(true);
+        try {
+            const pdfBlob = await generarPDF(cotizacion);
+            descargarPDFLocal(pdfBlob, `cotizacion-${cotizacion.cotizacionNumero}.pdf`);
+        } catch (error) { mostrarAlerta('Error al generar el PDF: ' + error.message, 'error');
+        } finally { mostrarLoading(false); }
+    }));
+    document.querySelectorAll('.editar-cotizacion').forEach(btn => btn.addEventListener('click', (e) => editarCotizacion(e.currentTarget.dataset.id)));
+    document.querySelectorAll('.eliminar-cotizacion').forEach(btn => btn.addEventListener('click', (e) => confirmarEliminacion(e.currentTarget.dataset.id)));
+    
+    document.querySelectorAll('.estatus-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const id = e.target.dataset.id;
+            const nuevoEstatus = e.target.value;
+            
+            const vendidaOptions = document.getElementById(`vendida-options-${id}`);
+            const rechazadaOptions = document.getElementById(`rechazada-options-${id}`);
+            let dataToUpdate = { estatus: nuevoEstatus };
+
+            if (nuevoEstatus === 'vendida') {
+                vendidaOptions.classList.add('show'); rechazadaOptions.classList.remove('show');
+                dataToUpdate.pagoEstatus = 'pendiente';
+            } else if (nuevoEstatus === 'rechazada') {
+                vendidaOptions.classList.remove('show'); rechazadaOptions.classList.add('show');
+                dataToUpdate.motivoRechazo = '';
+            } else {
+                vendidaOptions.classList.remove('show'); rechazadaOptions.classList.remove('show');
+            }
+            await actualizarEstatusCotizacion(id, dataToUpdate);
+        });
+    });
+
+    document.querySelectorAll('.pago-estatus-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            actualizarEstatusCotizacion(e.target.dataset.id, { pagoEstatus: e.target.value });
+        });
+    });
+
+    document.querySelectorAll('.motivo-rechazo-input').forEach(textarea => {
+        textarea.addEventListener('blur', (e) => {
+            actualizarEstatusCotizacion(e.target.dataset.id, { motivoRechazo: e.target.value });
+        });
+    });
+
+    setupPagination();
+}
+    
+async function actualizarEstatusCotizacion(id, dataToUpdate) {
+    try {
+        mostrarLoading(true);
+        const cotizacionRef = doc(db, 'cotizacionPdf', id);
+        
+        if (dataToUpdate.estatus) {
+            if (dataToUpdate.estatus !== 'vendida') dataToUpdate.pagoEstatus = '';
+            if (dataToUpdate.estatus !== 'rechazada') dataToUpdate.motivoRechazo = '';
+        }
+
+        await updateDoc(cotizacionRef, dataToUpdate);
+        
+        const indexGlobal = cotizaciones.findIndex(c => c.id === id);
+        if (indexGlobal !== -1) { cotizaciones[indexGlobal] = { ...cotizaciones[indexGlobal], ...dataToUpdate }; }
+        
+        const indexFiltrado = filteredCotizaciones.findIndex(c => c.id === id);
+        if (indexFiltrado !== -1) { filteredCotizaciones[indexFiltrado] = { ...filteredCotizaciones[indexFiltrado], ...dataToUpdate }; }
+        
+        renderizarTablaCotizaciones();
+        mostrarAlerta('✅ Estatus actualizado correctamente', 'success');
+    } catch (error) {
+        console.error('Error al actualizar el estatus:', error);
+        mostrarAlerta('❌ Error al actualizar el estatus', 'error');
+    } finally {
+        mostrarLoading(false);
+    }
+}
+
+// =======================================================
+// --- FUNCIÓN EDITAR COTIZACIÓN (CORREGIDA) ---
+// =======================================================
+async function editarCotizacion(id) {
+    const cotizacion = cotizaciones.find(c => c.id === id);
+    if (!cotizacion) return;
+
+    // 1. Limpiar completamente el formulario a su estado inicial.
+    resetearFormulario();
+    
+    // 2. Establecer el estado de edición DESPUÉS de limpiar.
+    isEditing = true;
+    editingId = id;
+
+    // 3. Configurar la interfaz para el modo de edición.
+    modalTitle.textContent = '✏️ Editar Cotización';
+    cotizacionForm.querySelector('button[type="submit"]').innerHTML = '<span>💾</span> Actualizar Cotización PDF';
+    
+    // 4. Llenar el formulario con los datos de la cotización existente.
+    Object.keys(cotizacion).forEach(key => {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input && key !== 'items' && key !== 'tipoCotizacion' && key !== 'tipoCredito' && key !== 'diasCredito') {
+            input.value = cotizacion[key];
+        }
+    });
+    
+    empresaSelector.value = cotizacion.empresaNombre?.includes('NEZAHUALCÓYOTL') ? 'RSI NEZA' : 'RSI IXT';
+    handleEmpresaChange();
+    
+    if (cotizacion.tipoCotizacion) document.getElementById('tipoCotizacion').value = cotizacion.tipoCotizacion;
+    
+    if (cotizacion.tipoCredito) {
+        tipoCredito.value = cotizacion.tipoCredito;
+        handleTipoCreditoChange();
+        if (cotizacion.diasCredito) diasCredito.value = cotizacion.diasCredito;
+    }
+    
+    // Rellenar datos del cliente
+    if (cotizacion.esEntradaManual) {
+        activarEntradaManual();
+        clienteNombre.value = cotizacion.clienteNombre;
+        clienteRFC.value = cotizacion.clienteRFC;
+        clienteDireccion.value = cotizacion.clienteDireccion;
+        clienteTelefono.value = cotizacion.clienteTelefono;
+    } else {
+        const clienteEncontrado = clientes.find(c => c.nombre === cotizacion.clienteNombre);
+        if (clienteEncontrado) {
+            seleccionarCliente(clienteEncontrado);
+        } else { // Si el cliente original ya no existe, pasa a modo manual con sus datos
+            activarEntradaManual();
+            clienteNombre.value = cotizacion.clienteNombre;
+            clienteRFC.value = cotizacion.clienteRFC;
+            clienteDireccion.value = cotizacion.clienteDireccion;
+            clienteTelefono.value = cotizacion.clienteTelefono;
+        }
+    }
+    
+    // Rellenar la tabla de ítems
+    itemsTableBody.innerHTML = ''; // Limpiar la fila por defecto
+    if (cotizacion.items?.length > 0) {
+        cotizacion.items.forEach(item => {
+            agregarItem();
+            const lastRow = itemsTableBody.lastElementChild;
+            lastRow.querySelector('.item-categoria').value = item.categoria || '';
+            lastRow.querySelector('.item-tipo-tecnologia').value = item.tipoTecnologia || '';
+            lastRow.querySelector('.item-descripcion').value = item.descripcion;
+            lastRow.querySelector('.item-cantidad').value = item.cantidad;
+            lastRow.querySelector('.item-precio').value = item.precio;
+            calcularTotalItem(lastRow);
+        });
+    } else {
+        agregarItem(); // Si no hay items, agrega uno vacío
+    }
+    
+    // 5. Calcular totales y mostrar el modal.
+    calcularTotales();
+    modalCotizacion.classList.add('show');
+}
+
+function confirmarEliminacion(id) {
+    const cotizacion = cotizaciones.find(c => c.id === id);
+    if (!cotizacion) return;
+
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: `No podrás revertir la eliminación de la cotización ${cotizacion.cotizacionNumero}.`,
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33', confirmButtonText: 'Sí, ¡eliminar!', cancelButtonText: 'Cancelar'
+    }).then((result) => { if (result.isConfirmed) { eliminarCotizacion(id); } });
+}
+
+async function eliminarCotizacion(id) {
+    try {
+        mostrarLoading(true);
+        await deleteDoc(doc(db, 'cotizacionPdf', id));
+        Swal.fire('¡Eliminada!', 'La cotización ha sido eliminada.', 'success');
+        await cargarCotizaciones();
+    } catch (error) {
+        console.error('Error al eliminar cotización:', error);
+        Swal.fire('Error', 'No se pudo eliminar la cotización.', 'error');
+    } finally {
+        mostrarLoading(false);
+    }
+}
+
+function mostrarLoading(mostrar) {
+    loadingSpinner.style.display = mostrar ? 'flex' : 'none';
+}
+
+function mostrarAlerta(mensaje, tipo = 'info') {
+    const Toast = Swal.mixin({
+        toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
+    Toast.fire({ icon: tipo, title: mensaje });
+}
+
+// =======================================================
+// --- NUEVAS FUNCIONES PARA EL RESUMEN DE CUENTAS ---
+// =======================================================
+
+function mostrarModalResumen() {
+    modalResumenCuentas.classList.add('show');
+    // Por defecto, muestra la suma de 'todos' al abrir
+    const defaultFilterBtn = resumenFiltrosContainer.querySelector('[data-filtro="todos"]');
+    setActiveFilter(defaultFilterBtn);
+    calcularYMostrarResumen('todos');
+}
+
+function handleFiltroClick(e) {
+    if (e.target.classList.contains('btn-filtro')) {
+        const filtro = e.target.dataset.filtro;
+        setActiveFilter(e.target);
+        calcularYMostrarResumen(filtro);
+    }
+}
+
+function setActiveFilter(activeButton) {
+    // Quita la clase 'active' de todos los botones de filtro
+    resumenFiltrosContainer.querySelectorAll('.btn-filtro').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    // Agrega la clase 'active' al botón presionado
+    activeButton.classList.add('active');
+}
+
+function calcularYMostrarResumen(filtro = 'todos') {
+    let cotizacionesFiltradas = cotizaciones;
+    const resumenTitulo = document.getElementById('resumenTitulo');
+
+    // Filtra el array de cotizaciones si el filtro no es 'todos'
+    if (filtro !== 'todos') {
+        cotizacionesFiltradas = cotizaciones.filter(coti => coti.estatus === filtro);
+    }
+
+    // Suma el 'totalFinal' de las cotizaciones filtradas
+    const sumaTotal = cotizacionesFiltradas.reduce((total, coti) => {
+        return total + (coti.totalFinal || 0);
+    }, 0);
+
+    // Actualiza el título del resumen según el filtro
+    switch (filtro) {
+        case 'en proceso':
+            resumenTitulo.textContent = 'Total de Cotizaciones "En Proceso"';
+            break;
+        case 'vendida':
+            resumenTitulo.textContent = 'Total de Cotizaciones "Vendidas"';
+            break;
+        case 'rechazada':
+            resumenTitulo.textContent = 'Total de Cotizaciones "Rechazadas"';
+            break;
+        default:
+            resumenTitulo.textContent = 'Total de Todas las Cotizaciones';
+    }
+
+    // Muestra el resultado formateado como moneda
+    document.getElementById('resumenSumaTotal').textContent = formatearMoneda(sumaTotal);
+}
+
+// =======================================================
+// --- FIN DE NUEVAS FUNCIONES ---
+// =======================================================
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papelera de Categorías</title>
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .categorias-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .titulo-categorias {
+            text-align: center;
+            font-size: 28px;
+            color: #FFD700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #1d1d1d;
+            color: #FFD700;
+        }
+
+        tr:hover {
+            background-color: #2d2d2d;
+        }
+
+        .btn-recuperar, .btn-eliminar-permanentemente {
+            background-color: transparent;
+            border: none;
+            color: #FFD700;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .btn-recuperar:hover {
+            color: #4CAF50; /* Verde para recuperar */
+        }
+
+        .btn-eliminar-permanentemente:hover {
+            color: #dc3545; /* Rojo para eliminar */
+        }
+
+        .imagen-categoria {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+    <br>
+    <div class="categorias-container">
+        <h2 class="titulo-categorias">Papelera de Categorías</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Imagen</th>
+                    <th>Eliminado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="categorias-papelera-lista">
+                <!-- Aquí se insertan dinámicamente las categorías -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+    
+        const categoriasPapeleraLista = document.getElementById("categorias-papelera-lista");
+    
+        // Cargar categorías de la papelera
+        cargarCategoriasPapelera();
+    
+        // Función para cargar las categorías de la papelera
+        async function cargarCategoriasPapelera() {
+            categoriasPapeleraLista.innerHTML = "";
+    
+            const querySnapshot = await getDocs(collection(db, "categoriasPapelera"));
+    
+            querySnapshot.forEach((doc) => {
+                const categoria = doc.data();
+                categoriasPapeleraLista.innerHTML += `
+                    <tr>
+                        <td>${doc.id}</td>
+                        <td>${categoria.nombre}</td>
+                        <td>
+                            ${categoria.imagen ? `<img src="${categoria.imagen}" class="imagen-categoria" alt="Imagen de categoría">` : "Sin imagen"}
+                        </td>
+                        <td>${categoria.eliminado}</td>
+                        <td>
+                            <button class="btn-recuperar" data-id="${doc.id}"><i class="fas fa-undo"></i></button>
+                            <button class="btn-eliminar-permanentemente" data-id="${doc.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+    
+            // Agregar eventos a los botones de recuperar y eliminar permanentemente
+            document.querySelectorAll(".btn-recuperar").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const categoriaId = btn.dataset.id;
+                    const categoriaRef = doc(db, "categoriasPapelera", categoriaId);
+                    const categoriaDoc = await getDoc(categoriaRef);
+    
+                    if (categoriaDoc.exists()) {
+                        const categoriaData = categoriaDoc.data();
+    
+                        // Mover la categoría de "categoriasPapelera" a "categorias"
+                        await setDoc(doc(db, "categorias", categoriaId), categoriaData);
+                        await deleteDoc(categoriaRef);
+    
+                        Swal.fire("Recuperada", "La categoría ha sido recuperada.", "success");
+                        cargarCategoriasPapelera(); // Recargar la lista
+                    }
+                });
+            });
+    
+            document.querySelectorAll(".btn-eliminar-permanentemente").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const categoriaId = btn.dataset.id;
+    
+                    Swal.fire({
+                        title: "¿Eliminar permanentemente?",
+                        text: "Esta acción no se puede deshacer.",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#dc3545",
+                        cancelButtonColor: "#6c757d",
+                        confirmButtonText: "Sí, eliminar",
+                        cancelButtonText: "Cancelar"
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            await deleteDoc(doc(db, "categoriasPapelera", categoriaId));
+                            Swal.fire("Eliminada", "La categoría ha sido eliminada permanentemente.", "success");
+                            cargarCategoriasPapelera(); // Recargar la lista
+                        }
+                    });
+                });
+            });
+        }
+    </script>
+    <style>
+        .floating-button-container-left {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+  }
+  .boton-flotante-azul {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 25px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 30px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  }
+  .boton-flotante-azul:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    color: white;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  }
+  .boton-flotante-azul:active {
+    transform: translateY(0);
+  }
+  .boton-flotante-azul svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5px;
+  }
+  @media (max-width: 768px) {
+    .nav {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .modal-content {
+      margin: 1rem;
+      max-height: 80vh;
+    }
+    .pdf-viewer {
+      height: 300px;
+    }
+  }
+    </style>
+    <div class="floating-button-container-left">
+        <a href="categorias.html" class="boton-flotante-azul" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Regresar a Categorias
+        </a>
+      </div>
+
+
+</body>
+</html>

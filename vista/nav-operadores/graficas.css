@@ -1,0 +1,429 @@
+/* Contenedor principal del dashboard */
+.dashboard-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dashboard-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    flex: 1;
+    min-width: 300px;
+}
+
+.wide-card {
+    flex: 2;
+    min-width: 500px;
+}
+
+.full-width-card {
+    flex: 100%;
+    width: 100%;
+}
+
+.card-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-header i {
+    color: #3F51B5;
+}
+
+.card-body {
+    min-height: 200px;
+}
+
+/* Estilos para los top colaboradores */
+.top-colaborador-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.top-colaborador-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #3F51B5;
+}
+
+.top-colaborador-info h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.top-colaborador-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.top-colaborador-stats {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    color: #3F51B5;
+    display: block;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Eficiencia */
+.eficiencia-circle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.circle-progress {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: conic-gradient(#4CAF50 var(--progress), #f0f0f0 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.circle-progress::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+}
+
+.circle-progress span {
+    position: relative;
+    font-size: 20px;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.eficiencia-info {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Tabla de desempeño */
+.table-responsive {
+    overflow-x: auto;
+}
+
+#desempenoTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#desempenoTable th, #desempenoTable td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#desempenoTable th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+}
+
+#desempenoTable tr:hover {
+    background-color: #f9f9f9;
+}
+
+.colaborador-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.colaborador-table-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.eficiencia-bar-container {
+    width: 100%;
+    height: 24px;
+    background-color: #f0f0f0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.eficiencia-bar {
+    height: 100%;
+    background-color: #4CAF50;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    transition: width 0.5s ease;
+}
+
+.eficiencia-bar span {
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Gráficas */
+canvas {
+    max-height: 400px;
+    width: 100% !important;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid #3F51B5;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 50px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-card {
+        min-width: 100%;
+    }
+    
+    .wide-card {
+        min-width: 100%;
+    }
+}
+
+/* Estilos generales */
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar oscuro */
+.sidebar {
+    background-color: #1e1e1e;
+    border-right: 1px solid #333;
+}
+
+.user-profile {
+    border-bottom: 1px solid #333;
+}
+
+.user-name, .user-area {
+    color: #e0e0e0;
+}
+
+/* Botones */
+.logout-btn, .asistencia-btn, .special-btn {
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+
+.logout-btn:hover, .asistencia-btn:hover, .special-btn:hover {
+    background-color: #444;
+}
+
+/* Tarjetas de estadísticas */
+.stat-card {
+    background-color: #252525;
+    border: 1px solid #333;
+}
+
+.stat-title {
+    color: #b0b0b0;
+}
+
+.stat-value {
+    color: #e0e0e0;
+}
+
+.stat-trend {
+    color: #b0b0b0;
+}
+
+/* Gráficas */
+.tickets-chart, .priority-stats {
+    background-color: #252525;
+    border: 1px solid #333;
+}
+
+.chart-title {
+    color: #e0e0e0;
+}
+
+/* Contenido principal */
+.main-content {
+    background-color: #121212;
+}
+
+.crud-header {
+    border-bottom: 1px solid #333;
+}
+
+.page-title {
+    color: #e0e0e0;
+}
+
+/* Tarjetas del dashboard */
+.dashboard-card {
+    background-color: #252525;
+    border: 1px solid #333;
+}
+
+.card-header {
+    color: #e0e0e0;
+    border-bottom: 1px solid #333;
+}
+
+/* Tabla */
+.table-responsive {
+    background-color: #252525;
+}
+
+#desempenoTable {
+    background-color: #252525;
+}
+
+#desempenoTable th, #desempenoTable td {
+    border-bottom: 1px solid #333;
+    color: #e0e0e0;
+}
+
+#desempenoTable th {
+    background-color: #333;
+}
+
+#desempenoTable tr:hover {
+    background-color: #2a2a2a;
+}
+
+/* Eficiencia */
+.eficiencia-bar-container {
+    background-color: #333;
+}
+
+.eficiencia-bar {
+    background-color: #4CAF50;
+}
+
+/* Modal */
+.modal {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    background-color: #252525;
+    border: 1px solid #333;
+}
+
+.modal-header {
+    border-bottom: 1px solid #333;
+    color: #e0e0e0;
+}
+
+.close {
+    color: #e0e0e0;
+}
+
+/* Botón hamburguesa */
+.sidebar-toggle span {
+    background-color: #e0e0e0;
+}
+
+.sidebar-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Colores para gráficas */
+.chartjs-render-monitor {
+    filter: brightness(0.8) contrast(1.2);
+}
+
+/* Ajustes de contraste */
+.top-colaborador-info h4, .top-colaborador-info p {
+    color: #e0e0e0;
+}
+
+.stat-number {
+    color: #4CAF50;
+}
+
+.circle-progress span {
+    color: #4CAF50;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #252525;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #4CAF50;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+}

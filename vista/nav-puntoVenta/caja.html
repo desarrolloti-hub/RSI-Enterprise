@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Caja Registradora</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Control de Caja Registradora</h1>
+    <button id="openDrawer">Abrir Caja</button>
+    <button id="alternativeMethod">Método Alternativo</button>
+    <div id="status"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const CASH_DRAWER_COMMAND = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
+            let currentDevice = null;
+
+            // Elementos de la UI
+            const statusDiv = document.getElementById('status');
+            const openBtn = document.getElementById('openDrawer');
+            const altBtn = document.getElementById('alternativeMethod');
+
+            async function requestDevice(existingDevice) {
+                try {
+                    if (existingDevice) return existingDevice;
+                    return await navigator.usb.requestDevice({
+                        filters: [{ 
+                            vendorId: 0x0FE6,
+                            productId: 0x811E
+                        }]
+                    });
+                } catch (error) {
+                    showError('No se pudo conectar con la caja. Asegúrese de que esté conectada y seleccionada correctamente.');
+                    throw error;
+                }
+            }
+
+            async function openCashDrawer(existingDevice) {
+                try {
+                    const device = await requestDevice(existingDevice);
+                    currentDevice = device;
+                    
+                    if (!device.opened) {
+                        await device.open();
+                    }
+                    
+                    let interfaceNumber = 0;
+                    if (device.configuration) {
+                        for (let i = 0; i < device.configuration.interfaces.length; i++) {
+                            try {
+                                await device.claimInterface(i);
+                                interfaceNumber = i;
+                                break;
+                            } catch (e) {
+                                console.log(`No se pudo reclamar la interfaz ${i}:`, e);
+                            }
+                        }
+                    } else {
+                        await device.selectConfiguration(1);
+                        await device.claimInterface(0);
+                    }
+                    
+                    let endpointOut = null;
+                    const interfaces = device.configuration?.interfaces || [];
+                    
+                    for (const iface of interfaces) {
+                        for (const alternate of iface.alternates) {
+                            for (const endpoint of alternate.endpoints) {
+                                if (endpoint.direction === 'out') {
+                                    endpointOut = endpoint.endpointNumber;
+                                    break;
+                                }
+                            }
+                            if (endpointOut !== null) break;
+                        }
+                        if (endpointOut !== null) break;
+                    }
+                    
+                    if (endpointOut === null) {
+                        throw new Error('Endpoint de salida no encontrado');
+                    }
+                    
+                    await device.transferOut(endpointOut, CASH_DRAWER_COMMAND);
+                    
+                    try {
+                        await device.releaseInterface(interfaceNumber);
+                    } catch (e) {
+                        console.log('Error liberando interfaz:', e);
+                    }
+                    
+                    showStatus('Caja abierta correctamente');
+                    return device;
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            async function tryAlternativeCashDrawerMethod(device) {
+                const alternativeCommands = [
+                    new Uint8Array([0x1B, 0x70, 0x01, 0x19, 0xFA]),
+                    new Uint8Array([0x1B, 0x70, 0x00, 0x32, 0x32]),
+                    new Uint8Array([0x1B, 0x07]),
+                    new Uint8Array([0x10, 0x14, 0x01, 0x00, 0x01])
+                ];
+                
+                try {
+                    if (!device.opened) await device.open();
+                    await device.claimInterface(0);
+                    
+                    let endpointOut = null;
+                    const interfaces = device.configuration?.interfaces || [];
+                    
+                    for (const iface of interfaces) {
+                        for (const alternate of iface.alternates) {
+                            for (const endpoint of alternate.endpoints) {
+                                if (endpoint.direction === 'out') {
+                                    endpointOut = endpoint.endpointNumber;
+                                    break;
+                                }
+                            }
+                            if (endpointOut !== null) break;
+                        }
+                        if (endpointOut !== null) break;
+                    }
+                    
+                    if (endpointOut === null) throw new Error('Endpoint de salida no encontrado');
+                    
+                    for (const command of alternativeCommands) {
+                        try {
+                            await device.transferOut(endpointOut, command);
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        } catch (e) {
+                            console.error('Error con comando alternativo:', e);
+                        }
+                    }
+                    
+                    showStatus('Métodos alternativos probados');
+                    return device;
+                } catch (error) {
+                    showError(`Error método alternativo: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            // Manejadores de eventos
+            openBtn.addEventListener('click', async () => {
+                try {
+                    await openCashDrawer(currentDevice);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+
+            altBtn.addEventListener('click', async () => {
+                if (!currentDevice) {
+                    showError('Primero conecte el dispositivo');
+                    return;
+                }
+                try {
+                    await tryAlternativeCashDrawerMethod(currentDevice);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+
+            function showStatus(message) {
+                statusDiv.textContent = message;
+                statusDiv.style.color = 'green';
+            }
+
+            function showError(message) {
+                statusDiv.textContent = message;
+                statusDiv.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

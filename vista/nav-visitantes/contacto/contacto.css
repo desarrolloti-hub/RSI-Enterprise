@@ -1,0 +1,356 @@
+/* ESTILOS MEJORADOS PARA FORMULARIO DE CONTACTO RSI ENTERPRISE */
+:root {
+  --primary: #1c1948;
+  --secondary: #8f94fb;
+  --white: #ffffff;
+  --gray: #f5f5f5;
+  --text: #333333;
+  --border: #e0e0e0;
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  margin-top: 70px;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+
+}
+
+/* Estilos generales para la sección de contacto */
+.contacto {
+  font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 80px 20px 40px;
+  background-color: var(--gray);
+  min-height: 100vh;
+}
+
+.cert-title {
+  color: var(--primary);
+  font-size: 28px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.cert-description {
+  color: var(--text);
+  font-size: 16px;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+/* Contenedores principales */
+.buttons-container, .addresses-container, #map {
+  margin: 30px auto;
+  max-width: 900px;
+}
+
+/* ESTILOS ESPECÍFICOS PARA BOTONES DE UBICACIÓN (MÉXICO/EEUU) */
+.buttons-container.location-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 30px auto;
+  width: 100%;
+  max-width: 500px;
+  flex-wrap: nowrap;     /* evita que salten de línea */
+  overflow-x: auto;      /* agrega scroll horizontal si no caben */
+  scrollbar-width: thin; /* (opcional) scrollbar más delgado en Firefox */
+}
+
+
+.buttonP {
+  flex: 0 0 auto;  /* mantiene el ancho natural */
+  min-width: 180px;
+  padding: 12px 15px;
+  background-color: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+
+.buttonP:hover {
+  background-color: #151238;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(28, 25, 72, 0.2);
+}
+
+.buttonP img {
+  margin-right: 8px;
+  width: 20px;
+  height: 15px;
+  object-fit: contain;
+}
+
+/* Botones de selección de ciudad */
+.buttons-container.city-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px auto;
+  flex-wrap: wrap;
+}
+
+.buttons-container.city-buttons button {
+  padding: 10px 15px;
+  background-color: var(--white);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.buttons-container.city-buttons button:hover {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+/* Estilos para el formulario de contacto */
+.containerFormC {
+  background: var(--white);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: var(--shadow);
+  max-width: 500px;
+  width: 90%;
+  margin: 0 auto;
+  transition: all 0.4s ease;
+}
+
+.containerFormC.active {
+  display: block;
+}
+
+.form-icon {
+  margin-bottom: 20px;
+}
+
+.form-icon i {
+  font-size: 40px;
+  color: var(--primary);
+}
+
+.containerFormC h2 {
+  color: var(--primary);
+  font-size: 24px;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+/* Campos del formulario */
+.input-container {
+  position: relative;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.input-container i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary);
+}
+
+.input-container input,
+.input-container textarea {
+  width: 90%;
+  padding: 13px 15px 13px 45px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.input-container textarea {
+  padding: 15px;
+  min-height: 130px;
+  min-width: 510px;
+  resize: vertical;
+}
+
+.input-container input:focus,
+.input-container textarea:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(143, 148, 251, 0.2);
+  outline: none;
+}
+
+/* Botón de enviar */
+.buttonF {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.buttonF:hover {
+  background: #151238;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(28, 25, 72, 0.2);
+}
+
+/* Estilos para el mapa */
+iframe {
+  width: 90%;
+  max-width: 800px;
+  height: 450px;
+  border: none;
+  margin: 20px auto;
+  border-radius: 15px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #e0e0e0, #c0c0c0);
+}
+
+iframe:hover {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos para la sección de información de contacto */
+.contact-container {
+  text-align: center;
+  background: var(--white);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: var(--shadow);
+  max-width: 500px;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.contact-block {
+  margin-bottom: 25px;
+}
+
+.contact-block h3 {
+  margin-bottom: 10px;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.contact-block p {
+  margin-bottom: 15px;
+  color: var(--text);
+}
+
+.contact-block a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.contact-block a:hover {
+  color: var(--secondary);
+}
+
+.btn-contact {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--primary);
+  color: var(--white);
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.btn-contact:hover {
+  background-color: #151238;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(28, 25, 72, 0.2);
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .contacto {
+    padding-top: 70px;
+  }
+  
+  .cert-title {
+    font-size: 24px;
+  }
+  
+  .buttons-container.location-buttons {
+    flex-direction: row;
+    gap: 10px;
+  }
+  
+  .buttonP {
+    min-width: 150px;
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+  
+  iframe {
+    height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cert-title {
+    font-size: 22px;
+  }
+  
+  .containerFormC {
+    padding: 25px 20px;
+  }
+  
+  .buttons-container.location-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .buttonP {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .input-container input,
+  .input-container textarea {
+    padding: 12px 12px 12px 40px;
+  }
+  
+  iframe {
+    height: 300px;
+  }
+  
+  .contact-container {
+    padding: 25px 15px;
+  }
+}
+/* Media Queries para dispositivos móviles */
+@media (max-width: 480px) {
+  .containerFormC, .contact-container {
+    padding: 20px 15px;
+    width: 95%; /* Más ancho en móviles para mejor uso del espacio */
+  }
+
+  .input-container input,
+  .input-container textarea {
+    padding: 12px 12px 12px 40px;
+    width: 100%; /* Asegurar que los inputs ocupen todo el ancho */
+  }
+}

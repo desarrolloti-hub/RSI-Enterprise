@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <title>Registro de Colaboradores</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+    <style>
+        /* Estilos generales */
+        .registro-body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navbar fixed */
+        .nan_header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #1d1d1d;
+            z-index: 1000;
+        }
+
+        /* Contenedor del formulario */
+        .registro-container {
+            max-width: 600px;
+            width: 95%;
+            margin: 80px auto 20px;
+            padding: 15px;
+        }
+
+        /* Estilos para el formulario */
+        .registro-form {
+            background-color: #1d1d1d;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            position: relative;
+            margin-top: 40px;
+        }
+
+        /* Círculo superior para el icono */
+        .registro-circle {
+            width: 70px;
+            height: 70px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .registro-circle i {
+            font-size: 30px;
+            color: #000;
+        }
+
+        /* Círculo para la foto de perfil */
+        .foto-perfil-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .foto-perfil {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #2d2d2d;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 10px;
+            border: 3px solid #FFD700;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .foto-perfil-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFD700;
+            font-size: 35px;
+        }
+
+        .foto-perfil-input {
+            display: none;
+        }
+
+        .foto-perfil-label {
+            background-color: #FFD700;
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .foto-perfil-label:hover {
+            background-color: #e6b800;
+        }
+
+        /* Título dentro del formulario */
+        .registro-title {
+            color: #FFD700;
+            font-size: 22px;
+            text-align: center;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        /* Campos del formulario */
+        .registro-form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            background-color: #2d2d2d;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .registro-form-group i {
+            color: #FFD700;
+            font-size: 18px;
+            margin-right: 8px;
+            min-width: 20px;
+        }
+
+        .registro-input,
+        .registro-file {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .registro-file {
+            cursor: pointer;
+        }
+
+        /* Botón de enviar */
+        .registro-button {
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .registro-button i {
+            margin-left: 8px;
+        }
+
+        .registro-button:hover {
+            background-color: #e6b800;
+        }
+
+        /* Mostrar/ocultar contraseña */
+        .password-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-toggle {
+            background: none;
+            border: none;
+            color: #FFD700;
+            cursor: pointer;
+            margin-left: 8px;
+            min-width: 24px;
+        }
+
+        /* Mensaje de error */
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 3px;
+            display: none;
+        }
+
+        /* Media Queries para dispositivos pequeños */
+        @media (max-width: 480px) {
+            .registro-container {
+                margin-top: 70px;
+                padding: 10px;
+            }
+            
+            .registro-form {
+                padding: 12px;
+            }
+            
+            .registro-circle {
+                width: 60px;
+                height: 60px;
+                top: -30px;
+            }
+            
+            .registro-circle i {
+                font-size: 26px;
+            }
+            
+            .foto-perfil {
+                width: 90px;
+                height: 90px;
+            }
+            
+            .foto-perfil-placeholder i {
+                font-size: 30px;
+            }
+            
+            .registro-title {
+                font-size: 20px;
+                margin-top: 20px;
+                margin-bottom: 12px;
+            }
+            
+            .registro-form-group {
+                padding: 6px 8px;
+                margin-bottom: 10px;
+            }
+            
+            .registro-input,
+            .registro-file {
+                font-size: 14px;
+                padding: 6px;
+            }
+            
+            .registro-button {
+                padding: 10px;
+                font-size: 15px;
+            }
+            
+            .foto-perfil-label {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+
+        /* Ajustes para navbar en móviles */
+        @media (max-width: 768px) {
+            .nan_menu {
+                flex-direction: column;
+                padding: 10px 0;
+            }
+            
+            .nan_menu li {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body class="registro-body">
+    <!-- Navbar -->
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contenedor del formulario -->
+    <div class="registro-container">
+        <!-- Formulario -->
+        <form id="registro-colaborador-form" class="registro-form">
+            <!-- Círculo superior -->
+            <div class="registro-circle">
+                <i class="fas fa-user-plus"></i>
+            </div>
+
+            <!-- Título dentro del formulario -->
+            <h2 class="registro-title">Registro de Colaborador</h2>
+
+            <!-- Foto de perfil -->
+            <div class="foto-perfil-container">
+                <div class="foto-perfil" id="fotoPerfilPreview">
+                    <div class="foto-perfil-placeholder">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <input type="file" id="fotoPerfil" class="foto-perfil-input" accept="image/*">
+                <label for="fotoPerfil" class="foto-perfil-label">Seleccionar Foto</label>
+                <div class="error-message" id="fotoError">La foto es requerida</div>
+            </div>
+
+            <!-- Campos del formulario con iconos -->
+            <div class="registro-form-group">
+                <i class="fas fa-id-card"></i>
+                <input type="text" id="numeroEmpleado" class="registro-input" placeholder="Número de Empleado" required>
+            </div>
+            <div class="error-message" id="numeroEmpleadoError">Este campo es requerido</div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="nombre" class="registro-input" placeholder="Nombre" required>
+            </div>
+            <div class="error-message" id="nombreError">Este campo es requerido</div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-user-tag"></i>
+                <input type="text" id="apellidoPaterno" class="registro-input" placeholder="Apellido Paterno" required>
+            </div>
+            <div class="error-message" id="apellidoPaternoError">Este campo es requerido</div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-user-tag"></i>
+                <input type="text" id="apellidoMaterno" class="registro-input" placeholder="Apellido Materno" required>
+            </div>
+            <div class="error-message" id="apellidoMaternoError">Este campo es requerido</div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="correo" class="registro-input" placeholder="Correo Electrónico" required>
+            </div>
+            <div class="error-message" id="correoError">Ingrese un correo válido</div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-lock"></i>
+                <div class="password-container">
+                    <input type="password" id="contrasena" class="registro-input" placeholder="Contraseña" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('contrasena')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="error-message" id="contrasenaError">La contraseña debe tener al menos 6 caracteres</div>
+
+            <div class="registro-form-group">
+                <i class="fas fa-lock"></i>
+                <div class="password-container">
+                    <input type="password" id="confirmarContrasena" class="registro-input" placeholder="Confirmar Contraseña" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmarContrasena')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="error-message" id="confirmarContrasenaError">Las contraseñas no coinciden</div>
+
+            <button type="submit" class="registro-button">
+                Registrar Colaborador <i class="fas fa-user-plus"></i>
+            </button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Mostrar mensaje al cargar la página
+        Swal.fire({
+            icon: "info",
+            title: "Formulario de Colaboradores",
+            text: "Complete todos los campos para registrar un nuevo colaborador. La foto de perfil es obligatoria.",
+            confirmButtonColor: "#FFD700"
+        });
+
+        // Convertir imagen a base64
+        const toBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+
+        // Mostrar vista previa de la foto de perfil
+        document.getElementById('fotoPerfil').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const fotoPerfilPreview = document.getElementById('fotoPerfilPreview');
+                    fotoPerfilPreview.style.backgroundImage = `url(${event.target.result})`;
+                    fotoPerfilPreview.innerHTML = '';
+                    document.getElementById('fotoError').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Función para mostrar/ocultar contraseña
+        function togglePassword(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            const toggleIcon = passwordInput.nextElementSibling.querySelector('i');
+            
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleIcon.classList.remove("fa-eye");
+                toggleIcon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                toggleIcon.classList.remove("fa-eye-slash");
+                toggleIcon.classList.add("fa-eye");
+            }
+        }
+
+        // Validar campos del formulario
+        function validarFormulario() {
+            let valido = true;
+            const foto = document.getElementById('fotoPerfil').files[0];
+            const numeroEmpleado = document.getElementById('numeroEmpleado').value;
+            const nombre = document.getElementById('nombre').value;
+            const apellidoPaterno = document.getElementById('apellidoPaterno').value;
+            const apellidoMaterno = document.getElementById('apellidoMaterno').value;
+            const correo = document.getElementById('correo').value;
+            const contrasena = document.getElementById('contrasena').value;
+            const confirmarContrasena = document.getElementById('confirmarContrasena').value;
+
+            // Validar foto
+            if (!foto) {
+                document.getElementById('fotoError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('fotoError').style.display = 'none';
+            }
+
+            // Validar número de empleado
+            if (!numeroEmpleado) {
+                document.getElementById('numeroEmpleadoError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('numeroEmpleadoError').style.display = 'none';
+            }
+
+            // Validar nombre
+            if (!nombre) {
+                document.getElementById('nombreError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('nombreError').style.display = 'none';
+            }
+
+            // Validar apellidos
+            if (!apellidoPaterno) {
+                document.getElementById('apellidoPaternoError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('apellidoPaternoError').style.display = 'none';
+            }
+
+            if (!apellidoMaterno) {
+                document.getElementById('apellidoMaternoError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('apellidoMaternoError').style.display = 'none';
+            }
+
+            // Validar correo
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!correo || !emailRegex.test(correo)) {
+                document.getElementById('correoError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('correoError').style.display = 'none';
+            }
+
+            // Validar contraseña
+            if (!contrasena || contrasena.length < 6) {
+                document.getElementById('contrasenaError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('contrasenaError').style.display = 'none';
+            }
+
+            // Validar confirmación de contraseña
+            if (!confirmarContrasena || contrasena !== confirmarContrasena) {
+                document.getElementById('confirmarContrasenaError').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('confirmarContrasenaError').style.display = 'none';
+            }
+
+            return valido;
+        }
+
+        // Manejar el envío del formulario
+        document.getElementById("registro-colaborador-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (!validarFormulario()) {
+                return;
+            }
+
+            // Obtener valores del formulario
+            const foto = document.getElementById('fotoPerfil').files[0];
+            const numeroEmpleado = document.getElementById('numeroEmpleado').value;
+            const nombre = document.getElementById('nombre').value;
+            const apellidoPaterno = document.getElementById('apellidoPaterno').value;
+            const apellidoMaterno = document.getElementById('apellidoMaterno').value;
+            const correo = document.getElementById('correo').value;
+            const contrasena = document.getElementById('contrasena').value;
+
+            try {
+                // Convertir la foto a base64
+                const fotoBase64 = await toBase64(foto);
+
+                // Crear usuario en Firebase Authentication
+                const userCredential = await createUserWithEmailAndPassword(auth, correo, contrasena);
+                const user = userCredential.user;
+
+                // Guardar información en Firestore
+                await addDoc(collection(db, "colaboradores"), {
+                    uid: user.uid,
+                    numeroEmpleado: numeroEmpleado,
+                    nombre: nombre,
+                    apellidoPaterno: apellidoPaterno,
+                    apellidoMaterno: apellidoMaterno,
+                    correo: correo,
+                    fotoPerfil: fotoBase64,
+                    rol: "colaborador",
+                    fechaRegistro: new Date(),
+                    activo: true
+                });
+
+                // Mostrar alerta de éxito
+                Swal.fire({
+                    icon: "success",
+                    title: "Éxito",
+                    text: "Colaborador registrado correctamente.",
+                    confirmButtonColor: "#FFD700"
+                }).then(() => {
+                    // Redirigir a la página de colaboradores
+                    window.location.href = "colaboradores.html";
+                });
+
+                // Limpiar formulario
+                document.getElementById("registro-colaborador-form").reset();
+                document.getElementById('fotoPerfilPreview').style.backgroundImage = '';
+                document.getElementById('fotoPerfilPreview').innerHTML = '<div class="foto-perfil-placeholder"><i class="fas fa-camera"></i></div>';
+            } catch (error) {
+                // Mostrar alerta de error
+                let errorMessage = "No se pudo registrar el colaborador.";
+                
+                if (error.code === "auth/email-already-in-use") {
+                    errorMessage = "El correo electrónico ya está en uso.";
+                } else if (error.code === "auth/invalid-email") {
+                    errorMessage = "El correo electrónico no es válido.";
+                } else if (error.code === "auth/weak-password") {
+                    errorMessage = "La contraseña es demasiado débil.";
+                }
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: errorMessage,
+                    confirmButtonColor: "#FFD700"
+                });
+                console.error("Error al registrar el colaborador:", error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta Tags SEO para página de servicios -->
+    <meta name="description" content="Servicios profesionales de seguridad electrónica, multimedia, drones y desarrollo de software en México. Instalación de cámaras, controles de acceso y sistemas AV.">
+    <meta name="keywords" content="instalación cámaras seguridad, alarmas para negocio, control de acceso, mantenimiento proyectores, grabación con drones, desarrollo software México">
+    <meta name="author" content="RSI Enterprise">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsienterprise.com/servicios">
+    <meta property="og:title" content="Servicios Profesionales de Seguridad y Tecnología | RSI Enterprise">
+    <meta property="og:description" content="Soluciones integrales en seguridad electrónica, sistemas multimedia, fotografía con drones y desarrollo de software personalizado.">
+    <meta property="og:image" content="https://rsienterprise.com/vista/css/img/servicios/seguridadElectronica.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rsienterprise.com/servicios">
+    <meta property="twitter:title" content="Servicios Profesionales de Seguridad y Tecnología | RSI Enterprise">
+    <meta property="twitter:description" content="Expertos en instalación de sistemas de seguridad, multimedia y desarrollo tecnológico en México.">
+    <meta property="twitter:image" content="https://rsienterprise.com/vista/css/img/servicios/seguridadElectronica.jpg">
+
+    <!-- Schema Markup para Servicio -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Seguridad electrónica y soluciones tecnológicas",
+    "provider": {
+        "@type": "LocalBusiness",
+        "name": "RSI Enterprise",
+        "image": "https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png",
+        "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Calle 31 #110, Col. El Sol",
+        "addressLocality": "Nezahualcóyotl",
+        "addressRegion": "Estado de México",
+        "postalCode": "57200",
+        "addressCountry": "MX"
+        },
+        "telephone": "+525576908248"
+    },
+    "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Servicios",
+        "itemListElement": [
+        {
+            "@type": "OfferCatalog",
+            "name": "Seguridad Electrónica",
+            "itemListElement": [
+            {
+                "@type": "Offer",
+                "itemOffered": {
+                "@type": "Service",
+                "name": "Instalación de CCTV"
+                }
+            },
+            {
+                "@type": "Offer",
+                "itemOffered": {
+                "@type": "Service",
+                "name": "Control de Acceso"
+                }
+            }
+            ]
+        },
+        {
+            "@type": "OfferCatalog",
+            "name": "Multimedia",
+            "itemListElement": [
+            {
+                "@type": "Offer",
+                "itemOffered": {
+                "@type": "Service",
+                "name": "Mantenimiento de Proyectores"
+                }
+            }
+            ]
+        }
+        ]
+    }
+    }
+    </script>
+    <link rel="icon" type="image/png" href="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png">
+    <title>Servicios de Seguridad Electrónica y Tecnología | RSI Enterprise México</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+    <!-- Estilos unificados con servicios.css -->
+    <link href="servicios.css" rel="stylesheet">
+    
+    <!-- Agregar la fuente Montserrat de Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Agregar Font Awesome para los íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+
+    <!-- Carga dinámica del navbar -->
+    <script src="../recursosDinamicos/nav.js"></script>
+    <h2 class="cert-title">
+        Nuestros Servicios Profesionales
+    </h2>
+    <p class="cert-description">
+        Ofrecemos soluciones integrales en seguridad electrónica, multimedia, drones y desarrollo de software.
+    </p>
+
+    <div class="rsi-cards-container">
+        <div class="rsi-column">
+            <!-- Multimedia -->
+            <div class="rsi-card">
+                <img src="https://rsienterprise.web.app/vista/css/img/servicios/multimedia.jpg" alt="Multimedia">
+                <div class="rsi-card-content">
+                    <h3 class="rsi-card-title">Multimedia</h3>
+                    <p class="rsi-card-text">Mantenimiento de proyectores, pólizas de servicio y más.</p>
+                    <button class="rsi-card-btn" onclick="showServiceInfo('multimedia')">Ver servicios</button>
+                </div>
+            </div>
+
+            <!-- Drones -->
+            <div class="rsi-card">
+                <img src="https://rsienterprise.web.app/vista/css/img/servicios/drones.jpg" alt="Grabación con Drones">
+                <div class="rsi-card-content">
+                    <h3 class="rsi-card-title">Grabación con Drones</h3>
+                    <p class="rsi-card-text">Fotografía y videografía aérea, inspecciones técnicas y más.</p>
+                    <button class="rsi-card-btn" onclick="showServiceInfo('drones')">Ver servicios</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="rsi-column">
+            <!-- Software -->
+            <div class="rsi-card">
+                <img src="https://rsienterprise.web.app/vista/css/img/servicios/software.jpg" alt="Desarrollo de Software">
+                <div class="rsi-card-content">
+                    <h3 class="rsi-card-title">Desarrollo de Software</h3>
+                    <p class="rsi-card-text">Creación de aplicaciones móviles, desarrollo web y soluciones personalizadas.</p>
+                    <button class="rsi-card-btn" onclick="showServiceInfo('software')">Ver servicios</button>
+                </div>
+            </div>
+
+            <!-- Seguridad -->
+            <div class="rsi-card">
+                <img src="https://rsienterprise.web.app/vista/css/img/servicios/seguridadElectronica.jpg" alt="Seguridad Electrónica">
+                <div class="rsi-card-content">
+                    <h3 class="rsi-card-title">Seguridad Electrónica</h3>
+                    <p class="rsi-card-text">Instalación de cámaras, control de acceso, alarmas y más.</p>
+                    <button class="rsi-card-btn" onclick="showServiceInfo('seguridad')">Ver servicios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br><br><br>
+    
+    <!-- Carga dinámica de botones flotantes -->
+    <script src="../recursosDinamicos/botones.js"></script>
+    
+    <!-- Carga dinámica del footer -->
+    <script src="../recursosDinamicos/footer.js"></script>
+
+    <!-- Scripts con las descripciones -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script>
+        function showServiceInfo(serviceType) {
+            const services = {
+                multimedia: {
+                    title: 'Servicios Multimedia',
+                    content: '• Mantenimiento de proyectores<br>• Pólizas de servicio<br>• Instalación de sistemas AV<br>• Configuración de salas de conferencias<br>• Soporte técnico especializado',
+                    image: 'https://rsienterprise.com/vista/css/img/servicios/multimedia.jpg'
+                },
+                drones: {
+                    title: 'Servicios con Drones',
+                    content: '• Fotografía aérea profesional<br>• Inspecciones industriales<br>• Mapeo 3D<br>• Vigilancia aérea<br>• Producción de video',
+                    image: 'https://rsienterprise.com/vista/css/img/servicios/drones.jpg'
+                },
+                software: {
+                    title: 'Desarrollo de Software',
+                    content: '• Aplicaciones móviles<br>• Sistemas web personalizados<br>• Soluciones empresariales<br>• Integración de sistemas<br>• Consultoría tecnológica',
+                    image: 'https://rsienterprise.com/vista/css/img/servicios/software.jpg'
+                },
+                seguridad: {
+                    title: 'Seguridad Electrónica',
+                    content: '• Instalación de CCTV<br>• Sistemas de alarma<br>• Control de acceso<br>• Automatización de seguridad<br>• Auditorías de protección',
+                    image: 'https://rsienterprise.com/vista/css/img/servicios/seguridadElectronica.jpg'
+                }
+            };
+
+            Swal.fire({
+                title: `<strong>${services[serviceType].title}</strong>`,
+                html: `<div class="service-alert-content">
+                        <img src="${services[serviceType].image}" alt="${serviceType}" style="width:100%; max-height:200px; object-fit:cover; border-radius:10px; margin-bottom:15px;">
+                        <div style="text-align:left; font-size:16px;">${services[serviceType].content}</div>
+                       </div>`,
+                showCloseButton: true,
+                showConfirmButton: false,
+                width: '700px',
+                background: '#f8f9fa',
+                padding: '2rem',
+                customClass: {
+                    popup: 'custom-swal-popup',
+                    title: 'custom-swal-title'
+                }
+            });
+        }
+    </script>
+</body>
+</html>

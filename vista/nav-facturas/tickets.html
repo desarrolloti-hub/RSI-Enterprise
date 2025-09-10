@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Tickets</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/gestiontickets.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    </head>
+  <link rel="stylesheet" href="../css/navAdmin.css">
+<header class="header">
+    <header class="nan_header">
+      <nav class="nan_navbar">
+          <div class="nan_logo">
+              <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+          </div>
+          <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+          <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+      </nav>
+    </header>
+  </header>
+  <br><br><br><br>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-receipt"></i> Gestión de Tickets</h1>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar tickets...">
+                </div>
+                <button class="btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> Actualizar</button>
+            </div>
+        </header>
+
+        <div id="tablaTickets"></div>
+
+        <!-- Modal para ver detalles -->
+        <div id="ticketModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 class="modal-title"><i class="fas fa-receipt"></i> Detalles del Ticket</h2>
+                <div id="ticketDetails" class="ticket-details">
+                    <!-- Los detalles se llenarán con JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Variables globales
+        let ticketsData = [];
+        const modal = document.getElementById('ticketModal');
+        const searchInput = document.getElementById('searchInput');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        // Función para extraer datos del array de búsqueda
+        function extraerDatosBusqueda(busqueda) {
+            if (!Array.isArray(busqueda)) {
+                return {
+                    nombre: null,
+                    telefono: null,
+                    idTicket: null
+                };
+            }
+            
+            return {
+                nombre: busqueda[0] || null,
+                telefono: busqueda[1] || null,
+                idTicket: busqueda[2] || null
+            };
+        }
+
+        // Función para formatear fecha
+        function formatearFecha(fechaFirestore) {
+            if (!fechaFirestore) return 'No especificada';
+            const fecha = fechaFirestore.toDate();
+            return fecha.toLocaleString('es-MX', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Función para formatear moneda
+        function formatearMoneda(valor) {
+            return valor ? `$${parseFloat(valor).toFixed(2)}` : '$0.00';
+        }
+
+        // Función para mostrar modal con detalles del ticket
+        function mostrarDetallesTicket(ticket) {
+            const modalContent = document.getElementById('ticketDetails');
+            const datosBusqueda = extraerDatosBusqueda(ticket.busqueda);
+            
+            // Datos básicos
+            let html = `
+                <div class="detail-group">
+                    <span class="detail-label">Folio:</span>
+                    <div class="detail-value">${ticket.folio || 'N/A'}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Fecha:</span>
+                    <div class="detail-value">${formatearFecha(ticket.fecha)}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Nombre (del array busqueda):</span>
+                    <div class="detail-value">${datosBusqueda.nombre || 'N/A'}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Teléfono (del array busqueda):</span>
+                    <div class="detail-value">${datosBusqueda.telefono || 'N/A'}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">ID Ticket (del array busqueda):</span>
+                    <div class="detail-value">${datosBusqueda.idTicket || 'N/A'}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Estado:</span>
+                    <div class="detail-value">${ticket.estado || 'N/A'}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Método de Pago:</span>
+                    <div class="detail-value">${ticket.metodoPago || 'N/A'}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Efectivo Recibido:</span>
+                    <div class="detail-value money">${formatearMoneda(ticket.efectivoRecibido)}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Cambio:</span>
+                    <div class="detail-value money">${formatearMoneda(ticket.cambio)}</div>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Total:</span>
+                    <div class="detail-value money">${formatearMoneda(ticket.total)}</div>
+                </div>
+                <div class="items-container">
+                    <span class="detail-label">Artículos:</span>
+                    <div class="detail-value">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Cantidad</th>
+                                    <th>Nombre</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            // Items del ticket
+            if (ticket.items && Array.isArray(ticket.items)) {
+                ticket.items.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.cantidad || 0}</td>
+                            <td>${item.nombre || 'Sin nombre'}</td>
+                            <td class="money">${formatearMoneda(item.precio)}</td>
+                            <td class="money">${formatearMoneda(item.subtotal)}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html += '<tr><td colspan="4">No hay artículos registrados</td></tr>';
+            }
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            modalContent.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        // Función para renderizar la tabla de tickets
+        function renderizarTickets(tickets) {
+            const contenedor = document.getElementById('tablaTickets');
+            
+            if (tickets.length === 0) {
+                contenedor.innerHTML = '<p>No se encontraron tickets</p>';
+                return;
+            }
+
+            // Crear tabla
+            const tabla = document.createElement('table');
+            
+            // Crear encabezados
+            const thead = document.createElement('thead');
+            const encabezados = [
+                'Folio', 'Fecha', 'Nombre (array)', 'Teléfono (array)', 'Total', 'Acciones'
+            ];
+            
+            const trHead = document.createElement('tr');
+            encabezados.forEach(texto => {
+                const th = document.createElement('th');
+                th.textContent = texto;
+                trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+            tabla.appendChild(thead);
+            
+            // Crear cuerpo de la tabla
+            const tbody = document.createElement('tbody');
+            
+            // Procesar cada ticket
+            tickets.forEach(ticket => {
+                const tr = document.createElement('tr');
+                const datosBusqueda = extraerDatosBusqueda(ticket.busqueda);
+                
+                // Datos principales
+                const celdasPrincipales = [
+                    ticket.folio || 'N/A',
+                    formatearFecha(ticket.fecha),
+                    datosBusqueda.nombre || 'N/A',
+                    datosBusqueda.telefono || 'N/A',
+                    `<span class="money">${formatearMoneda(ticket.total)}</span>`
+                ];
+                
+                celdasPrincipales.forEach(texto => {
+                    const td = document.createElement('td');
+                    td.innerHTML = texto;
+                    tr.appendChild(td);
+                });
+                
+                // Acciones
+                const tdAcciones = document.createElement('td');
+                tdAcciones.className = 'actions';
+                
+                // Botón Ver
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'view-btn';
+                viewBtn.title = 'Ver detalles';
+                viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                viewBtn.onclick = () => mostrarDetallesTicket(ticket);
+                
+                // Botón Eliminar
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.title = 'Eliminar';
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                deleteBtn.onclick = () => confirmarEliminacion(ticket);
+                
+                tdAcciones.appendChild(viewBtn);
+                tdAcciones.appendChild(deleteBtn);
+                tr.appendChild(tdAcciones);
+                
+                tbody.appendChild(tr);
+            });
+            
+            tabla.appendChild(tbody);
+            contenedor.innerHTML = '';
+            contenedor.appendChild(tabla);
+        }
+
+        // Función para confirmar eliminación con SweetAlert2 (doble validación)
+        async function confirmarEliminacion(ticket) {
+            // Primera confirmación
+            const { isConfirmed: primeraConfirmacion } = await Swal.fire({
+                title: '¿Eliminar ticket?',
+                text: `Estás a punto de eliminar el ticket ${ticket.folio || 'sin folio'}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                background: '#1a1a1a',
+                color: '#e0e0e0'
+            });
+
+            if (!primeraConfirmacion) return;
+
+            // Segunda confirmación con verificación
+            const { value: confirmacionFinal } = await Swal.fire({
+                title: 'Confirmación final',
+                text: `Para eliminar el ticket ${ticket.folio}, escribe "ELIMINAR"`,
+                input: 'text',
+                inputPlaceholder: 'Escribe ELIMINAR aquí',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Confirmar eliminación',
+                cancelButtonText: 'Cancelar',
+                background: '#1a1a1a',
+                color: '#e0e0e0',
+                inputValidator: (value) => {
+                    if (value.toUpperCase() !== 'ELIMINAR') {
+                        return 'Debes escribir exactamente "ELIMINAR"';
+                    }
+                }
+            });
+
+            if (confirmacionFinal) {
+                eliminarTicket(ticket.id);
+            }
+        }
+
+        // Función para eliminar ticket
+        async function eliminarTicket(ticketId) {
+            try {
+                await db.collection("tickets").doc(ticketId).delete();
+                
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: 'El ticket ha sido eliminado correctamente',
+                    icon: 'success',
+                    confirmButtonColor: '#FFD700',
+                    background: '#1a1a1a',
+                    color: '#e0e0e0'
+                });
+                
+                cargarTickets();
+            } catch (error) {
+                console.error("Error al eliminar ticket:", error);
+                
+                Swal.fire({
+                    title: 'Error',
+                    text: `No se pudo eliminar el ticket: ${error.message}`,
+                    icon: 'error',
+                    confirmButtonColor: '#d33',
+                    background: '#1a1a1a',
+                    color: '#e0e0e0'
+                });
+            }
+        }
+
+        // Función para cargar tickets desde Firestore
+        async function cargarTickets() {
+            const contenedor = document.getElementById('tablaTickets');
+            contenedor.innerHTML = '<p>Cargando tickets...</p>';
+
+            try {
+                const querySnapshot = await db.collection("tickets")
+                    .orderBy("fecha", "desc")
+                    .get();
+
+                ticketsData = [];
+                querySnapshot.forEach(doc => {
+                    ticketsData.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                renderizarTickets(ticketsData);
+            } catch (error) {
+                console.error("Error al cargar tickets:", error);
+                contenedor.innerHTML = `<p style="color:var(--color-error)">Error al cargar los tickets: ${error.message}</p>`;
+            }
+        }
+
+        // Función para buscar tickets
+        function buscarTickets(termino) {
+            if (!termino) {
+                renderizarTickets(ticketsData);
+                return;
+            }
+
+            const terminoLower = termino.toLowerCase();
+            const resultados = ticketsData.filter(ticket => {
+                const datosBusqueda = extraerDatosBusqueda(ticket.busqueda);
+                
+                return (
+                    (ticket.folio && ticket.folio.toLowerCase().includes(terminoLower)) ||
+                    (datosBusqueda.nombre && datosBusqueda.nombre.toLowerCase().includes(terminoLower)) ||
+                    (datosBusqueda.telefono && datosBusqueda.telefono.toLowerCase().includes(terminoLower)) ||
+                    (ticket.estado && ticket.estado.toLowerCase().includes(terminoLower)) ||
+                    (ticket.metodoPago && ticket.metodoPago.toLowerCase().includes(terminoLower))
+                );
+            });
+
+            renderizarTickets(resultados);
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', (e) => {
+            buscarTickets(e.target.value);
+        });
+
+        refreshBtn.addEventListener('click', cargarTickets);
+
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', cargarTickets);
+    </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías</title>
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .categorias-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .titulo-categorias {
+            text-align: center;
+            font-size: 28px;
+            color: #FFD700;
+        }
+
+        .btn-accion {
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: block;
+            margin: 10px auto;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        a {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .btn-accion:hover {
+            color: #504e4e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #1d1d1d;
+            color: #FFD700;
+        }
+
+        tr:hover {
+            background-color: #2d2d2d;
+        }
+
+        .btn-editar, .btn-eliminar {
+            background-color: transparent;
+            border: none;
+            color: #FFD700;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .btn-editar:hover, .btn-eliminar:hover {
+            color: #e6b800;
+        }
+
+        .imagen-categoria {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 8px;
+        }
+
+        /* Botón flotante */
+        .floating-button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            list-style: none;
+        }
+
+        .boton-flotante {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background-color: #dc3545; /* Color de fondo rojo */
+            color: white;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: background-color 0.3s ease;
+        }
+
+        .boton-flotante:hover {
+            background-color: #bb2d3b; /* Color hover más oscuro */
+            color: white;
+        }
+
+        .boton-flotante svg {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+    <br>
+    <div class="categorias-container">
+        <h2 class="titulo-categorias">Categorías</h2>
+        <button class="btn-accion"><a href="nuevaCategoria.html"><i class="fas fa-plus"></i> Nueva Categoría</a></button>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Imagen</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="categorias-lista">
+                <!-- Aquí se insertan dinámicamente las categorías -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, query, where, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+    
+        const categoriasLista = document.getElementById("categorias-lista");
+    
+        // Cargar categorías después de verificar permisos
+        cargarCategorias();
+    
+        // Función para cargar las categorías
+        async function cargarCategorias() {
+            categoriasLista.innerHTML = "";
+    
+            const querySnapshot = await getDocs(collection(db, "categorias"));
+    
+            querySnapshot.forEach((doc) => {
+                const categoria = doc.data();
+                categoriasLista.innerHTML += `
+                    <tr>
+                        <td>${doc.id}</td>
+                        <td>${categoria.nombre}</td>
+                        <td>
+                            ${categoria.imagen ? `<img src="${categoria.imagen}" class="imagen-categoria" alt="Imagen de categoría">` : "Sin imagen"}
+                        </td>
+                        <td>
+                            <button class="btn-editar" data-id="${doc.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn-eliminar" data-id="${doc.id}" data-nombre="${categoria.nombre}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+    
+            // Agregar eventos a los botones de editar y eliminar
+            document.querySelectorAll(".btn-editar").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const categoriaId = btn.dataset.id;
+                    window.location.href = `editarCategoria.html?id=${categoriaId}`;
+                });
+            });
+    
+            document.querySelectorAll(".btn-eliminar").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const categoriaId = btn.dataset.id;
+                    const categoriaNombre = btn.dataset.nombre;
+    
+                    // Verificar si hay productos asociados a esta categoría
+                    const productosQuery = query(collection(db, "Productos"), where("Categoria", "==", categoriaNombre));
+                    const productosSnapshot = await getDocs(productosQuery);
+    
+                    if (!productosSnapshot.empty) {
+                        // Hay productos asociados, no se puede eliminar
+                        Swal.fire({
+                            title: "Error",
+                            text: "No se puede eliminar la categoría porque hay productos asociados.",
+                            icon: "error",
+                            confirmButtonColor: "#FFD700",
+                        });
+                    } else {
+                        // No hay productos asociados, proceder con la eliminación
+                        Swal.fire({
+                            title: "¿Eliminar categoría?",
+                            text: "Esta acción moverá la categoría a la papelera.",
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonColor: "#FFD700",
+                            cancelButtonColor: "#d33",
+                            confirmButtonText: "Sí, mover a la papelera",
+                            cancelButtonText: "Cancelar"
+                        }).then(async (result) => {
+                            if (result.isConfirmed) {
+                                try {
+                                    // Obtener los datos de la categoría
+                                    const categoriaRef = doc(db, "categorias", categoriaId);
+                                    const categoriaDoc = await getDoc(categoriaRef);
+    
+                                    if (categoriaDoc.exists()) {
+                                        const categoriaData = categoriaDoc.data();
+    
+                                        // Agregar la fecha de eliminación
+                                        categoriaData.eliminado = new Date().toISOString(); // Fecha actual en formato ISO
+    
+                                        // Mover la categoría a la colección "categoriasPapelera"
+                                        await setDoc(doc(db, "categoriasPapelera", categoriaId), categoriaData);
+    
+                                        // Eliminar la categoría de la colección "categorias"
+                                        await deleteDoc(categoriaRef);
+    
+                                        Swal.fire("Movida a la papelera", "La categoría ha sido movida a la papelera.", "success");
+                                        cargarCategorias(); // Recargar la lista
+                                    } else {
+                                        Swal.fire("Error", "La categoría no existe.", "error");
+                                    }
+                                } catch (error) {
+                                    console.error("Error al mover la categoría a la papelera:", error);
+                                    Swal.fire("Error", "Hubo un problema al mover la categoría a la papelera.", "error");
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+    <!-- Botón flotante -->
+    <li class="floating-button-container">
+        <a href="categoriasPapelera.html" class="boton-flotante" title="Papelera">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14H6L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+            </svg>
+            Papelera
+        </a>
+    </li>
+</body>
+</html>

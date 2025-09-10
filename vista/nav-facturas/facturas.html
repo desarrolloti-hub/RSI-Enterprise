@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Facturas - RS I Enterprise</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/fac.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="../css/img/Logo-RSI-OFICIAL.png" alt="RS I Enterprise Logo" class="logo">
+            <h1>Administración de Facturas</h1>
+            <p class="subtitle">Visualiza y gestiona todas las solicitudes de facturación</p>
+        </div>
+
+<div class="controls">
+    <div class="search-filter">
+        <input type="text" class="search-box" id="searchInput" placeholder="Buscar por nombre, RFC o email...">
+        <select class="filter-select" id="statusFilter">
+            <option value="todos">Todos los estados</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="procesado">Procesados</option>
+            <option value="error">Con error</option>
+        </select>
+    </div>
+    <div class="buttons-group">
+        <a href="tickets.html">
+            <button class="compras-btn">
+                <i class="fas fa-cash-register"></i> Ver compras Rsi Ixtapaluca
+            </button>
+            <a href="/vista/nav-operadores/gestion_Tickets.html">
+            <button class="tickets-btn">
+                <i class="fas fa-ticket-alt"></i> Ver Mis Tickets
+            </button>
+        </a>
+        </a>
+        <a href="coti.html">
+            <button class="tickets-btn">
+                <i class="fas fa-pencil"></i> Cotizar
+            </button>
+        </a>
+        
+    </div>
+    <button class="refresh-btn" id="refreshBtn">
+        <svg class="refresh-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+        Actualizar
+    </button>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</div>        
+
+        <div class="cards-container" id="cardsContainer">
+            <div class="loading">Cargando facturas...</div>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <!-- Paginación se generará dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal">&times;</button>
+            <h2 class="modal-title">Detalles de Factura</h2>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido del modal se generará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para imagen en grande -->
+    <div class="image-modal" id="imageModal">
+        <span class="image-modal-close" id="closeImageModal">&times;</span>
+        <div class="image-modal-content">
+            <img id="expandedImage" class="image-modal-img" src="" alt="Imagen expandida">
+        </div>
+    </div>
+
+    <script>
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Variables globales
+        let facturas = [];
+        let filteredFacturas = [];
+        const itemsPerPage = 10;
+        let currentPage = 1;
+
+        // Elementos del DOM
+        const cardsContainer = document.getElementById('cardsContainer');
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const pagination = document.getElementById('pagination');
+        const detailModal = document.getElementById('detailModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalBody = document.getElementById('modalBody');
+        const imageModal = document.getElementById('imageModal');
+        const expandedImage = document.getElementById('expandedImage');
+        const closeImageModal = document.getElementById('closeImageModal');
+
+        // Formatear fecha
+        function formatDate(timestamp) {
+            if (!timestamp) return 'No especificada';
+            const date = timestamp.toDate();
+            return date.toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Cargar facturas desde Firebase
+        async function loadFacturas() {
+            try {
+                cardsContainer.innerHTML = '<div class="loading">Cargando facturas...</div>';
+                
+                const querySnapshot = await db.collection('facturas')
+                    .orderBy('fecha', 'desc')
+                    .get();
+                
+                facturas = [];
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    facturas.push({
+                        id: doc.id,
+                        ...data,
+                        fechaFormatted: formatDate(data.fecha),
+                        procesamientoFormatted: formatDate(data.fechaProcesamiento)
+                    });
+                });
+                
+                filterFacturas();
+            } catch (error) {
+                console.error('Error al cargar facturas:', error);
+                cardsContainer.innerHTML = '<div class="no-results">Error al cargar las facturas. Intente nuevamente.</div>';
+            }
+        }
+
+        // Filtrar facturas según búsqueda y estado
+        function filterFacturas() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const status = statusFilter.value;
+            
+            filteredFacturas = facturas.filter(factura => {
+                const matchesSearch = 
+                    factura.nombreRazonSocial.toLowerCase().includes(searchTerm) ||
+                    factura.rfc.toLowerCase().includes(searchTerm) ||
+                    factura.email.toLowerCase().includes(searchTerm);
+                
+                const matchesStatus = 
+                    status === 'todos' || 
+                    (status === 'pendiente' && factura.estado === 'pendiente') ||
+                    (status === 'procesado' && factura.estado === 'procesado') ||
+                    (status === 'error' && factura.estado === 'error');
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            renderFacturas();
+            renderPagination();
+        }
+
+        // Renderizar facturas en tarjetas
+        function renderFacturas() {
+            if (filteredFacturas.length === 0) {
+                cardsContainer.innerHTML = '<div class="no-results">No se encontraron facturas que coincidan con los criterios de búsqueda.</div>';
+                return;
+            }
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedFacturas = filteredFacturas.slice(startIndex, endIndex);
+            
+            let html = '';
+            
+            paginatedFacturas.forEach(factura => {
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(factura.estado) {
+                    case 'procesado':
+                        statusClass = 'status-procesado';
+                        statusText = 'Procesado';
+                        break;
+                    case 'error':
+                        statusClass = 'status-error';
+                        statusText = 'Error';
+                        break;
+                    default:
+                        statusClass = 'status-pendiente';
+                        statusText = 'Pendiente';
+                }
+                
+                html += `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">${factura.nombreRazonSocial}</h3>
+                            <span class="card-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-group">
+                                <div class="info-label">RFC</div>
+                                <div class="info-value">${factura.rfc}</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Email</div>
+                                <div class="info-value"><a href="mailto:${factura.email}" class="email-link">${factura.email}</a></div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Régimen Fiscal</div>
+                                <div class="info-value">${factura.regimenFiscal?.descripcion || factura.regimenFiscal?.clave || 'No especificado'}</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Uso CFDI</div>
+                                <div class="info-value">${factura.usoCFDI?.descripcion || factura.usoCFDI?.clave || 'No especificado'}</div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="card-date">Solicitado: ${factura.fechaFormatted}</div>
+                            <div class="card-actions">
+                                <button class="action-btn view-btn" data-id="${factura.id}">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                    </svg>
+                                    Ver
+                                </button>
+                                ${factura.estado === 'pendiente' ? `
+                                    <button class="action-btn process-btn" data-id="${factura.id}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        Procesar
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cardsContainer.innerHTML = html;
+            
+            // Agregar event listeners a los botones
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => showFacturaDetails(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.process-btn').forEach(btn => {
+                btn.addEventListener('click', () => processFactura(btn.dataset.id));
+            });
+        }
+
+        // Renderizar paginación
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredFacturas.length / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Botón Anterior
+            html += `<button class="page-btn" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
+            
+            // Páginas
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            
+            // Botón Siguiente
+            html += `<button class="page-btn" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
+            
+            pagination.innerHTML = html;
+            
+            // Event listeners para paginación
+            document.querySelectorAll('.page-btn:not(#prevPage):not(#nextPage)').forEach(btn => {
+                if (!btn.id) {
+                    btn.addEventListener('click', () => {
+                        currentPage = parseInt(btn.textContent);
+                        renderFacturas();
+                        renderPagination();
+                    });
+                }
+            });
+            
+            if (document.getElementById('prevPage')) {
+                document.getElementById('prevPage').addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderFacturas();
+                        renderPagination();
+                    }
+                });
+            }
+            
+            if (document.getElementById('nextPage')) {
+                document.getElementById('nextPage').addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderFacturas();
+                        renderPagination();
+                    }
+                });
+            }
+        }
+
+        // Mostrar imagen en grande
+        function expandImage(imageSrc) {
+            expandedImage.src = imageSrc;
+            imageModal.classList.add('show');
+            setTimeout(() => {
+                imageModal.style.display = 'flex';
+            }, 10);
+        }
+
+        // Mostrar detalles de factura en modal
+        function showFacturaDetails(facturaId) {
+            const factura = facturas.find(f => f.id === facturaId);
+            if (!factura) return;
+            
+            let statusClass = '';
+            let statusText = '';
+            
+            switch(factura.estado) {
+                case 'procesado':
+                    statusClass = 'status-procesado';
+                    statusText = 'Procesado';
+                    break;
+                case 'error':
+                    statusClass = 'status-error';
+                    statusText = 'Error';
+                    break;
+                default:
+                    statusClass = 'status-pendiente';
+                    statusText = 'Pendiente';
+            }
+            
+            modalBody.innerHTML = `
+                <div>
+                    <div class="info-group">
+                        <div class="info-label">Estado</div>
+                        <div class="info-value"><span class="${statusClass}">${statusText}</span></div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Nombre/Razón Social</div>
+                        <div class="info-value">${factura.nombreRazonSocial}</div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">RFC</div>
+                        <div class="info-value">${factura.rfc}</div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Email</div>
+                        <div class="info-value"><a href="mailto:${factura.email}" class="email-link">${factura.email}</a></div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Régimen Fiscal</div>
+                        <div class="info-value">${factura.regimenFiscal?.descripcion || factura.regimenFiscal?.clave || 'No especificado'}</div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Uso CFDI</div>
+                        <div class="info-value">${factura.usoCFDI?.descripcion || factura.usoCFDI?.clave || 'No especificado'}</div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Dirección Fiscal</div>
+                        <div class="info-value">${factura.direccionFiscal || 'No especificada'}</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="info-group">
+                        <div class="info-label">Fecha de Solicitud</div>
+                        <div class="info-value">${factura.fechaFormatted}</div>
+                    </div>
+                    ${factura.fechaProcesamiento ? `
+                    <div class="info-group">
+                        <div class="info-label">Fecha de Procesamiento</div>
+                        <div class="info-value">${factura.procesamientoFormatted}</div>
+                    </div>
+                    ` : ''}
+                    ${factura.notas ? `
+                    <div class="info-group">
+                        <div class="info-label">Notas</div>
+                        <div class="info-value">${factura.notas}</div>
+                    </div>
+                    ` : ''}
+                    <div class="info-group">
+                        <div class="info-label">Comprobante</div>
+                        ${factura.fotoBase64 ? `
+                            <div class="modal-image-container">
+                                <img src="${factura.fotoBase64}" alt="Comprobante" class="modal-image" onclick="expandImage('${factura.fotoBase64}')">
+                            </div>
+                        ` : '<div class="info-value">No disponible</div>'}
+                    </div>
+                </div>
+            `;
+            
+            detailModal.classList.add('show');
+            setTimeout(() => {
+                detailModal.style.display = 'flex';
+            }, 10);
+        }
+
+        // Procesar factura (marcar como procesada)
+        async function processFactura(facturaId) {
+            try {
+                const result = await Swal.fire({
+                    title: '¿Procesar esta factura?',
+                    text: 'Esta acción marcará la factura como procesada.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, procesar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (!result.isConfirmed) return;
+                
+                await db.collection('facturas').doc(facturaId).update({
+                    estado: 'procesado',
+                    fechaProcesamiento: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                await Swal.fire({
+                    title: '¡Factura procesada!',
+                    text: 'La factura ha sido marcada como procesada correctamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#1c3a4f'
+                });
+                
+                loadFacturas();
+            } catch (error) {
+                console.error('Error al procesar factura:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo procesar la factura. Intente nuevamente.',
+                    icon: 'error',
+                    confirmButtonColor: '#1c3a4f'
+                });
+            }
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterFacturas);
+        statusFilter.addEventListener('change', filterFacturas);
+        refreshBtn.addEventListener('click', loadFacturas);
+        closeModal.addEventListener('click', () => {
+            detailModal.classList.remove('show');
+            setTimeout(() => {
+                detailModal.style.display = 'none';
+            }, 300);
+        });
+        closeImageModal.addEventListener('click', () => {
+            imageModal.classList.remove('show');
+            setTimeout(() => {
+                imageModal.style.display = 'none';
+            }, 300);
+        });
+
+        // Cerrar modales al hacer clic fuera del contenido
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) {
+                detailModal.classList.remove('show');
+                setTimeout(() => {
+                    detailModal.style.display = 'none';
+                }, 300);
+            }
+        });
+
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) {
+                imageModal.classList.remove('show');
+                setTimeout(() => {
+                    imageModal.style.display = 'none';
+                }, 300);
+            }
+        });
+
+        // Hacer la función expandImage disponible globalmente
+        window.expandImage = expandImage;
+
+        // Cargar facturas al iniciar
+        loadFacturas();
+    </script>
+</body>
+</html>

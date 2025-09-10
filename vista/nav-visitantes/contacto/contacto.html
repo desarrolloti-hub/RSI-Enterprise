@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png">
+    <!-- Meta Tags SEO para Contacto -->
+    <meta name="description" content="Contacta a RSI Enterprise - Expertos en seguridad electrónica en México. Oficinas en Nezahualcóyotl, Ixtapaluca y California. Formulario de contacto directo.">
+    <meta name="keywords" content="contacto seguridad electrónica, ubicación RSI Enterprise, soporte técnico cámaras, teléfono alarmas México, direcciones sucursales">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsienterprise.com/contacto-&-comentarios">
+    <meta property="og:title" content="Contacto y Ubicaciones | RSI Enterprise - Soporte en México y EE.UU.">
+    <meta property="og:description" content="Encuentra nuestras sucursales y contacta a nuestros especialistas en seguridad electrónica. Atención personalizada en toda la República Mexicana.">
+    <meta property="og:image" content="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png">
+    <meta property="og:image:alt" content="RSI Enterprise - Canales de contacto">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rsienterprise.com/contacto-&-comentarios">
+    <meta property="twitter:title" content="Contacto y Ubicaciones | RSI Enterprise - Soporte en México y EE.UU.">
+    <meta property="twitter:description" content="Contáctanos para asesoría técnica en sistemas de seguridad. Oficinas en CDMX, Estado de México y California.">
+    <meta property="twitter:image" content="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png">
+
+    <!-- Schema Markup para LocalBusiness -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "Contacto RSI Enterprise",
+    "description": "Página de contacto para soporte técnico y ubicación de sucursales",
+    "url": "https://rsienterprise.com/contacto-&-comentarios",
+    "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Inicio",
+        "item": "https://rsienterprise.com"
+        },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Contacto",
+        "item": "https://rsienterprise.com/contacto-&-comentarios"
+        }]
+    },
+    "mainEntity": {
+        "@type": "Organization",
+        "name": "RSI Enterprise",
+        "address": [
+        {
+            "@type": "PostalAddress",
+            "streetAddress": "Empresa Seguridad electronica Rafha Solución Integrales",
+            "addressLocality": "Nezahualcóyotl",
+            "addressRegion": "Estado de México",
+            "addressCountry": "MX"
+        },
+        {
+            "@type": "PostalAddress",
+            "addressLocality": "Ixtapaluca",
+            "addressRegion": "Estado de México",
+            "addressCountry": "MX"
+        },
+        {
+            "@type": "PostalAddress",
+            "streetAddress": "2547 S Euclid Ave",
+            "addressLocality": "Ontario",
+            "addressRegion": "California",
+            "postalCode": "91762",
+            "addressCountry": "US"
+        }
+        ],
+        "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+525576908248",
+        "contactType": "customer service",
+        "email": "mitiendaenlinea@rhafasoluciones.com",
+        "areaServed": ["MX","US"],
+        "availableLanguage": ["es","en"]
+        }
+    }
+    }
+    </script>
+    <title>Contacto y Ubicaciones | RSI Enterprise - Sucursales en México y EE.UU.</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Estilos propios del documento -->
+    <link rel="stylesheet" href="contacto.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+</head>
+<body>
+     <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+     <!-- Carga dinámica del navbar -->
+    <script src="../recursosDinamicos/nav.js"></script>
+    <!-- Carga dinámica de botones flotantes -->
+    <script src="../recursosDinamicos/botones.js"></script>
+    <br><br>
+    <center>
+    <h2 class="cert-title">
+        Puedes encontrarnos en distintos puntos dentro de la república mexicana y en el extranjero.
+    </h2>
+    <h2></h2>
+    
+    <div class="buttons-container">
+        
+            <button class="buttonP" onclick="showAddresses('mexico')">
+                <img src="https://flagcdn.com/w40/mx.png" width="20" height="15" style="margin-right: 5px;">México
+            </button>
+            <button class="buttonP" onclick="showAddresses('usa')">
+                <img src="https://flagcdn.com/w40/us.png" width="20" height="15" style="margin-right: 5px;">Estados Unidos
+            </button>
+        
+    </div>
+    
+    <div class="addresses-container" id="addresses"></div>
+    <div id="map"></div>
+    <br>
+    <h2 class="cert-title">
+        ¡Para nosotros, tu opinión es muy importante!
+    </h2>
+    <p class="cert-description">
+        Por favor, llena el siguiente formulario<br>
+        <strong>Nos pondremos en contacto contigo. </strong>
+    </p>
+    <script>
+        function showAddresses(country) {
+            const addressesDiv = document.getElementById('addresses');
+            const mapDiv = document.getElementById('map');
+            addressesDiv.innerHTML = ''; // Limpiar direcciones anteriores
+            mapDiv.innerHTML = ''; // Limpiar mapa anterior
+            
+            if (country === 'mexico') {
+                addressesDiv.innerHTML = `
+                    <div class='buttons-container'>
+                        <center>
+                            <button class="buttonP" onclick="showMapNeza()">
+                                <i class="fas fa-map-marker-alt"></i>  Nezahualcóyotl
+                            </button>
+                            <button class="buttonP" onclick="showMapIxta()">
+                                <i class="fas fa-map-marker-alt"></i>  Ixtapaluca
+                            </button>
+                        </center>
+                    </div>
+                `;
+            } else if (country === 'usa') {
+                addressesDiv.innerHTML = `
+                    <div class='buttons-container'>
+                        <center><button class="buttonP" onclick="showMapCali()">
+                            <i class="fas fa-map-marker-alt"></i>
+                            California
+                            </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function showMapCali() {
+            const mapDiv = document.getElementById('map');
+            mapDiv.innerHTML = `
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d826.6655571293998!2d-117.65017095119431!3d34.026880121232644!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c3335dc8638e41%3A0x5418e48831e4eee6!2s2547%20S%20Euclid%20Ave%2C%20Ontario%2C%20CA%2091762%2C%20EE.%20UU.!5e0!3m2!1ses-419!2smx!4v1738704739480!5m2!1ses-419!2smx" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>    
+            `;
+        }
+
+        function showMapIxta() {
+            const mapDiv = document.getElementById('map');
+            mapDiv.innerHTML = `
+                <iframe src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d470.59298786665846!2d-98.86472216476758!3d19.33691607920196!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDIwJzEzLjAiTiA5OMKwNTEnNTIuOSJX!5e0!3m2!1ses-419!2smx!4v1738704522442!5m2!1ses-419!2smx" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>   
+            `;
+        }
+        
+        function showMapNeza() {
+            const mapDiv = document.getElementById('map');
+            mapDiv.innerHTML = `
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3762.5548259828897!2d-99.03653052416406!3d19.431631440710646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1fdd7ad7619c9%3A0xe45ea2f6c85d2835!2sEmpresa%20Seguridad%20electronica%20Rafha%20Soluci%C3%B3n%20Integrales!5e0!3m2!1ses-419!2smx!4v1738702333415!5m2!1ses-419!2smx" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>  
+            `;
+        }
+    </script>
+
+    <!-- Añade estos scripts al inicio de tu HTML -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Formulario de Contacto -->
+<center><div id="loginForm" class="containerFormC active">
+    <div class="form-icon">
+        <i class="fas fa-comments"></i>
+    </div>
+    <h2>Contáctanos</h2>
+    <form id="contactForm">
+        <div class="input-container">
+            <i class="fas fa-user"></i>
+            <input type="text" id="nombre" placeholder="Nombre completo" required>
+        </div>
+        <div class="input-container">
+            <i class="fas fa-envelope"></i>
+            <input type="email" id="email" placeholder="Correo electrónico" required>
+        </div>
+        <div class="input-container">
+            <i class="fas fa-phone"></i>
+            <input type="tel" id="telefono" placeholder="Telefono" required>
+        </div>
+        <div class="input-container">
+            <textarea id="mensaje" placeholder="Escribe tu mensaje" required 
+                     style="width: 100%; padding: 12px; border: 1px solid #e0dfda; 
+                     border-radius: 4px; font-size: 16px; box-sizing: border-box; 
+                     height: 100px;"></textarea>
+        </div>
+        <button type="submit" class="buttonF contact-btn">Enviar Mensaje</button>
+    </form>
+</div></center>
+
+<script>
+  // Inicializar Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    projectId: "rsienterprise",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Manejar el envío del formulario con SweetAlert2
+  document.getElementById('contactForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const nombre = document.getElementById('nombre').value;
+    const email = document.getElementById('email').value;
+    const telefono = document.getElementById('telefono').value;
+    const mensaje = document.getElementById('mensaje').value;
+
+    try {
+      await db.collection('contactanos').add({
+        nombre: nombre,
+        email: email,
+        telefono: telefono,
+        mensaje: mensaje,
+        fecha: new Date()
+      });
+      
+      Swal.fire({
+        icon: 'success',
+        title: '¡Mensaje enviado!',
+        text: 'Tu mensaje ha sido recibido correctamente',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#3085d6'
+      }).then(() => {
+        document.getElementById('contactForm').reset();
+      });
+      
+    } catch (error) {
+      console.error("Error al enviar el mensaje: ", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un error al enviar el mensaje',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#d33'
+      });
+    }
+  });
+</script>
+    <br><br>
+    <h2 class="cert-title">
+        Nos encontramos a tus ordenes
+    </h2>
+    <p class="cert-description">
+        <strong>En los siguientes medios: </strong>
+    </p>
+    <center><div class="contact-container">
+        <!-- Teléfono -->
+        <div class="contact-block">
+            <h3>Teléfono:</h3>
+            <p><a href="tel:+5576908248">55 76 90 82 48</a></p>
+            <br>
+        </div>
+
+        <!-- Correo -->
+        <div class="contact-block">
+            <h3>Correo Electrónico:</h3>
+            <p><a href="mailto:mitiendaenlinea@rhafasoluciones.com">mitiendaenlinea@rhafasoluciones.com</a></p>
+            <br>
+        </div>
+    </div></center>
+    </section>
+    <br>
+</body>
+<script src="../recursosDinamicos/footer.js"></script>
+</html> 

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Publicador de Artículos</title>
+    <style>
+        /* Estilos anteriores se mantienen igual */
+        :root {
+            --primary: #FFD700;
+            --secondary: #e6b800;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            background: #2d2d2d;
+            color: #ffffff;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        button {
+            background: var(--primary);
+            color: #000000;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: var(--secondary);
+        }
+
+        .content-section {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 0.5s;
+        }
+
+        #alert {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 40px;
+            background: var(--success);
+            color: white;
+            border-radius: 50px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: slideDown 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { top: -100px; }
+            to { top: 30px; }
+        }
+
+        select option {
+            background: #2d2d2d;
+            color: #ffffff;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Publicador de Contenido</h1>
+        
+        <form id="formulario">
+            <div class="form-group">
+                <label>Título del Artículo:</label>
+                <input type="text" id="titulo" required>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Contenido:</label>
+                <select id="tipoContenido" required>
+                    <option value="">Seleccione una opción</option>
+                    <option value="pdf">Archivo PDF</option>
+                    <option value="texto">Texto</option>
+                </select>
+            </div>
+
+            <div id="seccionPdf" class="content-section">
+                <div class="form-group">
+                    <label>Subir PDF:</label>
+                    <input type="file" id="archivoPdf" accept=".pdf">
+                </div>
+            </div>
+
+            <div id="seccionTexto" class="content-section">
+                <div class="form-group">
+                    <label>Contenido Textual:</label>
+                    <textarea id="texto" rows="8"></textarea>
+                </div>
+            </div>
+
+            <button type="button" id="btnPublicar">Publicar Artículo</button>
+        </form>
+    </div>
+
+    <div id="alert">¡Artículo publicado exitosamente!</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { 
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Elementos del DOM
+        const tipoContenido = document.getElementById('tipoContenido');
+        const seccionPdf = document.getElementById('seccionPdf');
+        const seccionTexto = document.getElementById('seccionTexto');
+        const btnPublicar = document.getElementById('btnPublicar');
+
+        // Función para convertir archivo a Base64
+        const readFileAsBase64 = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Extraer solo el Base64
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        // Manejar cambio de selección
+        tipoContenido.addEventListener('change', () => {
+            const tipo = tipoContenido.value;
+            seccionPdf.style.display = tipo === 'pdf' ? 'block' : 'none';
+            seccionTexto.style.display = tipo === 'texto' ? 'block' : 'none';
+        });
+
+        // Función de publicación
+        const guardarArticulo = async () => {
+            const titulo = document.getElementById('titulo').value;
+            const tipo = tipoContenido.value;
+            let contenido = '';
+
+            if (!titulo || !tipo) {
+                alert('Complete todos los campos obligatorios');
+                return;
+            }
+
+            try {
+                if (tipo === 'pdf') {
+                    const archivo = document.getElementById('archivoPdf').files[0];
+                    if (!archivo) {
+                        alert('Seleccione un archivo PDF');
+                        return;
+                    }
+                    
+                    // Convertir a Base64
+                    contenido = await readFileAsBase64(archivo);
+                } else {
+                    contenido = document.getElementById('texto').value;
+                    if (!contenido.trim()) {
+                        alert('Ingrese el contenido textual');
+                        return;
+                    }
+                }
+
+                await addDoc(collection(db, "blogs"), {
+                    titulo: titulo,
+                    tipo: tipo,
+                    contenido: contenido,
+                    fecha: serverTimestamp(),
+                    estado: 'publicado'
+                });
+
+                const alerta = document.getElementById('alert');
+                alerta.style.display = 'block';
+                setTimeout(() => alerta.style.display = 'none', 3000);
+
+                document.getElementById('formulario').reset();
+                seccionPdf.style.display = 'none';
+                seccionTexto.style.display = 'none';
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        btnPublicar.addEventListener('click', guardarArticulo);
+    </script>
+</body>
+</html>

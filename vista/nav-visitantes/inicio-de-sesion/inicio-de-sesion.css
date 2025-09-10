@@ -1,0 +1,256 @@
+/* ESTILOS MEJORADOS PARA INICIO DE SESIÓN RSI ENTERPRISE */
+:root {
+  --primary: #1c1948;
+  --secondary: #8f94fb;
+  --white: #ffffff;
+  --gray: #f5f5f5;
+  --text: #333333;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Contenedor wrapper */
+.auth-container-wrapper {
+  background-color: var(--gray);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* CONTENEDOR PRINCIPAL */
+.auth-container {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+  min-height: 550px;
+  background: var(--white);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* SECCIÓN DEL FORMULARIO */
+.form-section {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* SECCIÓN DE LA IMAGEN */
+.image-section {
+  flex: 1;
+  background: url('https://rsienterprise.com/vista/css/img/LOGO BLANCO.png') center/contain no-repeat;
+  background-color: var(--primary);
+  background-size: 70%;
+}
+
+/* FORMULARIOS */
+.containerForm {
+  width: 100%;
+  transition: all 0.4s ease;
+}
+
+.containerForm:not(.active) {
+  display: none;
+}
+
+/* CABECERA DEL FORMULARIO */
+.form-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-title-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.icon-circle {
+  width: 80px;
+  height: 80px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.icon-circle i {
+  color: var(--white);
+  font-size: 32px;
+}
+
+.form-header h2 {
+  color: var(--primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* CAMPOS DE FORMULARIO */
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-group i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 13px 15px 13px 45px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.input-group input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(143, 148, 251, 0.2);
+  outline: none;
+}
+
+/* ICONO DE MOSTRAR CONTRASEÑA */
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--primary);
+  background: none;
+  border: none;
+  font-size: 16px;
+}
+
+/* BOTONES */
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.btn-primary:hover {
+  background: #151238;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(28, 25, 72, 0.2);
+}
+
+/* ENLACES */
+.form-link {
+  display: block;
+  text-align: center;
+  color: var(--primary);
+  margin-top: 15px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.form-link:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+.forgot-password {
+  text-align: right;
+  margin: -10px 0 15px 0;
+}
+
+.forgot-password a {
+  color: var(--primary);
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.forgot-password a:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+/* SWEETALERT PERSONALIZADO */
+.swal2-popup {
+  border-radius: 10px !important;
+  font-family: 'Montserrat', sans-serif !important;
+}
+
+.swal2-title {
+  color: var(--primary) !important;
+  font-size: 24px !important;
+}
+
+.swal2-confirm {
+  background-color: var(--primary) !important;
+  border-radius: 6px !important;
+  padding: 10px 24px !important;
+}
+
+.swal2-input {
+  border: 1px solid #ddd !important;
+  border-radius: 6px !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .auth-container {
+    flex-direction: column;
+    max-width: 450px;
+  }
+  
+  .image-section {
+    display: none;
+  }
+  
+  .form-section {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-section {
+    padding: 25px 20px;
+  }
+  
+  .form-header h2 {
+    font-size: 22px;
+  }
+  
+  .input-group input {
+    padding: 12px 12px 12px 40px;
+  }
+  
+  .icon-circle {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .icon-circle i {
+    font-size: 28px;
+  }
+}

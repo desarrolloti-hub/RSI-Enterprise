@@ -1,0 +1,10 @@
+{
+  "name": "RSI Enterprise",
+  "short_name": "RSI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
+  "gcm_sender_id": "103953800507"
+}

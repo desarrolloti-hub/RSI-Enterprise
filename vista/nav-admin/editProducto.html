@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Producto</title>
+    <link rel="stylesheet" href="../css/navAdmin.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+            </div>
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+            <ul class="nan_menu">
+                <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+            </ul>
+        </nav>
+    </header>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .registro-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #1d1d1d;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            position: relative;
+        }
+        .icon-container {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #FFD700;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: black;
+        }
+        label {
+            display: block;
+            text-align: left;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .registro-form input, .registro-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            background-color: #2d2d2d;
+            color: #fff;
+            font-size: 16px;
+        }
+        .registro-form button {
+            background-color: #FFD700;
+            color: #000;
+            font-weight: bold;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .image-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .image-container img {
+            max-width: 100px;
+            border: 2px solid #FFD700;
+            border-radius: 5px;
+        }
+        .add-image-btn {
+            background-color: transparent;
+            border: none;
+            color: #FFD700;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+    <br><br><br><br><br><br><br><br>
+</head>
+<body>
+    <div class="registro-container">
+        <div class="icon-container">
+            <i class="fas fa-edit"></i>
+        </div>
+        <form id="edit-form" class="registro-form">
+            <h2>Editar Producto</h2>
+            <input type="hidden" id="productoId">
+            <label for="nombreProducto">Nombre del Producto</label>
+            <input type="text" id="nombreProducto" required>
+            <label for="marca">Marca</label>
+            <input type="text" id="marca" required>
+            <label for="modelo">Modelo</label>
+            <input type="text" id="modelo" required>
+            <label for="precio">Precio (MXN)</label>
+            <input type="text" id="precio" required>
+            <label for="sku">SKU</label>
+            <input type="text" id="sku" required>
+            <label for="especificaciones">Especificaciones</label>
+            <textarea id="especificaciones" required></textarea>
+            <label for="link">Link del Producto</label>
+            <input type="url" id="link" required>
+            
+            <div class="image-container" id="image-container"></div>
+            <button type="button" class="add-image-btn" id="add-image-btn">➕ Agregar nueva imagen</button>
+            <button type="submit">Guardar Cambios</button>
+        </form>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const urlParams = new URLSearchParams(window.location.search);
+        const productoId = urlParams.get("id");
+        const productoRef = doc(db, "Productos", productoId);
+        const imageContainer = document.getElementById("image-container");
+        const addImageBtn = document.getElementById("add-image-btn");
+        let imagenes = [];
+
+        async function cargarProducto() {
+            const productoSnap = await getDoc(productoRef);
+            if (productoSnap.exists()) {
+                const data = productoSnap.data();
+                document.getElementById("nombreProducto").value = data["Nombre Producto"] || "";
+                document.getElementById("marca").value = data.Marca || "";
+                document.getElementById("modelo").value = data.Modelo || "";
+                document.getElementById("precio").value = data["Precio MXN"] || "";
+                document.getElementById("sku").value = data.SKU || "";
+                document.getElementById("especificaciones").value = data.Especificaciones || "";
+                document.getElementById("link").value = data["Link de producto"] || "";
+                imagenes = data.Imagenes || [];
+                actualizarVistaImagenes();
+            }
+        }
+
+        function actualizarVistaImagenes() {
+            imageContainer.innerHTML = "";
+            imagenes.forEach((src, index) => {
+                const imgDiv = document.createElement("div");
+                const img = document.createElement("img");
+                img.src = src;
+                imgDiv.appendChild(img);
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "❌";
+                deleteBtn.type = "button"; // Cambia el tipo a "button"
+                deleteBtn.style.color = "#FF0000";
+                deleteBtn.style.background = "none";
+                deleteBtn.style.border = "none";
+                deleteBtn.style.cursor = "pointer";
+                deleteBtn.onclick = () => eliminarImagen(index);
+                imgDiv.appendChild(deleteBtn);
+                imageContainer.appendChild(imgDiv);
+            });
+        }
+
+        function eliminarImagen(index) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "No podrás revertir esto!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, elimínalo!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    imagenes.splice(index, 1);
+                    actualizarVistaImagenes();
+                    Swal.fire(
+                        'Eliminado!',
+                        'La imagen ha sido eliminada.',
+                        'success'
+                    );
+                }
+            });
+        }
+
+        addImageBtn.addEventListener("click", () => {
+            if (imagenes.length < 3) {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/*";
+                input.addEventListener("change", (event) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        imagenes.push(reader.result);
+                        actualizarVistaImagenes();
+                    };
+                    reader.readAsDataURL(event.target.files[0]);
+                });
+                input.click();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Máximo 3 imágenes permitidas!',
+                });
+            }
+        });
+
+        document.getElementById("edit-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const productoData = {
+                "Nombre Producto": document.getElementById("nombreProducto").value,
+                Marca: document.getElementById("marca").value,
+                Modelo: document.getElementById("modelo").value,
+                "Precio MXN": document.getElementById("precio").value,
+                SKU: document.getElementById("sku").value,
+                Especificaciones: document.getElementById("especificaciones").value,
+                "Link de producto": document.getElementById("link").value,
+                Imagenes: imagenes
+            };
+            try {
+                await updateDoc(productoRef, productoData);
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: 'Producto actualizado correctamente.',
+                }).then(() => {
+                    window.close(); // Cierra la ventana actual
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Hubo un problema al actualizar el producto.',
+                });
+            }
+        });
+
+        cargarProducto();
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+
+    :root {
+      --primary: #1c1948;
+      --secondary: #8f94fb;
+      --white: #ffffff;
+      --gray: #f5f5f5;
+      --text: #333333;
+      --border: #e0e0e0;
+      --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      margin-top: 70px;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: var(--gray);
+    }
+
+    /* Títulos y textos con estilos de contacto */
+    .cert-title {
+        margin-top: 130px;
+      color: var(--primary);
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+      padding: 20px 15px 0;
+    }
+
+    .cert-description {
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+      text-align: center;
+      padding: 0 15px;
+    }
+
+    /* Contenedor de tarjetas de servicios */
+    .rsi-cards-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 30px auto 50px;
+    }
+    
+    .rsi-column {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      flex: 1;
+      min-width: 280px;
+      max-width: 500px;
+    }
+    
+    /* Tarjetas con estilo de contacto */
+    .rsi-card {
+      background: var(--white);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+    
+    .rsi-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .rsi-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    
+    .rsi-card:hover img {
+      transform: scale(1.05);
+    }
+    
+    .rsi-card-content {
+      padding: 25px;
+    }
+    
+    .rsi-card-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--primary);
+    }
+    
+    .rsi-card-text {
+      color: var(--text);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    
+    /* Botones con estilo de contacto */
+    .rsi-card-btn {
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-block;
+      font-size: 14px;
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    .rsi-card-btn:hover {
+      background: #151238;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(28, 25, 72, 0.2);
+    }
+    
+    /* Estilos para el modal de SweetAlert */
+    .custom-swal-popup {
+      border-radius: 15px !important;
+      box-shadow: var(--shadow) !important;
+      font-family: 'Montserrat', sans-serif !important;
+    }
+    
+    .custom-swal-title {
+      color: var(--primary) !important;
+      font-size: 1.8rem !important;
+      font-weight: 600 !important;
+      margin-bottom: 20px !important;
+    }
+    
+    .service-alert-content {
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .rsi-cards-container {
+        margin-top: 80px;
+        padding: 15px;
+        gap: 20px;
+      }
+      
+      .cert-title {
+        font-size: 24px;
+      }
+      
+      .rsi-column {
+        min-width: 100%;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .cert-title {
+        font-size: 22px;
+      }
+      
+      .rsi-card-content {
+        padding: 20px;
+      }
+      
+      .rsi-card-title {
+        font-size: 1.2rem;
+      }
+    }
+
+    /* Animaciones */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .rsi-card {
+      animation: fadeIn 0.6s ease forwards;
+    }
+    
+    .rsi-card:nth-child(1) { animation-delay: 0.1s; }
+    .rsi-card:nth-child(2) { animation-delay: 0.2s; }
+    .rsi-card:nth-child(3) { animation-delay: 0.3s; }
+    .rsi-card:nth-child(4) { animation-delay: 0.4s; }

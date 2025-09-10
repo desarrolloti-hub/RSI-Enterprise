@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta Tags SEO para página "Quiénes Somos" -->
+    <meta name="description" content="RSI Enterprise - Empresa mexicana líder en seguridad electrónica con 5+ años de experiencia. Conoce nuestra misión, visión y valores que nos distinguen en el mercado.">
+    <meta name="keywords" content="empresa seguridad electrónica, instalación cámaras México, certificaciones seguridad, valores empresa seguridad, misión visión seguridad">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rsienterprise.com/nosotros">
+    <meta property="og:title" content="Conoce RSI Enterprise | Expertos en Seguridad Electrónica en México">
+    <meta property="og:description" content="Más de 5 años protegiendo negocios y hogares con soluciones tecnológicas de vanguardia en seguridad electrónica.">
+    <meta property="og:image" content="https://rsienterprise.com/vista/css/img/quienesSomos/nosotros.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rsienterprise.com/nosotros">
+    <meta property="twitter:title" content="Conoce RSI Enterprise | Expertos en Seguridad Electrónica en México">
+    <meta property="twitter:description" content="Empresa certificada con estándares internacionales en sistemas de seguridad y tecnología.">
+    <meta property="twitter:image" content="https://rsienterprise.com/vista/css/img/quienesSomos/nosotros.png">
+
+    <!-- Schema Markup para Página "About" -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "Quiénes Somos - RSI Enterprise",
+    "description": "Empresa mexicana especializada en seguridad electrónica con más de 5 años de experiencia en el mercado",
+    "url": "https://rsienterprise.com/nosotros",
+    "image": "https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png",
+    "about": {
+        "@type": "Organization",
+        "name": "RSI Enterprise",
+        "description": "Especialistas en instalación y mantenimiento de sistemas de seguridad electrónica",
+        "foundingDate": "2018",
+        "founders": [
+        {
+            "@type": "Person",
+            "name": "Fundador RSI"
+        }
+        ],
+        "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Calle 31 #110, Col. El Sol",
+        "addressLocality": "Nezahualcóyotl",
+        "addressRegion": "Estado de México",
+        "postalCode": "57200",
+        "addressCountry": "MX"
+        },
+        "telephone": "+525576908248",
+        "email": "aadministracion@rhafasoluciones.com",
+        "logo": "https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png",
+        "sameAs": [
+        "https://www.facebook.com/RafhaSolucionIntegrales/",
+        "https://www.instagram.com/rafhasolucionintegrales/",
+        "https://www.linkedin.com/company/rafha-soluciones/"
+        ]
+    }
+    }
+    </script>
+    <title>Quiénes Somos | RSI Enterprise - Expertos en Seguridad Electrónica en México</title>
+    <link rel="icon" type="image/png" href="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/index.css">
+    <link rel="stylesheet" href="https://rsienterprise.web.app/vista/css/estilos-nav.css">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Contenedor principal */
+        .about-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Sección de presentación */
+        .intro-section {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        .intro-section h1 {
+            color: #00013f;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .intro-section p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Tarjetas de Misión, Visión, Valores */
+        .core-values {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .value-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 350px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .value-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .value-card h2 {
+            color: #00013f;
+            font-size: 1.8rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .value-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .value-card:hover img {
+            transform: scale(1.03);
+        }
+
+        .value-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Estilo especial para valores - ESPACIADO REDUCIDO */
+        .values-list {
+            font-size: 1rem;
+            line-height: 1.4; /* Reducido de 1.8 */
+            margin: 0;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .values-list p {
+            margin: 3px 0; /* Reducido considerablemente */
+        }
+
+        .values-list strong {
+            color: #00013f;
+            font-size: 1.1rem;
+            margin-right: 5px;
+        }
+
+        /* Sección de certificaciones */
+        .certifications {
+            background: #ffffff;
+            padding: 40px 20px;
+            margin: 40px 0;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .certifications h2 {
+            color: #00013f;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .certifications p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            color: #555;
+        }
+
+        .cert-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .cert-card {
+            background: white;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 280px;
+            padding: 20px;
+            color: #333;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .cert-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+
+        .cert-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .cert-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .cert-card h3 {
+            color: #00013f;
+            font-size: 1.3rem;
+            margin-top: 0;
+        }
+
+        .cert-card p {
+            font-size: 0.95rem;
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .value-card, .cert-card {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .value-card, .cert-card {
+                max-width: 100%;
+            }
+            
+            .intro-section h1 {
+                font-size: 2rem;
+            }
+            
+            .certifications {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <a href="https://rsienterprise.com/"><img src="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a> &emsp; &emsp;
+            </div>
+    
+            <!-- Botón de hamburguesa para móviles -->
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú">&times;</button>
+    
+            <ul class="nan_menu">
+                <li><a href="productos.html"><i class="fas fa-box"></i> Productos</a></li> &emsp;&emsp;
+                <li><a href="servicios.html"><i class="fas fa-tools"></i> Servicios</a></li>&emsp;&emsp;
+                <li><a href="nosotros.html"><i class="fas fa-users"></i> ¿Quiénes somos?</a></li>&emsp;&emsp;
+                <li><a href="contacto-&-comentarios.html"><i class="fas fa-envelope"></i> Contáctanos</a></li>&emsp;&emsp;
+                <li><a href="blogs.html"><i class="fas fa-pencil"></i> Blogs</a></li>&emsp;&emsp;
+                <li><a href="inicio-de-sesion.html"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a></li>&emsp;&emsp;
+                <li class="nan_language">
+                    <select id="languageSelect" class="language-select">
+                        <option value="es" data-flag="https://rsienterprise.com/vista/css/img/flag-mexico.png">🇲🇽</option>
+                        <option value="en" data-flag="https://rsienterprise.com/vista/css/img/flag-usa.png">🇺🇸</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <script src="https://rsienterprise.com/javascripts/nav.js"></script>
+    <br><br><br>
+    <main>
+        <section class="intro-section">
+            <div class="about-container">
+                <h1>Conoce RSI Enterprise</h1>
+                <p>Somos una empresa mexicana con más de 5 años de experiencia, especializada en la implementación, asesoría y mantenimiento de equipos de seguridad. Ofrecemos productos y servicios de alta calidad, adaptados a tus necesidades.</p>
+            </div>
+        </section>
+
+        <section class="about-container">
+            <div class="core-values">
+                <!-- Misión -->
+                <div class="value-card">
+                    <img src="https://rsienterprise.com/vista/css/img/quienesSomos/mision1.png" alt="Misión">
+                    <h2>Misión</h2>
+                    <div class="value-content">
+                        <p>Ofrecer el más alto estándar en servicios de seguridad a través de la implementación de tecnologías y estrategias innovadoras, que detecten y den solución eficaz a las necesidades y prioridades de cada cliente.</p>
+                    </div>
+                </div>
+
+                <!-- Visión -->
+                <div class="value-card">
+                    <img src="https://rsienterprise.com/vista/css/img/quienesSomos/vision.png" alt="Visión">
+                    <h2>Visión</h2>
+                    <div class="value-content">
+                        <p>Consolidarnos y posicionarnos como líderes nacionales e internacionales en seguridad tecnológica, y tecnología de vanguardia, haciendo uso de nuestros dones y talentos, contribuyendo al bienestar social, generando fuentes de ingreso.</p>
+                    </div>
+                </div>
+
+                <!-- Valores - AHORA CON ESPACIADO REDUCIDO -->
+                <div class="value-card">
+                    <img src="https://rsienterprise.com/vista/css/img/quienesSomos/valores.png" alt="Valores">
+                    <h2>Valores</h2>
+                    <div class="value-content">
+                        <div class="values-list">
+                            <p><strong>C</strong>ompromiso</p>
+                            <p><strong>R</strong>esponsabilidad</p>
+                            <p><strong>E</strong>mpatía</p>
+                            <p><strong>C</strong>alidad</p>
+                            <p><strong>I</strong>ntegridad</p>
+                            <p><strong>M</strong>odestia</p>
+                            <p><strong>I</strong>gualdad</p>
+                            <p><strong>E</strong>xcelencia</p>
+                            <p><strong>N</strong>obleza</p>
+                            <p><strong>T</strong>ransparencia</p>
+                            <p><strong>O</strong>ptimismo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="certifications">
+            <div class="about-container">
+                <h2>Nuestras certificaciones</h2>
+                <p>Descubre los estándares internacionales que respaldan nuestra excelencia. Garantizamos innovación, calidad y confianza en cada servicio!</p>
+                
+                <div class="cert-cards">
+                    <div class="cert-card">
+                        <img src="https://rsienterprise.com/vista/css/img/quienesSomos/people.png" alt="PEOPLECERT">
+                        <h3>PEOPLECERT - ITIL</h3>
+                        <p>Nuestro equipo de expertos en TI es el motor detrás de la transformación organizacional, implementando servicios clave con innovación y resultados impactantes.</p>
+                    </div>
+                    
+                    <div class="cert-card">
+                        <img src="https://rsienterprise.com/vista/css/img/quienesSomos/scrum.png" alt="SCRUMstudy">
+                        <h3>SCRUMstudy</h3>
+                        <p>Llevamos la innovación al siguiente nivel con Scrum, revolucionando la gestión de proyectos y potenciando la mejora continua de productos.</p>
+                    </div>
+                    
+                    <div class="cert-card">
+                        <img src="https://rsienterprise.com/vista/css/img/quienesSomos/honeywell.png" alt="HoneyWell">
+                        <h3>FIRE LITE ALARMS</h3>
+                        <p>Técnicos altamente certificados en sistemas de control de incendios diseñados a la medida de tus necesidades.</p>
+                    </div>
+                    
+                    <div class="cert-card">
+                        <img src="https://rsienterprise.com/vista/css/img/quienesSomos/dsc.png" alt="DSC">
+                        <h3>DSC</h3>
+                        <p>Diseñamos, instalamos y mantenemos sistemas de prevención y extinción de incendios con precisión y excelencia.</p>
+                    </div>
+                    
+                    <div class="cert-card">
+                        <img src="https://rsienterprise.com/vista/css/img/quienesSomos/repse.png" alt="REPSE">
+                        <h3>REPSE</h3>
+                        <p>Registro que garantiza nuestros altos estándares de calidad y legalidad en servicios especializados.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div id="footer-wrapper"></div>
+    <script src="../../javascripts/includesVisita.js"></script>
+    <script src="../../javascripts/navScript.js"></script>
+    <script src="../../javascripts/funcionalidades.js"></script>
+</body>
+</html>

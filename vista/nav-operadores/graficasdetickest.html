@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="../../manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas Colaboradores | RSI Enterprise</title>
+    <link rel="stylesheet" href="gestion_Tickets.css">
+    <link rel="stylesheet" href="graficas.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js para gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF para generar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <!-- Imagen de fondo -->
+    <div class="../css/img/Logo-RSI-OFICIAL.png"></div>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="user-profile">
+            <img id="userAvatar" src="https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png" alt="Logo RSI" class="user-avatar">
+            <h2 class="user-name" id="userNameDisplay">Cargando...</h2>
+            <span class="user-area" id="userAreaDisplay">ÁREA: Cargando...</span>
+        </div>
+
+        <div class="logout-container">
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+            
+            <button class="asistencia-btn" id="endAssistanceBtn">
+                <i class="fas fa-user-clock"></i> Terminar Asistencia
+            </button>
+            
+            <button class="asistencia-btn" id="createTicketBtn" style="display: none;">
+                <i class="fas fa-plus-circle"></i> Levantar Ticket
+            </button>
+            
+            <!-- Botones especiales aquí -->
+            
+            <a href="../nav-operadores/gestion_Tickets.html" 
+               id="botonEspecial2" 
+               class="special-btn">
+               <i class="fas fa-file"></i> Ver Mis Tickets
+            </a>
+        </div>
+
+        <div class="stats-header">
+            <h3 class="stats-title">Mis Estadísticas</h3>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-title"><i class="fas fa-users"></i> Total Colaboradores</div>
+                <div id="totalColaboradores" class="stat-value">0</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> <span>5% vs último mes</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title"><i class="fas fa-ticket-alt"></i> Tickets Activos</div>
+                <div id="ticketsActivos" class="stat-value">0</div>
+                <div class="stat-trend trend-down">
+                    <i class="fas fa-arrow-down"></i> <span>2% menos</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tickets-chart">
+            <div class="chart-title">Estado de Tickets</div>
+            <canvas id="statusChart"></canvas>
+        </div>
+        
+        <div class="priority-stats">
+            <div class="chart-title">Tickets por Prioridad</div>
+            <canvas id="priorityChart"></canvas>
+        </div><br>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="crud-header">
+            <center>
+                <h1 class="page-title">Estadísticas de Colaboradores</h1>
+            </center>
+        </div>
+
+        <!-- Contenedores principales -->
+        <div class="dashboard-container">
+            <!-- Top Colaboradores -->
+            <div class="dashboard-section">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-trophy"></i> Top Colaborador
+                    </div>
+                    <div class="card-body" id="topColaborador">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-check-circle"></i> Mayor Finalizador
+                    </div>
+                    <div class="card-body" id="topFinalizador">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i> Eficiencia General
+                    </div>
+                    <div class="card-body" id="eficienciaGeneral">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráficas principales -->
+            <div class="dashboard-section">
+                <div class="dashboard-card wide-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar"></i> Tickets por Colaborador
+                    </div>
+                    <div class="card-body">
+                        <canvas id="ticketsPorColaboradorChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="dashboard-card wide-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie"></i> Distribución de Tickets
+                    </div>
+                    <div class="card-body">
+                        <canvas id="distribucionTicketsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabla de desempeño -->
+            <div class="dashboard-section">
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-table"></i> Desempeño por Colaborador
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="desempenoTable">
+                                <thead>
+                                    <tr>
+                                        <th>Colaborador</th>
+                                        <th>Área</th>
+                                        <th>Tickets</th>
+                                        <th>Finalizados</th>
+                                        <th>En Proceso</th>
+                                        <th>Pendientes</th>
+                                        <th>Eficiencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Se llenará dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para visualización de imágenes -->
+    <div id="imageViewerModal" class="modal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh; background: transparent; box-shadow: none;">
+            <span class="close" style="position: absolute; top: 15px; right: 15px; color: white; font-size: 35px; z-index: 100;">&times;</span>
+            <img id="expandedImage" style="width: 100%; height: auto; max-height: 90vh; object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- Modal de progreso para PDF -->
+    <div id="pdfProgressModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="modal-header">
+                <h2>Generando PDF</h2>
+            </div>
+            <div class="modal-body">
+                <div class="pdf-progress">
+                    <i class="fas fa-file-pdf fa-3x" style="color: #e74c3c; margin-bottom: 20px;"></i>
+                    <p>Procesando información del ticket...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="pdfProgressFill"></div>
+                    </div>
+                    <p id="pdfProgressText">0%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+// Esquemas de datos
+const DataSchemas = {
+    COLABORADOR: {
+        NOMBRE: '',
+        ÁREA: '',
+        PUESTO: '',
+        'CORREO ELECTRÓNICO EMPRESARIAL': '',
+        imagen: '',
+        ticketsAsignados: 0,
+        ticketsFinalizados: 0,
+        ultimaActualizacion: null
+    }
+};
+
+// Clase para manejar el estado del dashboard
+class DashboardManager {
+    constructor() {
+        this.colaboradoresData = [];
+        this.ticketsData = [];
+        this.charts = {};
+    }
+
+    setColaboradoresData(data) {
+        this.colaboradoresData = data;
+    }
+
+    setTicketsData(data) {
+        this.ticketsData = data;
+    }
+
+    registerChart(name, chart) {
+        this.charts[name] = chart;
+    }
+
+    destroyChart(name) {
+        if (this.charts[name]) {
+            this.charts[name].destroy();
+            delete this.charts[name];
+        }
+    }
+
+    destroyAllCharts() {
+        Object.keys(this.charts).forEach(name => this.destroyChart(name));
+    }
+}
+
+// Instancia única del manager
+const dashboardManager = new DashboardManager();
+
+// Importar módulos necesarios de Firebase v9
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { 
+    getFirestore, 
+    collection, 
+    query, 
+    where,
+    getDocs,
+    orderBy,
+    doc,
+    getDoc,
+    limit,
+    updateDoc,
+    addDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    signOut,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+    projectId: "rsienterprise",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+    measurementId: "G-38F2DBG9HE"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Configurar el proveedor de Google
+provider.addScope('email');
+provider.addScope('profile');
+
+// Elementos del DOM
+const DOM = {
+    userAvatar: document.getElementById('userAvatar'),
+    userNameDisplay: document.getElementById('userNameDisplay'),
+    userAreaDisplay: document.getElementById('userAreaDisplay'),
+    totalColaboradores: document.getElementById('totalColaboradores'),
+    ticketsActivos: document.getElementById('ticketsActivos'),
+    statusChart: document.getElementById('statusChart'),
+    priorityChart: document.getElementById('priorityChart'),
+    ticketsPorColaboradorChart: document.getElementById('ticketsPorColaboradorChart'),
+    distribucionTicketsChart: document.getElementById('distribucionTicketsChart'),
+    topColaborador: document.getElementById('topColaborador'),
+    topFinalizador: document.getElementById('topFinalizador'),
+    eficienciaGeneral: document.getElementById('eficienciaGeneral'),
+    desempenoTable: document.querySelector('#desempenoTable tbody'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    endAssistanceBtn: document.getElementById('endAssistanceBtn')
+};
+
+// Estado de la aplicación
+const AppState = {
+    currentUser: null,
+    userData: null,
+    userRole: null,
+    allColaboradores: [],
+    allTickets: []
+};
+
+// Funciones de utilidad
+const Utils = {
+    showLoading: (message = 'Cargando...') => {
+        Swal.fire({
+            title: message,
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+    },
+    
+    hideLoading: () => Swal.close(),
+    
+    showError: (message, title = 'Error') => {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: message,
+            confirmButtonColor: '#3085d6'
+        });
+    },
+    
+    formatNumber: (num) => {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    },
+    
+    calculateEfficiency: (total, completados) => {
+        if (total === 0) return 0;
+        return Math.round((completados / total) * 100);
+    },
+    
+    getRandomColor: () => {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+};
+
+// Controlador de Estadísticas
+const StatsController = {
+    async loadAllData() {
+        try {
+            Utils.showLoading('Cargando datos...');
+            
+            // Cargar todos los colaboradores
+            const colaboradoresRef = collection(db, 'colaboradores');
+            const colaboradoresSnapshot = await getDocs(colaboradoresRef);
+            const colaboradores = [];
+            
+            colaboradoresSnapshot.forEach(doc => {
+                colaboradores.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            // Cargar todos los tickets
+            const ticketsRef = collection(db, 'ticketsmesa');
+            const ticketsSnapshot = await getDocs(ticketsRef);
+            const tickets = [];
+            
+            ticketsSnapshot.forEach(doc => {
+                tickets.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            AppState.allColaboradores = colaboradores;
+            AppState.allTickets = tickets;
+            
+            // Actualizar UI con los datos
+            this.updateDashboard(colaboradores, tickets);
+            
+        } catch (error) {
+            console.error("Error cargando datos:", error);
+            Utils.showError("No se pudieron cargar los datos del dashboard");
+        } finally {
+            Utils.hideLoading();
+        }
+    },
+    
+    updateDashboard(colaboradores, tickets) {
+        // Actualizar contadores principales
+        DOM.totalColaboradores.textContent = colaboradores.length;
+        
+        const ticketsActivos = tickets.filter(t => t.estado && t.estado !== 'finalizado').length;
+        DOM.ticketsActivos.textContent = ticketsActivos;
+        
+        // Calcular estadísticas por colaborador
+        const statsByColaborador = this.calculateColaboradorStats(colaboradores, tickets);
+        
+        // Actualizar top colaboradores
+        this.updateTopColaboradores(statsByColaborador);
+        
+        // Actualizar tabla de desempeño
+        this.updateDesempenoTable(statsByColaborador);
+        
+        // Actualizar gráficas
+        this.updateCharts(statsByColaborador, tickets);
+    },
+    
+    calculateColaboradorStats(colaboradores, tickets) {
+        return colaboradores.map(colab => {
+            // Filtrar tickets del colaborador actual
+            const colabTickets = tickets.filter(t => {
+                // Verificar si el ticket tiene responsableNombre y coincide
+                const hasResponsable = t.responsableNombre && t.responsableNombre === colab.NOMBRE;
+                
+                // Verificar si el ticket tiene colaboradores y el ID está incluido
+                const hasColaboradores = t.colaboradores && Array.isArray(t.colaboradores) && 
+                                        t.colaboradores.includes(colab.id);
+                
+                return hasResponsable || hasColaboradores;
+            });
+            
+            // Contar tickets finalizados
+            const colabFinalizados = colabTickets.filter(t => 
+                t.estado && t.estado === 'finalizado'
+            ).length;
+            
+            // Contar tickets en proceso
+            const colabEnProceso = colabTickets.filter(t => 
+                t.estado && t.estado === 'en_proceso'
+            ).length;
+            
+            // Contar tickets pendientes
+            const colabPendientes = colabTickets.filter(t => 
+                t.estado && t.estado === 'pendiente'
+            ).length;
+            
+            return {
+                id: colab.id,
+                nombre: colab.NOMBRE || 'Sin nombre',
+                area: colab.ÁREA || 'Sin área',
+                imagen: colab.imagen || 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png',
+                ticketsTotal: colabTickets.length,
+                ticketsFinalizados: colabFinalizados,
+                ticketsEnProceso: colabEnProceso,
+                ticketsPendientes: colabPendientes,
+                eficiencia: Utils.calculateEfficiency(colabTickets.length, colabFinalizados)
+            };
+        });
+    },
+    
+    updateTopColaboradores(stats) {
+        // Filtrar colaboradores con al menos un ticket
+        const colaboradoresConTickets = stats.filter(c => c.ticketsTotal > 0);
+        
+        if (colaboradoresConTickets.length === 0) {
+            DOM.topColaborador.innerHTML = '<p>No hay datos disponibles</p>';
+            DOM.topFinalizador.innerHTML = '<p>No hay datos disponibles</p>';
+            DOM.eficienciaGeneral.innerHTML = '<p>No hay datos disponibles</p>';
+            return;
+        }
+        
+        // Encontrar al colaborador con más tickets
+        const topColaborador = [...colaboradoresConTickets].sort((a, b) => b.ticketsTotal - a.ticketsTotal)[0];
+        
+        // Encontrar al colaborador con más tickets finalizados
+        const topFinalizador = [...colaboradoresConTickets].sort((a, b) => b.ticketsFinalizados - a.ticketsFinalizados)[0];
+        
+        // Calcular eficiencia general
+        const totalTickets = colaboradoresConTickets.reduce((sum, colab) => sum + colab.ticketsTotal, 0);
+        const totalFinalizados = colaboradoresConTickets.reduce((sum, colab) => sum + colab.ticketsFinalizados, 0);
+        const eficienciaGeneral = Utils.calculateEfficiency(totalTickets, totalFinalizados);
+        
+        // Actualizar DOM
+        if (topColaborador) {
+            DOM.topColaborador.innerHTML = `
+                <div class="top-colaborador-info">
+                    <img src="${topColaborador.imagen}" alt="${topColaborador.nombre}" class="top-colaborador-img">
+                    <div>
+                        <h4>${topColaborador.nombre}</h4>
+                        <p>${topColaborador.area}</p>
+                    </div>
+                </div>
+                <div class="top-colaborador-stats">
+                    <span class="stat-number">${topColaborador.ticketsTotal}</span>
+                    <span class="stat-label">Tickets</span>
+                </div>
+            `;
+        }
+        
+        if (topFinalizador) {
+            DOM.topFinalizador.innerHTML = `
+                <div class="top-colaborador-info">
+                    <img src="${topFinalizador.imagen}" alt="${topFinalizador.nombre}" class="top-colaborador-img">
+                    <div>
+                        <h4>${topFinalizador.nombre}</h4>
+                        <p>${topFinalizador.area}</p>
+                    </div>
+                </div>
+                <div class="top-colaborador-stats">
+                    <span class="stat-number">${topFinalizador.ticketsFinalizados}</span>
+                    <span class="stat-label">Finalizados</span>
+                </div>
+            `;
+        }
+        
+        DOM.eficienciaGeneral.innerHTML = `
+            <div class="eficiencia-circle">
+                <div class="circle-progress" style="--progress: ${eficienciaGeneral}%">
+                    <span>${eficienciaGeneral}%</span>
+                </div>
+            </div>
+            <div class="eficiencia-info">
+                <p>${totalFinalizados} de ${totalTickets} tickets completados</p>
+            </div>
+        `;
+    },
+    
+    updateDesempenoTable(stats) {
+        DOM.desempenoTable.innerHTML = '';
+        
+        // Filtrar colaboradores con al menos un ticket
+        const colaboradoresConTickets = stats.filter(c => c.ticketsTotal > 0);
+        
+        if (colaboradoresConTickets.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="7" style="text-align: center;">No hay datos disponibles</td>';
+            DOM.desempenoTable.appendChild(row);
+            return;
+        }
+        
+        colaboradoresConTickets.sort((a, b) => b.ticketsTotal - a.ticketsTotal).forEach(colab => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>
+                    <div class="colaborador-cell">
+                        <img src="${colab.imagen}" alt="${colab.nombre}" class="colaborador-table-img">
+                        ${colab.nombre}
+                    </div>
+                </td>
+                <td>${colab.area}</td>
+                <td>${colab.ticketsTotal}</td>
+                <td>${colab.ticketsFinalizados}</td>
+                <td>${colab.ticketsEnProceso}</td>
+                <td>${colab.ticketsPendientes}</td>
+                <td>
+                    <div class="eficiencia-bar-container">
+                        <div class="eficiencia-bar" style="width: ${colab.eficiencia}%">
+                            <span>${colab.eficiencia}%</span>
+                        </div>
+                    </div>
+                </td>
+            `;
+            
+            DOM.desempenoTable.appendChild(row);
+        });
+    },
+    
+    updateCharts(stats, tickets) {
+        // Destruir gráficas existentes
+        dashboardManager.destroyAllCharts();
+        
+        // Filtrar colaboradores con al menos un ticket
+        const colaboradoresConTickets = stats.filter(c => c.ticketsTotal > 0);
+        
+        // Gráfica de estado de tickets
+        const ticketsFinalizados = tickets.filter(t => t.estado && t.estado === 'finalizado').length;
+        const ticketsEnProceso = tickets.filter(t => t.estado && t.estado === 'en_proceso').length;
+        const ticketsPendientes = tickets.filter(t => t.estado && t.estado === 'pendiente').length;
+        
+        const statusCtx = DOM.statusChart.getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Finalizados', 'En Proceso', 'Pendientes'],
+                datasets: [{
+                    data: [ticketsFinalizados, ticketsEnProceso, ticketsPendientes],
+                    backgroundColor: [
+                        '#4CAF50',
+                        '#FFC107',
+                        '#F44336'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        dashboardManager.registerChart('statusChart', statusChart);
+        
+        // Gráfica de tickets por prioridad
+        const ticketsAlta = tickets.filter(t => t.prioridad && t.prioridad === 'alta').length;
+        const ticketsMedia = tickets.filter(t => t.prioridad && t.prioridad === 'media').length;
+        const ticketsBaja = tickets.filter(t => t.prioridad && t.prioridad === 'baja').length;
+        
+        const priorityCtx = DOM.priorityChart.getContext('2d');
+        const priorityChart = new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Alta', 'Media', 'Baja'],
+                datasets: [{
+                    label: 'Tickets por Prioridad',
+                    data: [ticketsAlta, ticketsMedia, ticketsBaja],
+                    backgroundColor: [
+                        '#F44336',
+                        '#FFC107',
+                        '#4CAF50'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        dashboardManager.registerChart('priorityChart', priorityChart);
+        
+        // Gráfica de tickets por colaborador (top 10)
+        const topColaboradores = [...colaboradoresConTickets].sort((a, b) => b.ticketsTotal - a.ticketsTotal).slice(0, 10);
+        
+        if (topColaboradores.length > 0) {
+            const ticketsPorColaboradorCtx = DOM.ticketsPorColaboradorChart.getContext('2d');
+            const ticketsPorColaboradorChart = new Chart(ticketsPorColaboradorCtx, {
+                type: 'bar',
+                data: {
+                    labels: topColaboradores.map(c => c.nombre),
+                    datasets: [
+                        {
+                            label: 'Tickets Totales',
+                            data: topColaboradores.map(c => c.ticketsTotal),
+                            backgroundColor: '#3F51B5',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Tickets Finalizados',
+                            data: topColaboradores.map(c => c.ticketsFinalizados),
+                            backgroundColor: '#4CAF50',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+            dashboardManager.registerChart('ticketsPorColaboradorChart', ticketsPorColaboradorChart);
+        }
+        
+        // Gráfica de distribución de tickets por área
+        const areas = [...new Set(colaboradoresConTickets.map(c => c.area))];
+        const ticketsPorArea = areas.map(area => {
+            const colabsEnArea = colaboradoresConTickets.filter(c => c.area === area);
+            return {
+                area,
+                total: colabsEnArea.reduce((sum, c) => sum + c.ticketsTotal, 0),
+                finalizados: colabsEnArea.reduce((sum, c) => sum + c.ticketsFinalizados, 0)
+            };
+        }).filter(a => a.total > 0);
+        
+        if (ticketsPorArea.length > 0) {
+            const distribucionCtx = DOM.distribucionTicketsChart.getContext('2d');
+            const distribucionChart = new Chart(distribucionCtx, {
+                type: 'pie',
+                data: {
+                    labels: ticketsPorArea.map(a => a.area),
+                    datasets: [{
+                        data: ticketsPorArea.map(a => a.total),
+                        backgroundColor: ticketsPorArea.map(() => Utils.getRandomColor()),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const area = ticketsPorArea.find(a => a.area === context.label);
+                                    return `Finalizados: ${area.finalizados} (${Utils.calculateEfficiency(area.total, area.finalizados)}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            dashboardManager.registerChart('distribucionTicketsChart', distribucionChart);
+        }
+    }
+};
+
+// Controlador de Asistencia
+const AssistanceController = {
+    async endAssistance() {
+        try {
+            // Verificar si ya se está procesando
+            if (this._isEndingAssistance) return;
+            this._isEndingAssistance = true;
+            
+            Utils.showLoading('Registrando fin de asistencia...');
+            
+            if (!AppState.currentUser || !AppState.userData || !AppState.userData.colaboradorId) {
+                throw new Error('No se encontraron los datos del usuario');
+            }
+            
+            // Obtener referencia al colaborador
+            const colaboradorRef = doc(db, 'colaboradores', AppState.userData.colaboradorId);
+            const colaboradorSnap = await getDoc(colaboradorRef);
+            
+            if (!colaboradorSnap.exists()) {
+                throw new Error('No se encontró el registro del colaborador');
+            }
+            
+            const colaboradorData = colaboradorSnap.data();
+            
+            // Verificar si la asistencia ya está cerrada
+            if (!colaboradorData.asistencia?.estado) {
+                throw new Error('Tu asistencia ya está cerrada');
+            }
+            
+            // Actualizar el estado de asistencia
+            await updateDoc(colaboradorRef, {
+                'asistencia.estado': false,
+                'asistencia.ultimoCierre': serverTimestamp()
+            });
+            
+            // Registrar en la colección de asistencia
+            const asistenciaRef = collection(db, 'asistencias');
+            await addDoc(asistenciaRef, {
+                colaboradorId: AppState.userData.colaboradorId,
+                colaboradorNombre: AppState.userData.NOMBRE,
+                tipo: 'salida',
+                fecha: serverTimestamp(),
+                area: AppState.userData.ÁREA,
+                email: AppState.currentUser.email,
+                dia: new Date().toLocaleDateString('es-MX', { weekday: 'long' }),
+                horaRegistro: new Date().toLocaleTimeString('es-MX'),
+                ubicacion: {
+                    latitude: 19.4372,
+                    longitude: -99.0369,
+                    accuracy: 5000,
+                    source: 'lp'
+                }
+            });
+            
+            Utils.hideLoading();
+            
+            // Mostrar confirmación y redirigir
+            await Swal.fire({
+                icon: 'success',
+                title: 'Asistencia registrada',
+                text: 'Se ha registrado correctamente tu salida. Serás redirigido.',
+                confirmButtonColor: '#3085d6',
+                allowOutsideClick: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            
+            // Redirigir igual que en el logout
+            await AuthController.signOut();
+            
+        } catch (error) {
+            console.error("Error terminando asistencia:", error);
+            
+            let errorMessage = error.message;
+            if (errorMessage.includes('asistencia ya está cerrada')) {
+                // Si ya estaba cerrada, forzar logout igualmente
+                await AuthController.signOut();
+                return;
+            }
+            
+            Utils.showError(errorMessage || 'No se pudo registrar la asistencia');
+        } finally {
+            this._isEndingAssistance = false;
+            Utils.hideLoading();
+        }
+    }
+};
+
+// Controlador de autenticación
+const AuthController = {
+    async signInWithGoogle() {
+        try {
+            Utils.showLoading('Iniciando sesión...');
+            const result = await signInWithPopup(auth, provider);
+            AppState.currentUser = result.user;
+            console.log('Usuario autenticado:', result.user);
+            await this.verifyUserAccess(AppState.currentUser.email);
+        } catch (error) {
+            console.error("Error al iniciar sesión:", error);
+            Utils.showError(error.message || 'No se pudo iniciar sesión');
+        }
+    },
+    
+    async verifyUserAccess(email) {
+        try {
+            Utils.showLoading('Verificando acceso...');
+            
+            console.log('Verificando acceso para:', email);
+            
+            // 1. Verificar en la colección 'usuarios'
+            const usuariosRef = collection(db, 'usuarios');
+            const q = query(usuariosRef, where("email", "==", email));
+            const userSnapshot = await getDocs(q);
+            
+            if (userSnapshot.empty) {
+                throw new Error('No tienes acceso a esta plataforma');
+            }
+            
+            // Obtener rol del usuario
+            let userRole = null;
+            userSnapshot.forEach(doc => {
+                userRole = doc.data().rol;
+                console.log('Rol del usuario:', userRole);
+            });
+            
+            // Permitir acceso a todos excepto a los que tengan rol 'user'
+            if (userRole === 'user') {
+                throw new Error('No tienes permisos para acceder a esta sección');
+            }
+            
+            AppState.userRole = userRole;
+            
+            // Mostrar botón de crear ticket solo para admincolaborador
+            if (userRole === 'admincolaborador') {
+                const createTicketBtn = document.getElementById('createTicketBtn');
+                if (createTicketBtn) {
+                    createTicketBtn.style.display = 'block';
+                }
+            }
+            
+            // 2. Obtener datos del colaborador
+            const colaboradoresRef = collection(db, 'colaboradores');
+            const q2 = query(colaboradoresRef, where("CORREO ELECTRÓNICO EMPRESARIAL", "==", email));
+            const collabSnapshot = await getDocs(q2);
+            
+            if (collabSnapshot.empty) {
+                throw new Error('No se encontraron tus datos de colaborador');
+            }
+            
+            collabSnapshot.forEach(doc => {
+                AppState.userData = doc.data();
+                AppState.userData.colaboradorId = doc.id;
+                AppState.userData.nombreCompleto = doc.data()['NOMBRE'];
+                console.log("Datos del colaborador cargados:", AppState.userData);
+            });
+            
+            // Actualizar UI
+            this.updateUserProfile();
+            
+            // Cargar datos del dashboard
+            await StatsController.loadAllData();
+            
+        } catch (error) {
+            console.error("Error verificando acceso:", error);
+            await this.signOut();
+            Utils.showError(error.message);
+        } finally {
+            Utils.hideLoading();
+        }
+    },
+    
+    updateUserProfile() {
+        if (!AppState.userData) return;
+        
+        const userAvatar = DOM.userAvatar;
+        const userNameDisplay = DOM.userNameDisplay;
+        const userAreaDisplay = DOM.userAreaDisplay;
+        
+        if (userAvatar) {
+            userAvatar.src = AppState.userData.imagen || 
+                           'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
+        }
+        
+        if (userNameDisplay && AppState.userData.NOMBRE) {
+            userNameDisplay.textContent = AppState.userData.NOMBRE;
+        }
+        
+        if (userAreaDisplay && AppState.userData.ÁREA) {
+            userAreaDisplay.textContent = `ÁREA: ${AppState.userData.ÁREA}`;
+        }
+    },
+    
+    async signOut() {
+        try {
+            // Evitar múltiples ejecuciones
+            if (this._isLoggingOut) return;
+            this._isLoggingOut = true;
+            
+            Utils.showLoading('Cerrando sesión...');
+            await signOut(auth);
+            
+            // Limpiar estado
+            AppState.currentUser = null;
+            AppState.userData = null;
+            AppState.userRole = null;
+            AppState.allColaboradores = [];
+            AppState.allTickets = [];
+            
+            // Limpiar UI
+            if (DOM.userAvatar) {
+                DOM.userAvatar.src = 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
+            }
+            if (DOM.userNameDisplay) {
+                DOM.userNameDisplay.textContent = 'Usuario no autenticado';
+            }
+            if (DOM.userAreaDisplay) {
+                DOM.userAreaDisplay.textContent = 'ÁREA: No disponible';
+            }
+            
+            // Cerrar cualquier modal abierto
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => modal.style.display = 'none');
+            
+            // Redirección única con reemplazo en el historial
+            window.location.replace('/vista/nav-visitantes/inicio-de-sesion.html');
+            
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+            Utils.showError('No se pudo cerrar la sesión correctamente');
+        } finally {
+            this._isLoggingOut = false;
+            Utils.hideLoading();
+        }
+    },
+    
+    initializeAuthListener() {
+        onAuthStateChanged(auth, async (user) => {
+            console.log('Estado de autenticación cambió:', user ? 'Autenticado' : 'No autenticado');
+            if (user) {
+                AppState.currentUser = user;
+                try {
+                    await this.verifyUserAccess(user.email);
+                } catch (error) {
+                    console.error("Error en auth listener:", error);
+                }
+            } else {
+                console.log('Usuario no autenticado, iniciando proceso de login...');
+                this.signInWithGoogle();
+            }
+        });
+    }
+};
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM cargado, inicializando aplicación...');
+    
+    // Configurar evento de logout
+    if (DOM.logoutBtn) {
+        DOM.logoutBtn.addEventListener('click', () => {
+            AuthController.signOut();
+        });
+    }
+
+    // Configurar evento para el botón de terminar asistencia
+    if (DOM.endAssistanceBtn) {
+        DOM.endAssistanceBtn.addEventListener('click', async () => {
+            await AssistanceController.endAssistance();
+        });
+    }
+
+    // Configurar el botón de cerrar en el modal de imagen
+    const imageModalClose = document.querySelector('#imageViewerModal .close');
+    if (imageModalClose) {
+        imageModalClose.addEventListener('click', () => {
+            document.getElementById('imageViewerModal').style.display = 'none';
+        });
+    }
+
+    // Cerrar modales al hacer clic fuera del contenido
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            document.getElementById('imageViewerModal').style.display = 'none';
+        }
+    });
+
+    // Event listener para el botón de crear ticket
+    const createTicketBtn = document.getElementById('createTicketBtn');
+    if (createTicketBtn) {
+        createTicketBtn.addEventListener('click', () => {
+            window.location.href = '/vista/nav-mesa/gestion-tickets.html';
+        });
+    }
+    
+    AuthController.initializeAuthListener();
+    
+    // Hacer Swal disponible globalmente
+    window.Swal = Swal;
+});
+
+// Función para abrir el modal con la imagen en grande
+window.openImageModal = function(imageSrc) {
+    const modal = document.getElementById('imageViewerModal');
+    const img = document.getElementById('expandedImage');
+    if (modal && img) {
+        img.src = imageSrc;
+        modal.style.display = 'block';
+    }
+};
+
+// Función para cerrar el modal de imagen
+function closeImageModal() {
+    document.getElementById('imageViewerModal').style.display = 'none';
+}
+
+</script>
+
+<!-- Al final del body, después de todo el código principal -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear botón hamburguesa
+    const hamburgerBtn = document.createElement('button');
+    hamburgerBtn.className = 'sidebar-toggle';
+    hamburgerBtn.innerHTML = '<span></span><span></span><span></span>';
+    document.body.appendChild(hamburgerBtn);
+
+    // Crear overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+
+    // Elementos existentes
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    // Evento para abrir/cerrar menú
+    hamburgerBtn.addEventListener('click', function() {
+        this.classList.toggle('active');
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
+    });
+
+    // Cerrar menú al hacer clic en overlay
+    overlay.addEventListener('click', function() {
+        hamburgerBtn.classList.remove('active');
+        sidebar.classList.remove('active');
+        this.classList.remove('active');
+        document.body.classList.remove('menu-open');
+    });
+
+    // Cerrar menú al hacer clic en enlaces del sidebar
+    const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar button');
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Solo cerrar si es un enlace (no botones de acción)
+            if (this.tagName === 'A') {
+                hamburgerBtn.classList.remove('active');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.classList.remove('menu-open');
+            }
+        });
+    });
+
+    // Mejorar accesibilidad
+    hamburgerBtn.setAttribute('aria-label', 'Menú de navegación');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+    
+    hamburgerBtn.addEventListener('click', function() {
+        const expanded = this.classList.contains('active');
+        this.setAttribute('aria-expanded', expanded);
+        sidebar.setAttribute('aria-hidden', !expanded);
+    });
+});
+
+</script>
+
+<!-- Estilos adicionales para el dashboard -->
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>

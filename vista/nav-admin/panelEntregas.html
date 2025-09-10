@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Entregas RSI</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <style>
+        :root {
+            --color-primary: #000000;
+            --color-secondary: #FFD700;
+            --color-accent: #C0A020;
+            --color-text: #E0E0E0;
+            --color-text-secondary: #A0A0A0;
+            --color-card-bg: #121212;
+            --color-table-header: #1A1A1A;
+            --color-table-row: #1E1E1E;
+            --color-table-row-alt: #252525;
+            --color-success: #28a745;
+            --color-warning: #ffc107;
+            --color-danger: #dc3545;
+            --color-info: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--color-primary);
+            color: var(--color-text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #1A1A1A 100%);
+            border: 1px solid var(--color-accent);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, var(--color-secondary) 0%, transparent 70%);
+            opacity: 0.1;
+        }
+        
+        .header h1 {
+            color: var(--color-secondary);
+            font-size: 28px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            color: var(--color-text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Card Styles */
+        .card {
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-accent);
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--color-accent);
+            background: linear-gradient(to right, var(--color-primary), #1A1A1A);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-header h2 {
+            color: var(--color-secondary);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 6px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--color-text);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        
+        thead {
+            background-color: var(--color-table-header);
+            color: var(--color-secondary);
+        }
+        
+        tbody tr {
+            background-color: var(--color-table-row);
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: var(--color-table-row-alt);
+        }
+        
+        tbody tr:hover {
+            background-color: #2A2A2A;
+        }
+        
+        /* Badge Styles */
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-success {
+            background-color: var(--color-success);
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: var(--color-warning);
+            color: #212529;
+        }
+        
+        .badge-danger {
+            background-color: var(--color-danger);
+            color: white;
+        }
+        
+        .badge-secondary {
+            background-color: var(--color-text-secondary);
+            color: white;
+        }
+        
+        .badge-info {
+            background-color: var(--color-info);
+            color: white;
+        }
+        
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--color-secondary);
+            color: #000;
+            border: 1px solid var(--color-secondary);
+        }
+        
+        .btn-primary:hover {
+            background-color: transparent;
+            color: var(--color-secondary);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--color-secondary);
+            border: 1px solid var(--color-secondary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--color-secondary);
+            color: #000;
+        }
+        
+        .btn-success {
+            background-color: var(--color-success);
+            color: white;
+            border: 1px solid var(--color-success);
+        }
+        
+        .btn-success:hover {
+            background-color: transparent;
+            color: var(--color-success);
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        /* Status Cell */
+        .status-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .last-update {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+        }
+        
+        .refresh-btn {
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            transition: color 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            color: var(--color-secondary);
+        }
+        
+        /* Spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-top-color: var(--color-secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-accent);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--color-accent);
+            background: linear-gradient(to right, var(--color-primary), #1A1A1A);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .modal-header h3 {
+            color: var(--color-secondary);
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: var(--color-secondary);
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--color-accent);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Info Sections */
+        .info-section {
+            margin-bottom: 20px;
+        }
+        
+        .info-section h4 {
+            color: var(--color-secondary);
+            margin-bottom: 10px;
+            font-size: 16px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .info-row strong {
+            min-width: 120px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .info-row {
+                flex-direction: column;
+            }
+            
+            .info-row strong {
+                margin-bottom: 3px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-clipboard-check"></i>Panel de Entregas RSI</h1>
+            <p>Historial de Pedidos Entregados</p>
+        </header>
+
+        <main>
+            <section class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-history"></i>Historial de Entregas</h2>
+                    <div>
+                        <button id="refresh-all" class="btn btn-outline btn-sm">
+                            <i class="fas fa-sync-alt"></i> Actualizar Todo
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table id="deliveriesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID Orden</th>
+                                    <th>Fecha Pedido</th>
+                                    <th>Fecha Entrega</th>
+                                    <th>Email Cliente</th>
+                                    <th>Productos</th>
+                                    <th>Total</th>
+                                    <th>Sucursal</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modal para detalles -->
+        <div class="modal-overlay" id="detalleModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Detalles del Pedido Entregado</h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="info-section">
+                            <h4>Información de la Orden</h4>
+                            <div class="info-row">
+                                <strong>ID Orden:</strong>
+                                <span id="modal-orderId"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Fecha Pedido:</strong>
+                                <span id="modal-fecha"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Fecha Entrega:</strong>
+                                <span id="modal-deliveryDate"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Total:</strong>
+                                <span id="modal-total"></span>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Estado del Pago</h4>
+                            <div class="info-row">
+                                <strong>Estado:</strong>
+                                <span id="modal-estado" class="badge"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>ID Transacción:</strong>
+                                <span id="modal-transactionId"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Última actualización:</strong>
+                                <span id="modal-actualizacion"></span>
+                            </div>
+                            <button id="refresh-modal" class="btn btn-outline btn-sm">
+                                <i class="fas fa-sync-alt"></i> Actualizar estado
+                            </button>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Información del Cliente</h4>
+                            <div class="info-row">
+                                <strong>Email:</strong>
+                                <span id="modal-email"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>ID Usuario:</strong>
+                                <span id="modal-userId"></span>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Información de Entrega</h4>
+                            <div class="info-row">
+                                <strong>Sucursal:</strong>
+                                <span id="modal-sucursal"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Entregado por:</strong>
+                                <span id="modal-deliveredBy"></span>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Productos</h4>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Precio unitario</th>
+                                            <th>Cantidad</th>
+                                            <th>Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modal-productos">
+                                        <!-- Productos se cargarán aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline btn-sm" id="closeModalBtn">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="printOrderBtn">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- OpenPay JS -->
+    <script src="https://resources.openpay.mx/lib/openpay-js/1.2.39/openpay.v1.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Script principal -->
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Configuración de OpenPay Sandbox
+        OpenPay.setId('mfxzk8dtsjsaqscngyxp');
+        OpenPay.setApiKey('pk_92a7dde47c53491a828e3edba6e2704c');
+        OpenPay.setSandboxMode(true); // Cambiar a false en producción
+
+        // Variables globales
+        let currentModalDocId = null;
+        let currentModalOrderId = null;
+
+        // Función para formatear fecha
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('es-MX', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Función para formatear moneda
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-MX', { 
+                style: 'currency', 
+                currency: 'MXN' 
+            }).format(amount || 0);
+        }
+
+        // Función para obtener el badge según el estado
+        function getStatusBadge(status) {
+            const statusText = status === 'completed' ? 'Completado' : 
+                              status === 'paid' ? 'Pagado' :
+                              status === 'pending' ? 'Pendiente' : 
+                              status === 'cancelled' ? 'Cancelado' : 
+                              status === 'failed' ? 'Fallido' : 
+                              status === 'processing' ? 'Procesando' : status;
+            
+            const badgeClass = status === 'completed' || status === 'paid' ? 'badge-success' :
+                              status === 'pending' || status === 'processing' ? 'badge-warning' :
+                              status === 'cancelled' || status === 'failed' ? 'badge-danger' : 'badge-secondary';
+            
+            return `<span class="badge ${badgeClass}">${statusText}</span>`;
+        }
+
+        // Función para consultar estado en OpenPay
+        async function checkOpenPayStatus(orderId) {
+            if (!orderId) {
+                console.error('Order ID no proporcionado');
+                return { status: 'error', error: 'Falta orderId' };
+            }
+
+            try {
+                // Usamos el SDK de OpenPay JS para consultar el estado
+                const charge = await new Promise((resolve, reject) => {
+                    OpenPay.charges.get(orderId, (response) => {
+                        resolve(response);
+                    }, (error) => {
+                        reject(error);
+                    });
+                });
+
+                console.log('Respuesta OpenPay:', charge);
+                
+                return {
+                    status: charge.status || 'unknown',
+                    statusText: getStatusText(charge.status),
+                    amount: charge.amount || 0,
+                    currency: charge.currency || 'MXN',
+                    creationDate: charge.creation_date || null,
+                    operationDate: charge.operation_date || null,
+                    authorization: charge.authorization || null,
+                    method: charge.method || 'unknown',
+                    orderId: charge.order_id || null
+                };
+
+            } catch (error) {
+                console.error('Error al consultar OpenPay:', error);
+                return { 
+                    status: 'error', 
+                    error: error.message,
+                    statusText: 'Error'
+                };
+            }
+        }
+
+        // Función auxiliar para texto de estado
+        function getStatusText(status) {
+            const statusMap = {
+                'completed': 'Completado',
+                'paid': 'Pagado',
+                'pending': 'Pendiente',
+                'in_progress': 'En proceso',
+                'processing': 'Procesando',
+                'cancelled': 'Cancelado',
+                'failed': 'Fallido',
+                'error': 'Error'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Función para actualizar el estado en la UI
+        async function updatePaymentStatus(docId, orderId, isModal = false) {
+            let statusCell, loadingElement;
+            
+            if (isModal) {
+                loadingElement = document.getElementById('refresh-modal');
+                loadingElement.innerHTML = '<div class="spinner"></div> Actualizando...';
+            } else {
+                const row = document.querySelector(`tr[data-id="${docId}"]`);
+                if (!row) return;
+                statusCell = row.querySelector('.status-cell');
+                statusCell.innerHTML = '<div class="spinner"></div> Actualizando...';
+            }
+
+            try {
+                const estadoPago = await checkOpenPayStatus(orderId);
+                
+                // Preparar objeto de actualización
+                const updateData = {
+                    payment_status: estadoPago.status || 'unknown',
+                    status: estadoPago.status || 'unknown',
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    metadata: {
+                        payment_status: estadoPago.status || 'unknown'
+                    }
+                };
+                
+                // Actualizar Firebase
+                await db.collection("entregas").doc(docId).update(updateData);
+
+                // Actualizar la UI
+                const statusBadge = getStatusBadge(estadoPago.status);
+                const updateTime = formatDate(new Date());
+                
+                if (isModal) {
+                    document.getElementById('modal-estado').innerHTML = statusBadge;
+                    document.getElementById('modal-actualizacion').textContent = updateTime;
+                    loadingElement.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar estado';
+                    
+                    // Si estamos en el modal, también actualizamos la tabla
+                    const row = document.querySelector(`tr[data-id="${docId}"]`);
+                    if (row) {
+                        row.querySelector('.status-cell').innerHTML = `
+                            ${statusBadge}
+                            <small class="last-update">${updateTime}</small>
+                            <i class="fas fa-sync-alt refresh-btn"></i>
+                        `;
+                    }
+                } else {
+                    statusCell.innerHTML = `
+                        ${statusBadge}
+                        <small class="last-update">${updateTime}</small>
+                        <i class="fas fa-sync-alt refresh-btn"></i>
+                    `;
+                }
+
+                return estadoPago;
+
+            } catch (error) {
+                console.error('Error al actualizar estado:', error);
+                const errorBadge = '<span class="badge badge-danger">Error</span>';
+                
+                if (isModal) {
+                    document.getElementById('modal-estado').innerHTML = errorBadge;
+                    loadingElement.innerHTML = '<i class="fas fa-sync-alt"></i> Intentar nuevamente';
+                } else if (statusCell) {
+                    statusCell.innerHTML = `
+                        ${errorBadge}
+                        <i class="fas fa-sync-alt refresh-btn"></i>
+                    `;
+                }
+                
+                return { status: 'error', error: error.message };
+            }
+        }
+
+        // Función para cargar los datos en la tabla
+        function loadDeliveriesData() {
+            db.collection("entregas").orderBy("delivered_at", "desc").limit(100).get()
+                .then((querySnapshot) => {
+                    const tableBody = document.querySelector('#deliveriesTable tbody');
+                    tableBody.innerHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const orderId = data.order_id || data.metadata?.order_id || 'N/A';
+                        const productosCount = data.items?.length || 0;
+                        
+                        const row = document.createElement('tr');
+                        row.setAttribute('data-id', doc.id);
+                        row.setAttribute('data-order', orderId);
+                        
+                        row.innerHTML = `
+                            <td>${orderId}</td>
+                            <td>${formatDate(data.created_at)}</td>
+                            <td>${formatDate(data.delivered_at)}</td>
+                            <td>${data.user_email || 'N/A'}</td>
+                            <td>${productosCount} producto${productosCount !== 1 ? 's' : ''}</td>
+                            <td>${formatCurrency(data.amount)}</td>
+                            <td>${data.branch || 'N/A'}</td>
+                            <td>
+                                <button class="btn btn-outline btn-sm view-detail" data-id="${doc.id}">
+                                    <i class="fas fa-eye"></i> Detalles
+                                </button>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Configurar eventos después de cargar los datos
+                    setupEventListeners();
+                })
+                .catch((error) => {
+                    console.error("Error al cargar entregas:", error);
+                    alert("Error al cargar las entregas. Por favor recarga la página.");
+                });
+        }
+
+        // Función para mostrar el modal de detalle
+        async function showDetailModal(docId) {
+            try {
+                const doc = await db.collection("entregas").doc(docId).get();
+                
+                if (!doc.exists) {
+                    alert("No se encontró el pedido entregado");
+                    return;
+                }
+                
+                const data = doc.data();
+                currentModalDocId = docId;
+                currentModalOrderId = data.order_id || data.metadata?.order_id;
+                
+                // Llenar información básica
+                document.getElementById('modal-orderId').textContent = currentModalOrderId || 'N/A';
+                document.getElementById('modal-fecha').textContent = formatDate(data.created_at);
+                document.getElementById('modal-deliveryDate').textContent = formatDate(data.delivered_at) || 'N/A';
+                document.getElementById('modal-total').textContent = formatCurrency(data.amount);
+                
+                // Información del cliente
+                document.getElementById('modal-email').textContent = data.user_email || 'N/A';
+                document.getElementById('modal-userId').textContent = data.user_id || 'N/A';
+                
+                // Información de pago
+                document.getElementById('modal-estado').innerHTML = getStatusBadge(data.payment_status || data.status || 'pending');
+                document.getElementById('modal-actualizacion').textContent = formatDate(data.updated_at);
+                
+                // Mostrar enlace de pago como hipervínculo
+                const transactionIdElement = document.getElementById('modal-transactionId');
+                if (data.checkout_link) {
+                    transactionIdElement.innerHTML = `
+                        <a href="${data.checkout_link}" target="_blank" style="color: var(--color-secondary); text-decoration: underline;">
+                            <i class="fas fa-external-link-alt"></i> Ver en OpenPay
+                        </a>
+                    `;
+                } else {
+                    transactionIdElement.textContent = 'N/A';
+                }
+                
+                // Información de entrega
+                document.getElementById('modal-sucursal').textContent = data.branch || 'N/A';
+                document.getElementById('modal-deliveredBy').textContent = data.delivered_by || 'N/A';
+                
+                // Productos
+                const productosBody = document.getElementById('modal-productos');
+                productosBody.innerHTML = '';
+                
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.name || 'Producto no identificado'}</td>
+                            <td>${formatCurrency(item.price)}</td>
+                            <td>${item.quantity || 1}</td>
+                            <td>${formatCurrency((item.price || 0) * (item.quantity || 1))}</td>
+                        `;
+                        productosBody.appendChild(row);
+                    });
+                } else {
+                    productosBody.innerHTML = '<tr><td colspan="4">No hay información de productos</td></tr>';
+                }
+                
+                // Mostrar modal
+                document.getElementById('detalleModal').classList.add('active');
+                
+            } catch (error) {
+                console.error("Error al mostrar detalle:", error);
+                alert("Error al cargar los detalles. Por favor intenta nuevamente.");
+            }
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Evento para ver detalle
+            document.querySelectorAll('.view-detail').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const docId = this.getAttribute('data-id');
+                    showDetailModal(docId);
+                });
+            });
+            
+            // Evento para cerrar modal
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('detalleModal').classList.remove('active');
+            });
+            
+            document.getElementById('closeModalBtn').addEventListener('click', () => {
+                document.getElementById('detalleModal').classList.remove('active');
+            });
+            
+            // Configurar evento para actualizar desde el modal
+            document.getElementById('refresh-modal').addEventListener('click', () => {
+                if (currentModalDocId && currentModalOrderId) {
+                    updatePaymentStatus(currentModalDocId, currentModalOrderId, true);
+                }
+            });
+            
+            // Botón para actualizar todos los estados
+            document.getElementById('refresh-all').addEventListener('click', () => {
+                const rows = document.querySelectorAll('#deliveriesTable tbody tr');
+                rows.forEach(row => {
+                    const docId = row.getAttribute('data-id');
+                    const orderId = row.getAttribute('data-order');
+                    if (docId && orderId) {
+                        updatePaymentStatus(docId, orderId);
+                    }
+                });
+            });
+            
+            // Botón para imprimir
+            document.getElementById('printOrderBtn').addEventListener('click', () => {
+                window.print();
+            });
+        }
+
+        // Inicialización cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDeliveriesData();
+        });
+    </script>
+</body>
+</html>

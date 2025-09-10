@@ -1,0 +1,293 @@
+/* Estilos base para las secciones RSI */
+.rsi-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.rsi-section-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 50px;
+}
+
+.rsi-reverse {
+    flex-direction: row-reverse;
+}
+
+.rsi-text-content {
+    flex: 1;
+}
+
+.rsi-image-wrapper {
+    flex: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.rsi-image-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.rsi-image-wrapper:hover img {
+    transform: scale(1.05);
+}
+
+.rsi-section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.rsi-section-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 40px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.rsi-section-description {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: #555;
+}
+
+/* Botón primario */
+.rsi-primary-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #1c1948;
+    color: white !important;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.rsi-primary-btn:hover {
+    background-color: #2a2670;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(28, 25, 72, 0.2);
+}
+
+/* Sección Nosotros */
+.rsi-about-section {
+    padding: 80px 0;
+    background-color: #1c1948;
+    color: white;
+}
+
+.rsi-about-section .rsi-section-title,
+.rsi-about-section .rsi-section-description {
+    color: white;
+}
+
+.rsi-about-section .rsi-primary-btn {
+    background-color: #8f94fb;
+    color: #1c1948 !important;
+}
+
+.rsi-about-section .rsi-primary-btn:hover {
+    background-color: white;
+}
+
+/* Sección Valor */
+.rsi-value-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+}
+
+.rsi-value-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.rsi-value-card {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.rsi-value-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.rsi-value-icon {
+    font-size: 2.5rem;
+    color: #1c1948;
+    margin-bottom: 20px;
+}
+
+.rsi-card-title {
+    color: #1c1948;
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+}
+
+.rsi-card-text {
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Sección Productos */
+.rsi-products-section {
+    padding: 80px 0;
+    background-color: white;
+}
+
+/* Sección Estadísticas/Motivacional */
+.rsi-stats-section {
+    padding: 100px 0;
+    background: linear-gradient(rgba(28, 25, 72, 0.9), rgba(28, 25, 72, 0.9)), 
+                url('https://images.unsplash.com/photo-1605106702734-205df224ecce?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    text-align: center;
+    color: white;
+}
+
+.rsi-stats-section .rsi-section-title,
+.rsi-stats-section .rsi-section-subtitle {
+    color: white;
+}
+
+.rsi-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    max-width: 1000px;
+    margin: 50px auto;
+}
+
+.rsi-stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rsi-stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.rsi-stat-label {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.rsi-cta-button {
+    background-color: white;
+    color: #1c1948 !important;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 30px;
+}
+
+.rsi-cta-button:hover {
+    background-color: #8f94fb;
+    color: white !important;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Sección Servicios */
+.rsi-services-section {
+    padding: 80px 0;
+    background-color: #1c1948;
+    color: white;
+}
+
+.rsi-services-section .rsi-section-title,
+.rsi-services-section .rsi-section-description {
+    color: white;
+}
+
+.rsi-services-section .rsi-primary-btn {
+    background-color: #8f94fb;
+    color: #1c1948 !important;
+}
+
+.rsi-services-section .rsi-primary-btn:hover {
+    background-color: white;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .rsi-section-content {
+        flex-direction: column;
+    }
+    
+    .rsi-reverse {
+        flex-direction: column;
+    }
+    
+    .rsi-image-wrapper {
+        order: -1;
+        max-width: 50%;
+    }
+    
+    .rsi-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .rsi-section-title {
+        font-size: 1.8rem;
+    }
+    
+    .rsi-stats-section {
+        padding: 80px 0;
+    }
+    
+    .rsi-stat-number {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .rsi-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .rsi-section-title {
+        font-size: 1.6rem;
+    }
+    
+    .rsi-section-content {
+        gap: 30px;
+    }
+}

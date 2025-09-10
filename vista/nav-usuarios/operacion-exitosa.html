@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compra Exitosa | RSI Enterprise</title>
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/styles.css">
+    <link rel="stylesheet" href="https://rsienterprise.com/vista/css/estilos-nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .main-content {
+            margin-top: 85px; /* Margen superior para desktop */
+        }
+        .success-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .success-icon {
+            color: #4CAF50;
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #1c1948;
+            margin-bottom: 20px;
+        }
+        .order-details {
+            text-align: left;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .btn-continue {
+            background-color: #1c1948;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s;
+        }
+        .btn-continue:hover {
+            background-color: #2a2768;
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .detail-label {
+            font-weight: bold;
+            min-width: 180px;
+        }
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-left: 20px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .product-name {
+            flex-grow: 1;
+        }
+        .product-price {
+            min-width: 120px;
+            text-align: right;
+        }
+        .order-id {
+            font-size: 18px;
+            color: #1c1948;
+            background-color: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .nan_header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-top: 28px; /* Margen superior para móvil */
+            }
+            .detail-label {
+                min-width: 100%;
+                margin-bottom: 5px;
+            }
+            .success-container {
+                margin: 15px;
+                padding: 20px;
+            }
+            .success-icon {
+                font-size: 60px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body class="nan_reset">
+<header class="nan_header">
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <a href="dashUser.html"><img src="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a>
+        </div>
+        <button class="nan_hamburger" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+         <ul class="nan_menu">
+            <li><a href="productos-usuario.html"><i class="fas fa-box"></i> Productos</a></li>&emsp; &emsp;
+            <li><a href="historial-de-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>&emsp;&emsp;
+            <li><a href="lista-de-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>&emsp; &emsp;
+            <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>&emsp; &emsp;
+            <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>&emsp; &emsp;
+            <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>&emsp; &emsp;
+            <li class="nan_language">
+                <select id="languageSelect" class="language-select">
+                    <option value="es" data-flag="../css/img/flag-mexico.png">🇲🇽</option>
+                    <option value="en" data-flag="../css/img/flag-usa.png">🇺🇸</option>
+                </select>
+            </li>
+        </ul>
+    </nav>
+</header>
+<br><br>
+<div class="main-content">
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>¡Operación Completada Exitosamente!</h1>
+        <p>Gracias por tu compra. Hemos recibido tu operación y estamos procesando tu pedido.</p>
+        <p>Recibirás un correo electrónico con los detalles de tu compra.</p>
+        
+        <div class="order-id" id="order-id-display">
+            ID de tu pedido: Cargando...
+        </div>
+        
+        <div class="order-details" id="order-details">
+            <h3>Detalles de tu compra:</h3>
+            <!-- Los detalles se cargarán aquí dinámicamente -->
+        </div>
+        
+        <button class="btn-continue" id="btn-continue">
+            <i class="fas fa-home"></i> Volver al inicio
+        </button>
+        <button class="btn-continue" id="btn-historial">
+            <i class="fas fa-history"></i> historial de compras
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Configuración Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    projectId: "rsienterprise",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Formatear fecha
+function formatDate(timestamp) {
+    try {
+        return timestamp.toDate().toLocaleDateString('es-MX', {
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return new Date().toLocaleDateString('es-MX');
+    }
+}
+
+// Procesar parámetros de OpenPay
+async function processOpenPayResponse() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const openpayId = urlParams.get('id');
+    const orderId = urlParams.get('order_id');
+    const status = urlParams.get('status');
+    
+    if (!orderId || !status) return null;
+
+    try {
+        // Actualizar el registro en Firestore con los datos de OpenPay
+        const updateData = {
+            payment_status: status.toLowerCase(),
+            openpay_id: openpayId,
+            updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+            payment_details: {
+                status: status,
+                transaction_id: openpayId,
+                processed_at: new Date().toISOString()
+            }
+        };
+
+        // Solo marcar como completado si el pago fue exitoso
+        if (status.toLowerCase() === 'completed') {
+            updateData.status = 'completed';
+        }
+
+        await db.collection('orders').doc(orderId).update(updateData);
+        
+        // Devolver el ID de la orden actualizada
+        return orderId;
+    } catch (error) {
+        console.error('Error al actualizar con datos de OpenPay:', error);
+        return orderId; // Devolver el ID aunque falle la actualización
+    }
+}
+
+// Mostrar detalles principales
+async function displayOrderDetails() {
+    try {
+        // Procesar primero la respuesta de OpenPay si existe
+        const updatedOrderId = await processOpenPayResponse();
+        
+        // Obtener orderId de múltiples fuentes
+        const urlParams = new URLSearchParams(window.location.search);
+        let orderId = updatedOrderId || urlParams.get('order_id') || localStorage.getItem('currentOrderId');
+        
+        if (!orderId) {
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            orderId = currentOrder?.orderId;
+        }
+        
+        if (!orderId) throw new Error('No se encontró ID de pedido');
+        
+        // Mostrar ID inmediatamente
+        document.getElementById('order-id-display').textContent = `ID de tu pedido: ${orderId}`;
+        
+        // Obtener detalles de Firestore
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        
+        if (!orderDoc.exists) {
+            return displayLocalStorageData(orderId);
+        }
+        
+        const orderData = orderDoc.data();
+        renderOrderDetails(orderData);
+        
+        // Registrar visualización
+        if (auth.currentUser) {
+            await db.collection('orders').doc(orderId).update({
+                confirmation_viewed: true,
+                confirmation_viewed_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        // Limpiar localStorage solo después de confirmar que todo está bien
+        cleanLocalStorage();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        displayLocalStorageData();
+    }
+}
+
+// Limpiar localStorage de forma segura
+function cleanLocalStorage() {
+    try {
+        // Guardar el orderId por si se necesita para futuras referencias
+        const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+        if (currentOrder?.orderId) {
+            localStorage.setItem('lastOrderId', currentOrder.orderId);
+        }
+        
+        // Eliminar solo los datos que ya no se necesitan
+        localStorage.removeItem('cart');
+        localStorage.removeItem('cartTotal');
+        localStorage.removeItem('currentOrder');
+    } catch (e) {
+        console.error('Error limpiando localStorage:', e);
+    }
+}
+
+// Renderizar detalles de Firestore
+function renderOrderDetails(orderData) {
+    const orderDetails = document.getElementById('order-details');
+    
+    let detailsHTML = `
+        <div class="detail-item">
+            <span class="detail-label">Estado:</span>
+            <span style="color: ${orderData.status === 'completed' ? '#4CAF50' : '#1c1948'}">
+                ${(orderData.status || 'pendiente').toUpperCase()}
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Estado de pago:</span>
+            <span style="color: ${orderData.payment_status === 'completed' ? '#4CAF50' : '#FF9800'}">
+                ${(orderData.payment_status || 'pendiente').toUpperCase()}
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Fecha:</span>
+            <span>${formatDate(orderData.created_at)}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Total:</span>
+            <span>$${orderData.amount?.toFixed(2) || '0.00'} MXN</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Sucursal:</span>
+            <span>${orderData.branch || 'No especificada'}</span>
+        </div>
+        <h4 style="margin-top: 20px;">Productos</h4>
+    `;
+    
+    // Productos
+    orderData.items?.forEach(item => {
+        detailsHTML += `
+            <div class="product-item">
+                <span class="product-name">${item.quantity || 1} × ${item.name}</span>
+                <span class="product-price">$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    // Mostrar ID de OpenPay si existe
+    if (orderData.openpay_id) {
+        detailsHTML += `
+            <div class="detail-item" style="margin-top: 20px;">
+                <span class="detail-label">ID de transacción:</span>
+                <span>${orderData.openpay_id}</span>
+            </div>
+        `;
+    }
+    
+    orderDetails.innerHTML = detailsHTML;
+}
+
+// Mostrar datos de localStorage
+function displayLocalStorageData(orderId = null) {
+    const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+    const orderDetails = document.getElementById('order-details');
+    
+    if (!currentOrder) {
+        orderDetails.innerHTML = `<p style="color: #666;">No se encontraron detalles del pedido.</p>`;
+        return;
+    }
+    
+    // Si se proporciona orderId, actualizar el display
+    if (orderId) {
+        document.getElementById('order-id-display').textContent = `ID de tu pedido: ${orderId}`;
+    }
+    
+    orderDetails.innerHTML = `
+        <div class="detail-item">
+            <span class="detail-label">Estado:</span>
+            <span>${currentOrder.status?.toUpperCase() || 'PENDIENTE'}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Total:</span>
+            <span>$${currentOrder.amount?.toFixed(2) || '0.00'} MXN</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Sucursal:</span>
+            <span>${currentOrder.branch || 'No especificada'}</span>
+        </div>
+        <p style="margin-top: 20px; color: #666;">
+            Los detalles completos se actualizarán cuando el pago se confirme.
+        </p>
+    `;
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón de continuar
+    document.getElementById('btn-continue').addEventListener('click', () => {
+        window.location.href = 'dashUser.html';
+    });
+    document.getElementById('btn-historial').addEventListener('click', () => {
+        window.location.href = 'historial-de-compras.html';
+    });
+    
+    // Mostrar detalles al cargar
+    displayOrderDetails();
+});
+</script>
+</body>
+</html>

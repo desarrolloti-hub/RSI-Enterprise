@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket de Venta</title>
+    <style>
+        /* Estilos para pantalla */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .preview-container {
+            width: 80mm;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        /* Estilos del ticket */
+        .ticket {
+            width: 80mm;
+            padding: 5mm;
+            box-sizing: border-box;
+            font-size: 12pt;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 4mm;
+            padding-bottom: 3mm;
+            border-bottom: 2px dashed #000;
+        }
+        
+        .business-name {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 3mm;
+        }
+        
+        .ticket-info {
+            margin: 4mm 0;
+        }
+        
+        .ticket-info p {
+            margin: 2mm 0;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 4mm 0;
+            font-size: 11pt;
+        }
+        
+        .items-table th {
+            text-align: left;
+            border-bottom: 2px solid #000;
+            padding: 2mm 0;
+        }
+        
+        .items-table td {
+            padding: 2mm 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .total-section {
+            text-align: right;
+            margin-top: 4mm;
+            font-weight: bold;
+            font-size: 12pt;
+        }
+        
+        .barcode-container {
+            text-align: center;
+            margin: 5mm auto;
+        }
+        
+        .barcode-img {
+            width: 65mm;
+            height: auto;
+            max-height: 25mm;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 4mm;
+            font-size: 10pt;
+        }
+        
+        .cut-line {
+            text-align: center;
+            margin: 3mm 0;
+            font-size: 10pt;
+            color: #555;
+        }
+        
+        /* Botón de impresión */
+        .print-btn {
+            display: block;
+            width: 80mm;
+            margin: 15px auto;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14pt;
+        }
+        
+        /* Estilos para impresión */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .ticket, .ticket * {
+                visibility: visible;
+            }
+            .ticket {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 80mm;
+                padding: 5mm;
+                margin: 0;
+                border: none;
+            }
+            .print-btn {
+                display: none;
+            }
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Vista previa en navegador -->
+    <div class="preview-container">
+        <div class="ticket" id="ticket-content">
+            <!-- Encabezado -->
+            <div class="header">
+                <div class="business-name">RSI Enterprise</div>
+                <div>Av. Principal #123, Ciudad</div>
+                <div>Tel: +123 456 7890</div>
+                <div id="ticket-caja">Caja #1 - Usuario: Admin</div>
+            </div>
+            
+            <!-- Información -->
+            <div class="ticket-info">
+                <p><strong>Ticket #:</strong> <span id="ticket-numero">0001</span></p>
+                <p><strong>Fecha:</strong> <span id="ticket-fecha">09/05/2025 14:30</span></p>
+                <p><strong>Cliente:</strong> <span id="ticket-cliente">Consumidor Final</span></p>
+            </div>
+            
+            <!-- Items -->
+            <table class="items-table" id="ticket-items">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Cant.</th>
+                        <th style="width: 50%;">Descripción</th>
+                        <th style="width: 15%;">P. Unit.</th>
+                        <th style="width: 20%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+            
+            <!-- Totales -->
+            <div class="total-section">
+                <p>SUBTOTAL: $<span id="ticket-subtotal">105.00</span></p>
+                <p>IVA (12%): $<span id="ticket-iva">12.60</span></p>
+                <p>TOTAL: $<span id="ticket-total">117.60</span></p>
+            </div>
+            
+            <!-- Código de barras -->
+            <div class="barcode-container">
+                <img id="ticket-barcode" class="barcode-img" 
+                     src="https://barcode.tec-it.com/barcode.ashx?data=TICKET-0001&code=Code128&modulewidth=0.35&width=65mm&height=25mm" 
+                     alt="Código de Barras">
+            </div>
+            
+            <!-- Pie de página -->
+            <div class="footer">
+                <p>¡Gracias por su compra!</p>
+                <p>www.skytickets.com</p>
+            </div>
+            
+            <!-- Línea de corte -->
+            <div class="cut-line">
+                ▼ Corte aquí ▼
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botón de impresión -->
+    <button class="print-btn" onclick="imprimirTicket()">Imprimir Ticket</button>
+    
+    <script>
+        // Datos de ejemplo para el ticket
+        const ticketData = {
+            numero: "T-0001",
+            fecha: new Date().toLocaleString('es-ES'),
+            caja: "Caja #1",
+            usuario: "Admin",
+            cliente: "Consumidor Final",
+            items: [
+                { cantidad: 2, descripcion: "Boleto VIP Evento X", precio: 50.00, total: 100.00 },
+                { cantidad: 1, descripcion: "Servicio de Envío", precio: 5.00, total: 5.00 }
+            ],
+            subtotal: 105.00,
+            iva: 12.60,
+            total: 117.60
+        };
+        
+        // Función para generar el contenido del ticket
+        function generarTicket() {
+            // Actualizar información general
+            document.getElementById("ticket-numero").textContent = ticketData.numero;
+            document.getElementById("ticket-fecha").textContent = ticketData.fecha;
+            document.getElementById("ticket-caja").textContent = `${ticketData.caja} - Usuario: ${ticketData.usuario}`;
+            document.getElementById("ticket-cliente").textContent = ticketData.cliente;
+            
+            // Generar items
+            const itemsTable = document.querySelector("#ticket-items tbody");
+            itemsTable.innerHTML = ticketData.items.map(item => `
+                <tr>
+                    <td>${item.cantidad}</td>
+                    <td>${item.descripcion}</td>
+                    <td>$${item.precio.toFixed(2)}</td>
+                    <td>$${item.total.toFixed(2)}</td>
+                </tr>
+            `).join("");
+            
+            // Actualizar totales
+            document.getElementById("ticket-subtotal").textContent = ticketData.subtotal.toFixed(2);
+            document.getElementById("ticket-iva").textContent = ticketData.iva.toFixed(2);
+            document.getElementById("ticket-total").textContent = ticketData.total.toFixed(2);
+            
+            // Actualizar código de barras
+            document.getElementById("ticket-barcode").src = 
+                `https://barcode.tec-it.com/barcode.ashx?data=${ticketData.numero}&code=Code128&modulewidth=0.35&width=65mm&height=25mm`;
+        }
+        
+        // Función para imprimir el ticket (SIMPLIFICADA)
+        function imprimirTicket() {
+            generarTicket();
+            window.print();
+        }
+        
+        // Generar el ticket al cargar la página
+        document.addEventListener("DOMContentLoaded", generarTicket);
+    </script>
+</body>
+</html>

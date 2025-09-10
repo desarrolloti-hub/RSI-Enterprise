@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Interactivo de Cotizaciones - RSI Enterprise</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary-bg: #f4f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --brand-color: #0d2c54;
+            --brand-accent: #3b82f6;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header h1 {
+            color: var(--brand-color);
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.75rem;
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .chart-card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        
+        .chart-container canvas {
+            cursor: pointer;
+        }
+
+        .chart-card h2 {
+            margin-top: 0;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        /* Estilos del Modal */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.5); animation: fadeIn 0.3s ease-out;
+        }
+        .modal.show { display: flex; justify-content: center; align-items: center; }
+        .modal-content {
+            background-color: var(--primary-bg); margin: auto; padding: 2rem; border: 1px solid var(--border-color);
+            width: 90%; max-width: 900px; border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative; animation: slideIn 0.3s ease-out; display: flex; flex-direction: column;
+        }
+        #modalPDF .modal-content { max-width: 1200px; height: 90vh; }
+        .modal-header {
+            border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h2 { margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--brand-color); }
+        
+        .modal-header .btn-close-modal {
+            background-color: var(--brand-color); color: white; border: none; padding: 0.5rem 1rem;
+            border-radius: 0.375rem; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .modal-header .btn-close-modal:hover { background-color: #1f3d64; }
+
+        .modal-body { overflow-y: auto; flex-grow: 1; }
+        .coti-list { list-style: none; padding: 0; }
+        .coti-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 1rem;
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 0.5rem; margin-bottom: 0.75rem; transition: background-color 0.2s;
+        }
+        .coti-item:hover { background-color: #f9fafb; }
+        .coti-info { display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 1rem; width: 85%; align-items: center; }
+        .coti-info span { color: var(--text-secondary); font-size: 0.9rem; }
+        .coti-info strong { color: var(--text-primary); font-weight: 500; }
+        .coti-actions .btn-view {
+            background-color: var(--brand-accent); color: white; border: none; padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem; cursor: pointer; font-size: 1.25rem; transition: background-color 0.2s;
+        }
+        .coti-actions .btn-view:hover { background-color: #2563eb; }
+        .pdf-container { width: 100%; height: 100%; }
+        .loading-spinner {
+            display: none; justify-content: center; align-items: center; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); z-index: 9999;
+        }
+        .spinner {
+            border: 6px solid #f3f3f3; border-top: 6px solid var(--brand-color);
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+       
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    
+    .btn-regresar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-family: sans-serif;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.btn-regresar:hover {
+    background-color: #0056b3;
+}
+    </style>
+</head>
+<body>
+
+    <header class="header"><h1>📊 Cotizaciones Graficas</h1>
+    <a href="coti.html" class="btn-regresar">Regresar a Cotización</a>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="chart-card">
+            <h2>🏆 Cotizaciones por Colaborador</h2>
+            <div class="chart-container"><canvas id="cotizacionesPorUsuarioChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h2>📈 Estatus de Cotizaciones</h2>
+            <div class="chart-container"><canvas id="estatusChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h2>👥 Top 10 Clientes</h2>
+            <div class="chart-container"><canvas id="topClientesChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h2>🗓️ Cotizaciones por Mes (Último Año)</h2>
+            <div class="chart-container"><canvas id="cotizacionesPorMesChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h2>💰 Valor Total Vendido por Colaborador</h2>
+            <div class="chart-container"><canvas id="valorPorUsuarioChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h2>📦 Cotizaciones por Tipo</h2>
+            <div class="chart-container"><canvas id="tipoCotizacionChart"></canvas></div>
+        </div>
+    </main>
+    
+    <div id="cotiModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalCotiTitulo"></h2>
+                <button class="btn-close-modal" id="cerrarCotiModalBtn">Regresar</button>
+            </div>
+            <div class="modal-body"><ul id="listaCotizaciones" class="coti-list"></ul></div>
+        </div>
+    </div>
+    
+    <div id="modalPDF" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Vista Previa del PDF</h2>
+                <button class="btn-close-modal" id="regresarPdfBtn">Regresar</button>
+            </div>
+            <div class="modal-body"><div class="pdf-container"></div></div>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner"><div class="spinner"></div></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const cotiModal = document.getElementById('cotiModal');
+        const pdfModal = document.getElementById('modalPDF');
+        let chartInstances = {};
+        let allCotizaciones = [];
+        const monthMap = { 'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11 };
+
+        // --- Configuración de Logo y Términos para el PDF ---
+        const LOGO_PATH = '../css/img/Logo-RSI-OFICIAL.png'; // ¡REEMPLAZA ESTO CON LA RUTA A TU LOGO!
+        const LOGO_WIDTH = 40; // Ancho del logo en mm
+        const LOGO_HEIGHT = 40; // Alto del logo en mm
+
+        const TERMINOS_CONDICIONES = `1. La presente cotización se realiza en base a los requerimientos necesarios para la solución tecnológica.\n2. Condiciones de pago, 70% de anticipo y 30% al término de la instalación y funcionamiento.\n3. En caso de cancelación tendrá una penalización del 20% en el total de la cotización.\n4. Trabajo adicional que no esté dentro de la cotización tendrá un costo extra.\n5. Los equipos tienen un año de garantía por defecto de fábrica.\n6. La instalación tendrá la garantía de 2 meses siempre y cuando no cuente con daños o manipulación.`;
+
+        document.addEventListener('DOMContentLoaded', cargarYRenderizarDatos);
+        document.getElementById('cerrarCotiModalBtn').addEventListener('click', () => cotiModal.classList.remove('show'));
+        document.getElementById('regresarPdfBtn').addEventListener('click', () => {
+            pdfModal.classList.remove('show');
+            cotiModal.classList.add('show');
+        });
+        window.addEventListener('click', (event) => {
+            if (event.target == cotiModal) cotiModal.classList.remove('show');
+        });
+
+        async function cargarYRenderizarDatos() {
+            loadingSpinner.style.display = 'flex';
+            try {
+                const snapshot = await getDocs(collection(db, 'cotizacionPdf'));
+                allCotizaciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (allCotizaciones.length === 0) {
+                    Swal.fire('Sin Datos', 'No se encontraron cotizaciones.', 'warning');
+                    return;
+                }
+                procesarGraficas();
+            } catch (error) {
+                console.error("Error al cargar datos:", error);
+                Swal.fire('Error', 'No se pudieron cargar los datos.', 'error');
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+        
+        function procesarGraficas() {
+            procesarCotizacionesPorUsuario(allCotizaciones);
+            procesarEstatus(allCotizaciones);
+            procesarTopClientes(allCotizaciones);
+            procesarCotizacionesPorMes(allCotizaciones);
+            procesarValorPorUsuario(allCotizaciones);
+            procesarTipoCotizacion(allCotizaciones);
+        }
+
+        function handleGenericClick(event, chart, filterFn) {
+            const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+            if (points.length) {
+                const label = chart.data.labels[points[0].index];
+                const cotizacionesFiltradas = allCotizaciones.filter(coti => filterFn(coti, label));
+                mostrarModalConCotizaciones(`Filtro: ${label}`, cotizacionesFiltradas);
+            }
+        }
+
+        function mostrarModalConCotizaciones(titulo, cotizaciones) {
+            document.getElementById('modalCotiTitulo').textContent = titulo;
+            const lista = document.getElementById('listaCotizaciones');
+            lista.innerHTML = '';
+
+            if (cotizaciones.length === 0) {
+                lista.innerHTML = '<li class="coti-item">No se encontraron cotizaciones para este filtro.</li>';
+            } else {
+                cotizaciones
+                    .sort((a,b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+                    .forEach(coti => {
+                        const item = document.createElement('li');
+                        item.className = 'coti-item';
+                        item.innerHTML = `
+                            <div class="coti-info">
+                                <span># <strong>${coti.cotizacionNumero || 'N/A'}</strong></span>
+                                <span>Cliente: <strong>${coti.clienteNombre || 'N/A'}</strong></span>
+                                <span>Fecha: <strong>${new Date(coti.cotizacionFecha).toLocaleDateString('es-MX')}</strong></span>
+                                <span>Total: <strong>${formatearMoneda(coti.totalFinal)}</strong></span>
+                            </div>
+                            <div class="coti-actions">
+                                <button class="btn-view" data-id="${coti.id}" title="Ver PDF">👁️</button>
+                            </div>
+                        `;
+                        item.querySelector('.btn-view').addEventListener('click', (e) => verPDF(e.currentTarget.dataset.id));
+                        lista.appendChild(item);
+                    });
+            }
+            cotiModal.classList.add('show');
+        }
+        
+        function procesarCotizacionesPorUsuario(data) {
+            const conteo = data.reduce((acc, c) => { const n = c.generadoPor?.nombre || 'Desconocido'; acc[n] = (acc[n] || 0) + 1; return acc; }, {});
+            const sorted = Object.entries(conteo).sort(([, a], [, b]) => b - a);
+            const filterFn = (coti, label) => (coti.generadoPor?.nombre || 'Desconocido') === label;
+            renderizarGrafica('cotizacionesPorUsuarioChart', 'bar', { labels: sorted.map(([n]) => n), datasets: [{ label: 'Cotizaciones', data: sorted.map(([, t]) => t), backgroundColor: '#3b82f6' }] }, { indexAxis: 'y' }, filterFn);
+        }
+
+        function procesarEstatus(data) {
+            const conteo = data.reduce((acc, c) => { const e = c.estatus || 'en proceso'; acc[e] = (acc[e] || 0) + 1; return acc; }, {});
+            const labels = Object.keys(conteo).map(s => s.charAt(0).toUpperCase() + s.slice(1));
+            const filterFn = (coti, label) => (coti.estatus || 'en proceso').toLowerCase() === label.toLowerCase();
+            renderizarGrafica('estatusChart', 'pie', { labels, datasets: [{ data: Object.values(conteo), backgroundColor: ['#f59e0b', '#22c55e', '#ef4444'] }] }, {}, filterFn);
+        }
+        
+        function procesarTopClientes(data) {
+            const conteo = data.reduce((acc, c) => { const cl = c.clienteNombre || 'Anónimo'; acc[cl] = (acc[cl] || 0) + 1; return acc; }, {});
+            const sorted = Object.entries(conteo).sort(([, a], [, b]) => b - a).slice(0, 10);
+            const filterFn = (coti, label) => (coti.clienteNombre || 'Anónimo') === label;
+            renderizarGrafica('topClientesChart', 'bar', { labels: sorted.map(([cl]) => cl), datasets: [{ label: 'Cotizaciones', data: sorted.map(([, t]) => t), backgroundColor: '#10b981' }] }, {}, filterFn);
+        }
+
+        function procesarCotizacionesPorMes(data) {
+            const conteo = {};
+            for (let i = 11; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i, 1); conteo[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] = 0; }
+            data.forEach(c => { const d = new Date(c.fechaCreacion); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; if (conteo.hasOwnProperty(k)) conteo[k]++; });
+            const sorted = Object.entries(conteo).sort(([a], [b]) => new Date(a) - new Date(b));
+            const labels = sorted.map(([k]) => new Date(k + '-02').toLocaleString('es-MX', { month: 'short', year: '2-digit' }));
+            const filterFn = (coti, label) => {
+                const [monthStr, yearStr] = label.replace('.', '').split(' ');
+                const targetMonth = monthMap[monthStr];
+                const targetYear = parseInt(`20${yearStr}`);
+                const cotiDate = new Date(coti.fechaCreacion);
+                return cotiDate.getMonth() === targetMonth && cotiDate.getFullYear() === targetYear;
+            };
+            renderizarGrafica('cotizacionesPorMesChart', 'line', { labels, datasets: [{ label: 'Cotizaciones', data: sorted.map(([, t]) => t), borderColor: '#8b5cf6', tension: 0.1, fill: true, backgroundColor: 'rgba(139, 92, 246, 0.1)' }] }, {}, filterFn);
+        }
+        
+        function procesarValorPorUsuario(data) {
+            const vendidas = data.filter(c => c.estatus === 'vendida');
+            const total = vendidas.reduce((acc, c) => { const n = c.generadoPor?.nombre || 'Desconocido'; acc[n] = (acc[n] || 0) + (c.totalFinal || 0); return acc; }, {});
+            const sorted = Object.entries(total).sort(([, a], [, b]) => b - a);
+            const filterFn = (coti, label) => coti.estatus === 'vendida' && (coti.generadoPor?.nombre || 'Desconocido') === label;
+            renderizarGrafica('valorPorUsuarioChart', 'bar', { labels: sorted.map(([n]) => n), datasets: [{ label: 'Monto Vendido', data: sorted.map(([, t]) => t), backgroundColor: '#ec4499' }] }, { indexAxis: 'y' }, filterFn);
+        }
+        
+        function procesarTipoCotizacion(data) {
+            const conteo = data.reduce((acc, c) => { const t = c.tipoCotizacion || 'No especificado'; acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+            const labels = Object.keys(conteo).map(t => t.charAt(0).toUpperCase() + t.slice(1));
+            const filterFn = (coti, label) => (coti.tipoCotizacion || 'No especificado').toLowerCase() === label.toLowerCase();
+            renderizarGrafica('tipoCotizacionChart', 'doughnut', { labels, datasets: [{ data: Object.values(conteo), backgroundColor: ['#6366f1', '#06b6d4', '#f97316', '#a855f7'] }] }, {}, filterFn);
+        }
+
+        function renderizarGrafica(canvasId, tipo, data, opciones = {}, filterFn = null) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+            
+            const chartConfig = {
+                type: tipo,
+                data: data,
+                options: { responsive: true, maintainAspectRatio: false, ...opciones }
+            };
+            
+            if (filterFn) {
+                chartConfig.options.onClick = (event, elements, chart) => {
+                    if (elements.length > 0) handleGenericClick(event, chart, filterFn);
+                };
+            }
+            
+            chartInstances[canvasId] = new Chart(ctx, chartConfig);
+        }
+
+        async function verPDF(id) {
+            const cotizacion = allCotizaciones.find(c => c.id === id);
+            if (!cotizacion) { Swal.fire('Error', 'No se encontró la cotización', 'error'); return; }
+            try {
+                loadingSpinner.style.display = 'flex';
+                cotiModal.classList.remove('show'); 
+                const pdfBlob = await generarPDF(cotizacion);
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                const pdfContainer = pdfModal.querySelector('.pdf-container');
+                pdfContainer.innerHTML = `<iframe src="${pdfUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+                pdfModal.classList.add('show');
+            } catch (error) {
+                console.error('Error al generar PDF:', error);
+                Swal.fire('Error', `No se pudo generar el PDF. ${error.message}`, 'error');
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+        
+        function formatearMoneda(cantidad) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad || 0);
+        }
+
+        // --- Nueva función para cargar el logo desde una ruta ---
+        function getImageAsBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // Necesario si el logo está en otro dominio (CORS)
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL("image/png");
+                    resolve(dataURL);
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function generarPDF(data) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            try {
+                const pageWidth = pdf.internal.pageSize.getWidth(), pageHeight = pdf.internal.pageSize.getHeight(), margin = 15;
+                const textColor = '#000000', gray = '#6b7280', navy = '#0d2c54', lightGray = '#f5f5f5';
+                const formatearNumero = (num) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num || 0).replace('MX', '').trim();
+                const colX = { desc: margin, unidad: margin + 90, cant: margin + 110, precio: margin + 130, total: margin + 160 };
+                let page = 1, y = 15;
+                
+                const addPageFooter = () => pdf.setFontSize(8).setTextColor(gray).text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                const addNewPage = () => { addPageFooter(); pdf.addPage(); page++; y = 20; };
+                
+                let logoBase64 = null;
+                try {
+                    logoBase64 = await getImageAsBase64(LOGO_PATH);
+                } catch (e) {
+                    console.warn(`ADVERTENCIA: No se pudo cargar el logo desde la ruta: ${LOGO_PATH}.`, e);
+                }
+
+                if (logoBase64) {
+                    pdf.addImage(logoBase64, 'PNG', pageWidth - margin - LOGO_WIDTH, y, LOGO_WIDTH, LOGO_HEIGHT);
+                }
+
+                pdf.setFontSize(10).setTextColor(navy).text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
+                pdf.setFontSize(8).setTextColor(gray).text(data.empresaDireccion || "", margin, y + 10).text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, y + 15);
+                y += 25;
+                pdf.setFontSize(14).setTextColor(navy).text("COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
+                pdf.setFontSize(9).setTextColor(gray).text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, pageWidth / 2, y + 7, { align: 'center' });
+                y += 20;
+                pdf.setFontSize(9).setTextColor(textColor).text(`Cliente: ${data.clienteNombre}`, margin, y); y += 5;
+                pdf.text(`RFC: ${data.clienteRFC || 'N/E'}`, margin, y); y += 5; pdf.text(`Dirección: ${data.clienteDireccion}`, margin, y); y += 10;
+                y += 10;
+
+                pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 8, 'F');
+                pdf.setFontSize(8).setFont('helvetica', 'normal').setTextColor('#FFFFFF').text("DESCRIPCIÓN", colX.desc, y + 5).text("UNIDAD", colX.unidad, y + 5, { align: 'center' }).text("CANT.", colX.cant, y + 5, { align: 'right' }).text("P. UNIT.", colX.precio, y + 5, { align: 'right' }).text("TOTAL", colX.total, y + 5, { align: 'right' });
+                y += 10;
+
+                (data.items || []).forEach((item, index) => {
+                    const descLines = pdf.splitTextToSize(item.descripcion || '', colX.unidad - colX.desc - 5);
+                    const itemHeight = Math.max(descLines.length * 5, 10) + 2;
+                    if (y + itemHeight > pageHeight - 60) { addNewPage(); }
+                    
+                    if (index % 2 === 0) pdf.setFillColor(lightGray).rect(margin, y, pageWidth - 2 * margin, itemHeight, 'F');
+                    
+                    pdf.setTextColor(textColor);
+                    descLines.forEach((line, i) => pdf.text(line, colX.desc, y + 5 + (i * 5)));
+                    pdf.text((item.tipoTecnologia || '').slice(0, 4), colX.unidad, y + 5, { align: 'center' });
+                    pdf.text((item.cantidad || 0).toString(), colX.cant, y + 5, { align: 'right' });
+                    pdf.text(formatearNumero(item.precio), colX.precio, y + 5, { align: 'right' });
+                    pdf.text(formatearNumero(item.total), colX.total, y + 5, { align: 'right' });
+                    y += itemHeight;
+                });
+                y += 5;
+
+                const tableStartX = colX.total - 82, valueColX = tableStartX + 70;
+                pdf.setFontSize(9).setTextColor(textColor).text("Subtotal:", tableStartX, y + 5, { align: 'left' }).text(formatearNumero(data.subtotal), valueColX, y + 5, { align: 'left' }); y += 5;
+                if ((data.descuentoMonto || 0) > 0) { pdf.text(`Descuento (${data.descuento}%):`, tableStartX, y + 5, { align: 'left' }).text(`-${formatearNumero(data.descuentoMonto)}`, valueColX, y + 5, { align: 'left' }); y += 5; }
+                pdf.text(`IVA (${data.impuesto}%):`, tableStartX, y + 5, { align: 'left' }).text(formatearNumero(data.impuestoMonto), valueColX, y + 5, { align: 'left' }); y += 7;
+                pdf.setFont('helvetica', 'bold').setTextColor(navy).text("TOTAL:", tableStartX, y + 5, { align: 'left' }).text(`${formatearNumero(data.totalFinal)} ${data.cotizacionMoneda}`, valueColX, y + 5, { align: 'left' });
+                y += 15;
+
+                const termsText = data.terminos || TERMINOS_CONDICIONES;
+                const splitTerms = pdf.splitTextToSize(termsText, pageWidth - 2 * margin);
+                
+                if (y + (splitTerms.length * 4) > pageHeight - 20) { addNewPage(); }
+                
+                pdf.setFontSize(8).setFont('helvetica', 'bold').setTextColor(navy).text("Términos y Condiciones", margin, y);
+                y += 5;
+                pdf.setFontSize(7).setFont('helvetica', 'normal').setTextColor(gray);
+                splitTerms.forEach(line => {
+                    if (y > pageHeight - 20) { addNewPage(); }
+                    pdf.text(line, margin, y);
+                    y += 4;
+                });
+                
+                addPageFooter();
+                return pdf.output('blob');
+            } catch (error) { 
+                console.error('Error detallado en generarPDF:', error); 
+                throw new Error('Error al construir el PDF.'); 
+            }
+        }
+    </script>
+</body>
+</html>

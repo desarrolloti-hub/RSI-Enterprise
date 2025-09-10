@@ -1,0 +1,304 @@
+
+    :root {
+      --primary: #1c1948;
+      --secondary: #8f94fb;
+      --white: #ffffff;
+      --gray: #f5f5f5;
+      --text: #333333;
+      --border: #e0e0e0;
+      --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      margin-top: 130px;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Montserrat', sans-serif;
+      background-color: var(--gray);
+    }
+
+    /* Títulos y textos con estilos de contacto */
+    .cert-title {
+      color: var(--primary);
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+      padding: 20px 15px 0;
+    }
+
+    .cert-description {
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+      text-align: center;
+      padding: 0 15px;
+    }
+
+    /* Contenedor principal */
+    .luisitocomunica {
+      max-width: 1200px;
+      margin: 100px auto 50px;
+      padding: 0 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin: 0 0 40px;
+      font-size: 2.5rem;
+      padding: 0;
+    }
+
+    /* Grid de artículos */
+    .yuyacst {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 25px;
+      padding: 20px 0;
+    }
+
+    /* Tarjetas de artículos */
+    .aldocivico {
+      background: var(--white);
+      border-radius: 15px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .aldocivico:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      background-color: var(--white);
+    }
+
+    .aldocivico.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .benjashorts {
+      color: var(--primary);
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      line-height: 1.4;
+    }
+
+    .robertopmartinez {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: auto;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-contenido {
+      display: flex;
+      max-width: 90vw;
+      width: 100%;
+      height: 90vh;
+      overflow: hidden;
+      background: var(--white);
+      border-radius: 15px;
+      padding: 30px;
+      position: relative;
+    }
+
+    .modal-info-container {
+      width: 25%;
+      padding-right: 20px;
+      color: var(--text);
+    }
+
+    .modal-info-container h2 {
+      color: var(--primary);
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+
+    .modal-info-container span {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .pdf-viewer {
+      width: 75%;
+      height: 100%;
+      border: none;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-cerrar {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.3s;
+      z-index: 1001;
+    }
+
+    .modal-cerrar:hover {
+      background: var(--secondary);
+    }
+
+    .aldocivico.show {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    /* Estilos para el paginado */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin: 40px 0 20px;
+    }
+
+    .pagination button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      margin: 0 8px;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Montserrat', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .pagination button:hover {
+      background-color: #151238;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(28, 25, 72, 0.2);
+    }
+
+    .pagination button.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Contenido de texto */
+    #textContent {
+      width: 75%;
+      padding: 20px;
+      color: var(--text);
+      line-height: 1.6;
+      overflow-y: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .modal-contenido {
+        flex-direction: column;
+        height: auto;
+        max-height: 90vh;
+      }
+      
+      .modal-info-container {
+        width: 100%;
+        padding-right: 0;
+        margin-bottom: 20px;
+      }
+      
+      .pdf-viewer, #textContent {
+        width: 100%;
+        height: 400px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .luisitocomunica {
+        margin-top: 80px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .yuyacst {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .pagination {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+      }
+      
+      .pagination button {
+        width: 200px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .aldocivico {
+        padding: 20px;
+      }
+      
+      .benjashorts {
+        font-size: 1.1rem;
+      }
+      
+      .modal-contenido {
+        padding: 20px;
+      }
+      
+      .modal-info-container h2 {
+        font-size: 1.3rem;
+      }
+    }

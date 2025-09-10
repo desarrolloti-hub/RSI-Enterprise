@@ -1,0 +1,275 @@
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="../css/navAdmin.css">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <title>RSI Enterprise - Blog Manager</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" />
+</head>
+<body>
+  <header class="header">
+    <header class="nan_header">
+      <nav class="nan_navbar">
+          <div class="nan_logo">
+              <img src="../css/img/LOGO BLANCO.png" alt="Logo">
+          </div>
+          <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+          <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+          <ul class="nan_menu">
+            <li><i class="fas fa-home"></i><a href="dashAdmin.html"> Inicio</a></li>&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;&emsp; &emsp;
+          </ul> 
+      </nav>
+    </header>
+  </header>
+  <br><br><br><br>
+  <head>
+    <title>Opiniones</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background-color: #000000; 
+            margin: 0;
+            padding: 20px;
+            color: #ffffff;
+        }
+        
+        .comContainer { 
+            background: #1a1a1a; 
+            padding: 2rem; 
+            border-radius: 15px; 
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1); 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        
+        #comOpiniones {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 25px 0;
+        }
+        
+        .comOpinion { 
+            background: #2d2d2d; 
+            padding: 1.8rem; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); 
+            transition: all 0.3s ease;
+            position: relative;
+            color: #ffffff;
+            border: 1px solid #3d3d3d;
+        }
+        
+        .comOpinion:hover { 
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7); 
+        }
+        
+        .comEstrellas { 
+            color: #ffd700; 
+            font-size: 1.5rem; 
+            margin-bottom: 1rem; 
+            letter-spacing: 2px;
+        }
+        
+        .comFecha {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            font-style: italic;
+        }
+        
+        .comEliminar {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .comEliminar:hover {
+            background: #ff1a1a;
+            transform: scale(1.15);
+            box-shadow: 0 0 12px rgba(220, 53, 69, 0.6);
+        }
+        
+        .cargando, .error { 
+            padding: 1.2rem; 
+            margin: 2rem 0; 
+            border-radius: 8px; 
+            text-align: center;
+        }
+        
+        .cargando { 
+            background: #2d3748; 
+            color: #a0aec0; 
+            border: 1px solid #4a5568;
+        }
+        
+        .error { 
+            background: #4a1c1c; 
+            color: #feb2b2; 
+            border: 1px solid #742a2a;
+        }
+        
+        h2 {
+            color: #ffffff;
+            border-bottom: 2px solid #3d3d3d;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+        }
+        
+        #comCalificacionPromedio {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="comContainer">
+        <h2>📝 Opiniones</h2>
+        <p>Calificación promedio: <span id="comCalificacionPromedio">0.0</span> ★</p>
+        <div id="comOpiniones"></div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { 
+        getFirestore, collection, getDocs, 
+        Timestamp, query, orderBy, doc, deleteDoc 
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function cargarOpiniones() {
+        const opinionesContainer = document.getElementById("comOpiniones");
+        opinionesContainer.innerHTML = "<div class='cargando'>Cargando comentarios...</div>";
+        
+        try {
+            const q = query(collection(db, "comentarios"), orderBy('fecha', 'desc'));
+            const querySnapshot = await getDocs(q);
+            
+            let totalCalificacion = 0;
+            let cantidad = 0;
+            let opinionesHTML = [];
+
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                totalCalificacion += data.calificacion;
+                cantidad++;
+                
+                opinionesHTML.push(`
+                    <div class="comOpinion">
+                        <button class="comEliminar" data-id="${doc.id}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <div class="comEstrellas">${"★".repeat(data.calificacion)}${"☆".repeat(5 - data.calificacion)}</div>
+                        <p><strong>${escapeHtml(data.nombre)}</strong></p>
+                        <p>${escapeHtml(data.comentario)}</p>
+                        <p class="comFecha">${new Date(data.fecha.seconds * 1000).toLocaleDateString('es-ES', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        })}</p>
+                    </div>
+                `);
+            });
+
+            opinionesContainer.innerHTML = opinionesHTML.join('') || "<p class='cargando'>No hay comentarios aún</p>";
+            
+            const promedio = cantidad > 0 ? (totalCalificacion / cantidad).toFixed(1) : "0.0";
+            document.getElementById("comCalificacionPromedio").innerText = promedio;
+
+            document.querySelectorAll('.comEliminar').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const id = button.dataset.id;
+                    const result = await Swal.fire({
+                        title: '¿Eliminar comentario?',
+                        text: 'Esta acción no se puede deshacer',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Eliminar',
+                        cancelButtonText: 'Cancelar',
+                        background: '#2d2d2d',
+                        color: '#ffffff'
+                    });
+                    
+                    if (result.isConfirmed) {
+                        try {
+                            await deleteDoc(doc(db, "comentarios", id));
+                            await cargarOpiniones();
+                            Swal.fire({
+                                title: 'Eliminado',
+                                text: 'El comentario ha sido eliminado',
+                                icon: 'success',
+                                background: '#2d2d2d',
+                                color: '#ffffff'
+                            });
+                        } catch (error) {
+                            console.error("Error eliminando comentario:", error);
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'No se pudo eliminar el comentario',
+                                icon: 'error',
+                                background: '#2d2d2d',
+                                color: '#ffffff'
+                            });
+                        }
+                    }
+                });
+            });
+
+        } catch (error) {
+            console.error("Error cargando comentarios:", error);
+            opinionesContainer.innerHTML = "<p class='error'>⚠️ Error cargando comentarios. Intenta recargar la página</p>";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", cargarOpiniones);
+</script>
+</body>
+</html>
+
+
+      

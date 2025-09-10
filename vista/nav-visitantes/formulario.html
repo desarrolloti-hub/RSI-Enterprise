@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario RS I Enterprise</title>
+    
+    <!-- Dependencias -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #1c1948;
+            --secondary-color: #2a2f4f;
+            --accent-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            padding: 20px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            max-width: 180px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .form-container {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 2px;
+            background: var(--primary-color);
+            margin: 1rem auto 0;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(28, 25, 72, 0.2);
+            outline: none;
+        }
+
+        .rating-stars {
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .rating-stars span {
+            cursor: pointer;
+            font-size: 2.5rem;
+            color: #e0e0e0;
+            margin: 0 0.5rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .rating-stars span.active {
+            color: var(--primary-color);
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1.2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background: var(--secondary-color);
+            box-shadow: 0 8px 25px rgba(28, 25, 72, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                max-width: 150px;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            .rating-stars span {
+                font-size: 2.2rem;
+                margin: 0 0.3rem;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .form-container {
+                padding: 1.5rem;
+                border-radius: 15px;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .logo {
+                max-width: 130px;
+                margin-bottom: 1rem;
+            }
+
+            input, textarea {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .rating-stars span {
+                font-size: 1.8rem;
+                margin: 0 0.2rem;
+            }
+
+            button {
+                font-size: 0.95rem;
+                padding: 0.9rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .rating-stars span {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="logo-container">
+            <a href="https://rsienterprise.web.app/" target="_blank">
+                <img src="../css/img/Logo-RSI-OFICIAL.png" alt="RS I Enterprise Logo" class="logo">
+            </a>
+        </div>
+
+        <h2>¡Valora Nuestro Servicio!</h2>
+        <div class="form-group">
+            <input type="text" id="userName" placeholder="Nombre completo" required>
+        </div>
+        <div class="form-group">
+            <textarea id="userComment" placeholder="Tu opinión nos ayuda a mejorar..." rows="5" required></textarea>
+        </div>
+        
+        <div class="rating-stars">
+            <span>★</span>
+            <span>★</span>
+            <span>★</span>
+            <span>★</span>
+            <span>★</span>
+        </div>
+
+        <button id="submitBtn">Enviar Valoración</button>
+    </div>
+
+    <script>
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Lista de palabras prohibidas
+        const palabrasProhibidas = [
+            'puto', 'puta', 'verga', 'pendejo', 'chingar', 'culero', 'pito', 'mierda', 'cabrón',
+            'joder', 'coño', 'zorra', 'maricón', 'pendejada', 'naco', 'chairo', 'pendeja',
+            'fuck', 'shit', 'asshole', 'bitch', 'cunt', 'dick', 'pussy', 'whore', 'slut',
+            'motherfucker', 'bastard', 'cock', 'nigger', 'retard', 'cocksucker', 'douchebag',
+            'concha', 'boludo', 'pelotudo', 'guevon', 'malparido', 'hijueputa', 'marica',
+            'carajo', 'chupapija', 'pichula', 'careverga', 'mamaculo', 'ñero', 'sapo',
+            'put@', 'p3nd3j0', 'm1erda', 'f*ck', 'v3rg4', 'c0ñ0', 'p3n3dej0',
+            'puta', 'pinche', 'cabron', 'chingada', 'pendejo', 'naco', 
+            'güey', 'puto', 'culero', 'joto', 'pendejada', 'verga',
+            'madre', 'vrg', 'chinga', 'wey', 'mierda', 'chingón', 'chinga',
+            'marico', 'chúpala', 'paja', 'gafo', 'mamagüevo', 'pichurria',
+            'arrecho', 'chamo', 'coño', 'malandro', 'pendejada', 'verga',
+            'culillo', 'baboso', 'teta', 'pata',
+            'hijueputa', 'gonorrea', 'malparido', 'sapo', 'crica', 'chimba',
+            'pirobo', 'lámpara', 'guiso', 'mamera', 'güevón', 'maricada',
+            'ñero', 'basuco', 'paraco', 'traga',
+            'idiota', 'estúpido', 'imbécil', 'carajo', 'joder', 'culiao',
+            'chingar', 'cojones', 'polla', 'concha', 'tetas', 'follar',
+            'capullo', 'panocha', 'zorra', 'prostituta', 'cabron', 'put@',
+            'put0', 'pvt4', 'm4r1c0n', 'hdp', 'vergas', 'pendej@','Putos', 'putos','Puta','Putas','Put4s','put4s', '@','%',
+            '&','$','*','/'
+        ];
+
+        // Normalización de texto
+        function normalizarTexto(texto) {
+            return texto
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[0-9@#$%^&*()_+=[\]{}|\\;:'",.<>/?¡¿]/g, function(match) {
+                    const sustituciones = {'@':'a','3':'e','1':'i','0':'o','4':'a','$':'s','5':'s','7':'t','¿':'','¡':''};
+                    return sustituciones[match] || '';
+                });
+        }
+
+        // Detección de lenguaje ofensivo
+        function contieneLenguajeOfensivo(texto) {
+            const textoNormalizado = normalizarTexto(texto);
+            return palabrasProhibidas.some(palabra => {
+                const regex = new RegExp(`\\b${palabra}\\b`, 'i');
+                return regex.test(textoNormalizado);
+            });
+        }
+
+        // Sistema de calificación
+        const stars = document.querySelectorAll('.rating-stars span');
+        let selectedRating = 0;
+
+        stars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                stars.forEach((s, i) => {
+                    s.classList.remove('active');
+                    s.style.color = i <= index ? '#1c1948' : '#e0e0e0';
+                    if(i <= index) s.classList.add('active');
+                });
+                selectedRating = index + 1;
+            });
+        });
+
+        // Manejo del formulario
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const name = document.getElementById('userName').value.trim();
+            const comment = document.getElementById('userComment').value.trim();
+
+            // Validación de campos
+            if (!name || !comment || selectedRating === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Atención!',
+                    text: 'Por favor completa todos los campos y selecciona una calificación',
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#1c1948'
+                });
+                return;
+            }
+
+            // Validación de lenguaje ofensivo
+            if (contieneLenguajeOfensivo(name) || contieneLenguajeOfensivo(comment)) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Contenido inapropiado',
+                    html: `Hemos detectado lenguaje ofensivo en tu comentario.<br>
+                           Por favor revisa nuestro <a href="https://rsienterprise.web.app/politicas" target="_blank">código de conducta</a>`,
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#ff0000'
+                });
+                
+                setTimeout(() => {
+                    window.location.href = 'https://rsienterprise.web.app/politicas';
+                }, 5000);
+                return;
+            }
+
+            try {
+                // Enviar a Firebase
+                await db.collection('comentarios').add({
+                    nombre: name,
+                    comentario: comment,
+                    calificacion: selectedRating,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Confirmación y redirección
+                await Swal.fire({
+                    icon: 'success',
+                    title: '¡Gracias!',
+                    text: 'Tu comentario se ha enviado correctamente',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    background: '#ffffff',
+                    iconColor: '#1c1948'
+                });
+
+                window.location.href = 'https://rsienterprise.web.app/';
+
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al enviar tu comentario',
+                    confirmButtonColor: '#1c1948',
+                    background: '#ffffff',
+                    iconColor: '#ff0000'
+                });
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda de Electrónica</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/responsiv.css">
+    <link rel="stylesheet" href="../css/estilos-nav.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    <header class="nan_header">
+        <nav class="nan_navbar">
+            <div class="nan_logo">
+                <a href="https://rsienterprise.com/"><img src="https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo"></a> &emsp; &emsp;
+            </div>
+    
+            <!-- Botón de hamburguesa para móviles -->
+            <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+            <button class="nan_close" aria-label="Cerrar menú">&times;</button>
+    
+            <ul class="nan_menu">
+                <li><a href="productos.html"><i class="fas fa-box"></i> Productos</a></li> &emsp;&emsp;
+                <li><a href="servicios.html"><i class="fas fa-tools"></i> Servicios</a></li>&emsp;&emsp;
+                <li><a href="nosotros.html"><i class="fas fa-users"></i> ¿Quiénes somos?</a></li>&emsp;&emsp;
+                <li><a href="contacto-&-comentarios.html"><i class="fas fa-envelope"></i> Contáctanos</a></li>&emsp;&emsp;
+                <li><a href="blogs.html"><i class="fas fa-pencil"></i> Blogs</a></li>&emsp;&emsp;
+                <li><a href="inicio-de-sesion.html"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a></li>&emsp;&emsp;
+                <li class="nan_language">
+                    <select id="languageSelect" class="language-select">
+                        <option value="es" data-flag="https://rsienterprise.com/vista/css/img/flag-mexico.png">🇲🇽</option>
+                        <option value="en" data-flag="https://rsienterprise.com/vista/css/img/flag-usa.png">🇺🇸</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <script src="../../javascripts/nav.js"></script>
+<body>
+    <header id="nav"></header>
+<br><br><br><br>
+    <!-- Bloque de Detección de Incendio -->
+    <div class="bloque">
+        <h1>Detección de Incendio</h1>
+
+        <div class="pregunta ironman2" onclick="toggleRespuesta(this)">
+            ¿Cuál es el objetivo principal de un sistema de detección de incendio?
+        </div>
+        <div class="respuesta">
+            El propósito principal de un sistema de detección de incendios es proteger la vida humana; Después del desarrollo, la protección de activos y la continuidad del negocio se consideran dentro de los parámetros de diseño.
+        </div>
+
+        <div class="pregunta capitanamerica2" onclick="toggleRespuesta(this)">
+            ¿Cuál es la función de un sistema de detección de incendio?
+        </div>
+        <div class="respuesta">
+            La función de un sistema de detección de incendio es identificar y alertar sobre la presencia de un incendio en sus etapas iniciales, permitiendo una respuesta rápida para minimizar daños.
+        </div>
+
+        <div class="pregunta thor2" onclick="toggleRespuesta(this)">
+            ¿Cuál es el objetivo de diseñar un sistema de detección de incendio?
+        </div>
+        <div class="respuesta">
+            El objetivo de diseñar un sistema de detección de incendio es garantizar la seguridad de las personas y proteger los bienes materiales, además de asegurar la continuidad de las operaciones en caso de un incendio.
+        </div>
+
+        <div class="pregunta hulk2" onclick="toggleRespuesta(this)">
+            ¿Cuáles son los componentes básicos de un sistema de detección de incendio?
+        </div>
+        <div class="respuesta">
+            Los componentes básicos de un sistema de detección de incendio incluyen detectores de humo, detectores de calor, paneles de control, alarmas audibles y visuales, y sistemas de notificación.
+        </div>
+    </div>
+
+    <!-- Bloque de CCTV -->
+    <div class="bloque">
+        <h1>CCTV</h1>
+
+        <div class="pregunta spiderman2" onclick="toggleRespuesta(this)">
+            ¿Tiene costo adicional el ver mis cámaras por internet o desde mi teléfono?
+        </div>
+        <div class="respuesta">
+            No, para ver tu cámara a través de Internet o teléfono móvil, solo necesitas conectar tu dispositivo a Internet, independientemente de dónde te encuentres, puedes hacerlo desde una computadora (por ejemplo, en la oficina) o con conexión a Internet.
+        </div>
+
+        <div class="pregunta blackwidow2" onclick="toggleRespuesta(this)">
+            ¿Necesito computadora?
+        </div>
+        <div class="respuesta">
+            No necesariamente, puedes acceder a las cámaras desde cualquier dispositivo con conexión a Internet, como un teléfono móvil o una tablet.
+        </div>
+
+        <div class="pregunta hawkeye2" onclick="toggleRespuesta(this)">
+            ¿Pueden ver de noche las cámaras?
+        </div>
+        <div class="respuesta">
+            Sí, muchas cámaras de vigilancia tienen visión nocturna, lo que les permite capturar imágenes en condiciones de poca luz o oscuridad total.
+        </div>
+
+        <div class="pregunta doctorstrange2" onclick="toggleRespuesta(this)">
+            ¿Puedo grabar lo que captan las cámaras de vigilancia?
+        </div>
+        <div class="respuesta">
+            Sí, la mayoría de los sistemas de CCTV permiten grabar el video capturado por las cámaras, ya sea en un dispositivo local o en la nube.
+        </div>
+
+        <div class="pregunta blackpanther2" onclick="toggleRespuesta(this)">
+            ¿Cuánto tiempo graban los equipos?
+        </div>
+        <div class="respuesta">
+            El tiempo de grabación depende de la capacidad de almacenamiento del dispositivo de grabación y de la configuración del sistema. Algunos sistemas pueden grabar continuamente, mientras que otros solo graban cuando detectan movimiento.
+        </div>
+
+        <div class="pregunta captainmarvel2" onclick="toggleRespuesta(this)">
+            ¿Qué tipo de cámaras existen y cual necesito?
+        </div>
+        <div class="respuesta">
+            Existen varios tipos de cámaras, como cámaras domo, cámaras bullet, cámaras PTZ (Pan-Tilt-Zoom), y cámaras con visión nocturna. El tipo de cámara que necesitas depende de tus requisitos específicos, como el área que deseas cubrir y las condiciones de iluminación.
+        </div>
+
+        <div class="pregunta antman2" onclick="toggleRespuesta(this)">
+            ¿Qué resoluciones (calidad de video) tienen las cámaras o los equipos?
+        </div>
+        <div class="respuesta">
+            Las cámaras de vigilancia pueden tener diferentes resoluciones, desde SD (480p) hasta 4K (2160p). La resolución que elijas dependerá de la claridad que necesites para identificar detalles como rostros o placas.
+        </div>
+
+        <div class="pregunta wasp2" onclick="toggleRespuesta(this)">
+            ¿Graba audio?
+        </div>
+        <div class="respuesta">
+            Algunas cámaras de vigilancia tienen la capacidad de grabar audio, pero esto depende del modelo y de las regulaciones locales sobre privacidad.
+        </div>
+
+        <div class="pregunta falcon2" onclick="toggleRespuesta(this)">
+            ¿Graban nítidamente Rostros y Placas?
+        </div>
+        <div class="respuesta">
+            La nitidez con la que se graban rostros y placas depende de la resolución de la cámara y de la distancia a la que se encuentren los objetos. Las cámaras de alta resolución (1080p o superior) suelen capturar detalles con mayor claridad.
+        </div>
+
+        <div class="pregunta wintersoldier2" onclick="toggleRespuesta(this)">
+            ¿Puedo hablar a través de la cámara?
+        </div>
+        <div class="respuesta">
+            Sí, algunas cámaras de vigilancia tienen un micrófono y un altavoz integrados, lo que te permite comunicarte a través de la cámara desde tu dispositivo móvil o computadora.
+        </div>
+
+        <div class="pregunta scarletwitch2" onclick="toggleRespuesta(this)">
+            ¿Las cámaras tienen detección de movimiento?
+        </div>
+        <div class="respuesta">
+            Sí, muchas cámaras de vigilancia modernas tienen detección de movimiento, lo que les permite comenzar a grabar o enviar alertas cuando detectan actividad en el área monitoreada.
+        </div>
+
+        <div class="pregunta vision2" onclick="toggleRespuesta(this)">
+            ¿Qué pasa si perdí la contraseña de mi equipo de grabación?
+        </div>
+        <div class="respuesta">
+            Si pierdes la contraseña de tu equipo de grabación, generalmente puedes restablecerla siguiendo las instrucciones del fabricante. Esto puede implicar restablecer el dispositivo a su configuración de fábrica o contactar al soporte técnico.
+        </div>
+
+        <div class="pregunta starlord2" onclick="toggleRespuesta(this)">
+            ¿Qué pasa con mis cámaras si se corta el suministro de energía eléctrica?
+        </div>
+        <div class="respuesta">
+            Si se corta el suministro de energía eléctrica, las cámaras que no tienen respaldo de batería dejarán de funcionar. Sin embargo, algunos sistemas de CCTV tienen baterías de respaldo o están conectados a sistemas de energía ininterrumpida (UPS) para mantenerlas en funcionamiento durante cortes de energía.
+        </div>
+    </div>
+    <div id="footer-wrapper"></div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <script src="../../javascripts/includesVisita.js"></script>
+    <script src="../../javascripts/funcionalidades.js"></script>
+    <script>
+        function toggleRespuesta(pregunta) {
+            pregunta.classList.toggle('activa');
+        }
+    </script>
+    <script src="../../javascripts/navScript.js"></script>
+</body>
+</html>

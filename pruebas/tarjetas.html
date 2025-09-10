@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* --- ESTILOS DEL NAVBAR --- */
+    .nan_header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000; /* Asegura que esté por encima del contenido */
+      background-color: white; /* Fondo para que el contenido no se vea detrás */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: sombra para separar visualmente */
+    }
+
+    /* --- ESPACIO PARA EL NAVBAR --- */
+    main {
+      margin-top: 80px; /* Ajusta este valor según la altura de tu nav */
+      padding-top: 20px; /* Espacio adicional si es necesario */
+    }
+
+    /* --- ESTILOS DE LAS TARJETAS --- */
+    .product-card {
+      transition: all 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    /* --- ESTILOS DEL QUICK-VIEW MODAL --- */
+    #quick-view-modal {
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      position: fixed; /* Asegura que el modal esté fijo en la pantalla */
+      top: 80px; /* Respeta el espacio del navbar */
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 80px); /* Altura menos la altura del navbar */
+      background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+      z-index: 1001; /* Asegura que esté por encima del navbar */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px; /* Espacio interno */
+      overflow-y: auto; /* Permite el scroll si el contenido es largo */
+    }
+
+    #quick-view-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* --- ESTILOS DEL DETAIL-VIEW --- */
+    #detail-view {
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      position: fixed; /* Asegura que el modal esté fijo en la pantalla */
+      top: 0;
+      left: 0;
+      width: 100%; /* Ocupa todo el ancho */
+      height: 100vh; /* Ocupa toda la altura */
+      background-color: white;
+      z-index: 1001; /* Asegura que esté por encima del navbar */
+      overflow-y: auto; /* Permite el scroll si el contenido es largo */
+      padding-top: 80px; /* Respeta el espacio del navbar */
+    }
+
+    #detail-view.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* --- ESTILOS DEL BOTÓN DE CERRAR EN DETAIL-VIEW --- */
+    #close-detail {
+      position: fixed; /* Fijo en la pantalla */
+      top: 84px; /* 80px del navbar + 4px de margen */
+      right: 16px; /* Margen derecho */
+      background-color: #f3f4f6; /* Fondo gris claro */
+      padding: 8px; /* Espacio interno */
+      border-radius: 50%; /* Forma circular */
+      cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+      transition: background-color 0.3s ease; /* Transición suave */
+      z-index: 1002; /* Asegura que esté por encima del contenido */
+    }
+
+    #close-detail:hover {
+      background-color: #e5e7eb; /* Cambia el color al pasar el cursor */
+    }
+
+    /* --- ESTILOS DEL LOADER --- */
+    .loader {
+      border-top-color: #6366f1;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- BOTÓN DE VISTA RÁPIDA --- */
+    .quick-view-btn {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .product-card:hover .quick-view-btn {
+      opacity: 1;
+    }
+
+    /* --- COLOR PERSONALIZADO --- */
+    .text-custom-green {
+      color: #02ac16;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Contenido principal -->
+  <main class="container mx-auto px-4 pt-8 pb-8">
+    <!-- Loader -->
+    <div id="loader" class="flex flex-col items-center justify-center py-12">
+      <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4 loader"></div>
+      <p class="text-gray-600">Cargando productos...</p>
+    </div>
+
+    <!-- Error message -->
+    <div id="error-message" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md hidden"></div>
+
+    <!-- Products container -->
+    <div id="products-container" class="hidden">
+      <!-- New Releases Section -->
+      <section class="mb-12">
+        <div id="new-releases" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <!-- Products will be inserted here -->
+        </div>
+      </section>
+
+      <!-- Best Sellers Section -->
+      <section>
+        <div class="flex items-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-indigo-600">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+            <path d="M3 6h18"></path>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <h2 class="text-2xl font-bold text-gray-900">Productos Más Vendidos</h2>
+        </div>
+        <div id="best-sellers" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <!-- Products will be inserted here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Quick View Modal Template -->
+  <div id="quick-view-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">Vista Rápida</h2>
+        <button class="close-modal text-gray-400 hover:text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <div class="aspect-w-1 aspect-h-1 mb-4">
+          <img id="quick-view-image" class="w-full h-100 object-cover rounded-md" src="" alt="">
+        </div>
+        <h3 id="quick-view-name" class="text-xl font-semibold text-gray-900 mb-2"></h3>
+        <p id="quick-view-price" class="text-2xl font-bold mb-4 text-custom-green"></p>
+        <center> 
+        <p class="text-sm text-gray-500">RSI</p>
+        </center>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail View Template -->
+  <div id="detail-view" class="fixed inset-0 bg-white z-50 overflow-y-auto hidden">
+    <div class="container mx-auto px-4 py-8">
+      <button id="close-detail" class="absolute top-4 right-4 bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"></path>
+          <path d="m6 6 12 12"></path>
+        </svg>
+      </button>
+      
+      <div class="flex flex-col md:flex-row gap-8 mt-8">
+        <!-- Left side - Image -->
+        <div class="md:w-1/2">
+          <div class="sticky top-5">
+            <img
+              id="detail-image"
+              src=""
+              alt=""
+              class="rounded-lg shadow-md"
+              style="width: 580px; height: auto;">
+            <div id="detail-gallery" class="mt-4 grid grid-cols-4 gap-2">
+              <!-- Additional images will be inserted here -->
+            </div>
+          </div>
+        </div>  
+        <!-- Right side - Product details -->
+        <div class="md:w-1/2">
+          <div class="mb-6">
+            <h1 id="detail-name" class="text-3xl font-bold text-gray-900 mb-2"></h1>
+            <p id="detail-sku" class="text-sm text-gray-500 mb-4"></p>
+            <p id="detail-price" class="text-3xl font-bold mb-6" style="color: #02ac16;"></p>            
+            <div class="flex space-x-4 mb-8">
+              <button class="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700 transition-colors">
+                Añadir al carrito
+              </button>
+              <button class="border border-gray-300 px-6 py-3 rounded-md font-medium hover:bg-gray-50 transition-colors">
+                Guardar
+              </button>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 py-6">
+            <h2 class="text-lg font-semibold mb-4">Detalles del producto</h2>
+            <div class="space-y-4">
+              <div>
+                <h3 class="text-sm font-medium text-gray-500">Marca</h3>
+                <p id="detail-brand"></p>
+              </div>
+                    
+              <div>
+                <h3 class="text-sm font-medium text-gray-500">Modelo</h3>
+                <p id="detail-model"></p>
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-500">Categoría</h3>
+                <p id="detail-category"></p>
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-500">Tipo</h3>
+                <p id="detail-type"></p>
+              </div>
+              <div id="detail-structure-container" class="border-t border-gray-200 py-6">
+                <h3 class="text-sm font-medium text-gray-500">Estructura</h3>
+                <p id="detail-structure" class="text-gray-700 whitespace-pre-line"></p>
+            </div>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 py-6">
+            <h2 class="text-lg font-semibold mb-4">Especificaciones</h2>
+            <p id="detail-specs" class="text-gray-700 whitespace-pre-line"></p>
+          </div>
+          
+          <div id="detail-link-container" class="border-t border-gray-200 py-6">
+            <a id="detail-link" href="" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-800 font-medium">
+            
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+      authDomain: "rsienterprise.firebaseapp.com",
+      projectId: "rsienterprise",
+      storageBucket: "rsienterprise.appspot.com",
+      messagingSenderId: "1063117165770",
+      appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM elements
+    const loader = document.getElementById('loader');
+    const errorMessage = document.getElementById('error-message');
+    const productsContainer = document.getElementById('products-container');
+    const newReleasesContainer = document.getElementById('new-releases');
+    const bestSellersContainer = document.getElementById('best-sellers');
+    const quickViewModal = document.getElementById('quick-view-modal');
+    const detailView = document.getElementById('detail-view');
+
+    // Default image
+    const defaultImage = "https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png";
+
+    // Fetch products from Firestore
+    async function fetchProducts() {
+      try {
+        console.log("Fetching products from Firebase...");
+        
+        // Fetch new releases (latest 8 products)
+        const newReleasesQuery = query(
+          collection(db, 'Productos'),
+          orderBy('timestamp', 'desc'),
+          limit(8)
+        );
+        
+        // Fetch best sellers (first 8 products)
+        const bestSellersQuery = query(
+          collection(db, 'Productos'),
+          limit(8)
+        );
+        
+        const [newReleasesSnapshot, bestSellersSnapshot] = await Promise.all([
+          getDocs(newReleasesQuery),
+          getDocs(bestSellersQuery)
+        ]);
+        
+        console.log("New releases count:", newReleasesSnapshot.docs.length);
+        console.log("Best sellers count:", bestSellersSnapshot.docs.length);
+        
+        const newReleasesData = newReleasesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        const bestSellersData = bestSellersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        console.log("New releases data:", newReleasesData);
+        console.log("Best sellers data:", bestSellersData);
+        
+        // Render products
+        renderProducts(bestSellersData, bestSellersContainer, 'No se encontraron productos destacados');
+        
+        // Hide loader and show products
+        loader.classList.add('hidden');
+        productsContainer.classList.remove('hidden');
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        loader.classList.add('hidden');
+        errorMessage.textContent = 'Error al cargar los productos. Por favor, intenta de nuevo más tarde.';
+        errorMessage.classList.remove('hidden');
+      }
+    }
+
+    // Render products to container
+    function renderProducts(products, container, emptyMessage) {
+      container.innerHTML = '';
+      
+      if (products.length === 0) {
+        container.innerHTML = `
+        
+          <div class="col-span-4 text-center py-8 text-gray-500">
+            ${emptyMessage}
+          </div>
+        `;
+        return;
+      }
+      
+      products.forEach(product => {
+        const productCard = createProductCard(product);
+        container.appendChild(productCard);
+      });
+    }
+
+    // Create product card element
+    function createProductCard(product) {
+      const productImage = product.Imagenes && product.Imagenes.length > 0 
+        ? product.Imagenes[0] 
+        : defaultImage;
+      
+      const card = document.createElement('div');
+      card.className = 'product-card relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl';
+      card.innerHTML = `
+        <div class="cursor-pointer">
+          <div class="relative h-600 overflow-hidden">
+            <img 
+              src="${productImage}" 
+              alt="${product['Nombre Producto'] || 'Producto'}" 
+              class="w-full h-full object-cover"
+              onerror="this.src='${defaultImage}'"
+            />
+            <button 
+              class="quick-view-btn absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+              aria-label="Vista rápida"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div class="p-4">
+            <h3 class="text-sm font-medium text-gray-900 truncate">
+              ${product['Nombre Producto'] || 'Producto sin nombre'}
+            </h3>
+                <p class="mt-1 text-lg font-semibold" style="color: #02ac16;">
+              $${product['Precio MXN']?.toLocaleString('es-MX') || '0'}
+            </p>
+          </div>
+        </div>
+      `;
+      
+      // Quick view button click
+      const quickViewBtn = card.querySelector('.quick-view-btn');
+      quickViewBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showQuickView(product);
+      });
+      
+      // Card click for detail view
+      card.addEventListener('click', () => {
+        showDetailView(product);
+      });
+      
+      return card;
+    }
+
+    // Show quick view modal
+    function showQuickView(product) {
+      const productImage = product.Imagenes && product.Imagenes.length > 0 
+        ? product.Imagenes[0] 
+        : defaultImage;
+      
+      document.getElementById('quick-view-image').src = productImage;
+      document.getElementById('quick-view-image').alt = product['Nombre Producto'] || 'Producto';
+      document.getElementById('quick-view-name').textContent = product['Nombre Producto'] || 'Producto sin nombre';
+      document.getElementById('quick-view-price').textContent = `$${product['Precio MXN']?.toLocaleString('es-MX') || '0'}`;
+      
+      quickViewModal.classList.remove('hidden');
+      quickViewModal.classList.add('active');
+      
+      // Close modal on background click
+      quickViewModal.addEventListener('click', (e) => {
+        if (e.target === quickViewModal) {
+          closeQuickView();
+        }
+      });
+      
+      // Close modal on close button click
+      const closeBtn = quickViewModal.querySelector('.close-modal');
+      closeBtn.addEventListener('click', closeQuickView);
+    }
+
+    // Close quick view modal
+    function closeQuickView() {
+      quickViewModal.classList.remove('active');
+      setTimeout(() => {
+        quickViewModal.classList.add('hidden');
+      }, 300);
+    }
+
+    // Show detail view
+    function showDetailView(product) {
+      const productImage = product.Imagenes && product.Imagenes.length > 0 
+        ? product.Imagenes[0] 
+        : defaultImage;  
+      
+      document.getElementById('detail-image').src = productImage;
+      document.getElementById('detail-image').alt = product['Nombre Producto'] || 'Producto';
+      document.getElementById('detail-name').textContent = product['Nombre Producto'] || 'Producto sin nombre';
+      document.getElementById('detail-price').textContent = `$${product['Precio MXN']?.toLocaleString('es-MX') || '0'}`;
+      document.getElementById('detail-brand').textContent = product.Marca || 'N/A';
+      document.getElementById('detail-model').textContent = product.Modelo || 'N/A';
+      document.getElementById('detail-category').textContent = product.Categoria || 'N/A';
+      document.getElementById('detail-type').textContent = product.Tipo || 'N/A';
+      document.getElementById('detail-specs').textContent = product.Especificaciones || 'No hay especificaciones disponibles';
+      
+      // Structure section
+      const structureContainer = document.getElementById('detail-structure-container');
+      const structureContent = document.getElementById('detail-structure');
+      if (product.Estructura) {
+        structureContent.textContent = product.Estructura;
+        structureContainer.classList.remove('hidden');
+      } else {
+        structureContainer.classList.add('hidden');
+      }
+      
+      // Product link section
+      const linkContainer = document.getElementById('detail-link-container');
+      const linkElement = document.getElementById('detail-link');
+      if (product['Link de producto']) {
+        linkElement.href = product['Link de producto'];
+        linkContainer.classList.remove('hidden');
+      } else {
+        linkContainer.classList.add('hidden');
+      }
+      
+      // Image gallery
+      const galleryContainer = document.getElementById('detail-gallery');
+      galleryContainer.innerHTML = '';
+      
+      if (product.Imagenes && product.Imagenes.length > 1) {
+        product.Imagenes.forEach((img, idx) => {
+          const imgElement = document.createElement('div');
+          imgElement.className = 'aspect-square overflow-hidden rounded-md border border-gray-200';
+          imgElement.innerHTML = `
+            <img 
+              src="${img}" 
+              alt="${product['Nombre Producto'] || 'Producto'} - ${idx + 1}" 
+              class="w-full h-full object-cover"
+              onerror="this.src='${defaultImage}'"
+            />
+          `;
+          galleryContainer.appendChild(imgElement);
+          
+          // Click on thumbnail to change main image
+          imgElement.addEventListener('click', () => {
+            document.getElementById('detail-image').src = img;
+          });
+        });
+      } else {
+        galleryContainer.classList.add('hidden');
+      }
+      
+      // Show detail view with animation
+      detailView.classList.remove('hidden');
+      setTimeout(() => {
+        detailView.classList.add('active');
+      }, 10);
+      
+      // Close detail view on button click
+      document.getElementById('close-detail').addEventListener('click', closeDetailView);
+    }
+
+    // Close detail view
+    function closeDetailView() {
+      detailView.classList.remove('active');
+      setTimeout(() => {
+        detailView.classList.add('hidden');
+      }, 300);
+    }
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log("DOM loaded, fetching products...");
+      fetchProducts();
+    });
+  </script>
+</body>
+</html>

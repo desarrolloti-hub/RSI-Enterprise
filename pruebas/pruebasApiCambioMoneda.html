@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Valores de Moneda</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Valores de Moneda</h1>
+    <p>USD: <span id="usdValue">Cargando...</span></p>
+    <p>MXN: <span id="mxnValue">Cargando...</span></p>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // API Key y URL de la API
+        const apiKey = 'd84f2ec1d23aa107ecf87f3ed28d5da8';
+        const apiUrl = `http://api.exchangeratesapi.io/v1/latest?access_key=${apiKey}&symbols=USD,MXN`;
+
+        // Función para obtener la fecha actual en formato YYYY-MM-DD
+        function getCurrentDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        // Función para obtener los valores de la moneda
+        async function getCurrencyValues() {
+            const today = getCurrentDate();
+            const docRef = db.collection('valoresMoneda').doc(today);
+
+            // Intentar obtener los valores de Firestore
+            const doc = await docRef.get();
+            if (doc.exists) {
+                // Si los valores ya están en Firestore, usarlos
+                const data = doc.data();
+                document.getElementById('usdValue').textContent = data.USD;
+                document.getElementById('mxnValue').textContent = data.MXN;
+            } else {
+                // Si no están en Firestore, hacer la consulta a la API
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                const usdValue = data.rates.USD;
+                const mxnValue = data.rates.MXN;
+
+                // Guardar los valores en Firestore
+                await docRef.set({
+                    USD: usdValue,
+                    MXN: mxnValue
+                });
+
+                // Mostrar los valores en la página
+                document.getElementById('usdValue').textContent = usdValue;
+                document.getElementById('mxnValue').textContent = mxnValue;
+            }
+        }
+
+        // Llamar a la función para obtener los valores de la moneda
+        getCurrencyValues();
+    </script>
+</body>
+</html>

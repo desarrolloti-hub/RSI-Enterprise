@@ -1,0 +1,406 @@
+/* --- ESTILOS GENERALES DEL NAVBAR --- */
+.nan_header {
+    background-color: white;
+    color: black;
+    padding: 3px 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nan_navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.nan_logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nan_logo img {
+    max-width: 100px;
+    height: auto;
+}
+
+.nan_menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+}
+
+.nan_menu li {
+    margin-left: 20px;
+}
+
+.nan_menu a {
+    color: black;
+    text-decoration: none;
+    font-size: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.nan_menu a:hover {
+    color: #0a4b90;
+    transform: scale(1.1);
+    padding-left: 10px;
+}
+
+/* --- ESTILOS DEL SELECTOR DE IDIOMA --- */
+.nan_language {
+    display: flex;
+    align-items: center;
+}
+
+.language-select {
+    width: 60px;
+    height: 40px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: transparent;
+    appearance: none;
+    background-image: url('../../../vista/css/img/flag-mexico.png');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    padding: 0;
+    border-radius: 5px;
+    text-indent: -9999px; /* Oculta el texto */
+}
+
+/* --- ESTILOS DEL MENÚ RESPONSIVE --- */
+.nan_hamburger, .nan_close {
+    display: none; /* Ocultos en escritorio */
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+    position: absolute;
+    right: 20px;
+    top: 15px;
+}
+
+/* Solo visible en móviles */
+@media (max-width: 768px) {
+    .nan_header {
+        padding: 0 10px; /* Padding reducido */
+        height: 80px; /* Altura más pequeña */
+        display: flex;
+        align-items: center; /* Centrar verticalmente los elementos */
+        justify-content: space-between; /* Espacio entre logo y hamburguesa */
+    }
+
+/* --- ESTILOS GENERALES DEL NAVBAR --- */
+.nan_header {
+    background-color: white;
+    color: black;
+    padding: 3px 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nan_navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.nan_logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nan_logo img {
+    max-width: 100px;
+    height: auto;
+}
+
+/* --- ESTILOS DEL MENÚ RESPONSIVE --- */
+@media (max-width: 768px) {
+    .nan_header {
+        padding: 0 10px; /* Padding reducido */
+        height: 80px; /* Altura más pequeña */
+        display: flex;
+        align-items: center; /* Centrar verticalmente los elementos */
+        justify-content: center; /* Centrar el contenido */
+        position: relative; /* Necesario para posicionar el logo */
+    }
+
+    .nan_hamburger {
+        display: block; /* Aparece solo en responsive */
+        font-size: 24px; /* Tamaño actual */
+        position: absolute; /* Posicionar el botón de hamburguesa */
+        right: 20px; /* Alinear a la derecha */
+        top: 50%; /* Centrar verticalmente */
+        transform: translateY(-50%); /* Centrar verticalmente */
+        padding: 0; /* Sin padding */
+    }
+
+    .nan_logo {
+        position: absolute; /* Posicionar el logo */
+        left: 50%; /* Centrar horizontalmente */
+        top: 50%; /* Centrar verticalmente */
+        transform: translate(-50%, -50%); /* Centrar perfectamente */
+    }
+
+    .nan_logo img {
+        max-width: 80px; /* Tamaño actual */
+        height: auto;
+    }
+
+    .nan_menu {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 70%;
+        height: 100vh;
+        background-color: #f8f8f8;
+        border-left: 1px solid #ddd;
+        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+        padding-top: 50px; /* Menos espacio en la parte superior */
+        align-items: center;
+    }
+
+    .nan_menu.nan_active {
+        display: flex;
+        right: 0;
+        opacity: 1;
+    }
+
+    .nan_menu li {
+        margin: 10px 0; /* Menos espacio entre elementos */
+    }
+
+    .nan_menu a {
+        padding: 8px 15px; /* Menos padding */
+        font-size: 16px; /* Tamaño de fuente más pequeño */
+        display: block;
+    }
+
+    .nan_close {
+        display: none;
+        position: absolute;
+        top: 50%; /* Centrar verticalmente */
+        right: 15px; /* Ajustar posición */
+        font-size: 24px; /* Tamaño actual */
+        background: none;
+        border: none;
+        cursor: pointer;
+        z-index: 1001;
+        transform: translateY(-50%); /* Centrar verticalmente */
+    }
+
+    /* Mostrar la "X" solo cuando el menú está activo */
+    .nan_menu.nan_active ~ .nan_close {
+        display: block;
+    }
+
+    /* Ocultar el botón hamburguesa cuando el menú está activo */
+    .nan_menu.nan_active ~ .nan_hamburger {
+        display: none;
+    }
+}}
+
+/*Inicio estilos boton carrito de compras y menu*/
+/* ===== BOTÓN FLOTANTE (Estilo WhatsApp pero en derecha) ===== */
+/* ===== MENÚ DEL CARRITO (Sidebar completo) ===== */
+.cart-sidebar {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.cart-sidebar.open {
+    right: 0;
+}
+
+.cart-sidebar h2 {
+    padding: 20px;
+    margin: 0;
+    background-color: #1e40af;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+}
+
+.cart-sidebar h2 button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+#cart-items {
+    padding: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+    gap: 15px;
+}
+
+.cart-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.cart-item .product-name {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quantity-controls button {
+    width: 25px;
+    height: 25px;
+    background-color: #f3f4f6;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-controls button:hover {
+    background-color: #e5e7eb;
+}
+
+.quantity-controls input {
+    width: 40px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+}
+
+.remove-btn:hover {
+    color: #dc2626;
+}
+
+.cart-subtotal {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+#checkout {
+    background-color: #1e40af;
+    color: white;
+    border: none;
+    padding: 15px;
+    margin: 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#checkout:hover {
+    background-color: #1e3a8a;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .cart-sidebar {
+        width: 100%;
+        right: -100%;
+    }
+}
+
+@media (max-width: 600px) {
+  .floating-cart-btn {
+      position: fixed; /* Asegura que sea flotante */
+      width: 50px;
+      height: 50px;
+      right: 15px; /* Distancia desde la derecha */
+      bottom: 30px; /* Distancia desde abajo */
+      z-index: 999; /* Asegura que esté por encima de otros elementos */
+      /* Estilos adicionales para mejor apariencia */
+      background: #ff5722; /* Color de ejemplo, cámbialo según tu diseño */
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  .floating-cart-btn i {
+      font-size: 20px;
+  }
+  .floating-cart-btn span {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+      background: #ff0000;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Productos a Firebase</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: gold;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            border: 2px solid gold;
+            background: black;
+            color: gold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:disabled {
+            border-color: gray;
+            color: gray;
+            cursor: not-allowed;
+        }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const fileInput = document.getElementById("fileInput");
+            const uploadButton = document.getElementById("uploadButton");
+            uploadButton.disabled = true;
+            
+            fileInput.addEventListener("change", () => {
+                uploadButton.disabled = false;
+            });
+
+            uploadButton.addEventListener("click", async () => {
+                if (!fileInput.files.length) {
+                    Swal.fire("Error", "Selecciona un archivo antes de continuar", "error");
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    try {
+                        if (!window.XLSX) {
+                            Swal.fire("Error", "Error cargando la biblioteca XLSX", "error");
+                            return;
+                        }
+                        
+                        Swal.fire({
+                            title: "Cargando...",
+                            text: "Se comenzará la carga de archivos a la base de datos",
+                            icon: "info",
+                            showConfirmButton: true
+                        }).then(() => {
+                            Swal.fire({
+                                title: "Subiendo productos...",
+                                text: "Por favor, espera mientras se completan las cargas",
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                        });
+                        
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: "array" });
+                        let productos = [];
+
+                        workbook.SheetNames.forEach(sheetName => {
+                            const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                            sheet.forEach(row => {
+                                productos.push({
+                                    nombre: row["Nombre Producto"] || "", 
+                                    marca: row["Marca"] || "", 
+                                    modelo: row["Modelo"] || "", 
+                                    precio: row["Precio MXN"] || 0, 
+                                    especificaciones: row["Especificaciones"] || "", 
+                                    link: row["Link de producto"] || "", 
+                                    sku: row["SKU"] || "", 
+                                    categoria: row["Categoria"] || "", 
+                                    tipo: row["Tipo"] || "", 
+                                    estructura: row["Estructura"] || ""
+                                });
+                            });
+                        });
+
+                        if (productos.length === 0) {
+                            Swal.fire("Error", "El archivo no contiene datos válidos", "warning");
+                            return;
+                        }
+                        
+                        for (const producto of productos) {
+                            await addDoc(collection(db, "productos"), producto);
+                        }
+                        
+                        Swal.fire("Éxito", "Productos subidos exitosamente", "success");
+                    } catch (error) {
+                        Swal.fire("Error", "Hubo un problema procesando el archivo", "error");
+                        console.error(error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Subir Productos a Firebase</h1>
+    <input type="file" id="fileInput" accept=".xlsx, .xls">
+    <button id="uploadButton" disabled>Continuar</button>
+</body>
+</html>

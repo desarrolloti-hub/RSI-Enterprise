@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos de Seguridad Electrónica | RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Estilos propios del documento -->
+    <link rel="stylesheet" href="productos.css"> 
+</head>
+<body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+
+    <!-- Carga dinámica del navbar -->
+    <script src="../recursosDinamicos/nav.js"></script>
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="container">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="Buscar productos..." autocomplete="off">
+                    <button id="search-button" class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="search-results" class="search-results-container" style="display: none;">
+                    <!-- Los resultados predictivos aparecerán aquí -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section" id="categories-section">
+        <div class="container">
+            <h2 class="section-title">Explora nuestras categorías</h2>
+            <p class="section-subtitle">Selecciona una categoría para ver los productos disponibles</p>
+            
+            <div class="categories-grid" id="categories-container">
+                <!-- Categorías se cargarán aquí -->
+                <div class="loader-container">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section" id="products-section" style="display: none;">
+        <div class="container">
+            <h2 class="section-title" id="category-title"></h2>
+            
+            <div class="products-grid" id="products-container">
+                <!-- Productos se cargarán aquí -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="back-to-categories" class="view-details-btn">
+                    <i class="fas fa-arrow-left"></i> Volver a categorías
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Variables globales
+    let currentCategory = '';
+    const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+
+    // Cargar categorías
+    async function loadCategories() {
+        try {
+            const categoriesContainer = document.getElementById('categories-container');
+            const querySnapshot = await getDocs(collection(db, "categorias"));
+            
+            categoriesContainer.innerHTML = '';
+            
+            if (querySnapshot.empty) {
+                categoriesContainer.innerHTML = '<p class="text-center">No se encontraron categorías</p>';
+                return;
+            }
+            
+            querySnapshot.forEach((doc) => {
+                const category = doc.data();
+                createCategoryCard(category);
+            });
+        } catch (error) {
+            console.error("Error cargando categorías:", error);
+            document.getElementById('categories-container').innerHTML = 
+                '<p class="text-center text-red-500">Error al cargar categorías</p>';
+        }
+    }
+
+    // Crear tarjeta de categoría
+    function createCategoryCard(category) {
+        const container = document.createElement('div');
+        container.className = 'category-container';
+        container.style.textAlign = 'center';
+        
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'category-image-container';
+        
+        const img = document.createElement('img');
+        img.src = category.imagen || defaultImage;
+        img.alt = category.nombre;
+        img.className = 'category-image';
+        img.onerror = function() { this.src = defaultImage; };
+        
+        const title = document.createElement('h3');
+        title.className = 'category-title';
+        title.textContent = category.nombre;
+        
+        imageContainer.appendChild(img);
+        container.appendChild(imageContainer);
+        container.appendChild(title);
+        
+        container.addEventListener('click', () => {
+            currentCategory = category.nombre;
+            loadProducts(category.nombre);
+        });
+        
+        document.getElementById('categories-container').appendChild(container);
+    }
+
+    // Cargar productos por categoría
+    async function loadProducts(categoryName) {
+        try {
+            // Mostrar loader
+            document.getElementById('products-container').innerHTML = `
+                <div class="loader-container" style="grid-column: 1 / -1;">
+                    <div class="loader"></div>
+                </div>
+            `;
+            
+            // Ocultar categorías y mostrar productos
+            document.getElementById('categories-section').style.display = 'none';
+            document.getElementById('products-section').style.display = 'block';
+            document.getElementById('category-title').textContent = categoryName;
+            
+            // Formatear nombre de colección (eliminar espacios)
+            const collectionName = 'productos' + categoryName.replace(/\s+/g, '');
+            
+            const querySnapshot = await getDocs(collection(db, collectionName));
+            const productsContainer = document.getElementById('products-container');
+            
+            productsContainer.innerHTML = '';
+            
+            if (querySnapshot.empty) {
+                productsContainer.innerHTML = '<p class="text-center" style="grid-column: 1 / -1;">No se encontraron productos en esta categoría</p>';
+                return;
+            }
+            
+            querySnapshot.forEach((doc) => {
+                const product = doc.data();
+                product.id = doc.id;
+                createProductCard(product, collectionName);
+            });
+            
+            // Scroll suave a la sección de productos
+            document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            console.error("Error cargando productos:", error);
+            document.getElementById('products-container').innerHTML = 
+                '<p class="text-center text-red-500" style="grid-column: 1 / -1;">Error al cargar productos</p>';
+        }
+    }
+
+    // Crear tarjeta de producto
+    function createProductCard(product, collectionName) {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        
+        const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+        const descuento = Number(product.Descuento) || 0;
+        const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+        
+        card.innerHTML = `
+            <div class="product-image-container">
+                <img src="${product.Imagenes?.[0] || defaultImage}" 
+                     alt="${product['Nombre Producto'] || 'Producto'}" 
+                     class="product-image"
+                     onerror="this.src='${defaultImage}'">
+            </div>
+            <div class="product-content">
+                <h3 class="product-title">${product['Nombre Producto'] || 'Producto sin nombre'}</h3>
+                
+                ${descuento > 0 ? `
+                    <div>
+                        <span class="product-original-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                        <span class="product-discount">${descuento}% OFF</span>
+                    </div>
+                    <p class="product-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                ` : `
+                    <p class="product-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                `}
+                
+                <div class="product-actions">
+                    <button class="view-details-btn" data-product-id="${product.id}" data-collection="${collectionName}">
+                        Ver detalles
+                    </button>
+                    <button class="add-to-cart-btn" data-product-id="${product.id}">
+                        <i class="fas fa-shopping-cart"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Evento para ver detalles
+        card.querySelector('.view-details-btn').addEventListener('click', (e) => {
+            const productId = e.target.getAttribute('data-product-id');
+            const collection = e.target.getAttribute('data-collection');
+            window.location.href = `/vista/nav-visitantes/detalleProducto/detalleProducto.html?collection=${collection}&id=${productId}`;
+        });
+        
+        // Evento para añadir al carrito - NUEVO ENFOQUE
+        card.querySelector('.add-to-cart-btn').addEventListener('click', () => {
+            addToCartDirect(product, collectionName);
+        });
+        
+        document.getElementById('products-container').appendChild(card);
+    }
+
+    // Función para agregar directamente al carrito
+    function addToCartDirect(product, collectionName) {
+        try {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+            
+            // Generar un ID único para el producto
+            const productId = product.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Buscar si el producto ya está en el carrito
+            const existingProductIndex = cart.findIndex(item => item.id === productId);
+            
+            if (existingProductIndex !== -1) {
+                // Incrementar cantidad si ya existe
+                cart[existingProductIndex].cantidad += 1;
+            } else {
+                // Calcular precios
+                const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                const descuento = Number(product.Descuento) || 0;
+                const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                
+                // Añadir nuevo producto al carrito
+                cart.push({
+                    imagen: product.Imagenes?.[0] || defaultImage,
+                    nombre: product['Nombre Producto'] || 'Producto sin nombre',
+                    precio: precioFinal,
+                    precioOriginal: precioBase,
+                    descuento: descuento,
+                    cantidad: 1,
+                    id: productId,
+                    sku: product.SKU || productId,
+                    collection: collectionName
+                });
+            }
+            
+            localStorage.setItem("cart", JSON.stringify(cart));
+            
+            // Actualizar contador
+            updateCartCount();
+            
+            // Mostrar notificación
+            Swal.fire({
+                title: '¡Producto agregado!',
+                text: `${product['Nombre Producto'] || 'El producto'} se ha añadido al carrito`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                timer: 2000
+            });
+            
+            return true;
+        } catch (error) {
+            console.error("Error al agregar al carrito:", error);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo agregar el producto al carrito',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+    }
+
+    // Función para actualizar contador del carrito
+    function updateCartCount() {
+        try {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            const totalItems = cart.reduce((total, item) => total + (item.cantidad || 1), 0);
+            
+            // Actualizar en botones.js si existe
+            if (window.updateCartCount) {
+                window.updateCartCount();
+            }
+            
+            // Actualizar directamente por si acaso
+            const cartCountElement = document.getElementById("cart-count");
+            if (cartCountElement) {
+                cartCountElement.textContent = totalItems;
+            }
+        } catch (error) {
+            console.error("Error updating cart count:", error);
+        }
+    }
+
+    // Evento para volver a categorías
+    document.getElementById('back-to-categories').addEventListener('click', () => {
+        document.getElementById('categories-section').style.display = 'block';
+        document.getElementById('products-section').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Función para buscar productos en todas las categorías
+    async function searchProducts(searchTerm) {
+        try {
+            // Obtener todas las colecciones de productos
+            const collectionsSnapshot = await getDocs(collection(db, "categorias"));
+            const categories = collectionsSnapshot.docs.map(doc => doc.data().nombre.replace(/\s+/g, ''));
+            
+            const allProducts = [];
+            
+            // Buscar en cada colección de productos
+            for (const category of categories) {
+                const collectionName = 'productos' + category;
+                const querySnapshot = await getDocs(collection(db, collectionName));
+                
+                querySnapshot.forEach((doc) => {
+                    const product = doc.data();
+                    product.id = doc.id;
+                    product.collection = collectionName;
+                    product.category = category.replace(/([A-Z])/g, ' $1').trim(); // Formatear nombre de categoría
+                    allProducts.push(product);
+                });
+            }
+            
+            // Filtrar productos que coincidan con el término de búsqueda
+            const results = allProducts.filter(product => {
+                const searchFields = [
+                    product['Nombre Producto'] || '',
+                    product.Descripción || '',
+                    product.Características || '',
+                    product.Marca || '',
+                    product.SKU || '',
+                    product.category || ''
+                ].join(' ').toLowerCase();
+                
+                return searchFields.includes(searchTerm.toLowerCase());
+            });
+            
+            return results;
+        } catch (error) {
+            console.error("Error en la búsqueda:", error);
+            return [];
+        }
+    }
+
+    // Función para mostrar resultados de búsqueda
+    function displaySearchResults(results) {
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = '';
+        
+        if (results.length === 0) {
+            resultsContainer.innerHTML = '<div class="no-results">No se encontraron productos</div>';
+            resultsContainer.style.display = 'block';
+            return;
+        }
+        
+        results.slice(0, 10).forEach(product => {
+            const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+            const descuento = Number(product.Descuento) || 0;
+            const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+            
+            const resultItem = document.createElement('div');
+            resultItem.className = 'search-result-item';
+            resultItem.innerHTML = `
+                <img src="${product.Imagenes?.[0] || defaultImage}" 
+                     alt="${product['Nombre Producto'] || 'Producto'}" 
+                     class="search-result-image"
+                     onerror="this.src='${defaultImage}'">
+                <div class="search-result-info">
+                    <div class="search-result-name">${product['Nombre Producto'] || 'Producto sin nombre'}</div>
+                    <div class="search-result-category">${product.category}</div>
+                </div>
+                <div class="search-result-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+            `;
+            
+            resultItem.addEventListener('click', () => {
+                // Redirigir a la página de detalles del producto
+                window.location.href = `/vista/detalleProducto/detalleProducto.html?collection=${product.collection}&id=${product.id}`;
+            });
+            
+            resultsContainer.appendChild(resultItem);
+        });
+        
+        resultsContainer.style.display = 'block';
+    }
+
+    // Evento para búsqueda predictiva
+    let searchTimeout;
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        const resultsContainer = document.getElementById('search-results');
+        
+        // Limpiar timeout anterior
+        clearTimeout(searchTimeout);
+        
+        // Ocultar resultados si el campo está vacío
+        if (searchTerm.length === 0) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+        
+        // Mostrar resultados solo después de 3 caracteres
+        if (searchTerm.length >= 3) {
+            // Mostrar loader en los resultados
+            resultsContainer.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <div class="loader" style="margin: 0 auto; width: 30px; height: 30px; border-width: 3px;"></div>
+                    <p style="margin-top: 10px;">Buscando...</p>
+                </div>
+            `;
+            resultsContainer.style.display = 'block';
+            
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const results = await searchProducts(searchTerm);
+                    displaySearchResults(results);
+                } catch (error) {
+                    resultsContainer.innerHTML = `
+                        <div class="no-results">
+                            Error al cargar los resultados. Intenta nuevamente.
+                        </div>
+                    `;
+                    console.error("Error en búsqueda predictiva:", error);
+                }
+            }, 300); // Pequeño retraso para evitar múltiples solicitudes
+        } else {
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+    // Ocultar resultados al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        const searchContainer = document.querySelector('.search-container');
+        if (!searchContainer.contains(e.target)) {
+            document.getElementById('search-results').style.display = 'none';
+        }
+    });
+
+    // Evento para búsqueda principal
+    document.getElementById('search-button').addEventListener('click', async () => {
+        const searchTerm = document.getElementById('search-input').value.trim();
+        if (searchTerm) {
+            // Mostrar loader
+            Swal.fire({
+                title: 'Buscando productos...',
+                html: 'Por favor espera mientras buscamos los productos que coinciden con tu búsqueda.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                const results = await searchProducts(searchTerm);
+                Swal.close(); // Cerrar el loader
+                
+                if (results.length === 0) {
+                    Swal.fire({
+                        title: 'No se encontraron resultados',
+                        text: `No hay productos que coincidan con "${searchTerm}"`,
+                        icon: 'info',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+                
+                // Mostrar todos los resultados en la sección de productos
+                document.getElementById('categories-section').style.display = 'none';
+                document.getElementById('products-section').style.display = 'block';
+                document.getElementById('category-title').textContent = `Resultados para: "${searchTerm}"`;
+                
+                const productsContainer = document.getElementById('products-container');
+                productsContainer.innerHTML = '';
+                
+                results.forEach(product => {
+                    createProductCard(product, product.collection);
+                });
+                
+                document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                Swal.close(); // Cerrar el loader en caso de error
+                Swal.fire({
+                    title: 'Error en la búsqueda',
+                    text: 'Ocurrió un error al buscar los productos. Por favor intenta nuevamente.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                console.error("Error en la búsqueda:", error);
+            }
+        }
+    });
+
+    // Evento para tecla Enter en búsqueda
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('search-button').click();
+        }
+    });
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCategories();
+        updateCartCount();
+    });
+</script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../recursosDinamicos/footer.js"></script>
+     <!-- Carga dinámica de botones flotantes -->
+    <script src="../recursosDinamicos/botones.js"></script>
+</body>
+</html>

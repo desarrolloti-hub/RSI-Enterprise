@@ -1,0 +1,1200 @@
+        /* Reset y base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e4e4e4 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #1e3a8a;
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Botones */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: #2a71fd;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Main content */
+        .main {
+            padding: 40px 0;
+        }
+
+        /* Buscador */
+        .search-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Tabla de cotizaciones */
+        .table-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .cotizaciones-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cotizaciones-table th,
+        .cotizaciones-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .cotizaciones-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .cotizaciones-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-borrador {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-local {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Modales */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        /* Formulario */
+        .form-section {
+            display: grid;
+            gap: 30px;
+        }
+
+        .section-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .section-card.empresa {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #dbeafe, #f0f9ff);
+        }
+
+        .section-card.cliente {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+        }
+
+        .section-card.cotizacion {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #fef3c7, #fffbeb);
+        }
+
+        .section-card.productos {
+            border-color: #8b5cf6;
+            background: linear-gradient(135deg, #e9d5ff, #f5f3ff);
+        }
+
+        .section-card.totales {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #fee2e2, #fef2f2);
+        }
+
+        .section-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input:read-only {
+            background: #f9fafb;
+            color: #6b7280;
+        }
+
+        /* Búsqueda de clientes */
+        .cliente-search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .cliente-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .cliente-dropdown.show {
+            display: block;
+        }
+
+        .cliente-option {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.2s ease;
+        }
+
+        .cliente-option:hover {
+            background: #f8fafc;
+        }
+
+        .cliente-option:last-child {
+            border-bottom: none;
+        }
+
+        .cliente-option.manual {
+            background: #f0f9ff;
+            border-top: 2px solid #3b82f6;
+        }
+
+        .cliente-info {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* Tabla de items */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .items-table th,
+        .items-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .items-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .items-table input,
+        .items-table select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .items-table input:focus,
+        .items-table select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* Totales */
+        .totales-grid {
+            display: grid;
+            gap: 12px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .totales-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .totales-row.total-final {
+            border-top: 2px solid #e5e7eb;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+
+        .totales-row input {
+            width: 80px;
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            text-align: right;
+        }
+
+        /* Términos y condiciones */
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Acciones del formulario */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f4f6;
+            border-top: 5px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-spinner p {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Alertas */
+        .alerta {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+            max-width: 400px;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alerta-success {
+            background: #dcfce7;
+            border: 2px solid #16a34a;
+            color: #166534;
+        }
+
+        .alerta-error {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+            color: #991b1b;
+        }
+
+        .alerta-warning {
+            background: #fef3c7;
+            border: 2px solid #d97706;
+            color: #92400e;
+        }
+
+        .alerta-info {
+            background: #dbeafe;
+            border: 2px solid #2563eb;
+            color: #1e40af;
+        }
+
+        .alerta-contenido {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alerta-cerrar {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 12px;
+            opacity: 0.7;
+        }
+
+        .alerta-cerrar:hover {
+            opacity: 1;
+        }
+
+        /* PDF Viewer */
+        .pdf-container {
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .pdf-preview {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        .pdf-preview h4 {
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .tech-summary {
+            background: #f0f9ff;
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid #3b82f6;
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .tech-summary h5 {
+            color: #1e40af;
+            margin-bottom: 12px;
+        }
+
+        .tech-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #e0e7ff;
+        }
+
+        .tech-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header .container {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 10px;
+                max-height: 95vh;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .acciones {
+                flex-direction: column;
+            }
+
+            .table-container {
+                font-size: 14px;
+            }
+
+            .cotizaciones-table th,
+            .cotizaciones-table td {
+                padding: 8px;
+            }
+        }
+
+        /* Campos de crédito */
+        .credit-options {
+            display: none;
+            grid-column: 1 / -1;
+            background: #fef3c7;
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid #f59e0b;
+        }
+
+        .credit-options.show {
+            display: block;
+        }
+
+        .credit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        /* Compression status */
+        .compression-info {
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .compression-info.warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .compression-info.success {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #166534;
+        }
+    
+
+   /*Responsive*/
+   
+   /* Agregar al final del CSS */
+@media (max-width: 768px) {
+    .cotizaciones-table th, 
+    .cotizaciones-table td {
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+    
+    .cotizaciones-table td:nth-child(5), /* Descripción */
+    .cotizaciones-table th:nth-child(5) {
+        display: none;
+    }
+    
+    .acciones {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .acciones button {
+        width: 100%;
+        padding: 4px;
+        font-size: 11px;
+    }
+    
+    .paginacion {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .cotizaciones-table td:nth-child(3), /* Fecha */
+    .cotizaciones-table th:nth-child(3) {
+        display: none;
+    }
+    
+    .modal-content {
+        margin: 5px;
+        max-height: 98vh;
+    }
+    
+    .modal-body {
+        padding: 10px;
+    }
+    
+    .section-card {
+        padding: 12px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100%;
+    }
+}
+
+/* Agrega esto al final de tu archivo coti.css */
+.cotizaciones-table td:nth-child(5) {
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+    line-height: 1.4;
+    max-height: 4.2em; /* 3 líneas * 1.4 line-height */
+}
+
+@media (max-width: 768px) {
+    .cotizaciones-table {
+        font-size: 12px;
+    }
+    
+    .cotizaciones-table th, 
+    .cotizaciones-table td {
+        padding: 8px 4px;
+    }
+    
+    /* Ocultar columnas menos importantes en móvil */
+    .cotizaciones-table td:nth-child(3), /* Fecha */
+    .cotizaciones-table th:nth-child(3),
+    .cotizaciones-table td:nth-child(6), /* Generado por */
+    .cotizaciones-table th:nth-child(6) {
+        display: none;
+    }
+    
+    /* Ajustar acciones */
+    .acciones {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .acciones button {
+        width: 100%;
+        padding: 4px;
+        font-size: 11px;
+    }
+    
+    /* Ajustar texto en celdas */
+    .cotizaciones-table td {
+        word-break: break-word;
+    }
+}
+
+@media (max-width: 480px) {
+    .cotizaciones-table td:nth-child(4), /* Total */
+    .cotizaciones-table th:nth-child(4) {
+        display: none;
+    }
+    
+    /* Reducir aún más el padding */
+    .cotizaciones-table th, 
+    .cotizaciones-table td {
+        padding: 6px 2px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Ajustes generales para la tabla de items */
+    .items-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .items-table th,
+    .items-table td {
+        padding: 8px;
+        font-size: 12px;
+        display: table-cell; /* Forzar que todas las celdas se muestren */
+        min-width: 80px; /* Ancho mínimo para cada celda */
+    }
+    
+    /* Ajustar inputs y selects */
+    .items-table input,
+    .items-table select {
+        width: 100%;
+        padding: 6px;
+        font-size: 12px;
+        box-sizing: border-box;
+    }
+    
+    /* Ajustar botones de acciones */
+    .eliminar-item {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    /* Asegurar que la columna de acciones no sea demasiado estrecha */
+    .items-table td:last-child {
+        min-width: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Ajustes adicionales para pantallas muy pequeñas */
+    .items-table th,
+    .items-table td {
+        padding: 6px 4px;
+        font-size: 11px;
+    }
+    
+    .items-table input,
+    .items-table select {
+        padding: 4px;
+        font-size: 11px;
+    }
+    
+    /* Reducir el ancho mínimo de celdas menos críticas */
+    .items-table .item-categoria,
+    .items-table .item-tipo-tecnologia {
+        min-width: 60px;
+    }
+    
+    /* Ajustar el botón de eliminar */
+    .eliminar-item {
+        padding: 2px 4px;
+        font-size: 10px;
+    }
+}
+
+/* Agrega esto al final de tu archivo coti.css */
+
+/* Ajustes para el formulario en móviles */
+@media (max-width: 768px) {
+    /* Ajustar padding del modal */
+    .modal-body {
+        padding: 15px !important;
+    }
+    
+    /* Ajustar tamaño de fuente en inputs */
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+    
+    /* Ajustar grid del formulario */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    /* Ajustar secciones de tarjetas */
+    .section-card {
+        padding: 15px !important;
+    }
+    
+    /* Ajustar tabla de items */
+    .items-table th, 
+    .items-table td {
+        padding: 8px 4px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Ajustar inputs en la tabla */
+    .items-table input, 
+    .items-table select {
+        padding: 6px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Ajustar botones de acciones */
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .form-actions button {
+        width: 100%;
+    }
+    
+    /* Ajustar campos de crédito */
+    .credit-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Ajustar textarea de términos */
+    .form-group textarea {
+        min-height: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Ajustes adicionales para pantallas muy pequeñas */
+    .modal-body {
+        padding: 10px !important;
+    }
+    
+    .section-card {
+        padding: 12px !important;
+    }
+    
+    /* Reducir tamaño de fuente en inputs */
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        font-size: 13px !important;
+        padding: 8px !important;
+    }
+    
+    /* Ajustar tabla de items */
+    .items-table th, 
+    .items-table td {
+        padding: 6px 2px !important;
+        font-size: 11px !important;
+    }
+    
+    /* Ajustar tamaño de botones */
+    .btn {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+    }
+    
+    /* Ajustar header del modal */
+    .modal-header h2 {
+        font-size: 1.2rem !important;
+    }
+    
+    /* Ajustar títulos de sección */
+    .section-card h3 {
+        font-size: 1.1rem !important;
+    }
+}
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    gap: 8px;
+}
+
+.pagination-button {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    color: #0d2c54;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-button.active {
+    background-color: #0d2c54;
+    color: #fff;
+    border-color: #0d2c54;
+    font-weight: bold;
+}
+
+        /* --- ESTILOS AGREGADOS PARA LAS NUEVAS FUNCIONALIDADES --- */
+
+        /* 1. Ancho de la tabla principal */
+        .main > .container {
+            max-width: 95%; /* Hacemos el contenedor principal más ancho */
+            padding: 0 24px;
+        }
+
+        /* 2. Estilos para los campos de estatus adicionales */
+        .additional-status-fields {
+            display: none; /* Ocultos por defecto */
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .additional-status-fields.show {
+            display: block; /* Se muestra cuando se añade la clase 'show' */
+        }
+        
+        /* 3. Estilos para los botones de mover ítems */
+        .item-actions-move {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            justify-content: center;
+        }
+        
+        .btn-move-up, .btn-move-down {
+            padding: 4px;
+            line-height: 1;
+            font-size: 12px;
+        }
+        
+        /* Pequeña animación para que aparezca suavemente */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Estilos para la funcionalidad de arrastrar y soltar */
+.drag-handle {
+    cursor: move; /* Cambia el cursor para indicar que se puede mover */
+    font-size: 1.2rem;
+    color: #9ca3af;
+    padding: 5px;
+    text-align: center;
+}
+
+.items-table tr.dragging {
+    opacity: 0.5; /* Hace la fila semitransparente mientras se arrastra */
+    background: #e0f2fe;
+}
+    
+
+
+        .resumen-filtros {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .btn-filtro {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .btn-filtro:hover {
+            background-color: #e5e7eb;
+        }
+        .btn-filtro.active {
+            background-color: #0d2c54; /* RSI Navy */
+            color: white;
+            border-color: #0d2c54;
+        }
+        .resumen-totales {
+            text-align: center;
+            background-color: #f0f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+        }
+        #resumenTitulo {
+            color: #1e3a8a;
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+        .total-amount {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #15803d;
+            margin: 10px 0 0 0;
+        }
+        .btn.btn-info { /* Estilo personalizado para el nuevo botón */
+            background-color: #06b6d4;
+            color: white;
+        }
+        .btn.btn-info:hover {
+            background-color: #0891b2;
+        }
+    
