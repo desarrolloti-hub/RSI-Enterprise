@@ -8,7 +8,6 @@
    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <style>
         .resumen-filtros {
             display: flex;
@@ -865,7 +864,7 @@ async function inicializarApp() {
             row.innerHTML = `
                 <td><span class="drag-handle" title="Arrastrar para reordenar">⠿</span></td>
                 <td>
-                    <select class="item-categoria" required><option value="">Seleccionar...</option><option value="CCTV">📹 CCTV</option><option value="DH">🏠 DETECTOR DE HUMO</option><option value="CA">🔐 CONTROL DE ACCESOS</option><option value="AI">🚨 ALARMA INTRUSION</option><option value="MULTIMEDIA">📺 MULTIMEDIA</option><option value="REDES">🛜 REDES TRANSPORTE DE DATOS</option><option value="OTRO">📦 OTRO</option></select>
+                    <select class="item-categoria" required><option value="">Seleccionar...</option><option value="CCTV">📹 CCTV</option><option value="DH">🏠 DETECTOR DE HUMO</option><option value="CA">🔐 CONTROL DE ACCESOS</option><option value="ALARMA INTRUSION">🚨 ALARMA INTRUSION</option><option value="MULTIMEDIA">📺 MULTIMEDIA</option><option value="REDES">🛜 REDES TRANSPORTE DE DATOS</option><option value="OTRO">📦 OTRO</option></select>
                 </td>
                 <td>
                     <select class="item-tipo-tecnologia" required><option value="">Seleccionar...</option><option value="servicio">🔧 Servicio</option><option value="pieza">⚙️ Pieza</option><option value="kit">📦 Kit</option><option value="par">👥 Par</option><option value="cm">🐛 Centimetro</option><option value="m">🚇 Metro</option></select>
@@ -1101,6 +1100,20 @@ async function generarPDF(data) {
         let page = 1, y = 20;
         const nuevaPagina = () => { pdf.addPage(); page++; y = 20; };
         const piePagina = () => pdf.setFontSize(8).setTextColor(gray).text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        
+        // MAPA PARA TRADUCIR CATEGORÍAS CORTAS (incluye la corrección para 'AI')
+        const categoriaDisplayMap = {
+            'CCTV': '📹 CCTV',
+            'DH': '🏠 DETECTOR DE HUMO',
+            'CA': '🔐 CONTROL DE ACCESOS',
+            'ALARMA INTRUSION': '🚨 ALARMA INTRUSIÓN',
+            'MULTIMEDIA': '📺 MULTIMEDIA',
+            'REDES': '🛜 REDES TRANSPORTE DE DATOS',
+            'OTRO': '📦 OTRO',
+            'AI': '🚨 ALARMA INTRUSIÓN', 
+            'ALARMA': '🚨 ALARMA INTRUSIÓN' 
+        };
+
         try { pdf.addImage('../css/img/Logo-RSI-OFICIAL.png', 'PNG', pageWidth - margin - 40, margin, 40, 40); } catch (e) { console.warn('No se pudo cargar el logo.'); }
         pdf.setFontSize(10).setTextColor(navy).text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
         pdf.setFontSize(8).setTextColor(gray).text(data.empresaDireccion || "", margin, y + 10).text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, y + 15);
@@ -1108,6 +1121,25 @@ async function generarPDF(data) {
         pdf.setFontSize(14).setTextColor(navy).text("COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
         pdf.setFontSize(9).setTextColor(gray).text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, pageWidth / 2, y + 7, { align: 'center' });
         y += 20;
+
+        // ==========================================================
+        //  ⬇️ NUEVA LÓGICA PARA AÑADIR LA DESCRIPCIÓN (cotizacionDescripcion)
+        // ==========================================================
+        if (data.cotizacionDescripcion && data.cotizacionDescripcion.trim().length > 0) {
+            pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'bold').text("DESCRIPCIÓN:", margin, y);
+            y += 5;
+            pdf.setFontSize(9).setTextColor(textColor).setFont('helvetica', 'normal');
+            
+            // Usar splitTextToSize para manejar saltos de línea si la descripción es larga
+            const descLines = pdf.splitTextToSize(data.cotizacionDescripcion.trim(), pageWidth - 2 * margin);
+            descLines.forEach(line => {
+                pdf.text(line, margin, y); 
+                y += 5;
+            });
+            y += 5; // Espacio extra después de la descripción
+        }
+        // ==========================================================
+        
         pdf.setFontSize(9).setTextColor(textColor).text(`Cliente: ${data.clienteNombre}`, margin, y); y += 5;
         pdf.text(`RFC: ${data.clienteRFC || 'N/E'}`, margin, y); y += 5; pdf.text(`Dirección: ${data.clienteDireccion}`, margin, y); y += 10;
         const tipoCotizacionMap = { 'implementacion': 'Implementación', 'proyecto': 'Proyecto', 'servicio': 'Servicio' };
@@ -1115,11 +1147,18 @@ async function generarPDF(data) {
         if (data.tipoCredito === 'credito' && data.diasCredito) infoPago += ` (${data.diasCredito} días)`;
         const info = [`Tipo: ${tipoCotizacionMap[data.tipoCotizacion] || 'N/E'}`, `Vigencia: ${data.cotizacionVigencia} días`, `Moneda: ${data.cotizacionMoneda}`, infoPago].join(" | ");
         pdf.text(info, margin, y); y += 10;
+        
         const grupos = agruparTecnologias(data.items);
         Object.entries(grupos).forEach(([categoria, items]) => {
+            // Aplicar la traducción para mostrar el nombre completo.
+            const textoCompleto = categoriaDisplayMap[categoria] || categoria;
+            // Limpiar de emoji y espacio para el PDF, ya que la fuente puede fallar.
+            const displayCategoria = textoCompleto.replace(/^(.*?)\s/, '').trim(); 
+
             if (y > pageHeight - 70) { piePagina(); nuevaPagina(); }
             pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 12, 'F');
-            pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold').text(categoria, pageWidth / 2, y + 8, { align: 'center' });
+            // Usamos displayCategoria que ya fue traducida y limpiada.
+            pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold').text(displayCategoria, pageWidth / 2, y + 8, { align: 'center' });
             y += 14;
             pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 8, 'F');
             pdf.setFontSize(8).setFont('helvetica', 'normal').text("DESCRIPCIÓN", colX.desc, y + 5).text("UNIDAD", colX.unidad, y + 5, { align: 'center' }).text("CANT.", colX.cant, y + 5, { align: 'right' }).text("P. UNIT.", colX.precio, y + 5, { align: 'right' }).text("TOTAL", colX.total, y + 5, { align: 'right' });
@@ -1127,7 +1166,7 @@ async function generarPDF(data) {
             items.forEach((item, index) => {
                 const descLines = pdf.splitTextToSize(item.descripcion, colX.unidad - colX.desc - 5);
                 const itemHeight = Math.max(descLines.length * 5, 10) + 2;
-                if (y + itemHeight > pageHeight - 20) { piePagina(); nuevaPagina(); y = 20; }
+                if (y + itemHeight > pageHeight - 20) { piePagina(); nuevaPagina(); }
                 if (index % 2 === 0) pdf.setFillColor(lightGray).rect(margin, y, pageWidth - 2 * margin, itemHeight, 'F');
                 pdf.setTextColor(textColor);
                 descLines.forEach((line, i) => pdf.text(line, colX.desc, y + 5 + (i * 5)));
@@ -1140,6 +1179,8 @@ async function generarPDF(data) {
             });
             y += 2;
         });
+        
+        // Totales y Términos (sin cambios)
         const tableStartX = colX.total - 82, valueColX = tableStartX + 70;
         pdf.setFontSize(9).setTextColor(textColor).text("Subtotal:", tableStartX, y + 5, { align: 'left' }).text(formatearNumero(data.subtotal), valueColX, y + 5, { align: 'left' }); y += 5;
         if (data.descuentoMonto > 0) { pdf.text(`Descuento (${data.descuento}%):`, tableStartX, y + 5, { align: 'left' }).text(`-${formatearNumero(data.descuentoMonto)}`, valueColX, y + 5, { align: 'left' }); y += 5; }
