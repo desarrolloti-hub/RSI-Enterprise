@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punto de Venta RSI IXTAPALUCA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -225,7 +225,7 @@
             <div class="max-w-7xl mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
-                        <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Logo" class="h-12">
+                        <img src="/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo" class="h-12">
                         <span class="ml-2 text-xl font-bold text-blue-900">RSI IXTAPALUCA</span>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -373,7 +373,7 @@
 
     <div class="ticket-preview" id="ticket-preview">
         <div class="ticket-logo">
-            <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Logo RSI">
+            <img src="/vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo RSI">
         </div>
         
         <div class="ticket-header">
@@ -778,12 +778,12 @@
             let y = 5;
 
             // Logo (más pequeño)
-            const logoUrl = '../css/img/Logo-RSI-OFICIAL.png';
-            const qrUrl = '../css/img/QR.PNG';
+            const logoUrl = '/vista/css/img/Logo-RSI-OFICIAL.png';
+            const qrUrl = '/vista/css/img/QR.png';
             const logoWidth = 80; // Reducido de 80 a 60
             const logoHeight = 80; // Reducido de 80 a 60
             const logoX = (80 - logoWidth) / 2;
-            doc.addImage(logoUrl, 'PNG', logoX, y, logoWidth, logoHeight);
+            doc.addImage(logoUrl, 'png', logoX, y, logoWidth, logoHeight);
             y += logoHeight + 3;
 
             // Información de la empresa
@@ -892,7 +892,7 @@
             
             const qrSize = 80; // Reducido de 70 a 50
             const qrX = (80 - qrSize) / 2;
-            doc.addImage(qrUrl, 'PNG', qrX, y, qrSize, qrSize);
+            doc.addImage(qrUrl, 'png', qrX, y, qrSize, qrSize);
             y += qrSize + 5;
 
             // Generar PDF
