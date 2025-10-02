@@ -84,7 +84,7 @@
                 }
                 
                 .menu-nav-overlay.active {
-                    display: block;
+                    display: none;
                 }
                 
                 .menu-nav-floating-btn {
@@ -1123,150 +1123,172 @@
         }
         
         // Aplicar estilos personalizados al menú
-        function applyCustomMenuStyles(preferences) {
-            console.log('🎨 Aplicando estilos personalizados al menú:', preferences);
-            
-            // Definir opciones de personalización
-            const backgroundOptions = [
-                { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
-                { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
-                { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
-            ];
-            
-            const themeOptions = [
-                { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
-                { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
-                { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
-                { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
-                { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
-                { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
-            ];
-            
-            // Obtener los colores seleccionados
-            const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
-            const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
-            
-            // Crear o actualizar estilos personalizados
-            const styleId = 'menu-nav-custom-styles';
-            let styleElement = document.getElementById(styleId);
-            
-            if (!styleElement) {
-                styleElement = document.createElement('style');
-                styleElement.id = styleId;
-                document.head.appendChild(styleElement);
-            }
-            
-            // Generar CSS personalizado
-            styleElement.textContent = `
-                /* ESTILOS PERSONALIZADOS PARA EL MENÚ */
-                .menu-nav-sidebar {
-                    background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
-                    color: ${selectedBackground.textColor} !important;
-                }
-                
-                .menu-nav-floating-btn {
-                    background: ${selectedTheme.primary} !important;
-                    box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
-                }
-                
-                .menu-nav-floating-btn:hover {
-                    background: ${selectedTheme.secondary} !important;
-                }
-                
-                .menu-nav-user-profile {
-                    border-bottom: 1px solid ${selectedTheme.accent}20 !important;
-                }
-                
-                .menu-nav-user-avatar {
-                    border: 3px solid ${selectedTheme.primary} !important;
-                }
-                
-                .menu-nav-user-name {
-                    color: ${selectedBackground.textColor} !important;
-                }
-                
-                .menu-nav-user-area {
-                    color: ${selectedTheme.accent} !important;
-                }
-                
-                .menu-nav-stats-container,
-                .menu-nav-charts-container {
-                    border-bottom: 1px solid ${selectedTheme.accent}20 !important;
-                }
-                
-                .menu-nav-stat-card {
-                    background: ${selectedBackground.cardBg}20 !important;
-                    color: ${selectedBackground.textColor} !important;
-                }
-                
-                .menu-nav-stat-card:hover {
-                    background: ${selectedBackground.cardBg}40 !important;
-                }
-                
-                .menu-nav-stat-title {
-                    color: ${selectedTheme.accent} !important;
-                }
-                
-                .menu-nav-stat-value {
-                    color: ${selectedBackground.textColor} !important;
-                }
-                
-                .menu-nav-month-indicator {
-                    color: ${selectedTheme.primary} !important;
-                }
-                
-                .menu-nav-chart-title {
-                    color: ${selectedTheme.primary} !important;
-                }
-                
-                .menu-nav-chart {
-                    background: ${selectedBackground.cardBg}20 !important;
-                }
-                
-                .menu-nav-chart-progress {
-                    background: ${selectedBackground.cardBg}40 !important;
-                }
-                
-                .menu-nav-chart-value {
-                    color: ${selectedBackground.textColor} !important;
-                }
-                
-                .menu-nav-btn {
-                    background: ${selectedBackground.cardBg}20 !important;
-                    color: ${selectedBackground.textColor} !important;
-                }
-                
-                .menu-nav-btn:hover {
-                    background: ${selectedTheme.primary}20 !important;
-                }
-                
-                .menu-nav-btn-logout {
-                    background: rgba(220, 53, 69, 0.2) !important;
-                }
-                
-                .menu-nav-btn-logout:hover {
-                    background: rgba(220, 53, 69, 0.4) !important;
-                }
-                
-                .menu-nav-btn-finish {
-                    background: rgba(255, 193, 7, 0.2) !important;
-                }
-                
-                .menu-nav-btn-finish:hover {
-                    background: rgba(255, 193, 7, 0.4) !important;
-                }
-                
-                /* Ajustes para modo oscuro */
-                ${selectedBackground.id === 'dark' ? `
-                    .menu-nav-stat-title,
-                    .menu-nav-chart-label {
-                        color: ${selectedTheme.accent} !important;
-                    }
-                ` : ''}
-            `;
-            
-            console.log('✅ Estilos personalizados aplicados al menú');
+        // Reemplazar la función applyCustomMenuStyles existente con esta versión mejorada
+function applyCustomMenuStyles(preferences) {
+    console.log('🎨 Aplicando estilos personalizados al menú con bordes pronunciados:', preferences);
+    
+    // Definir opciones de personalización
+    const backgroundOptions = [
+        { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
+        { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
+        { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
+    ];
+    
+    const themeOptions = [
+        { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
+        { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
+        { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
+        { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
+        { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
+        { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
+    ];
+    
+    // Obtener los colores seleccionados
+    const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
+    const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
+    
+    // Crear o actualizar estilos personalizados
+    const styleId = 'menu-nav-custom-styles';
+    let styleElement = document.getElementById(styleId);
+    
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        document.head.appendChild(styleElement);
+    }
+    
+    // Generar CSS personalizado con bordes más pronunciados
+    styleElement.textContent = `
+        /* ESTILOS PERSONALIZADOS PARA EL MENÚ - BORDES PRONUNCIADOS */
+        .menu-nav-sidebar {
+            background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
+            color: ${selectedBackground.textColor} !important;
+            border-right: 3px solid ${selectedTheme.primary} !important;
         }
+        
+        .menu-nav-floating-btn {
+            background: ${selectedTheme.primary} !important;
+            box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
+            border: 2px solid ${selectedTheme.secondary} !important;
+        }
+        
+        .menu-nav-floating-btn:hover {
+            background: ${selectedTheme.secondary} !important;
+            border-color: ${selectedTheme.accent} !important;
+        }
+        
+        .menu-nav-user-profile {
+            border-bottom: 2px solid ${selectedTheme.accent} !important;
+        }
+        
+        .menu-nav-user-avatar {
+            border: 3px solid ${selectedTheme.primary} !important;
+            box-shadow: 0 0 0 2px ${selectedTheme.accent} !important;
+        }
+        
+        .menu-nav-user-name {
+            color: ${selectedBackground.textColor} !important;
+        }
+        
+        .menu-nav-user-area {
+            color: ${selectedTheme.accent} !important;
+        }
+        
+        .menu-nav-stats-container,
+        .menu-nav-charts-container {
+            border-bottom: 2px solid ${selectedTheme.accent} !important;
+        }
+        
+        .menu-nav-stat-card {
+            background: ${selectedBackground.cardBg}20 !important;
+            color: ${selectedBackground.textColor} !important;
+            border: 2px solid ${selectedTheme.accent}30 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+        }
+        
+        .menu-nav-stat-card:hover {
+            background: ${selectedBackground.cardBg}40 !important;
+            border-color: ${selectedTheme.accent}60 !important;
+        }
+        
+        .menu-nav-stat-title {
+            color: ${selectedTheme.accent} !important;
+        }
+        
+        .menu-nav-stat-value {
+            color: ${selectedBackground.textColor} !important;
+        }
+        
+        .menu-nav-month-indicator {
+            color: ${selectedTheme.primary} !important;
+            font-weight: 600;
+        }
+        
+        .menu-nav-chart-title {
+            color: ${selectedTheme.primary} !important;
+            font-weight: 600;
+        }
+        
+        .menu-nav-chart {
+            background: ${selectedBackground.cardBg}20 !important;
+            border: 2px solid ${selectedTheme.accent}30 !important;
+            border-radius: 8px;
+        }
+        
+        .menu-nav-chart-progress {
+            background: ${selectedBackground.cardBg}40 !important;
+            border: 1px solid ${selectedTheme.accent}20 !important;
+        }
+        
+        .menu-nav-chart-value {
+            color: ${selectedBackground.textColor} !important;
+            font-weight: 600;
+        }
+        
+        .menu-nav-btn {
+            background: ${selectedBackground.cardBg}20 !important;
+            color: ${selectedBackground.textColor} !important;
+            border: 2px solid ${selectedTheme.accent}30 !important;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+        
+        .menu-nav-btn:hover {
+            background: ${selectedTheme.primary}20 !important;
+            border-color: ${selectedTheme.primary} !important;
+        }
+        
+        .menu-nav-btn-logout {
+            background: rgba(220, 53, 69, 0.2) !important;
+            border-color: rgba(220, 53, 69, 0.4) !important;
+        }
+        
+        .menu-nav-btn-logout:hover {
+            background: rgba(220, 53, 69, 0.4) !important;
+            border-color: rgba(220, 53, 69, 0.8) !important;
+        }
+        
+        .menu-nav-btn-finish {
+            background: rgba(255, 193, 7, 0.2) !important;
+            border-color: rgba(255, 193, 7, 0.4) !important;
+        }
+        
+        .menu-nav-btn-finish:hover {
+            background: rgba(255, 193, 7, 0.4) !important;
+            border-color: rgba(255, 193, 7, 0.8) !important;
+        }
+        
+        /* Ajustes para modo oscuro */
+        ${selectedBackground.id === 'dark' ? `
+            .menu-nav-stat-title,
+            .menu-nav-chart-label {
+                color: ${selectedTheme.accent} !important;
+            }
+        ` : ''}
+    `;
+    
+    console.log('✅ Estilos personalizados con bordes pronunciados aplicados al menú');
+}
         
         // Función global para actualizar estilos (llamada desde personalizacion.html)
         window.updateMenuStyles = function(preferences) {

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personalización de Interfaz</title>
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         /* Estilos base */
         * {
@@ -222,19 +224,116 @@
             font-weight: 500;
         }
         
-        /* Responsive */
-        @media (max-width: 600px) {
+        /* Responsive mejorado */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .personalization-section, 
+            .preview-section {
+                padding: 20px;
+            }
+            
             .options-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 12px;
+            }
+            
+            .color-preview {
+                height: 70px;
+            }
+            
+            .color-name {
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+            
+            .section-title {
+                font-size: 1.2rem;
+            }
+            
+            .preview-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .preview-item {
+                width: 100%;
+                max-width: 250px;
             }
             
             .buttons-container {
                 flex-direction: column;
+                gap: 10px;
             }
             
             .btn {
                 width: 100%;
             }
+        }
+        
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .color-preview {
+                height: 60px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .description {
+                font-size: 0.9rem;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Estilos mejorados para bordes más pronunciados */
+        .personalization-section, 
+        .preview-section {
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+        }
+
+        .color-option {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            border: 2px solid var(--accent-color);
+        }
+
+        .color-option.selected {
+            border: 3px solid var(--primary-color);
+        }
+
+        .btn {
+            border: 2px solid transparent;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            border-color: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            border-color: #ced4da;
+        }
+
+        .preview-item {
+            border: 2px solid var(--primary-color);
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
     </style>
 </head>
@@ -282,6 +381,9 @@
 
     <!-- Font Awesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -402,6 +504,9 @@
                     personalizationState.preferences.background = option.dataset.id;
                     applyBackground();
                     updatePreview();
+                    
+                    // Mostrar feedback visual
+                    showSelectionFeedback('Fondo', option.querySelector('.color-name').textContent);
                 }
             });
             
@@ -419,6 +524,9 @@
                     personalizationState.preferences.theme = option.dataset.id;
                     applyTheme();
                     updatePreview();
+                    
+                    // Mostrar feedback visual
+                    showSelectionFeedback('Tema', option.querySelector('.color-name').textContent);
                 }
             });
             
@@ -569,6 +677,33 @@
         // Guardar preferencias
         async function savePreferences() {
             try {
+                // Mostrar confirmación con SweetAlert2
+                const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+                const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+                
+                const result = await Swal.fire({
+                    title: '¿Guardar preferencias?',
+                    html: `
+                        <div style="text-align: left; margin: 15px 0;">
+                            <p><strong>Fondo:</strong> ${selectedBackground.name}</p>
+                            <p><strong>Tema:</strong> ${selectedTheme.name}</p>
+                        </div>
+                        <p>¿Estás seguro de que deseas guardar estas preferencias?</p>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: selectedTheme.primary,
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, guardar',
+                    cancelButtonText: 'Cancelar',
+                    background: selectedBackground.cardBg,
+                    color: selectedBackground.textColor
+                });
+                
+                if (!result.isConfirmed) {
+                    return;
+                }
+                
                 // Guardar en localStorage
                 localStorage.setItem('personalizationPreferences', JSON.stringify(personalizationState.preferences));
                 
@@ -582,9 +717,25 @@
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
-                    showMessage('Preferencias guardadas correctamente en la base de datos y almacenamiento local', 'success');
+                    // Mostrar mensaje de éxito con SweetAlert2
+                    await Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Preferencias guardadas correctamente en la base de datos y almacenamiento local',
+                        icon: 'success',
+                        confirmButtonColor: selectedTheme.primary,
+                        background: selectedBackground.cardBg,
+                        color: selectedBackground.textColor
+                    });
                 } else {
-                    showMessage('Preferencias guardadas en almacenamiento local (inicia sesión para guardar en la nube)', 'success');
+                    // Mostrar mensaje de éxito con SweetAlert2
+                    await Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Preferencias guardadas en almacenamiento local (inicia sesión para guardar en la nube)',
+                        icon: 'success',
+                        confirmButtonColor: selectedTheme.primary,
+                        background: selectedBackground.cardBg,
+                        color: selectedBackground.textColor
+                    });
                 }
                 
                 // Actualizar el menú de navegación si está disponible
@@ -592,7 +743,19 @@
                 
             } catch (error) {
                 console.error('Error al guardar preferencias:', error);
-                showMessage('Error al guardar preferencias: ' + error.message, 'error');
+                
+                // Mostrar mensaje de error con SweetAlert2
+                const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+                const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+                
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Error al guardar preferencias: ' + error.message,
+                    icon: 'error',
+                    confirmButtonColor: selectedTheme.primary,
+                    background: selectedBackground.cardBg,
+                    color: selectedBackground.textColor
+                });
             }
         }
         
@@ -601,14 +764,35 @@
             // Verificar si el menú de navegación está disponible
             if (typeof updateMenuStyles === 'function') {
                 updateMenuStyles(personalizationState.preferences);
-                showMessage('Menú de navegación actualizado con las nuevas preferencias', 'success');
+                console.log('Menú de navegación actualizado con las nuevas preferencias');
             } else {
                 console.log('La función updateMenuStyles no está disponible');
             }
         }
         
         // Restablecer preferencias
-        function resetPreferences() {
+        async function resetPreferences() {
+            // Mostrar confirmación con SweetAlert2
+            const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+            const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+            
+            const result = await Swal.fire({
+                title: '¿Restablecer preferencias?',
+                text: '¿Estás seguro de que deseas restablecer todas las preferencias a los valores por defecto?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: selectedTheme.primary,
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, restablecer',
+                cancelButtonText: 'Cancelar',
+                background: selectedBackground.cardBg,
+                color: selectedBackground.textColor
+            });
+            
+            if (!result.isConfirmed) {
+                return;
+            }
+            
             personalizationState.preferences = {
                 background: 'light',
                 theme: 'purple'
@@ -617,7 +801,15 @@
             // Aplicar valores por defecto
             applySavedPreferences();
             
-            showMessage('Preferencias restablecidas a valores por defecto', 'success');
+            // Mostrar mensaje de éxito con SweetAlert2
+            await Swal.fire({
+                title: '¡Restablecido!',
+                text: 'Preferencias restablecidas a valores por defecto',
+                icon: 'success',
+                confirmButtonColor: '#6C43E0', // Usar el color por defecto
+                background: '#f5f5f5',
+                color: '#333'
+            });
         }
         
         // Mostrar mensajes
@@ -633,6 +825,23 @@
             }, 5000);
         }
         
+        // Mostrar feedback de selección
+        function showSelectionFeedback(type, value) {
+            const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+            const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+            
+            Swal.fire({
+                title: `${type} seleccionado`,
+                text: `Has seleccionado: ${value}`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                background: selectedBackground.cardBg,
+                color: selectedBackground.textColor,
+                iconColor: selectedTheme.primary
+            });
+        }
+        
         // Función para actualizar estilos del menú (será llamada desde navegacion-admin.js)
         window.updateMenuStyles = function(preferences) {
             console.log('Actualizando estilos del menú con preferencias:', preferences);
@@ -641,29 +850,33 @@
             const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background);
             const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme);
             
-            // Actualizar estilos del menú
+            // Actualizar estilos del menú con bordes más pronunciados
             const menuStyles = `
-                /* ESTILOS ACTUALIZADOS DESDE PERSONALIZACIÓN */
+                /* ESTILOS ACTUALIZADOS DESDE PERSONALIZACIÓN - BORDES PRONUNCIADOS */
                 .menu-nav-sidebar {
                     background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
                     color: ${selectedBackground.textColor} !important;
+                    border-right: 3px solid ${selectedTheme.primary} !important;
                 }
                 
                 .menu-nav-floating-btn {
                     background: ${selectedTheme.primary} !important;
                     box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
+                    border: 2px solid ${selectedTheme.secondary} !important;
                 }
                 
                 .menu-nav-floating-btn:hover {
                     background: ${selectedTheme.secondary} !important;
+                    border-color: ${selectedTheme.accent} !important;
                 }
                 
                 .menu-nav-user-profile {
-                    border-bottom: 1px solid ${selectedTheme.accent}20 !important;
+                    border-bottom: 2px solid ${selectedTheme.accent} !important;
                 }
                 
                 .menu-nav-user-avatar {
                     border: 3px solid ${selectedTheme.primary} !important;
+                    box-shadow: 0 0 0 2px ${selectedTheme.accent} !important;
                 }
                 
                 .menu-nav-user-name {
@@ -676,16 +889,19 @@
                 
                 .menu-nav-stats-container,
                 .menu-nav-charts-container {
-                    border-bottom: 1px solid ${selectedTheme.accent}20 !important;
+                    border-bottom: 2px solid ${selectedTheme.accent} !important;
                 }
                 
                 .menu-nav-stat-card {
                     background: ${selectedBackground.cardBg}20 !important;
                     color: ${selectedBackground.textColor} !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
                 }
                 
                 .menu-nav-stat-card:hover {
                     background: ${selectedBackground.cardBg}40 !important;
+                    border-color: ${selectedTheme.accent}60 !important;
                 }
                 
                 .menu-nav-stat-title {
@@ -698,47 +914,76 @@
                 
                 .menu-nav-month-indicator {
                     color: ${selectedTheme.primary} !important;
+                    font-weight: 600;
                 }
                 
                 .menu-nav-chart-title {
                     color: ${selectedTheme.primary} !important;
+                    font-weight: 600;
                 }
                 
                 .menu-nav-chart {
                     background: ${selectedBackground.cardBg}20 !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    border-radius: 8px;
                 }
                 
                 .menu-nav-chart-progress {
                     background: ${selectedBackground.cardBg}40 !important;
+                    border: 1px solid ${selectedTheme.accent}20 !important;
                 }
                 
                 .menu-nav-chart-value {
                     color: ${selectedBackground.textColor} !important;
+                    font-weight: 600;
                 }
                 
                 .menu-nav-btn {
                     background: ${selectedBackground.cardBg}20 !important;
                     color: ${selectedBackground.textColor} !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    font-weight: 600;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
                 }
                 
                 .menu-nav-btn:hover {
                     background: ${selectedTheme.primary}20 !important;
+                    border-color: ${selectedTheme.primary} !important;
                 }
                 
                 .menu-nav-btn-logout {
                     background: rgba(220, 53, 69, 0.2) !important;
+                    border-color: rgba(220, 53, 69, 0.4) !important;
                 }
                 
                 .menu-nav-btn-logout:hover {
                     background: rgba(220, 53, 69, 0.4) !important;
+                    border-color: rgba(220, 53, 69, 0.8) !important;
                 }
                 
                 .menu-nav-btn-finish {
                     background: rgba(255, 193, 7, 0.2) !important;
+                    border-color: rgba(255, 193, 7, 0.4) !important;
                 }
                 
                 .menu-nav-btn-finish:hover {
                     background: rgba(255, 193, 7, 0.4) !important;
+                    border-color: rgba(255, 193, 7, 0.8) !important;
+                }
+                
+                /* Estilos para tickets en otras páginas */
+                .ticket-card, .ticket-item {
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    border-radius: 8px !important;
+                }
+                
+                .ticket-card:hover, .ticket-item:hover {
+                    border-color: ${selectedTheme.primary} !important;
+                }
+                
+                .btn-ticket, .btn-action {
+                    border: 2px solid ${selectedTheme.primary} !important;
+                    font-weight: 600 !important;
                 }
             `;
             
@@ -753,7 +998,7 @@
                 document.head.appendChild(styleElement);
             }
             
-            console.log('Estilos del menú actualizados correctamente');
+            console.log('Estilos del menú actualizados correctamente con bordes pronunciados');
         };
     </script>
     <script src="../js/navegacion-admin.js"></script>

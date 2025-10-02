@@ -51,6 +51,15 @@
         }
     };
 
+    // Función auxiliar para obtener colores más sutiles
+    function getSubtleBackground(baseColor) {
+        // Si es un color oscuro, aclararlo ligeramente
+        if (baseColor === '#1a1a1a') return '#2a2a2a';
+        if (baseColor === '#808080') return '#909090';
+        // Si es claro, oscurecerlo ligeramente
+        return '#f0f0f0';
+    }
+
     // Aplicar estilos CSS personalizados
     function applyCustomStyles(preferences) {
         console.log('🎨 Aplicando estilos personalizados:', preferences);
@@ -83,8 +92,8 @@
             }
             
             /* Aplicar colores a elementos comunes */
-            body {
-                background-color: var(--background-color) !important;
+            body{
+                background-color: ${getSubtleBackground(selectedBackground.color)} !important;
                 color: var(--text-color) !important;
                 transition: background-color 0.3s ease, color 0.3s ease;
             }
@@ -271,10 +280,216 @@
                     border: 1px solid #999 !important;
                 }
             ` : ''}
+
+            /* ESTILOS PARA SWEETALERT2 PERSONALIZADOS */
+            .swal2-popup {
+                background: ${selectedBackground.cardBg} !important;
+                color: ${selectedBackground.textColor} !important;
+                border: 2px solid ${selectedTheme.primary} !important;
+                border-radius: 12px !important;
+            }
+
+            .swal2-title {
+                color: ${selectedTheme.primary} !important;
+                font-weight: 700 !important;
+            }
+
+            .swal2-content {
+                color: ${selectedBackground.textColor} !important;
+            }
+
+            .swal2-confirm {
+                background: ${selectedTheme.primary} !important;
+                border: 2px solid ${selectedTheme.secondary} !important;
+                color: white !important;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                transition: all 0.3s ease !important;
+            }
+
+            .swal2-confirm:hover {
+                background: ${selectedTheme.secondary} !important;
+                transform: translateY(-2px) !important;
+                box-shadow: 0 4px 8px ${selectedTheme.primary}40 !important;
+            }
+
+            .swal2-cancel {
+                background: ${selectedBackground.id === 'dark' ? '#555' : '#e9ecef'} !important;
+                border: 2px solid ${selectedBackground.id === 'dark' ? '#666' : '#ced4da'} !important;
+                color: ${selectedBackground.textColor} !important;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                transition: all 0.3s ease !important;
+            }
+
+            .swal2-cancel:hover {
+                background: ${selectedBackground.id === 'dark' ? '#666' : '#dee2e6'} !important;
+                transform: translateY(-2px) !important;
+            }
+
+            .swal2-success [class^=swal2-success-line] {
+                background-color: ${selectedTheme.primary} !important;
+            }
+
+            .swal2-success [class^=swal2-success-circular-line] {
+                background-color: transparent !important;
+            }
+
+            .swal2-icon.swal2-success .swal2-success-ring {
+                border: 4px solid ${selectedTheme.primary}30 !important;
+            }
+
+            .swal2-icon.swal2-error {
+                border-color: ${selectedTheme.primary} !important;
+            }
+
+            .swal2-icon.swal2-error [class^=swal2-x-mark-line] {
+                background-color: ${selectedTheme.primary} !important;
+            }
+
+            .swal2-icon.swal2-warning {
+                border-color: #ffc107 !important;
+                color: #ffc107 !important;
+            }
+
+            .swal2-icon.swal2-info {
+                border-color: ${selectedTheme.primary} !important;
+                color: ${selectedTheme.primary} !important;
+            }
+
+            .swal2-actions {
+                gap: 10px !important;
+            }
+
+            /* SweetAlert2 con fondo oscuro */
+            ${selectedBackground.id === 'dark' ? `
+                .swal2-popup {
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+                }
+                
+                .swal2-input, .swal2-textarea {
+                    background: #333 !important;
+                    color: white !important;
+                    border: 1px solid #555 !important;
+                }
+                
+                .swal2-input:focus, .swal2-textarea:focus {
+                    border-color: ${selectedTheme.primary} !important;
+                    box-shadow: 0 0 0 2px ${selectedTheme.primary}20 !important;
+                }
+            ` : ''}
+
+            ${selectedBackground.id === 'gray' ? `
+                .swal2-popup {
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+                }
+            ` : ''}
         `;
         
         console.log('✅ Estilos personalizados aplicados correctamente');
+        
+        // Aplicar configuración global para SweetAlert2
+        applySweetAlertConfig(selectedTheme, selectedBackground);
     }
+
+    // Configurar SweetAlert2 globalmente con los colores personalizados
+    function applySweetAlertConfig(selectedTheme, selectedBackground) {
+        if (typeof Swal !== 'undefined') {
+            // Configuración global de SweetAlert2
+            Swal.mixin({
+                background: selectedBackground.cardBg,
+                color: selectedBackground.textColor,
+                confirmButtonColor: selectedTheme.primary,
+                cancelButtonColor: selectedBackground.id === 'dark' ? '#555' : '#6c757d',
+                customClass: {
+                    popup: 'sweet-alert-custom',
+                    confirmButton: 'sweet-alert-confirm-custom',
+                    cancelButton: 'sweet-alert-cancel-custom',
+                    title: 'sweet-alert-title-custom',
+                    htmlContainer: 'sweet-alert-content-custom'
+                }
+            });
+            
+            console.log('🎨 Configuración de SweetAlert2 aplicada con colores personalizados');
+        } else {
+            console.log('ℹ️ SweetAlert2 no está cargado, se aplicarán estilos via CSS');
+        }
+    }
+
+    // Función para mostrar SweetAlert con colores personalizados
+    window.showCustomAlert = function(config) {
+        if (typeof Swal === 'undefined') {
+            console.warn('SweetAlert2 no está cargado');
+            return Promise.resolve(false);
+        }
+
+        // Obtener preferencias actuales
+        const savedPrefs = localStorage.getItem('personalizationPreferences');
+        const preferences = savedPrefs ? JSON.parse(savedPrefs) : personalizationState.preferences;
+        
+        const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
+        const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
+
+        // Configuración base con colores personalizados
+        const defaultConfig = {
+            background: selectedBackground.cardBg,
+            color: selectedBackground.textColor,
+            confirmButtonColor: selectedTheme.primary,
+            cancelButtonColor: selectedBackground.id === 'dark' ? '#555' : '#6c757d',
+            iconColor: selectedTheme.primary
+        };
+
+        return Swal.fire({
+            ...defaultConfig,
+            ...config
+        });
+    };
+
+    // Función para confirmación personalizada
+    window.showCustomConfirm = function(title, text, confirmButtonText = 'Confirmar', cancelButtonText = 'Cancelar') {
+        return window.showCustomAlert({
+            title: title,
+            text: text,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: cancelButtonText,
+            customClass: {
+                confirmButton: 'btn-confirm-custom',
+                cancelButton: 'btn-cancel-custom'
+            }
+        });
+    };
+
+    // Función para éxito personalizado
+    window.showCustomSuccess = function(title, text, confirmButtonText = 'OK') {
+        return window.showCustomAlert({
+            title: title,
+            text: text,
+            icon: 'success',
+            confirmButtonText: confirmButtonText
+        });
+    };
+
+    // Función para error personalizado
+    window.showCustomError = function(title, text, confirmButtonText = 'OK') {
+        return window.showCustomAlert({
+            title: title,
+            text: text,
+            icon: 'error',
+            confirmButtonText: confirmButtonText
+        });
+    };
+
+    // Función para advertencia personalizada
+    window.showCustomWarning = function(title, text, confirmButtonText = 'Entendido') {
+        return window.showCustomAlert({
+            title: title,
+            text: text,
+            icon: 'warning',
+            confirmButtonText: confirmButtonText
+        });
+    };
 
     // Cargar perfil del usuario desde colaboradores
     async function loadUserProfile() {
