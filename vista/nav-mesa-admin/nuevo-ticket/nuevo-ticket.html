@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Nuevo Ticket</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="nuevo-ticket.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h2 class="title" style="color:#fff !important;">Nuevo Ticket</h2>
+            
+            <div class="ticket-type-selector">
+                <button class="ticket-type-btn active" data-type="operativo">
+                    <i class="fas fa-tools"></i>
+                    Ticket Operativo
+                </button>
+                <button class="ticket-type-btn" data-type="administracion">
+                    <i class="fas fa-building"></i>
+                    Ticket Administración
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulario para Ticket Operativo -->
+        <div class="form-container">
+            <div class="form-header">
+                <h3 id="formTitle" style="color:#fff !important;">Nuevo Ticket Operativo</h3>
+            </div>
+
+            <form id="ticketOperativoForm" class="form-content" onsubmit="saveTicket(event, 'operativo')">
+                <div class="form-group">
+                    <label for="titulo">TÍTULO DEL TICKET</label>
+                    <input type="text" id="titulo" class="form-control" required>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Información del Cliente</h3>
+                    <div class="form-group">
+                        <label for="cuenta">CUENTA</label>
+                        <select id="cuenta" class="form-control" onchange="loadClientData(this.value)" required>
+                            <option value="">Seleccione un cliente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="direccionFiscal">DIRECCIÓN FISCAL</label>
+                        <input type="text" id="direccionFiscal" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="rfc">RFC</label>
+                        <input type="text" id="rfc" class="form-control">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="atencionA">ATENCIÓN A</label>
+                            <input type="text" id="atencionA" class="form-control">
+                        </div>
+                        <div class="form-col">
+                            <label for="correo">CORREO</label>
+                            <input type="text" id="correo" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Información del Servicio</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="fecha">FECHA</label>
+                            <input type="date" id="fecha" class="form-control">
+                        </div>
+                        <div class="form-col">
+                            <label for="ordenServicio">ORDEN DE SERVICIO</label>
+                            <input type="text" id="ordenServicio" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="proyecto">PROYECTO</label>
+                        <input type="text" id="proyecto" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="servicio">SERVICIO</label>
+                        <input type="text" id="servicio" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SISTEMAS:</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="sistemas" value="CCTV"> CCTV</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sistemas" value="DH"> DH</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sistemas" value="CA"> CA</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sistemas" value="AI"> AI</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sistemas" value="SM"> MULTIMEDIA</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sistemas" value="OTRO"> OTRO</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcionActividades">DESCRIPCIÓN DE ACTIVIDADES</label>
+                        <textarea id="descripcionActividades" class="form-control" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Asignación y Prioridad</h3>
+                    <div class="form-group">
+                        <label for="colaboradores">Colaboradores</label>
+                        <select id="colaboradores" class="form-control" multiple></select>
+                        <small class="text-muted">El primer colaborador seleccionado será el responsable del proyecto</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="area">Área</label>
+                        <input type="text" id="area" class="form-control" readonly>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="estado">Estado</label>
+                            <select id="estado" class="form-control">
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en_proceso">En Proceso</option>
+                                <option value="finalizado">Finalizado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="prioridad">Prioridad</label>
+                            <select id="prioridad" class="form-control">
+                                <option value="alta">Alta</option>
+                                <option value="media">Media</option>
+                                <option value="baja">Baja</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cancelTicket()">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Guardar Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Formulario para Ticket Administración (oculto inicialmente) -->
+        <div class="form-container" id="adminFormContainer" style="display: none;">
+            <div class="form-header">
+                <h3 style="color:#fff !important;">Nuevo Ticket para Administración</h3>
+            </div>
+
+            <form id="ticketAdminForm" class="form-content" onsubmit="saveTicket(event, 'administracion')">
+                <div class="form-group">
+                    <label for="rsiTitulo">TÍTULO DEL TICKET</label>
+                    <input type="text" id="rsiTitulo" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="rsiDescripcionActividades">DESCRIPCIÓN DE ACTIVIDAD</label>
+                    <textarea id="rsiDescripcionActividades" class="form-control" rows="4"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="rsiFecha">FECHA</label>
+                        <input type="date" id="rsiFecha" class="form-control">
+                    </div>
+                    <div class="form-col">
+                        <label for="rsiFechaFinalizacion">FECHA DE FINALIZACIÓN</label>
+                        <input type="date" id="rsiFechaFinalizacion" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Asignación y Prioridad</h3>
+                    <div class="form-group">
+                        <label for="rsiColaboradores">Responsable / CC (Copia a)</label>
+                        <select id="rsiColaboradores" class="form-control" multiple></select>
+                        <small class="text-muted">El primer colaborador seleccionado será el responsable.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="rsiArea">Área del Responsable</label>
+                        <input type="text" id="rsiArea" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="rsiPrioridad">Importancia</label>
+                        <select id="rsiPrioridad" class="form-control">
+                            <option value="alta">Alta</option>
+                            <option value="media" selected>Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cancelTicket()">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Guardar Ticket RSI
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Estado de la aplicación
+    const appState = {
+        currentUser: null,
+        colaboradores: [],
+        clientes: [],
+        currentTicketType: 'operativo'
+    };
+
+    // Variables de control para el estado del guardado
+    let isSaving = false;
+
+    // =================================================================================
+    // FUNCIONES PRINCIPALES
+    // =================================================================================
+
+    async function initialLoad() {
+        try {
+            await loadUserProfile();
+            await loadClientes();
+            await loadCollaborators();
+            setupEventListeners();
+            setupSelect2();
+        } catch (error) {
+            console.error("Error en la carga inicial:", error);
+            showError('No se pudieron cargar los datos iniciales.');
+        }
+    }
+
+    async function loadUserProfile() {
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            return;
+        }
+        
+        try {
+            // Obtener datos del usuario desde localStorage (que se llena con navegacion-admin.js)
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                appState.currentUser = JSON.parse(savedUser);
+                console.log('Usuario cargado desde localStorage:', appState.currentUser);
+            } else {
+                // Si no está en localStorage, buscar en Firestore
+                const querySnapshot = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const userData = doc.data();
+                    appState.currentUser = {
+                        id: doc.id,
+                        nombre: userData.NOMBRE,
+                        area: userData.ÁREA,
+                        imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
+                } else {
+                    // Usuario no encontrado en colaboradores
+                    appState.currentUser = {
+                        id: user.uid,
+                        nombre: user.email,
+                        area: 'Usuario no registrado',
+                        imagen: '../css/img/Logo-RSI-OFICIAL.png'
+                    };
+                }
+            }
+        } catch (error) {
+            console.error("Error al cargar perfil:", error);
+        }
+    }
+
+    async function loadClientes() {
+        try {
+            const snapshot = await db.collection('clientes').get();
+            const selectCuenta = document.getElementById('cuenta');
+            selectCuenta.innerHTML = '<option value="">Seleccione un cliente</option>';
+            
+            appState.clientes = snapshot.docs.map(doc => {
+                const data = doc.data();
+                const direccionCompleta = [data.Calle, data['No.Exterior'], data.Colonia, data['Codigo Postal'], data.Pais].filter(Boolean).join(', ');
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = data['Nombre Comercial'] || 'Cliente sin nombre comercial';
+                selectCuenta.appendChild(option);
+                return {
+                    id: doc.id,
+                    nombreComercial: data['Nombre Comercial'] || '',
+                    rfc: data.RFC || '',
+                    correo: data.Correo || '',
+                    contacto: data.Nombre || '',
+                    direccion: direccionCompleta
+                };
+            });
+        } catch (error) {
+            console.error("Error al cargar clientes:", error);
+        }
+    }
+
+    async function loadCollaborators() {
+        try {
+            const snapshot = await db.collection('colaboradores').get();
+            appState.colaboradores = snapshot.docs.map(doc => ({
+                id: doc.id,
+                nombre: doc.data().NOMBRE,
+                area: doc.data().ÁREA
+            }));
+
+            // Configurar Select2 para colaboradores
+            $('#colaboradores').select2({
+                data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
+                placeholder: 'Seleccione colaboradores',
+                width: '100%'
+            });
+
+            $('#rsiColaboradores').select2({
+                data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
+                placeholder: 'Seleccione responsable y copias',
+                width: '100%'
+            });
+        } catch (error) {
+            console.error("Error al cargar colaboradores:", error);
+        }
+    }
+
+    function setupSelect2() {
+        // Configurar Select2 para el select de clientes
+        $('#cuenta').select2({
+            placeholder: 'Seleccione un cliente',
+            width: '100%'
+        });
+    }
+
+    function setupEventListeners() {
+        // Cambiar tipo de ticket
+        document.querySelectorAll('.ticket-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                changeTicketType(type);
+            });
+        });
+
+        // Actualizar área cuando cambian los colaboradores
+        $('#colaboradores').on('change', function() {
+            actualizarAreas('#colaboradores', 'area');
+        });
+
+        $('#rsiColaboradores').on('change', function() {
+            actualizarAreas('#rsiColaboradores', 'rsiArea');
+        });
+
+        // Cargar datos del cliente cuando se selecciona
+        document.getElementById('cuenta').addEventListener('change', function(e) {
+            loadClientData(e.target.value);
+        });
+    }
+
+    function loadClientData(clientId) {
+        const cliente = appState.clientes.find(c => c.id === clientId);
+        if (cliente) {
+            document.getElementById('direccionFiscal').value = cliente.direccion || '';
+            document.getElementById('rfc').value = cliente.rfc || '';
+            document.getElementById('atencionA').value = cliente.contacto || '';
+            document.getElementById('correo').value = cliente.correo || '';
+        } else {
+            document.getElementById('direccionFiscal').value = '';
+            document.getElementById('rfc').value = '';
+            document.getElementById('atencionA').value = '';
+            document.getElementById('correo').value = '';
+        }
+    }
+
+    function changeTicketType(type) {
+        appState.currentTicketType = type;
+        
+        // Actualizar botones
+        document.querySelectorAll('.ticket-type-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`.ticket-type-btn[data-type="${type}"]`).classList.add('active');
+        
+        // Mostrar formulario correspondiente
+        if (type === 'operativo') {
+            document.getElementById('adminFormContainer').style.display = 'none';
+            document.querySelector('.form-container').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Nuevo Ticket Operativo';
+        } else {
+            document.querySelector('.form-container').style.display = 'none';
+            document.getElementById('adminFormContainer').style.display = 'block';
+        }
+    }
+
+    function actualizarAreas(selectorId, inputId) {
+        const selectedIds = $(selectorId).val() || [];
+        if (selectedIds.length > 0) {
+            const areas = new Set();
+            selectedIds.forEach(id => {
+                const colaborador = appState.colaboradores.find(c => c.id === id);
+                if (colaborador && colaborador.area) {
+                    areas.add(colaborador.area);
+                }
+            });
+            document.getElementById(inputId).value = Array.from(areas).join(', ');
+        } else {
+            document.getElementById(inputId).value = '';
+        }
+    }
+
+    // =================================================================================
+    // FUNCIONES PARA GUARDAR TICKETS
+    // =================================================================================
+
+    async function saveTicket(event, type) {
+        event.preventDefault();
+        
+        if (isSaving) return;
+        isSaving = true;
+        
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        try {
+            if (type === 'operativo') {
+                await saveOperativoTicket();
+            } else {
+                await saveAdminTicket();
+            }
+            
+            // Éxito
+            await showSuccess('¡Ticket creado exitosamente!', 'El ticket ha sido registrado en el sistema.');
+            
+            // Redirigir después de un breve tiempo
+            setTimeout(() => {
+                window.location.href = 'gestion-tickets-admin.html';
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error al guardar ticket:', error);
+            showError('No se pudo guardar el ticket. Por favor, intente nuevamente.');
+        } finally {
+            isSaving = false;
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    }
+
+    async function saveOperativoTicket() {
+        // Validar formulario
+        if (!validateOperativoForm()) {
+            throw new Error('Formulario incompleto');
+        }
+        
+        const selectedCollaboratorsIds = $('#colaboradores').val() || [];
+        const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
+        
+        // Obtener usuario que levanta el ticket desde appState
+        const levantadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
+        
+        const ticketData = {
+            titulo: document.getElementById('titulo').value,
+            estado: document.getElementById('estado').value,
+            prioridad: document.getElementById('prioridad').value,
+            area: document.getElementById('area').value,
+            colaboradores: selectedCollaboratorsIds,
+            responsableNombre: responsable ? responsable.nombre : '',
+            cuentaId: document.getElementById('cuenta').value,
+            cuentaNombre: $("#cuenta option:selected").text(),
+            direccionFiscal: document.getElementById('direccionFiscal').value,
+            rfc: document.getElementById('rfc').value,
+            atencionA: document.getElementById('atencionA').value,
+            correo: document.getElementById('correo').value,
+            fecha: document.getElementById('fecha').value,
+            ordenServicio: document.getElementById('ordenServicio').value,
+            proyecto: document.getElementById('proyecto').value,
+            servicio: document.getElementById('servicio').value,
+            sistemas: Array.from(document.querySelectorAll('input[name="sistemas"]:checked')).map(cb => cb.value),
+            descripcionActividades: document.getElementById('descripcionActividades').value,
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+            notificacion: false,
+            conclusion: "El equipo queda instalado, configurado y operando correctamente.",
+            levantadoPor: levantadoPor,
+            tipo: 'operativo'
+        };
+        
+        await db.collection('ticketsmesa').add(ticketData);
+    }
+
+    async function saveAdminTicket() {
+        // Validar formulario
+        if (!validateAdminForm()) {
+            throw new Error('Formulario incompleto');
+        }
+        
+        const selectedCollaboratorsIds = $('#rsiColaboradores').val() || [];
+        const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
+        
+        // Obtener usuario que levanta el ticket desde appState
+        const levantadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
+        
+        const ticketData = {
+            titulo: document.getElementById('rsiTitulo').value,
+            descripcionActividades: document.getElementById('rsiDescripcionActividades').value,
+            fecha: document.getElementById('rsiFecha').value,
+            fechaFinalizacion: document.getElementById('rsiFechaFinalizacion').value,
+            prioridad: document.getElementById('rsiPrioridad').value,
+            colaboradores: selectedCollaboratorsIds,
+            responsableNombre: responsable ? responsable.nombre : 'Sin asignar',
+            area: document.getElementById('rsiArea').value,
+            cuentaNombre: "Ticket Interno RSI",
+            estado: "pendiente",
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+            notificacion: false,
+            conclusion: "Pendiente de conclusión.",
+            cuentaId: null,
+            direccionFiscal: '',
+            rfc: '',
+            atencionA: '',
+            correo: '',
+            ordenServicio: '',
+            proyecto: 'Interno',
+            servicio: 'Actividad Interna',
+            sistemas: ['OTRO'],
+            levantadoPor: levantadoPor,
+            tipo: 'administracion'
+        };
+        
+        await db.collection('ticketsmesa').add(ticketData);
+    }
+
+    function validateOperativoForm() {
+        const titulo = document.getElementById('titulo').value;
+        const cuenta = document.getElementById('cuenta').value;
+        
+        if (!titulo.trim()) {
+            showError('El título del ticket es obligatorio');
+            return false;
+        }
+        
+        if (!cuenta) {
+            showError('Debe seleccionar un cliente');
+            return false;
+        }
+        
+        return true;
+    }
+
+    function validateAdminForm() {
+        const titulo = document.getElementById('rsiTitulo').value;
+        
+        if (!titulo.trim()) {
+            showError('El título del ticket es obligatorio');
+            return false;
+        }
+        
+        return true;
+    }
+
+    function cancelTicket() {
+        Swal.fire({
+            title: '¿Cancelar ticket?',
+            text: 'Los cambios no guardados se perderán.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cancelar',
+            cancelButtonText: 'Continuar editando',
+            confirmButtonColor: '#6C43E0',
+            cancelButtonColor: '#dc3545'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'gestion-tickets-admin.html';
+            }
+        });
+    }
+
+    // =================================================================================
+    // FUNCIONES DE UTILIDAD
+    // =================================================================================
+
+    function showError(message) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#6C43E0'
+            });
+        } else {
+            alert('Error: ' + message);
+        }
+    }
+
+    async function showSuccess(title, text) {
+        if (typeof Swal !== 'undefined') {
+            await Swal.fire({
+                title: title,
+                text: text,
+                icon: 'success',
+                confirmButtonColor: '#6C43E0',
+                timer: 3000,
+                showConfirmButton: true
+            });
+        } else {
+            alert(title + ': ' + text);
+        }
+    }
+
+    // =================================================================================
+    // INICIALIZACIÓN
+    // =================================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log('Usuario autenticado:', user.email);
+                initialLoad();
+            } else {
+                console.log('No hay usuario autenticado, redirigiendo...');
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            }
+        });
+    });
+</script>
+<script src="../js/personalizacion-colores.js"></script>
+<script src="../js/navegacion-admin.js"></script>
+</body>
+</html>
