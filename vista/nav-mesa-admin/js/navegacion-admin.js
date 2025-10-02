@@ -1,4 +1,4 @@
-// navegacion-admin.js - Función autónoma COMPLETA con iconos y gráficas ACTUALIZADA
+// navegacion-admin.js - Función autónoma COMPLETA con iconos, gráficas y personalización ACTUALIZADA
 (function() {
     'use strict';
     
@@ -1088,6 +1088,214 @@
             }
         }
         
+        // =============================================
+        // FUNCIONES DE PERSONALIZACIÓN
+        // =============================================
+        
+        // Cargar preferencias de personalización
+        async function loadPersonalizationPreferences() {
+            try {
+                // Cargar desde localStorage primero
+                const savedPrefs = localStorage.getItem('personalizationPreferences');
+                if (savedPrefs) {
+                    const preferences = JSON.parse(savedPrefs);
+                    applyCustomMenuStyles(preferences);
+                    console.log('✅ Preferencias cargadas desde localStorage');
+                }
+                
+                // Cargar desde Firebase si hay usuario
+                if (menuState.currentUser && menuState.userData) {
+                    const prefsDoc = await db.collection('personalizacion')
+                        .where('colaboradorId', '==', menuState.userData.id)
+                        .get();
+                    
+                    if (!prefsDoc.empty) {
+                        const prefsData = prefsDoc.docs[0].data();
+                        applyCustomMenuStyles(prefsData.preferences);
+                        // Guardar también en localStorage para acceso rápido
+                        localStorage.setItem('personalizationPreferences', JSON.stringify(prefsData.preferences));
+                        console.log('✅ Preferencias cargadas desde Firebase');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar preferencias de personalización:', error);
+            }
+        }
+        
+        // Aplicar estilos personalizados al menú
+        function applyCustomMenuStyles(preferences) {
+            console.log('🎨 Aplicando estilos personalizados al menú:', preferences);
+            
+            // Definir opciones de personalización
+            const backgroundOptions = [
+                { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
+                { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
+                { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
+            ];
+            
+            const themeOptions = [
+                { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
+                { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
+                { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
+                { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
+                { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
+                { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
+            ];
+            
+            // Obtener los colores seleccionados
+            const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
+            const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
+            
+            // Crear o actualizar estilos personalizados
+            const styleId = 'menu-nav-custom-styles';
+            let styleElement = document.getElementById(styleId);
+            
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                document.head.appendChild(styleElement);
+            }
+            
+            // Generar CSS personalizado
+            styleElement.textContent = `
+                /* ESTILOS PERSONALIZADOS PARA EL MENÚ */
+                .menu-nav-sidebar {
+                    background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-floating-btn {
+                    background: ${selectedTheme.primary} !important;
+                    box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
+                }
+                
+                .menu-nav-floating-btn:hover {
+                    background: ${selectedTheme.secondary} !important;
+                }
+                
+                .menu-nav-user-profile {
+                    border-bottom: 1px solid ${selectedTheme.accent}20 !important;
+                }
+                
+                .menu-nav-user-avatar {
+                    border: 3px solid ${selectedTheme.primary} !important;
+                }
+                
+                .menu-nav-user-name {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-user-area {
+                    color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stats-container,
+                .menu-nav-charts-container {
+                    border-bottom: 1px solid ${selectedTheme.accent}20 !important;
+                }
+                
+                .menu-nav-stat-card {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-stat-card:hover {
+                    background: ${selectedBackground.cardBg}40 !important;
+                }
+                
+                .menu-nav-stat-title {
+                    color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stat-value {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-month-indicator {
+                    color: ${selectedTheme.primary} !important;
+                }
+                
+                .menu-nav-chart-title {
+                    color: ${selectedTheme.primary} !important;
+                }
+                
+                .menu-nav-chart {
+                    background: ${selectedBackground.cardBg}20 !important;
+                }
+                
+                .menu-nav-chart-progress {
+                    background: ${selectedBackground.cardBg}40 !important;
+                }
+                
+                .menu-nav-chart-value {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-btn {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-btn:hover {
+                    background: ${selectedTheme.primary}20 !important;
+                }
+                
+                .menu-nav-btn-logout {
+                    background: rgba(220, 53, 69, 0.2) !important;
+                }
+                
+                .menu-nav-btn-logout:hover {
+                    background: rgba(220, 53, 69, 0.4) !important;
+                }
+                
+                .menu-nav-btn-finish {
+                    background: rgba(255, 193, 7, 0.2) !important;
+                }
+                
+                .menu-nav-btn-finish:hover {
+                    background: rgba(255, 193, 7, 0.4) !important;
+                }
+                
+                /* Ajustes para modo oscuro */
+                ${selectedBackground.id === 'dark' ? `
+                    .menu-nav-stat-title,
+                    .menu-nav-chart-label {
+                        color: ${selectedTheme.accent} !important;
+                    }
+                ` : ''}
+            `;
+            
+            console.log('✅ Estilos personalizados aplicados al menú');
+        }
+        
+        // Función global para actualizar estilos (llamada desde personalizacion.html)
+        window.updateMenuStyles = function(preferences) {
+            console.log('🔄 Actualizando estilos del menú desde personalización');
+            applyCustomMenuStyles(preferences);
+            
+            // Guardar en localStorage
+            localStorage.setItem('personalizationPreferences', JSON.stringify(preferences));
+            
+            // Si hay usuario autenticado, guardar también en Firebase
+            if (menuState.currentUser && menuState.userData) {
+                db.collection('personalizacion').doc(menuState.userData.id).set({
+                    colaboradorId: menuState.userData.id,
+                    colaboradorNombre: menuState.userData.nombre,
+                    colaboradorEmail: menuState.userData.correoEmpresarial,
+                    preferences: preferences,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    console.log('✅ Preferencias guardadas en Firebase');
+                }).catch(error => {
+                    console.error('❌ Error al guardar en Firebase:', error);
+                });
+            }
+        };
+        
+        // =============================================
+        // INICIALIZACIÓN DEL MENÚ
+        // =============================================
+        
         // Inicializar el menú
         function initMenu() {
             loadFontAwesome(); // Cargar FontAwesome primero
@@ -1100,6 +1308,7 @@
                 if (user) {
                     console.log('👤 Usuario autenticado detectado:', user.email);
                     loadCompleteUserData();
+                    loadPersonalizationPreferences(); // Cargar preferencias de personalización
                     
                     // Actualizar estadísticas cada 30 segundos
                     setInterval(loadUserStats, 30000);
