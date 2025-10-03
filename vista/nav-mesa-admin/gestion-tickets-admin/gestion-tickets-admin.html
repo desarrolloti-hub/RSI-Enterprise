@@ -46,27 +46,29 @@
 
         <div class="table-container">
             <!-- TABLA PARA ESCRITORIO -->
-            <table class="desktop-table">
-                <thead>
-                    <tr>
-                        <th>Colaboradores</th>
-                        <th>Título</th>
-                        <th>Estado</th>
-                        <th>Prioridad</th>
-                        <th>Área</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="ticketsTableBody">
-                    <tr>
-                        <td colspan="7" class="loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Cargando tickets...</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <table class="desktop-table">
+            <thead>
+                <tr>
+                    <th>ID Ticket</th>
+                    <th>Colaboradores</th>
+                    <th>Título</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Área</th>
+                    <th>Levantado por</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="ticketsTableBody">
+                <tr>
+                    <td colspan="9" class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Cargando tickets...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
             <!-- TARJETAS PARA MÓVIL -->
             <div class="mobile-cards" id="mobileCardsContainer">
@@ -247,143 +249,154 @@
     }
 
     function applySearchAndDisplay() {
-        const searchTerm = appState.filters.searchTerm.toLowerCase().trim();
-        
-        let ticketsToDisplay = appState.allTickets;
-        
-        if (searchTerm) {
-            ticketsToDisplay = appState.allTickets.filter(ticket => {
-                const searchableString = [
-                    ticket.nombresColaboradores,
-                    ticket.titulo,
-                    ticket.estado,
-                    ticket.prioridad,
-                    ticket.area,
-                    formatDate(ticket.fechaCreacion),
-                    ticket.cuentaNombre,
-                    ticket.proyecto,
-                    ticket.servicio,
-                    ticket.ordenServicio,
-                    ticket.id
-                ].join(' ').toLowerCase();
-                
-                return searchableString.includes(searchTerm);
-            });
-        }
-
-        displayTickets(ticketsToDisplay);
-    }
+    const searchTerm = appState.filters.searchTerm.toLowerCase().trim();
     
+    let ticketsToDisplay = appState.allTickets;
+    
+    if (searchTerm) {
+        ticketsToDisplay = appState.allTickets.filter(ticket => {
+            const searchableString = [
+                ticket.idTicket || ticket.id, // Incluir ID del ticket en la búsqueda
+                ticket.nombresColaboradores,
+                ticket.titulo,
+                ticket.estado,
+                ticket.prioridad,
+                ticket.area,
+                ticket.levantadoPor, // Incluir levantadoPor en la búsqueda
+                formatDate(ticket.fechaCreacion),
+                ticket.cuentaNombre,
+                ticket.proyecto,
+                ticket.servicio,
+                ticket.ordenServicio
+            ].join(' ').toLowerCase();
+            
+            return searchableString.includes(searchTerm);
+        });
+    }
+
+    displayTickets(ticketsToDisplay);
+}
+
     function displayTickets(tickets) {
-        const tbody = document.getElementById('ticketsTableBody');
-        const mobileContainer = document.getElementById('mobileCardsContainer');
-        
-        tbody.innerHTML = '';
-        mobileContainer.innerHTML = '';
-        
-        if (!tickets || tickets.length === 0) {
-            const emptyMessage = `
-                <tr>
-                    <td colspan="7" class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <h3>No hay tickets para mostrar</h3>
-                        <p>${appState.filters.searchTerm || appState.filters.collaboratorId ? 
-                            'Intenta ajustar los filtros de búsqueda' : 
-                            'No se encontraron tickets en el sistema'}</p>
-                    </td>
-                </tr>
-            `;
-            tbody.innerHTML = emptyMessage;
-            mobileContainer.innerHTML = `
-                <div class="empty-state">
+    const tbody = document.getElementById('ticketsTableBody');
+    const mobileContainer = document.getElementById('mobileCardsContainer');
+    
+    tbody.innerHTML = '';
+    mobileContainer.innerHTML = '';
+    
+    if (!tickets || tickets.length === 0) {
+        const emptyMessage = `
+            <tr>
+                <td colspan="8" class="empty-state">
                     <i class="fas fa-inbox"></i>
                     <h3>No hay tickets para mostrar</h3>
                     <p>${appState.filters.searchTerm || appState.filters.collaboratorId ? 
                         'Intenta ajustar los filtros de búsqueda' : 
                         'No se encontraron tickets en el sistema'}</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Mostrar tabla para escritorio
-        const rowsHtml = tickets.map(ticket => {
-            return `
-                <tr>
-                    <td>${ticket.nombresColaboradores || 'Sin asignar'}</td>
-                    <td><strong>${ticket.titulo || 'Sin título'}</strong></td>
-                    <td><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></td>
-                    <td>${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</td>
-                    <td>${ticket.area || 'N/A'}</td>
-                    <td>${formatDate(ticket.fechaCreacion)}</td>
-                    <td>
-                        <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
-                        <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        tbody.innerHTML = rowsHtml;
-
-        // Mostrar tarjetas para móvil
-        const cardsHtml = tickets.map(ticket => {
-            return `
-                <div class="ticket-card">
-                    <div class="card-row">
-                        <span class="card-label">Colaboradores:</span>
-                        <span class="card-value">${ticket.nombresColaboradores || 'Sin asignar'}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Título:</span>
-                        <span class="card-value"><strong>${ticket.titulo || 'Sin título'}</strong></span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Estado:</span>
-                        <span class="card-value"><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Prioridad:</span>
-                        <span class="card-value">${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Área:</span>
-                        <span class="card-value">${ticket.area || 'N/A'}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Fecha:</span>
-                        <span class="card-value">${formatDate(ticket.fechaCreacion)}</span>
-                    </div>
-                    <div class="card-actions">
-                        <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
-                        <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        mobileContainer.innerHTML = cardsHtml;
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML = emptyMessage;
+        mobileContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>No hay tickets para mostrar</h3>
+                <p>${appState.filters.searchTerm || appState.filters.collaboratorId ? 
+                    'Intenta ajustar los filtros de búsqueda' : 
+                    'No se encontraron tickets en el sistema'}</p>
+            </div>
+        `;
+        return;
     }
+
+    // Mostrar tabla para escritorio
+    const rowsHtml = tickets.map(ticket => {
+        return `
+            <tr>
+                <td><strong>${ticket.idTicket || ticket.id || 'N/A'}</strong></td>
+                <td>${ticket.nombresColaboradores || 'Sin asignar'}</td>
+                <td><strong>${ticket.titulo || 'Sin título'}</strong></td>
+                <td><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></td>
+                <td>${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</td>
+                <td>${ticket.area || 'N/A'}</td>
+                <td>${ticket.levantadoPor || 'N/A'}</td>
+                <td>${formatDate(ticket.fechaCreacion)}</td>
+                <td>
+                    <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.innerHTML = rowsHtml;
+
+    // Mostrar tarjetas para móvil
+    const cardsHtml = tickets.map(ticket => {
+        return `
+            <div class="ticket-card">
+                <div class="card-row">
+                    <span class="card-label">ID del Ticket:</span>
+                    <span class="card-value"><strong>${ticket.idTicket || ticket.id || 'N/A'}</strong></span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Colaboradores:</span>
+                    <span class="card-value">${ticket.nombresColaboradores || 'Sin asignar'}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Título:</span>
+                    <span class="card-value"><strong>${ticket.titulo || 'Sin título'}</strong></span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Estado:</span>
+                    <span class="card-value"><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Prioridad:</span>
+                    <span class="card-value">${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Área:</span>
+                    <span class="card-value">${ticket.area || 'N/A'}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Levantado por:</span>
+                    <span class="card-value">${ticket.levantadoPor || 'N/A'}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Fecha:</span>
+                    <span class="card-value">${formatDate(ticket.fechaCreacion)}</span>
+                </div>
+                <div class="card-actions">
+                    <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    mobileContainer.innerHTML = cardsHtml;
+}
 
     function setupPagination(totalTickets) {
         const paginationContainer = document.querySelector('.pagination-container');
