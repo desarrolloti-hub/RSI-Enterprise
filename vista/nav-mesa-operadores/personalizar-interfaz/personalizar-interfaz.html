@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalización de Interfaz</title>
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        /* Estilos base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #6C43E0;
+            --secondary-color: #5a35c7;
+            --accent-color: #8B5FEB;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: white;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        /* Estilos para las opciones de personalización */
+        .personalization-section {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .color-option {
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .color-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .color-option.selected {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px var(--primary-color);
+        }
+        
+        .color-preview {
+            height: 80px;
+            width: 100%;
+        }
+        
+        .color-name {
+            padding: 10px;
+            text-align: center;
+            font-weight: 500;
+            background-color: var(--card-bg);
+        }
+        
+        .checkmark {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .color-option.selected .checkmark {
+            opacity: 1;
+        }
+        
+        /* Botones */
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(108, 67, 224, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #dee2e6;
+            transform: translateY(-2px);
+        }
+        
+        /* Mensajes de estado */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Vista previa */
+        .preview-section {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .preview-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .preview-item {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        /* Responsive mejorado */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .personalization-section, 
+            .preview-section {
+                padding: 20px;
+            }
+            
+            .options-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 12px;
+            }
+            
+            .color-preview {
+                height: 70px;
+            }
+            
+            .color-name {
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+            
+            .section-title {
+                font-size: 1.2rem;
+            }
+            
+            .preview-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .preview-item {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .buttons-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .color-preview {
+                height: 60px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .description {
+                font-size: 0.9rem;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Estilos mejorados para bordes más pronunciados */
+        .personalization-section, 
+        .preview-section {
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+        }
+
+        .color-option {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            border: 2px solid var(--accent-color);
+        }
+
+        .color-option.selected {
+            border: 3px solid var(--primary-color);
+        }
+
+        .btn {
+            border: 2px solid transparent;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            border-color: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            border-color: #ced4da;
+        }
+
+        .preview-item {
+            border: 2px solid var(--primary-color);
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-palette"></i> Personalización de Interfaz</h1>
+            <p class="description">Selecciona tus colores preferidos para personalizar la apariencia de la aplicación</p>
+        </header>
+        
+        <div id="message" class="message"></div>
+        
+        <section class="personalization-section">
+            <h2 class="section-title"><i class="fas fa-fill-drip"></i> Color de Fondo</h2>
+            <div class="options-grid" id="background-options">
+                <!-- Las opciones de fondo se generarán dinámicamente -->
+            </div>
+        </section>
+        
+        <section class="personalization-section">
+            <h2 class="section-title"><i class="fas fa-paint-brush"></i> Combinación de Colores</h2>
+            <div class="options-grid" id="theme-options">
+                <!-- Las opciones de tema se generarán dinámicamente -->
+            </div>
+        </section>
+        
+        <section class="preview-section">
+            <h3 class="preview-title">Vista Previa</h3>
+            <div class="preview-container">
+                <div class="preview-item" id="preview-primary">Botón Principal</div>
+                <div class="preview-item" id="preview-secondary">Botón Secundario</div>
+                <div class="preview-item" id="preview-accent">Elemento Destacado</div>
+            </div>
+        </section>
+        
+        <div class="buttons-container">
+            <button class="btn btn-secondary" id="reset-btn">
+                <i class="fas fa-undo"></i> Restablecer
+            </button>
+            <button class="btn btn-primary" id="save-btn">
+                <i class="fas fa-save"></i> Guardar Preferencias
+            </button>
+        </div>
+    </div>
+
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Estado de la personalización
+        const personalizationState = {
+            currentUser: null,
+            userData: null,
+            preferences: {
+                background: 'light',
+                theme: 'purple'
+            }
+        };
+        
+        // Opciones de personalización
+        const backgroundOptions = [
+            { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
+            { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
+            { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
+        ];
+        
+        const themeOptions = [
+            { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
+            { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
+            { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
+            { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
+            { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
+            { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
+        ];
+        
+        // Inicializar la interfaz
+        document.addEventListener('DOMContentLoaded', function() {
+            initPersonalizationInterface();
+            setupEventListeners();
+            
+            // Verificar autenticación
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('Usuario autenticado:', user.email);
+                    personalizationState.currentUser = user;
+                    loadUserProfile();
+                } else {
+                    console.log('No hay usuario autenticado');
+                    showMessage('Debes iniciar sesión para guardar preferencias', 'error');
+                }
+            });
+        });
+        
+        // Inicializar la interfaz de personalización
+        function initPersonalizationInterface() {
+            // Cargar opciones de fondo
+            const backgroundOptionsContainer = document.getElementById('background-options');
+            backgroundOptionsContainer.innerHTML = '';
+            
+            backgroundOptions.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'color-option';
+                optionElement.dataset.id = option.id;
+                optionElement.innerHTML = `
+                    <div class="color-preview" style="background-color: ${option.color};"></div>
+                    <div class="color-name">${option.name}</div>
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                `;
+                backgroundOptionsContainer.appendChild(optionElement);
+            });
+            
+            // Cargar opciones de tema
+            const themeOptionsContainer = document.getElementById('theme-options');
+            themeOptionsContainer.innerHTML = '';
+            
+            themeOptions.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'color-option';
+                optionElement.dataset.id = option.id;
+                optionElement.innerHTML = `
+                    <div class="color-preview" style="background: linear-gradient(135deg, ${option.primary} 0%, ${option.accent} 100%);"></div>
+                    <div class="color-name">${option.name}</div>
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                `;
+                themeOptionsContainer.appendChild(optionElement);
+            });
+            
+            // Cargar preferencias guardadas
+            loadSavedPreferences();
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Selección de opciones de fondo
+            document.getElementById('background-options').addEventListener('click', function(e) {
+                const option = e.target.closest('.color-option');
+                if (option) {
+                    // Remover selección anterior
+                    document.querySelectorAll('#background-options .color-option').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    
+                    // Seleccionar nueva opción
+                    option.classList.add('selected');
+                    personalizationState.preferences.background = option.dataset.id;
+                    applyBackground();
+                    updatePreview();
+                    
+                    // Mostrar feedback visual
+                    showSelectionFeedback('Fondo', option.querySelector('.color-name').textContent);
+                }
+            });
+            
+            // Selección de opciones de tema
+            document.getElementById('theme-options').addEventListener('click', function(e) {
+                const option = e.target.closest('.color-option');
+                if (option) {
+                    // Remover selección anterior
+                    document.querySelectorAll('#theme-options .color-option').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    
+                    // Seleccionar nueva opción
+                    option.classList.add('selected');
+                    personalizationState.preferences.theme = option.dataset.id;
+                    applyTheme();
+                    updatePreview();
+                    
+                    // Mostrar feedback visual
+                    showSelectionFeedback('Tema', option.querySelector('.color-name').textContent);
+                }
+            });
+            
+            // Botón de guardar
+            document.getElementById('save-btn').addEventListener('click', savePreferences);
+            
+            // Botón de restablecer
+            document.getElementById('reset-btn').addEventListener('click', resetPreferences);
+        }
+        
+        // Aplicar fondo seleccionado
+        function applyBackground() {
+            const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+            
+            // Aplicar nuevo fondo
+            document.documentElement.style.setProperty('--background-color', selectedBackground.color);
+            document.documentElement.style.setProperty('--text-color', selectedBackground.textColor);
+            document.documentElement.style.setProperty('--card-bg', selectedBackground.cardBg);
+            
+            // Ajustar sombra de tarjetas según el fondo
+            if (personalizationState.preferences.background === 'dark') {
+                document.documentElement.style.setProperty('--card-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)');
+            } else {
+                document.documentElement.style.setProperty('--card-shadow', '0 4px 12px rgba(0, 0, 0, 0.1)');
+            }
+        }
+        
+        // Aplicar tema seleccionado
+        function applyTheme() {
+            const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+            
+            // Aplicar colores del tema
+            document.documentElement.style.setProperty('--primary-color', selectedTheme.primary);
+            document.documentElement.style.setProperty('--secondary-color', selectedTheme.secondary);
+            document.documentElement.style.setProperty('--accent-color', selectedTheme.accent);
+        }
+        
+        // Actualizar vista previa
+        function updatePreview() {
+            const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+            
+            document.getElementById('preview-primary').style.backgroundColor = selectedTheme.primary;
+            document.getElementById('preview-primary').style.color = 'white';
+            
+            document.getElementById('preview-secondary').style.backgroundColor = selectedTheme.secondary;
+            document.getElementById('preview-secondary').style.color = 'white';
+            
+            document.getElementById('preview-accent').style.backgroundColor = selectedTheme.accent;
+            document.getElementById('preview-accent').style.color = 'white';
+        }
+        
+        // Cargar perfil del usuario
+        async function loadUserProfile() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    console.log('No hay usuario autenticado');
+                    return;
+                }
+                
+                // Buscar en la colección "colaboradores"
+                const colaboradorQuery = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!colaboradorQuery.empty) {
+                    const doc = colaboradorQuery.docs[0];
+                    const userData = doc.data();
+                    
+                    personalizationState.userData = {
+                        id: doc.id,
+                        nombre: userData.NOMBRE || 'Usuario',
+                        area: userData.ÁREA || 'Sin área',
+                        correoEmpresarial: userData["CORREO ELECTRÓNICO EMPRESARIAL"]
+                    };
+                    
+                    console.log('Perfil de usuario cargado:', personalizationState.userData);
+                } else {
+                    console.log('Usuario no encontrado en colaboradores');
+                    personalizationState.userData = {
+                        id: user.uid,
+                        nombre: user.email,
+                        area: 'Usuario no registrado',
+                        correoEmpresarial: user.email
+                    };
+                }
+                
+            } catch (error) {
+                console.error("Error al cargar perfil:", error);
+            }
+        }
+        
+        // Cargar preferencias guardadas
+        async function loadSavedPreferences() {
+            // Intentar cargar desde localStorage primero
+            const savedPrefs = localStorage.getItem('personalizationPreferences');
+            
+            if (savedPrefs) {
+                try {
+                    const prefs = JSON.parse(savedPrefs);
+                    personalizationState.preferences = prefs;
+                    applySavedPreferences();
+                    showMessage('Preferencias cargadas desde almacenamiento local', 'success');
+                } catch (e) {
+                    console.error('Error al cargar preferencias desde localStorage:', e);
+                }
+            }
+            
+            // Intentar cargar desde Firebase si hay usuario autenticado
+            if (personalizationState.currentUser) {
+                try {
+                    const prefsDoc = await db.collection('personalizacion')
+                        .where('colaboradorId', '==', personalizationState.userData.id)
+                        .get();
+                    
+                    if (!prefsDoc.empty) {
+                        const prefsData = prefsDoc.docs[0].data();
+                        personalizationState.preferences = prefsData.preferences;
+                        applySavedPreferences();
+                        showMessage('Preferencias cargadas desde la base de datos', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error al cargar preferencias desde Firebase:', error);
+                }
+            }
+        }
+        
+        // Aplicar preferencias guardadas
+        function applySavedPreferences() {
+            // Aplicar fondo
+            const backgroundOption = document.querySelector(`#background-options .color-option[data-id="${personalizationState.preferences.background}"]`);
+            if (backgroundOption) {
+                backgroundOption.classList.add('selected');
+                applyBackground();
+            }
+            
+            // Aplicar tema
+            const themeOption = document.querySelector(`#theme-options .color-option[data-id="${personalizationState.preferences.theme}"]`);
+            if (themeOption) {
+                themeOption.classList.add('selected');
+                applyTheme();
+            }
+            
+            // Actualizar vista previa
+            updatePreview();
+        }
+        
+        // Guardar preferencias
+        async function savePreferences() {
+            try {
+                // Mostrar confirmación con SweetAlert2
+                const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+                const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+                
+                const result = await Swal.fire({
+                    title: '¿Guardar preferencias?',
+                    html: `
+                        <div style="text-align: left; margin: 15px 0;">
+                            <p><strong>Fondo:</strong> ${selectedBackground.name}</p>
+                            <p><strong>Tema:</strong> ${selectedTheme.name}</p>
+                        </div>
+                        <p>¿Estás seguro de que deseas guardar estas preferencias?</p>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: selectedTheme.primary,
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, guardar',
+                    cancelButtonText: 'Cancelar',
+                    background: selectedBackground.cardBg,
+                    color: selectedBackground.textColor
+                });
+                
+                if (!result.isConfirmed) {
+                    return;
+                }
+                
+                // Guardar en localStorage
+                localStorage.setItem('personalizationPreferences', JSON.stringify(personalizationState.preferences));
+                
+                // Guardar en Firebase si hay usuario autenticado
+                if (personalizationState.currentUser && personalizationState.userData) {
+                    await db.collection('personalizacion').doc(personalizationState.userData.id).set({
+                        colaboradorId: personalizationState.userData.id,
+                        colaboradorNombre: personalizationState.userData.nombre,
+                        colaboradorEmail: personalizationState.userData.correoEmpresarial,
+                        preferences: personalizationState.preferences,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Mostrar mensaje de éxito con SweetAlert2
+                    await Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Preferencias guardadas correctamente en la base de datos y almacenamiento local',
+                        icon: 'success',
+                        confirmButtonColor: selectedTheme.primary,
+                        background: selectedBackground.cardBg,
+                        color: selectedBackground.textColor
+                    });
+                } else {
+                    // Mostrar mensaje de éxito con SweetAlert2
+                    await Swal.fire({
+                        title: '¡Guardado!',
+                        text: 'Preferencias guardadas en almacenamiento local (inicia sesión para guardar en la nube)',
+                        icon: 'success',
+                        confirmButtonColor: selectedTheme.primary,
+                        background: selectedBackground.cardBg,
+                        color: selectedBackground.textColor
+                    });
+                }
+                
+                // Actualizar el menú de navegación si está disponible
+                updateNavigationMenu();
+                
+            } catch (error) {
+                console.error('Error al guardar preferencias:', error);
+                
+                // Mostrar mensaje de error con SweetAlert2
+                const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+                const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+                
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Error al guardar preferencias: ' + error.message,
+                    icon: 'error',
+                    confirmButtonColor: selectedTheme.primary,
+                    background: selectedBackground.cardBg,
+                    color: selectedBackground.textColor
+                });
+            }
+        }
+        
+        // Actualizar el menú de navegación con las nuevas preferencias
+        function updateNavigationMenu() {
+            // Verificar si el menú de navegación está disponible
+            if (typeof updateMenuStyles === 'function') {
+                updateMenuStyles(personalizationState.preferences);
+                console.log('Menú de navegación actualizado con las nuevas preferencias');
+            } else {
+                console.log('La función updateMenuStyles no está disponible');
+            }
+        }
+        
+        // Restablecer preferencias
+        async function resetPreferences() {
+            // Mostrar confirmación con SweetAlert2
+            const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+            const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+            
+            const result = await Swal.fire({
+                title: '¿Restablecer preferencias?',
+                text: '¿Estás seguro de que deseas restablecer todas las preferencias a los valores por defecto?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: selectedTheme.primary,
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, restablecer',
+                cancelButtonText: 'Cancelar',
+                background: selectedBackground.cardBg,
+                color: selectedBackground.textColor
+            });
+            
+            if (!result.isConfirmed) {
+                return;
+            }
+            
+            personalizationState.preferences = {
+                background: 'light',
+                theme: 'purple'
+            };
+            
+            // Aplicar valores por defecto
+            applySavedPreferences();
+            
+            // Mostrar mensaje de éxito con SweetAlert2
+            await Swal.fire({
+                title: '¡Restablecido!',
+                text: 'Preferencias restablecidas a valores por defecto',
+                icon: 'success',
+                confirmButtonColor: '#6C43E0', // Usar el color por defecto
+                background: '#f5f5f5',
+                color: '#333'
+            });
+        }
+        
+        // Mostrar mensajes
+        function showMessage(text, type) {
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = text;
+            messageElement.className = `message ${type}`;
+            messageElement.style.display = 'block';
+            
+            // Ocultar mensaje después de 5 segundos
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Mostrar feedback de selección
+        function showSelectionFeedback(type, value) {
+            const selectedTheme = themeOptions.find(theme => theme.id === personalizationState.preferences.theme);
+            const selectedBackground = backgroundOptions.find(bg => bg.id === personalizationState.preferences.background);
+            
+            Swal.fire({
+                title: `${type} seleccionado`,
+                text: `Has seleccionado: ${value}`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                background: selectedBackground.cardBg,
+                color: selectedBackground.textColor,
+                iconColor: selectedTheme.primary
+            });
+        }
+        
+        // Función para actualizar estilos del menú (será llamada desde navegacion-admin.js)
+        window.updateMenuStyles = function(preferences) {
+            console.log('Actualizando estilos del menú con preferencias:', preferences);
+            
+            // Obtener los colores seleccionados
+            const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background);
+            const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme);
+            
+            // Actualizar estilos del menú con bordes más pronunciados
+            const menuStyles = `
+                /* ESTILOS ACTUALIZADOS DESDE PERSONALIZACIÓN - BORDES PRONUNCIADOS */
+                .menu-nav-sidebar {
+                    background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
+                    color: ${selectedBackground.textColor} !important;
+                    border-right: 3px solid ${selectedTheme.primary} !important;
+                }
+                
+                .menu-nav-floating-btn {
+                    background: ${selectedTheme.primary} !important;
+                    box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
+                    border: 2px solid ${selectedTheme.secondary} !important;
+                }
+                
+                .menu-nav-floating-btn:hover {
+                    background: ${selectedTheme.secondary} !important;
+                    border-color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-user-profile {
+                    border-bottom: 2px solid ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-user-avatar {
+                    border: 3px solid ${selectedTheme.primary} !important;
+                    box-shadow: 0 0 0 2px ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-user-name {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-user-area {
+                    color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stats-container,
+                .menu-nav-charts-container {
+                    border-bottom: 2px solid ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stat-card {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    color: ${selectedBackground.textColor} !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+                }
+                
+                .menu-nav-stat-card:hover {
+                    background: ${selectedBackground.cardBg}40 !important;
+                    border-color: ${selectedTheme.accent}60 !important;
+                }
+                
+                .menu-nav-stat-title {
+                    color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stat-value {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-month-indicator {
+                    color: ${selectedTheme.primary} !important;
+                    font-weight: 600;
+                }
+                
+                .menu-nav-chart-title {
+                    color: ${selectedTheme.primary} !important;
+                    font-weight: 600;
+                }
+                
+                .menu-nav-chart {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    border-radius: 8px;
+                }
+                
+                .menu-nav-chart-progress {
+                    background: ${selectedBackground.cardBg}40 !important;
+                    border: 1px solid ${selectedTheme.accent}20 !important;
+                }
+                
+                .menu-nav-chart-value {
+                    color: ${selectedBackground.textColor} !important;
+                    font-weight: 600;
+                }
+                
+                .menu-nav-btn {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    color: ${selectedBackground.textColor} !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    font-weight: 600;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+                }
+                
+                .menu-nav-btn:hover {
+                    background: ${selectedTheme.primary}20 !important;
+                    border-color: ${selectedTheme.primary} !important;
+                }
+                
+                .menu-nav-btn-logout {
+                    background: rgba(220, 53, 69, 0.2) !important;
+                    border-color: rgba(220, 53, 69, 0.4) !important;
+                }
+                
+                .menu-nav-btn-logout:hover {
+                    background: rgba(220, 53, 69, 0.4) !important;
+                    border-color: rgba(220, 53, 69, 0.8) !important;
+                }
+                
+                .menu-nav-btn-finish {
+                    background: rgba(255, 193, 7, 0.2) !important;
+                    border-color: rgba(255, 193, 7, 0.4) !important;
+                }
+                
+                .menu-nav-btn-finish:hover {
+                    background: rgba(255, 193, 7, 0.4) !important;
+                    border-color: rgba(255, 193, 7, 0.8) !important;
+                }
+                
+                /* Estilos para tickets en otras páginas */
+                .ticket-card, .ticket-item {
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    border-radius: 8px !important;
+                }
+                
+                .ticket-card:hover, .ticket-item:hover {
+                    border-color: ${selectedTheme.primary} !important;
+                }
+                
+                .btn-ticket, .btn-action {
+                    border: 2px solid ${selectedTheme.primary} !important;
+                    font-weight: 600 !important;
+                }
+            `;
+            
+            // Aplicar estilos al menú
+            const existingStyle = document.getElementById('menu-nav-custom-styles');
+            if (existingStyle) {
+                existingStyle.textContent = menuStyles;
+            } else {
+                const styleElement = document.createElement('style');
+                styleElement.id = 'menu-nav-custom-styles';
+                styleElement.textContent = menuStyles;
+                document.head.appendChild(styleElement);
+            }
+            
+            console.log('Estilos del menú actualizados correctamente con bordes pronunciados');
+        };
+    </script>
+    <script src="../js/navegacion-admin.js"></script>
+</body>
+</html>
