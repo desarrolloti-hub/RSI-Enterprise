@@ -1,11 +1,522 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Terminar Asistencia | RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <link rel="stylesheet" href="fin-asistencia.css">
 </head>
 <body>
-    
+    <div class="attendance-container" id="attendanceContainer">
+        <div class="attendance-header">
+            <h1>Terminar Asistencia</h1>
+            <p>Registra tu hora de salida laboral</p>
+        </div>
+
+        <div class="employee-info">
+            <img src="https://ui-avatars.com/api/?name=RS&background=c84e4e&color=fff&size=128" alt="Empleado" class="employee-avatar" id="employeeAvatar">
+            <div class="employee-details" id="employeeDetails">
+                <h3>Cargando Nombre...</h3>
+                <p><strong>Estatus:</strong> <span style="color: var(--error);">Verificando...</span></p>
+            </div>
+        </div>
+
+        <div class="attendance-options">
+            <div class="attendance-date" id="attendanceDate">
+                <i class="fas fa-calendar-day"></i> <span id="currentDate"></span>
+            </div>
+            
+            <div class="options-grid">
+                <div class="attendance-option selected" data-value="normal_exit">
+                    <div class="checkbox"></div>
+                    <div class="option-icon"><i class="fas fa-sign-out-alt"></i></div>
+                    <div class="option-label">Salida Normal</div>
+                    <div class="option-desc">Finalizar jornada laboral.</div>
+                </div>
+
+                <div class="attendance-option" data-value="extra_hours">
+                    <div class="checkbox"></div>
+                    <div class="option-icon"><i class="fas fa-clock"></i></div>
+                    <div class="option-label">Horas Extra</div>
+                    <div class="option-desc">Registrar salida después del horario.</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="submit-btn" id="submitAttendance">
+            <i class="fas fa-user-clock"></i> Registrar Salida
+        </button>
+    </div>
+
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-box">
+            <div class="alert-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="alert-title">¡Salida Registrada!</h3>
+            <p class="alert-message">Tu salida ha sido registrada. Serás redirigido.</p>
+            <button class="alert-btn" id="alertBtn">Aceptar</button>
+        </div>
+    </div>
+
+    <div class="alert-overlay" id="errorAlert">
+        <div class="alert-box error-alert-box">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h3 class="alert-title">¡Error!</h3>
+            <p class="alert-message">Hubo un problema.</p>
+            <button class="alert-btn" id="errorBtn">Entendido</button>
+        </div>
+    </div>
+
+    <div class="alert-overlay" id="locationOverlay">
+        <div class="alert-box">
+            <div class="alert-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h3 class="alert-title">Ubicación Requerida</h3>
+            <p class="alert-message">Para registrar tu salida, necesitamos acceder a tu ubicación actual. Por favor, permite el acceso a la geolocalización.</p>
+            <button class="alert-btn" id="locationBtn">Permitir Ubicación</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuración de Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+                measurementId: "G-38F2DBG9HE"
+            };
+
+            // Inicializar Firebase
+            const app = firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const auth = firebase.auth();
+
+            // Elementos del DOM
+            const attendanceContainer = document.getElementById('attendanceContainer');
+            const employeeAvatar = document.getElementById('employeeAvatar');
+            const employeeDetails = document.getElementById('employeeDetails');
+            const currentDateElement = document.getElementById('currentDate');
+            const attendanceOptions = document.querySelectorAll('.attendance-option');
+            const submitBtn = document.getElementById('submitAttendance');
+            const optionsGrid = document.querySelector('.options-grid');
+            const alertOverlay = document.getElementById('alertOverlay');
+            const alertBtn = document.getElementById('alertBtn');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorBtn = document.getElementById('errorBtn');
+            const locationOverlay = document.getElementById('locationOverlay');
+            const locationBtn = document.getElementById('locationBtn');
+            let isLocationRequested = false;
+
+            // Animación de carga inicial
+            setTimeout(() => {
+                attendanceContainer.classList.add('loaded');
+            }, 100);
+
+            // Mostrar fecha y hora actual
+            function updateDateTime() {
+                const now = new Date();
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                currentDateElement.textContent = now.toLocaleDateString('es-ES', options);
+            }
+
+            // Actualizar cada segundo
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            // --- Utilidades ---
+            function showAlert(type, title, message) {
+                // Ocultar todas las alertas primero
+                alertOverlay.classList.remove('show');
+                errorAlert.classList.remove('show');
+                
+                const targetAlert = type === 'error' ? errorAlert : alertOverlay;
+                const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+                const iconElement = targetAlert.querySelector('.alert-icon i');
+
+                targetAlert.querySelector('.alert-title').textContent = title;
+                targetAlert.querySelector('.alert-message').innerHTML = message;
+                iconElement.className = `fas ${icon}`;
+                
+                targetAlert.classList.add('show');
+            }
+
+            async function getUserRole(email) {
+                try {
+                    const querySnapshot = await db.collection('usuarios')
+                        .where('email', '==', email)
+                        .limit(1)
+                        .get();
+                    return querySnapshot.empty ? null : querySnapshot.docs[0].data().rol;
+                } catch (error) {
+                    console.error("Error al obtener rol:", error);
+                    return null;
+                }
+            }
+
+            async function getUserData(email) {
+                try {
+                    const querySnapshot = await db.collection('colaboradores')
+                        .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                        .limit(1)
+                        .get();
+                    if (!querySnapshot.empty) {
+                        return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+                    }
+                    return null;
+                } catch (error) {
+                    console.error("Error al obtener datos del usuario:", error);
+                    return null;
+                }
+            }
+            
+            function displayUserInfo(user) {
+                employeeDetails.innerHTML = `
+                    <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
+                    <p><strong>Área:</strong> ${user['ÁREA'] || 'No especificado'}</p>
+                    <p><strong>ID Empleado:</strong> ${user.NIT || 'ID no disponible'}</p>
+                    <p><strong>Asistencia:</strong> ${user.asistencia?.estado ? 
+                        '<span style="color: var(--success);">Activa desde hoy</span>' : 
+                        '<span style="color: var(--error);">No iniciada hoy</span>'}</p>
+                `;
+                
+                if (user.imagen) {
+                    employeeAvatar.src = user.imagen;
+                } else {
+                    const name = user.NOMBRE || '';
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=c84e4e&color=fff&size=128`;
+                }
+            }
+
+            function redirectByRole(role) {
+                switch(role) {
+                    case 'puntoVenta':
+                        window.location.href = '../nav-puntoVenta/inicio.html';
+                        break;
+                    case 'facturas':
+                        window.location.href = '../nav-facturas/facturas.html';
+                        break;
+                    case 'colaborador':
+                        window.location.href = '../nav-operadores/gestion_Tickets.html';
+                        break;
+                    case 'admincolaborador':
+                        window.location.href = '../asistencia/asistencia.html';
+                        break;
+                    default:
+                        window.location.href = "../nav-operadores/gestion_Tickets.html";
+                }
+            }
+            
+            function getAttendanceTypeName(type) {
+                const types = {
+                    'normal_exit': 'Salida Normal',
+                    'extra_hours': 'Horas Extra',
+                };
+                return types[type] || type;
+            }
+
+            // --- Geolocalización (Simplificada y Reutilizada) ---
+            let userCoordinates = null;
+            
+            function getLocation() {
+                return new Promise((resolve, reject) => {
+                    if (navigator.geolocation) {
+                        const timeout = setTimeout(() => {
+                            reject(new Error("Tiempo de espera agotado al obtener ubicación"));
+                        }, 15000); 
+
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                clearTimeout(timeout); 
+                                userCoordinates = {
+                                    latitude: Math.round(position.coords.latitude * 1000) / 1000,
+                                    longitude: Math.round(position.coords.longitude * 1000) / 1000,
+                                    accuracy: position.coords.accuracy,
+                                    source: 'lp' 
+                                };
+                                resolve(userCoordinates);
+                            },
+                            (error) => {
+                                clearTimeout(timeout); 
+                                let errorMessage = "Error desconocido";
+                                switch(error.code) {
+                                    case error.PERMISSION_DENIED:
+                                        errorMessage = "Permiso de ubicación denegado. Por favor habilita los permisos.";
+                                        break;
+                                    case error.POSITION_UNAVAILABLE:
+                                        errorMessage = "La información de ubicación no está disponible.";
+                                        break;
+                                    case error.TIMEOUT:
+                                        errorMessage = "La solicitud de ubicación ha caducado. Intenta nuevamente.";
+                                        break;
+                                }
+                                reject(new Error(errorMessage));
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        );
+                    } else {
+                        reject(new Error("Geolocalización no soportada por el navegador"));
+                    }
+                });
+            }
+
+            async function getFallbackLocation() {
+                try {
+                    const response = await fetch('https://ipapi.co/json/');
+                    const data = await response.json();
+                    return {
+                        latitude: data.latitude,
+                        longitude: data.longitude,
+                        accuracy: 5000, // Baja precisión (IP)
+                        source: 'ip'
+                    };
+                } catch (error) {
+                    return {latitude: 0, longitude: 0, accuracy: 10000, source: 'fallback'}; // Ubicación genérica
+                }
+            }
+
+            // --- Lógica de FINALIZAR ASISTENCIA ---
+
+            async function endAttendance(exitType, userData) {
+                if (!userData || !userData.id) {
+                    throw new Error("Datos de usuario incompletos. No se puede registrar la salida.");
+                }
+                
+                if (!userData.asistencia?.estado) {
+                     throw new Error("Tu asistencia de entrada NO fue registrada hoy. No puedes registrar la salida.");
+                }
+
+                const now = new Date();
+                const timestamp = firebase.firestore.Timestamp.fromDate(now);
+
+                // 1. Obtener ubicación
+                try {
+                    userCoordinates = await getLocation();
+                } catch (error) {
+                    console.warn("No se pudo obtener ubicación precisa, intentando con fallback...", error);
+                    userCoordinates = await getFallbackLocation();
+                }
+                
+                // 2. Actualizar el estado en la colección 'colaboradores' a FALSE
+                const collaboratorRef = db.collection('colaboradores').doc(userData.id);
+                await collaboratorRef.update({
+                    'asistencia.estado': false,
+                    'asistencia.ultimoCierre': timestamp 
+                });
+
+                // 3. Registrar la SALIDA en la colección 'asistencias'
+                //    (Se registra la salida con tipo 'salida' o 'salida_extra' y se marca como activo: false)
+                const exitData = {
+                    userId: userData.id,
+                    email: userData['CORREO ELECTRÓNICO EMPRESARIAL'],
+                    nombre: userData.NOMBRE,
+                    area: userData['ÁREA'],
+                    tipo: exitType === 'normal_exit' ? 'salida' : 'salida_extra', // Usar 'salida' o 'salida_extra'
+                    fecha: timestamp,
+                    dia: now.toLocaleDateString('es-ES', { weekday: 'long' }),
+                    horaRegistro: now.toLocaleTimeString('es-ES'),
+                    activo: false, // Marcar como inactivo
+                    ubicacion: userCoordinates,
+                    detalles: {
+                        correoPersonal: userData['CORREO ELECTRONICO PERSONAL'],
+                        correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'],
+                        rfc: userData.RFC,
+                        nss: userData.NSS,
+                        curp: userData.CURP
+                    }
+                };
+
+                await db.collection('asistencias').add(exitData); // Agregar un nuevo documento a asistencias
+                
+                // 4. Obtener el rol del usuario para redireccionamiento
+                const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                
+                showAlert(
+                    'success', 
+                    'Salida Registrada', 
+                    `Tu jornada ha finalizado.<br>
+                    <strong>Tipo:</strong> ${getAttendanceTypeName(exitType)}<br>
+                    Serás redirigido al panel en 3 segundos.`
+                );
+                
+                // Redirigir al panel, NO CERRAR SESIÓN
+                setTimeout(() => {
+                    redirectByRole(userRole); 
+                }, 3000);
+
+                return true;
+
+            }
+            
+            // Configurar el botón de enviar con los datos del usuario
+            function setupSubmitButton(userData) {
+                submitBtn.addEventListener('click', async function() {
+                    const selectedOption = document.querySelector('.attendance-option.selected');
+                    
+                    if (!selectedOption) {
+                        showAlert('error', 'Selecciona una opción', 'Debes seleccionar un tipo de salida antes de continuar.');
+                        return;
+                    }
+
+                    const exitType = selectedOption.getAttribute('data-value');
+                    
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando Salida...';
+                    submitBtn.disabled = true;
+
+                    try {
+                        await endAttendance(exitType, userData);
+                    } catch (error) {
+                        console.error("Error al finalizar asistencia:", error);
+                        showAlert(
+                            'error', 
+                            'Error al registrar la Salida', 
+                            error.message || 'Hubo un problema al registrar tu salida. Intenta nuevamente.'
+                        );
+                        submitBtn.innerHTML = '<i class="fas fa-user-clock"></i> Registrar Salida';
+                        submitBtn.disabled = false;
+                    }
+                });
+            }
+
+            // --- Inicialización y Autenticación ---
+
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    const userRole = await getUserRole(user.email);
+                    
+                    if (userRole === 'user' || userRole === 'admin') {
+                        showAlert('error', 'Acceso denegado', 
+                            'No tienes permisos para acceder a esta función. Serás redirigido.');
+                        setTimeout(() => {
+                            auth.signOut().then(() => {
+                                window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                            });
+                        }, 3000);
+                        return;
+                    }
+                    
+                    const userData = await getUserData(user.email);
+                    
+                    if (!userData) {
+                        showAlert('error', 'Datos no encontrados', 
+                            'No se encontraron datos para este usuario. Serás redirigido a la página de inicio de sesión.');
+                        setTimeout(() => {
+                            auth.signOut().then(() => {
+                                window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                            });
+                        }, 3000);
+                        return;
+                    }
+                    
+                    displayUserInfo(userData);
+                    
+                    // Si ya se registró la asistencia de salida (estado: false en colaborador), redirigir
+                    if (!userData.asistencia?.estado) {
+                        showAlert(
+                            'info', 
+                            'Salida ya registrada hoy', 
+                            `Ya registraste tu salida hoy.<br>
+                            Serás redirigido al panel en 3 segundos...`
+                        );
+                        setTimeout(() => {
+                            redirectByRole(userRole);
+                        }, 3000);
+                        return;
+                    }
+                    
+                    // Solicitar ubicación si no se ha hecho
+                    if (!isLocationRequested) {
+                        locationOverlay.classList.add('show');
+                    } else {
+                        setupSubmitButton(userData);
+                    }
+
+                } else {
+                    window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                }
+            });
+
+            // --- Event Listeners Globales ---
+
+            // Configurar el botón de ubicación
+            locationBtn.addEventListener('click', async function() {
+                locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación...';
+                locationBtn.disabled = true;
+                
+                try {
+                    await getLocation();
+                    isLocationRequested = true;
+                    locationOverlay.classList.remove('show');
+                    
+                    const user = auth.currentUser;
+                    if (user) {
+                         const userData = await getUserData(user.email);
+                         setupSubmitButton(userData);
+                    }
+                    
+                    showAlert(
+                        'success', 
+                        'Ubicación verificada', 
+                        'Gracias por activar tu ubicación. Ya puedes registrar tu salida.'
+                    );
+                    
+                } catch (error) {
+                    console.error("Error al obtener ubicación:", error);
+                    showAlert(
+                        'error', 
+                        'Ubicación requerida', 
+                        error.message || 'No podemos continuar sin acceso a tu ubicación.'
+                    );
+                    locationBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Intentar nuevamente';
+                    locationBtn.disabled = false;
+                }
+            });
+
+            // Botón de alerta
+            alertBtn.addEventListener('click', function() { alertOverlay.classList.remove('show'); });
+            errorBtn.addEventListener('click', function() { errorAlert.classList.remove('show'); });
+
+            // Selección de opciones de asistencia
+            attendanceOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    attendanceOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Animación de shake (reutilizada)
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    20%, 60% { transform: translateX(-8px); }
+                    40%, 80% { transform: translateX(8px); }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+        
+    </script>
 </body>
 </html>

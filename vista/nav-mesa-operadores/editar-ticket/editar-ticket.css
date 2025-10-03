@@ -1,3 +1,316 @@
-h1{
-    
-}
+
+        /* Variables de color */
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --info-background: #e9ecef;
+        }
+
+        /* Estilos Generales y Reseteo Básico */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            color: #343a40;
+            line-height: 1.6;
+        }
+
+        h1, h3 {
+            color: var(--primary-dark);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--card-background);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Encabezado y Botón de Volver */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .header h1 i {
+            margin-right: 10px;
+            color: var(--success-color);
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--secondary-color);
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background-color: var(--border-color);
+            color: #343a40;
+        }
+
+        .back-btn i {
+            margin-right: 5px;
+        }
+
+        /* Contenedor Principal del Formulario/Ticket */
+        .finish-ticket-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Tarjeta de Información del Ticket */
+        .ticket-info-card {
+            background-color: var(--info-background);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .ticket-info-card h3 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+
+        .ticket-info-card p {
+            margin: 5px 0;
+            font-size: 0.95rem;
+        }
+
+        .ticket-info-card strong {
+            font-weight: 600;
+            color: #495057;
+            min-width: 90px;
+            display: inline-block;
+        }
+
+        /* Estilo específico para la descripción (añadida dinámicamente) */
+        #ticketInfo #ticketDescriptionDisplay strong {
+            display: block; 
+            margin-bottom: 5px;
+        }
+        #ticketInfo #ticketDescriptionDisplay span {
+            white-space: pre-wrap;
+            display: block; 
+            margin-top: 5px; 
+            background-color: var(--card-background); 
+            padding: 10px; 
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        
+        /* Formulario de Finalización */
+        .finish-form {
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--card-background);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group label i {
+            margin-right: 5px;
+            color: var(--primary-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box; 
+            transition: border-color 0.2s ease;
+            resize: vertical;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            margin-top: 4px;
+        }
+
+        .form-text.text-muted {
+            font-size: 0.85rem;
+            color: var(--secondary-color) !important;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Vista Previa de Imágenes */
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            min-height: 50px; 
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .delete-image-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--danger-color);
+            color: var(--card-background);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            transition: background-color 0.2s;
+            opacity: 0.9;
+        }
+
+        .delete-image-btn:hover {
+            background-color: #a71d2a;
+            opacity: 1;
+        }
+
+        /* Acciones del Formulario */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease, opacity 0.2s;
+        }
+
+        .action-btn i {
+            margin-right: 5px;
+        }
+
+        .cancel-btn {
+            background-color: var(--secondary-color);
+            color: var(--card-background);
+        }
+
+        .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .confirm-btn {
+            background-color: var(--success-color);
+            color: var(--card-background);
+        }
+
+        .confirm-btn:hover {
+            background-color: #1e7e34;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Modal de Visualización de Imágenes */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9); 
+            justify-content: center;
+            align-items: center;
+        }
+
+        .close {
+            color: #fff !important; 
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5); 
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #fff !important;
+            opacity: 1;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        /* Responsividad básica */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; box-shadow: none; }
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .form-actions { flex-direction: column; gap: 10px; }
+            .action-btn { width: 100%; }
+        }

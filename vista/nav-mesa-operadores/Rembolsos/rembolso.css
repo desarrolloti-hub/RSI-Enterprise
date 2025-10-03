@@ -1,0 +1,267 @@
+/* =============================== */
+/* === Estilos Base (Reutilizados) === */
+/* =============================== */
+
+:root {
+    --primary: #c84e4e; /* Rojo/Granate principal de RSI */
+    --secondary: #3b5998; /* Un color secundario si se necesita */
+    --success: #28a745;
+    --error: #dc3545;
+    --background: #f4f4f9;
+    --text-color: #333;
+    --card-background: #fff;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--background);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.attendance-container {
+    background-color: var(--card-background);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    max-width: 400px;
+    width: 90%;
+    margin: 30px 0;
+    transition: all 0.5s ease-in-out;
+}
+
+.attendance-header h1 {
+    color: var(--primary);
+    font-size: 1.8em;
+    margin-bottom: 5px;
+}
+
+.attendance-header p {
+    color: #666;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+/* --- Info del Colaborador --- */
+.employee-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.employee-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+}
+
+.employee-details h3 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.employee-details p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #ddd;
+    margin: 15px 0;
+}
+
+
+/* =============================== */
+/* === Estilos del Formulario de Reembolso === */
+/* =============================== */
+
+.reimbursement-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0;
+}
+
+.reimbursement-form label {
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 5px;
+    display: block;
+    font-size: 1em;
+}
+
+.reimbursement-form input[type="number"],
+.reimbursement-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.reimbursement-form input[type="number"]:focus,
+.reimbursement-form textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(200, 78, 78, 0.2);
+    outline: none;
+}
+
+.reimbursement-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Estilo para la carga de archivos */
+.file-upload-container {
+    border: 2px dashed #bbb;
+    background-color: #fafafa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.file-upload-container:hover {
+    border-color: var(--primary);
+    background-color: #fff0f0;
+}
+
+.file-upload-container i {
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+#fileText {
+    margin: 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+#previewImage {
+    max-width: 100%;
+    max-height: 250px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    object-fit: contain;
+}
+
+/* --- Botón de Envío --- */
+.submit-btn {
+    background-color: var(--primary);
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background-color: #b04141;
+}
+
+.submit-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+
+/* =============================== */
+/* === Estilos de Alerta (Reutilizados) === */
+/* =============================== */
+
+.alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.alert-overlay.show {
+    display: flex;
+}
+
+.alert-box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 350px;
+    width: 80%;
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.3s ease-out;
+}
+
+.alert-overlay.show .alert-box {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.alert-icon i {
+    font-size: 3em;
+    color: var(--success);
+    margin-bottom: 15px;
+}
+
+.error-alert-box .alert-icon i {
+    color: var(--error);
+}
+
+.alert-title {
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+    color: var(--text-color);
+}
+
+.alert-message {
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.alert-btn {
+    background-color: var(--primary);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
