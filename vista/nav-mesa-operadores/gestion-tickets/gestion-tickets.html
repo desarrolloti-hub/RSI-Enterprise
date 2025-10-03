@@ -28,7 +28,7 @@
                 <i class="fas fa-user-clock"></i> Terminar Asistencia
             </a>
 
-             <a href="../Rembolsos/rembolso.html" class="asistencia-btn" id="endAssistanceLink">
+            <a href="../Rembolsos/rembolso.html" class="asistencia-btn" id="endAssistanceLink">
                 <i class="fas fa-money-bill-transfer"></i> Reembolsos
             </a>
             
@@ -158,7 +158,7 @@
     </div>
 
     <script type="module">
-    // Esquemas de datos
+    // Esquemas de datos (Se mantienen)
     const DataSchemas = {
         EVIDENCIA: {
             ticketId: '',
@@ -185,7 +185,7 @@
         }
     };
 
-    // Clase para manejar el estado del ticket
+    // Clase para manejar el estado del ticket (Se mantiene)
     class TicketManager {
         constructor() {
             this.currentTicketId = null;
@@ -212,7 +212,7 @@
     // Instancia única del manager
     const ticketManager = new TicketManager();
 
-    // Importar módulos necesarios de Firebase v9
+    // Importar módulos necesarios de Firebase v9 (SOLO FIRESTORE)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { 
         getFirestore, 
@@ -228,13 +228,7 @@
         addDoc,
         serverTimestamp
     } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-    import { 
-        getAuth, 
-        GoogleAuthProvider, 
-        signInWithPopup, 
-        signOut,
-        onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    // NOTA: Se eliminan todas las importaciones de Firebase Auth.
 
     // Configuración de Firebase
     const firebaseConfig = {
@@ -248,17 +242,12 @@
         measurementId: "G-38F2DBG9HE"
     };
 
-    // Inicializar Firebase
+    // Inicializar Firebase (Solo Firestore)
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+    // NOTA: Se elimina la inicialización de auth y provider.
 
-    // Configurar el proveedor de Google
-    provider.addScope('email');
-    provider.addScope('profile');
-
-    // Elementos del DOM
+    // Elementos del DOM (Se mantienen)
     const DOM = {
         userAvatar: document.getElementById('userAvatar'),
         userNameDisplay: document.getElementById('userNameDisplay'),
@@ -271,31 +260,28 @@
         lowPriority: document.getElementById('lowPriority'),
         statusChart: document.getElementById('statusChart'),
         logoutBtn: document.getElementById('logoutBtn'),
-        // endAssistanceBtn: document.getElementById('endAssistanceBtn'), // ELIMINADO
         filterBtn: document.getElementById('filterBtn'),
         filterText: document.getElementById('filterText'),
         finishTicketBtn: document.getElementById('finishTicketBtn'),
         editFinishBtn: document.getElementById('editFinishBtn')
     };
 
-    // Estado de la aplicación
+    // Estado de la aplicación (Se modificó)
     const AppState = {
-        currentUser: null,
-        userData: null,
-        userRole: null,
+        // currentUser y userRole eliminados
+        userData: null, // Asumirá los datos del colaborador
         lastCheckedTicketId : null,
         ticketCheckInterval: null,
-        notificationCheckInterval: 10000, // 10 segundos inicialmente
-        allTickets: [] // Almacenar todos los tickets
+        notificationCheckInterval: 10000,
+        allTickets: []
     };
 
-    // En tu módulo principal, después de definir AppState:
     window.AppState = AppState;
-    // Disparar evento cuando esté listo
     document.dispatchEvent(new Event('AppStateReady'));
 
-    // Generador de PDF
+    // Generador de PDF (Se mantiene)
     class PDFGenerator {
+        // ... (todo el código de PDFGenerator se mantiene) ...
         constructor() {
             this.jsPDF = window.jspdf.jsPDF;
         }
@@ -310,20 +296,16 @@
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 let yPosition = 20;
 
-                // Header con logo
                 this.updateProgress(20, 'Añadiendo header...');
                 await this.addHeader(pdf, pageWidth, yPosition);
                 yPosition += 40;
 
-                // Información básica del ticket
                 this.updateProgress(30, 'Añadiendo información básica...');
                 yPosition = this.addBasicInfo(pdf, ticketData, yPosition, pageWidth);
 
-                // Información adicional
                 this.updateProgress(40, 'Añadiendo información adicional...');
                 yPosition = this.addAdditionalInfo(pdf, ticketData, yPosition, pageWidth);
 
-                // Evidencias de colaboradores
                 this.updateProgress(50, 'Procesando evidencias...');
                 if (evidencias && evidencias.length > 0) {
                     for (let i = 0; i < evidencias.length; i++) {
@@ -334,13 +316,11 @@
 
                 this.updateProgress(95, 'Finalizando PDF...');
                 
-                // Guardar en Firebase
                 const pdfBase64 = pdf.output('datauristring');
                 await this.savePDFToFirebase(ticketData.id, pdfBase64);
 
                 this.updateProgress(100, 'PDF generado exitosamente');
                 
-                // Descargar PDF
                 const fileName = `Ticket_${ticketData.id.substring(0, 8)}_${new Date().toISOString().split('T')[0]}.pdf`;
                 pdf.save(fileName);
 
@@ -367,18 +347,15 @@
         }
 
         async addHeader(pdf, pageWidth, yPosition) {
-            // Título principal
             pdf.setFontSize(20);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(102, 126, 234);
             pdf.text('REPORTE DE TICKET - RSI ENTERPRISE', pageWidth / 2, yPosition, { align: 'center' });
             
-            // Línea decorativa
             pdf.setDrawColor(102, 126, 234);
             pdf.setLineWidth(2);
             pdf.line(20, yPosition + 5, pageWidth - 20, yPosition + 5);
             
-            // Fecha de generación
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
             pdf.setTextColor(100, 100, 100);
@@ -388,14 +365,12 @@
         addBasicInfo(pdf, ticketData, yPosition, pageWidth) {
             const shortId = ticketData.id.substring(0, 8);
             
-            // Título de sección
             pdf.setFontSize(14);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(44, 62, 80);
             pdf.text('INFORMACIÓN BÁSICA', 20, yPosition);
             yPosition += 10;
 
-            // Crear tabla de información básica
             const basicInfo = [
                 ['ID del Ticket:', `#${shortId.toUpperCase()}`],
                 ['Título:', ticketData.titulo || 'Sin título'],
@@ -417,7 +392,6 @@
         }
 
         addAdditionalInfo(pdf, ticketData, yPosition, pageWidth) {
-            // Descripción del ticket
             if (ticketData.descripcionActividades) {
                 pdf.setFontSize(14);
                 pdf.setFont('helvetica', 'bold');
@@ -434,7 +408,6 @@
                 yPosition += splitDescription.length * 5 + 10;
             }
 
-            // Información adicional si existe
             const additionalData = [];
             if (ticketData.servicio) additionalData.push(['Servicio:', ticketData.servicio]);
             if (ticketData.proyecto) additionalData.push(['Proyecto:', ticketData.proyecto]);
@@ -457,20 +430,17 @@
         }
 
         async addEvidenceSection(pdf, evidencia, yPosition, pageWidth, pageHeight) {
-            // Verificar si necesitamos una nueva página
             if (yPosition > pageHeight - 50) {
                 pdf.addPage();
                 yPosition = 20;
             }
 
-            // Título de evidencias del colaborador
             pdf.setFontSize(14);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(44, 62, 80);
             pdf.text(`EVIDENCIAS DE: ${evidencia.colaboradorNombre}`, 20, yPosition);
             yPosition += 10;
 
-            // Descripción de la evidencia
             if (evidencia.descripcion) {
                 pdf.setFontSize(12);
                 pdf.setFont('helvetica', 'bold');
@@ -484,7 +454,6 @@
                 yPosition += splitDescription.length * 5 + 10;
             }
 
-            // Imágenes de evidencia
             if (evidencia.imagenes && evidencia.imagenes.length > 0) {
                 pdf.setFontSize(12);
                 pdf.setFont('helvetica', 'bold');
@@ -498,7 +467,6 @@
 
                 for (const imageUrl of evidencia.imagenes) {
                     try {
-                        // Verificar si necesitamos una nueva página
                         if (yPosition + imageHeight > pageHeight - 20) {
                             pdf.addPage();
                             yPosition = 20;
@@ -506,12 +474,10 @@
 
                         const xPosition = 20 + (imageCount % imagesPerRow) * (imageWidth + 10);
                         
-                        // Añadir imagen
                         await this.addImageToPDF(pdf, imageUrl, xPosition, yPosition, imageWidth, imageHeight);
                         
                         imageCount++;
                         
-                        // Si completamos una fila, avanzar yPosition
                         if (imageCount % imagesPerRow === 0) {
                             yPosition += imageHeight + 10;
                         }
@@ -520,7 +486,6 @@
                     }
                 }
 
-                // Si la última fila no está completa, avanzar yPosition
                 if (imageCount % imagesPerRow !== 0) {
                     yPosition += imageHeight + 10;
                 }
@@ -562,17 +527,14 @@
             const colWidth = (pageWidth - 40) / 2;
 
             data.forEach(([label, value]) => {
-                // Fondo alternativo para las filas
                 pdf.setFillColor(248, 249, 250);
                 pdf.rect(20, yPosition - 5, pageWidth - 40, rowHeight, 'F');
                 
-                // Texto del label
                 pdf.setFontSize(10);
                 pdf.setFont('helvetica', 'bold');
                 pdf.setTextColor(44, 62, 80);
                 pdf.text(label, 25, yPosition);
                 
-                // Texto del valor
                 pdf.setFont('helvetica', 'normal');
                 pdf.setTextColor(0, 0, 0);
                 const splitValue = pdf.splitTextToSize(value, colWidth - 10);
@@ -635,7 +597,6 @@
             if (progressFill) progressFill.style.width = percentage + '%';
             if (progressText) progressText.textContent = Math.round(percentage) + '%';
             
-            // Actualizar texto de progreso si se proporciona
             const progressTextElement = document.querySelector('#pdfProgressModal .modal-body p');
             if (progressTextElement && text) {
                 progressTextElement.textContent = text;
@@ -646,7 +607,7 @@
     // Instancia del generador de PDF
     const pdfGenerator = new PDFGenerator();
 
-    // Funciones de utilidad
+    // Funciones de utilidad (Se mantienen)
     const Utils = {
         showLoading: (message = 'Cargando...') => {
             Swal.fire({
@@ -788,7 +749,6 @@
                             return true;
                         } catch (error) {
                             console.error("Error con Service Worker:", error);
-                            // Fallback a notificación estándar
                             new Notification(title, {
                                 body: body,
                                 icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png'
@@ -796,7 +756,6 @@
                             return true;
                         }
                     } else {
-                        // Notificación estándar si no hay service worker
                         new Notification(title, {
                             body: body,
                             icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png'
@@ -812,7 +771,7 @@
         }
     };
 
-    // Controlador de Tickets
+    // Controlador de Tickets (Ajustado para usar AppState.userData directamente)
     const TicketsController = {
         processTickets: (querySnapshot) => {
             const tickets = [];
@@ -860,7 +819,6 @@
                     return;
                 }
 
-                // Calcular estadísticas para todos los tickets
                 let pendingTickets = 0;
                 let inProgressTickets = 0;
                 let completedTickets = 0;
@@ -869,12 +827,10 @@
                 let lowPriority = 0;
 
                 tickets.forEach(ticket => {
-                    // Actualizar contadores de estado
                     if (ticket.estado === 'pendiente') pendingTickets++;
                     else if (ticket.estado === 'en_proceso') inProgressTickets++;
                     else if (ticket.estado === 'finalizado') completedTickets++;
                     
-                    // Actualizar contadores de prioridad
                     if (ticket.prioridad === 'alta') highPriority++;
                     else if (ticket.prioridad === 'media') mediumPriority++;
                     else if (ticket.prioridad === 'baja') lowPriority++;
@@ -883,7 +839,6 @@
                 let html = '';
                 filteredTickets.forEach(ticket => {
                     try {
-                        // Validaciones robustas
                         const ticketId = ticket.id || 'ID-NO-DISPONIBLE';
                         const shortId = ticketId.substring(0, 8);
                         const estado = ticket.estado || 'desconocido';
@@ -893,7 +848,6 @@
                         const area = ticket.area || 'General';
                         const fechaCreacion = ticket.fechaCreacion || null;
                         
-                        // Información del colaborador (si existe)
                         const colaboradorInfo = ticket.colaborador ? `
                             <div class="ticket-meta">
                                 <span class="badge badge-primary">
@@ -942,7 +896,6 @@
                     }
                 });
                 
-                // Actualizar estadísticas
                 DOM.totalTickets.textContent = tickets.length;
                 DOM.highPriority.textContent = highPriority;
                 DOM.mediumPriority.textContent = mediumPriority;
@@ -951,7 +904,6 @@
                 
                 DOM.ticketsContainer.innerHTML = html;
                 
-                // Agregar event listeners para los botones de ver detalles
                 document.querySelectorAll('.action-btn.view').forEach(btn => {
                     btn.addEventListener('click', () => TicketsController.showTicketDetails(btn.dataset.id));
                 });
@@ -961,24 +913,54 @@
             }
         },
 
+        // ** LÓGICA DE CARGA DE TICKETS AJUSTADA **
         async loadUserTickets() {
             try {
                 Utils.showLoading('Cargando tickets...');
                 
-                // Verificar que tenemos los datos del usuario
+                // 1. Asume que AppState.userData está vacío si no se inyectó, y lo intenta cargar
+                //    usando el email de la variable global (window.UserDataGlobal)
                 if (!AppState.userData || !AppState.userData.nombreCompleto) {
-                    throw new Error('Datos de usuario incompletos');
+                    const userDataGlobal = window.UserDataGlobal;
+                    if (!userDataGlobal || !userDataGlobal.email) {
+                        throw new Error('Datos de autenticación externos (email) no disponibles.');
+                    }
+
+                    // 1.1. Buscar datos del colaborador por email
+                    const colaboradoresRef = collection(db, 'colaboradores');
+                    const q2 = query(colaboradoresRef, where("CORREO ELECTRÓNICO EMPRESARIAL", "==", userDataGlobal.email));
+                    const collabSnapshot = await getDocs(q2);
+                    
+                    if (collabSnapshot.empty) {
+                        throw new Error('No se encontraron tus datos de colaborador en la base de datos.');
+                    }
+                    
+                    collabSnapshot.forEach(doc => {
+                        AppState.userData = doc.data();
+                        AppState.userData.colaboradorId = doc.id;
+                        AppState.userData.nombreCompleto = doc.data()['NOMBRE'];
+                    });
+
+                    // 1.2. Actualizar UI con los datos cargados
+                    TicketsController.updateUserProfile();
+
+                    // 1.3. Mostrar botón de crear ticket si el rol es 'admincolaborador' (inyectado)
+                    if (userDataGlobal.userRole === 'admincolaborador') {
+                        const createTicketBtn = document.getElementById('createTicketBtn');
+                        if (createTicketBtn) {
+                            createTicketBtn.style.display = 'block';
+                        }
+                    }
                 }
-                
+
+                // 2. Continuar con la carga de tickets
                 const ticketsRef = collection(db, 'ticketsmesa');
                 const nombreResponsable = AppState.userData.nombreCompleto;
                 const colaboradorId = AppState.userData.colaboradorId;
                 
-                console.log("Buscando tickets para:", nombreResponsable, "o colaborador ID:", colaboradorId);
-                
                 let querySnapshot;
                 try {
-                    // Ejecutar ambas consultas
+                    // Ejecutar consultas combinadas (Responsable y Colaborador)
                     const qResponsable = query(
                         ticketsRef,
                         where("responsableNombre", "==", nombreResponsable),
@@ -996,95 +978,62 @@
                         getDocs(qColaborador)
                     ]);
                     
-                    // Combinar resultados evitando duplicados
                     const allTickets = new Map();
-                    
-                    snapshotResponsable.forEach(doc => {
-                        allTickets.set(doc.id, doc);
-                    });
-                    
-                    snapshotColaborador.forEach(doc => {
-                        allTickets.set(doc.id, doc);
-                    });
+                    snapshotResponsable.forEach(doc => { allTickets.set(doc.id, doc); });
+                    snapshotColaborador.forEach(doc => { allTickets.set(doc.id, doc); });
                     
                     querySnapshot = {
                         docs: Array.from(allTickets.values()),
                         empty: allTickets.size === 0,
                         size: allTickets.size,
-                        forEach: function(callback) {
-                            this.docs.forEach(doc => callback(doc));
-                        }
+                        forEach: function(callback) { this.docs.forEach(doc => callback(doc)); }
                     };
                     
                 } catch (error) {
+                    // Fallback sin ordenar si hay error de índice (mantenido)
                     if (error.code === 'failed-precondition') {
                         console.warn("Índice faltante, cargando tickets sin ordenar...");
-                        // Intentar sin ordenar
-                        const qResponsable = query(
-                            ticketsRef,
-                            where("responsableNombre", "==", nombreResponsable)
-                        );
-                        
-                        const qColaborador = query(
-                            ticketsRef,
-                            where("colaboradores", "array-contains", colaboradorId)
-                        );
+                        const qResponsable = query(ticketsRef, where("responsableNombre", "==", nombreResponsable));
+                        const qColaborador = query(ticketsRef, where("colaboradores", "array-contains", colaboradorId));
                         
                         const [snapshotResponsable, snapshotColaborador] = await Promise.all([
                             getDocs(qResponsable),
                             getDocs(qColaborador)
                         ]);
                         
-                        // Combinar resultados
                         const allTickets = new Map();
-                        
-                        snapshotResponsable.forEach(doc => {
-                            allTickets.set(doc.id, doc);
-                        });
-                        
-                        snapshotColaborador.forEach(doc => {
-                            allTickets.set(doc.id, doc);
-                        });
+                        snapshotResponsable.forEach(doc => { allTickets.set(doc.id, doc); });
+                        snapshotColaborador.forEach(doc => { allTickets.set(doc.id, doc); });
                         
                         querySnapshot = {
                             docs: Array.from(allTickets.values()),
                             empty: allTickets.size === 0,
                             size: allTickets.size,
-                            forEach: function(callback) {
-                                this.docs.forEach(doc => callback(doc));
-                            }
+                            forEach: function(callback) { this.docs.forEach(doc => callback(doc)); }
                         };
                     } else {
                         throw error;
                     }
                 }
                 
-                console.log("Tickets encontrados:", querySnapshot.size);
-                
                 const tickets = this.processTickets(querySnapshot);
                 const ticketsEnriquecidos = await this.enriquecerTicketsConColaborador(tickets);
                 
-                // Guardar todos los tickets en el estado global
                 AppState.allTickets = ticketsEnriquecidos;
-                
                 this.renderTickets(ticketsEnriquecidos);
                 
-                // Verificar si hay tickets nuevos para notificar
                 if (tickets.length > 0) {
-                    const latestTicketId = tickets[0].id;
-                    if (AppState.lastCheckedTicketId !== latestTicketId) {
-                        AppState.lastCheckedTicketId = latestTicketId;
-                    }
+                    AppState.lastCheckedTicketId = tickets[0].id;
                 }
                 
             } catch (error) {
                 console.error("Error cargando tickets:", error);
-                Utils.showError("No se pudieron cargar los tickets");
+                Utils.showError("No se pudieron cargar los tickets. " + error.message);
                 DOM.ticketsContainer.innerHTML = `
                     <div class="no-tickets">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>Error al cargar tickets</h3>
-                        <p>No se pudieron cargar los tickets. Intenta nuevamente.</p>
+                        <p>No se pudieron cargar los tickets: ${error.message}</p>
                     </div>
                 `;
             } finally {
@@ -1096,19 +1045,9 @@
             if (!tickets || tickets.length === 0) return tickets;
             
             try {
-                // Obtener datos del colaborador responsable
-                const colaboradorRef = doc(db, 'colaboradores', AppState.userData.colaboradorId);
-                const colaboradorSnap = await getDoc(colaboradorRef);
+                // Se usa AppState.userData, ya cargado
+                const datosColaborador = AppState.userData;
                 
-                if (!colaboradorSnap.exists()) {
-                    console.warn("No se encontró el documento del colaborador");
-                    return tickets;
-                }
-                
-                const datosColaborador = colaboradorSnap.data();
-                console.log("Datos del colaborador:", datosColaborador);
-                
-                // Añadir datos del colaborador a cada ticket
                 return tickets.map(ticket => ({
                     ...ticket,
                     colaborador: {
@@ -1139,10 +1078,8 @@
                 const data = ticketSnap.data();
                 const shortId = ticketId.substring(0, 8);
                 
-                // Actualizar el estado en ticketManager
                 ticketManager.setCurrentTicket(ticketId, data.estado);
                 
-                // Obtener nombres de colaboradores
                 let nombresColaboradores = [];
                 if (data.colaboradores && data.colaboradores.length > 0) {
                     const colaboradoresPromises = data.colaboradores.map(async colabId => {
@@ -1153,7 +1090,6 @@
                     nombresColaboradores = await Promise.all(colaboradoresPromises);
                 }
                 
-                // Obtener todas las evidencias para este ticket
                 const evidenciasRef = collection(db, 'evidenciatickets');
                 const q = query(evidenciasRef, where("ticketId", "==", ticketId));
                 const evidenciasSnap = await getDocs(q);
@@ -1163,16 +1099,13 @@
                     evidencias.push(doc.data());
                 });
                 
-                // Configurar botones según si el usuario ya subió evidencias
                 const finishBtn = document.getElementById('finishTicketBtn');
                 const editBtn = document.getElementById('editFinishBtn');
                 
-                // Definir userEvidence aquí antes de usarla
                 const userEvidence = evidencias.find(
                     ev => ev.colaboradorId === AppState.userData.colaboradorId
                 );
                 
-                // Configurar botones
                 const ticketEstaFinalizado = data.estado === 'finalizado';
                 const usuarioYaCompleto = !!userEvidence;
 
@@ -1187,24 +1120,19 @@
                     editBtn.style.display = 'none';
                 }
                 
-                // **CORRECCIÓN: Actualizar el href del botón de finalizar para redirigir al panel de editar ticket**
                 if (finishBtn) {
                     finishBtn.href = `../editar-ticket/editar-ticket.html?ticketId=${ticketId}`;
-                    console.log('Botón de finalizar configurado con URL:', finishBtn.href);
                 }
                 
-                // **CORRECCIÓN: Configurar también el botón de editar para redirigir al panel de editar ticket**
                 if (editBtn && usuarioYaCompleto) {
                     editBtn.onclick = () => {
                         window.location.href = `../editar-ticket/editar-ticket.html?ticketId=${ticketId}&edit=true`;
                     };
                 }
                 
-                // Mostrar detalles del ticket
                 const modal = document.getElementById('detailModal');
                 const detailContent = document.getElementById('detailContent');
                 
-                // Crear HTML para el progreso de colaboradores
                 let progressHTML = '';
                 if (data.colaboradores && data.colaboradores.length > 1) {
                     progressHTML = `
@@ -1237,7 +1165,6 @@
                     `;
                 }
                 
-                // Crear HTML para las imágenes del usuario actual si existen
                 let userEvidenceHTML = '';
                 if (userEvidence) {
                     userEvidenceHTML = `
@@ -1255,7 +1182,6 @@
                     `;
                 }
 
-                // Crear HTML para información adicional del ticket
                 let additionalInfoHTML = '';
                 if (data.servicio || data.proyecto || data.ordenServicio || data.descripcionActividades) {
                     additionalInfoHTML = `
@@ -1269,7 +1195,6 @@
                     `;
                 }
                 
-                // Crear HTML para información fiscal si existe
                 let fiscalInfoHTML = '';
                 if (data.rfc || data.direccionFiscal || data.cuenta) {
                     fiscalInfoHTML = `
@@ -1282,7 +1207,6 @@
                     `;
                 }
                 
-                // Crear HTML para sistemas si existen
                 let sistemasHTML = '';
                 if (data.sistemas && Object.keys(data.sistemas).length > 0) {
                     sistemasHTML = `
@@ -1340,7 +1264,6 @@
                     </div>
                 `;
                 
-                // Configurar event listeners para los botones de evidencias
                 document.querySelectorAll('.view-evidence-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const colabId = btn.dataset.colabId;
@@ -1382,11 +1305,10 @@
                     });
                 }
 
-                // Configurar event listeners para los botones de PDF
                 document.querySelectorAll('.print-pdf-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const ticketId = btn.dataset.ticketId;
-                        await this.generateTicketPDF(ticketId);
+                        await TicketsController.generateTicketPDF(ticketId);
                     });
                 });
                 
@@ -1402,7 +1324,6 @@
 
         async generateTicketPDF(ticketId) {
             try {
-                // Obtener datos del ticket
                 const ticketRef = doc(db, 'ticketsmesa', ticketId);
                 const ticketSnap = await getDoc(ticketRef);
                 
@@ -1412,7 +1333,6 @@
                 
                 const ticketData = { id: ticketId, ...ticketSnap.data() };
                 
-                // Obtener evidencias
                 const evidenciasRef = collection(db, 'evidenciatickets');
                 const q = query(evidenciasRef, where("ticketId", "==", ticketId));
                 const evidenciasSnap = await getDocs(q);
@@ -1422,7 +1342,6 @@
                     evidencias.push(doc.data());
                 });
                 
-                // Generar PDF
                 await pdfGenerator.generateTicketPDF(ticketData, evidencias);
                 
             } catch (error) {
@@ -1439,7 +1358,7 @@
                 const q = query(
                     ticketsRef,
                     where("responsableNombre", "==", AppState.userData.nombreCompleto),
-                    where("notificacion", "==", false), // Solo tickets no notificados
+                    where("notificacion", "==", false),
                     orderBy("fechaCreacion", "desc"),
                     limit(1)
                 );
@@ -1452,7 +1371,6 @@
                     const ticketRef = doc(db, 'ticketsmesa', ticketId);
                     const ticketData = latestTicket.data();
                     
-                    // Mostrar notificación
                     const notificationShown = await Utils.showNotification(
                         'Nuevo Ticket Asignado - RSI',
                         `Tienes un nuevo ticket: "${ticketData.titulo || 'Nuevo ticket sin título'}"`,
@@ -1460,15 +1378,12 @@
                     );
                     
                     if (notificationShown) {
-                        // Actualizar el campo notificacion a true solo si se mostró la notificación
                         await updateDoc(ticketRef, {
                             notificacion: true
                         });
                         
-                        // Actualizar el último ticket verificado
                         AppState.lastCheckedTicketId = ticketId;
                         
-                        // Recargar los tickets para reflejar el cambio
                         await this.loadUserTickets();
                         
                         return true;
@@ -1479,95 +1394,9 @@
                 console.error("Error verificando nuevos tickets:", error);
                 return false;
             }
-        }
-    };
-    
-    // Controlador de autenticación
-    const AuthController = {
-        async signInWithGoogle() {
-            try {
-                Utils.showLoading('Iniciando sesión...');
-                const result = await signInWithPopup(auth, provider);
-                AppState.currentUser = result.user;
-                console.log('Usuario autenticado:', result.user);
-                await this.verifyUserAccess(AppState.currentUser.email);
-            } catch (error) {
-                console.error("Error al iniciar sesión:", error);
-                Utils.showError(error.message || 'No se pudo iniciar sesión');
-            }
         },
-        
-        async verifyUserAccess(email) {
-            try {
-                Utils.showLoading('Verificando acceso...');
-                
-                console.log('Verificando acceso para:', email);
-                
-                // 1. Verificar en la colección 'usuarios'
-                const usuariosRef = collection(db, 'usuarios');
-                const q = query(usuariosRef, where("email", "==", email));
-                const userSnapshot = await getDocs(q);
-                
-                if (userSnapshot.empty) {
-                    throw new Error('No tienes acceso a esta plataforma');
-                }
-                
-                // Obtener rol del usuario
-                let userRole = null;
-                userSnapshot.forEach(doc => {
-                    userRole = doc.data().rol;
-                    console.log('Rol del usuario:', userRole);
-                });
-                
-                // Permitir acceso a todos excepto a los que tengan rol 'user'
-                if (userRole === 'user') {
-                    throw new Error('No tienes permisos para acceder a esta sección');
-                }
-                
-                AppState.userRole = userRole;
-                
-                // Mostrar botón de crear ticket solo para admincolaborador
-                if (userRole === 'admincolaborador') {
-                    const createTicketBtn = document.getElementById('createTicketBtn');
-                    if (createTicketBtn) {
-                        createTicketBtn.style.display = 'block';
-                    }
-                }
-                
-                // 2. Obtener datos del colaborador
-                const colaboradoresRef = collection(db, 'colaboradores');
-                const q2 = query(colaboradoresRef, where("CORREO ELECTRÓNICO EMPRESARIAL", "==", email));
-                const collabSnapshot = await getDocs(q2);
-                
-                if (collabSnapshot.empty) {
-                    throw new Error('No se encontraron tus datos de colaborador');
-                }
-                
-                collabSnapshot.forEach(doc => {
-                    AppState.userData = doc.data();
-                    AppState.userData.colaboradorId = doc.id;
-                    AppState.userData.nombreCompleto = doc.data()['NOMBRE'];
-                    console.log("Datos del colaborador cargados:", AppState.userData);
-                });
-                
-                // Actualizar UI
-                this.updateUserProfile();
-                
-                // Cargar tickets del usuario
-                await TicketsController.loadUserTickets();
-                
-                // Configurar intervalo para verificar nuevos tickets
-                this.setupTicketCheckInterval();
-                
-            } catch (error) {
-                console.error("Error verificando acceso:", error);
-                await this.signOut();
-                Utils.showError(error.message);
-            } finally {
-                Utils.hideLoading();
-            }
-        },
-        
+
+        // ** FUNCIÓN AGREGADA: Extraída de AuthController **
         updateUserProfile() {
             if (!AppState.userData) return;
             
@@ -1577,7 +1406,7 @@
             
             if (userAvatar) {
                 userAvatar.src = AppState.userData.imagen || 
-                               'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
+                                'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
             }
             
             if (userNameDisplay && AppState.userData.NOMBRE) {
@@ -1589,114 +1418,72 @@
             }
         },
         
-        async signOut() {
-            try {
-                // Evitar múltiples ejecuciones
-                if (this._isLoggingOut) return;
-                this._isLoggingOut = true;
-                
-                Utils.showLoading('Cerrando sesión...');
-                await signOut(auth);
-                
-                // Limpiar estado
-                AppState.currentUser = null;
-                AppState.userData = null;
-                AppState.userRole = null;
-                
-                // Limpiar UI
-                if (DOM.userAvatar) {
-                    DOM.userAvatar.src = 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
-                }
-                if (DOM.userNameDisplay) {
-                    DOM.userNameDisplay.textContent = 'Usuario no autenticado';
-                }
-                if (DOM.userAreaDisplay) {
-                    DOM.userAreaDisplay.textContent = 'ÁREA: No disponible';
-                }
-                
-                // Cerrar cualquier modal abierto
-                const modals = document.querySelectorAll('.modal');
-                modals.forEach(modal => modal.style.display = 'none');
-                
-                // Redirección única con reemplazo en el historial
-                window.location.replace('/vista/nav-visitantes/inicio-de-sesion.html');
-                
-            } catch (error) {
-                console.error("Error al cerrar sesión:", error);
-                Utils.showError('No se pudo cerrar la sesión correctamente');
-            } finally {
-                this._isLoggingOut = false;
-                Utils.hideLoading();
-            }
-        },
-        
+        // ** FUNCIÓN AGREGADA: Extraída de AuthController **
         setupTicketCheckInterval() {
-            // Limpiar intervalo anterior si existe
             if (AppState.ticketCheckInterval) {
                 clearInterval(AppState.ticketCheckInterval);
             }
             
-            // Configurar nuevo intervalo
             const checkTickets = async () => {
-                const hadNewTickets = await TicketsController.checkForNewTickets();
+                const hadNewTickets = await this.checkForNewTickets();
                 
                 if (hadNewTickets) {
-                    // Si hubo notificaciones, aumentar el intervalo temporalmente
                     clearInterval(AppState.ticketCheckInterval);
-                    AppState.notificationCheckInterval = 30000; // 30 segundos
-                    
+                    AppState.notificationCheckInterval = 30000;
                     AppState.ticketCheckInterval = setInterval(checkTickets, AppState.notificationCheckInterval);
                 } else {
-                    // Volver al intervalo normal si no hay notificaciones
                     if (AppState.notificationCheckInterval !== 10000) {
                         clearInterval(AppState.ticketCheckInterval);
-                        AppState.notificationCheckInterval = 10000; // 10 segundos
-                        
+                        AppState.notificationCheckInterval = 10000;
                         AppState.ticketCheckInterval = setInterval(checkTickets, AppState.notificationCheckInterval);
                     }
                 }
             };
             
-            // Iniciar el intervalo
             AppState.ticketCheckInterval = setInterval(checkTickets, AppState.notificationCheckInterval);
-        },
-        
-        initializeAuthListener() {
-            onAuthStateChanged(auth, async (user) => {
-                console.log('Estado de autenticación cambió:', user ? 'Autenticado' : 'No autenticado');
-                if (user) {
-                    AppState.currentUser = user;
-                    try {
-                        await this.verifyUserAccess(user.email);
-                    } catch (error) {
-                        console.error("Error en auth listener:", error);
-                    }
-                } else {
-                    console.log('Usuario no autenticado, iniciando proceso de login...');
-                    this.signInWithGoogle();
-                }
-            });
         }
     };
+    
+    // ** LÓGICA DE INICIO DE LA APLICACIÓN (SIN AUTENTICADOR DE FIREBASE) **
+    async function initializeAppLogic() {
+        console.log('Inicializando lógica de la aplicación sin Firebase Auth...');
+
+        // Intenta cargar el usuario asumiendo que el script externo lo inyectó
+        try {
+            await TicketsController.loadUserTickets();
+            TicketsController.setupTicketCheckInterval();
+        } catch (error) {
+            console.error("Error crítico al cargar datos del usuario:", error);
+            
+            // Si falla, muestra un mensaje de error y redirige simulando cierre de sesión
+            document.getElementById('mensajeAcceso').style.display = 'block';
+            document.getElementById('mensajeAcceso').innerHTML = `<div style="color: red; padding: 20px; text-align: center;">Acceso denegado. ${error.message}. Redirigiendo...</div>`;
+            Utils.showError('No se pudo verificar el acceso.', 'Error de Autenticación');
+
+            // Redirección simulada
+            setTimeout(() => {
+                window.location.replace('/vista/nav-visitantes/inicio-de-sesion.html');
+            }, 3000);
+        }
+    }
+
 
     // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM cargado, inicializando aplicación...');
+        console.log('DOM cargado, configurando listeners...');
         
-        // Configurar evento de logout
+        // ** LÓGICA DE CERRAR SESIÓN MODIFICADA **
         if (DOM.logoutBtn) {
             DOM.logoutBtn.addEventListener('click', () => {
-                AuthController.signOut();
+                Utils.showLoading('Cerrando sesión...');
+                // Simulación de cierre de sesión y redirección
+                setTimeout(() => {
+                    // Limpia AppState y redirige
+                    window.location.replace('/vista/nav-visitantes/inicio-de-sesion.html');
+                    Utils.hideLoading();
+                }, 500);
             });
         }
-
-        /* ELIMINADO: Evento para el botón de terminar asistencia
-        if (DOM.endAssistanceBtn) {
-            DOM.endAssistanceBtn.addEventListener('click', async () => {
-                await AssistanceController.endAssistance();
-            });
-        }
-        */
 
         // Configurar el filtro de tickets
         if (DOM.filterBtn) {
@@ -1706,20 +1493,17 @@
                     DOM.filterText.textContent = showFinalized ? 'Ver Activos' : 'Ver Finalizados';
                 }
                 
-                // Re-renderizar tickets con el nuevo filtro
                 if (AppState.allTickets.length > 0) {
                     TicketsController.renderTickets(AppState.allTickets);
                 }
             });
         }
-
         
         // Configurar todos los botones de cerrar
         const closeButtons = document.querySelectorAll('.modal .close, .cancel-btn, #closeDetailBtn');
         closeButtons.forEach(btn => {
             btn.addEventListener('click', closeModals);
         });
-        
         
         // Event listener para el botón de crear ticket
         const createTicketBtn = document.getElementById('createTicketBtn');
@@ -1729,20 +1513,8 @@
             });
         }
 
-        // Configurar el botón de finalizar ticket en el modal de detalles
-        const finishTicketBtn = document.getElementById('finishTicketBtn');
-        if (finishTicketBtn) {
-            // El botón ahora es un enlace que redirige al panel de editar ticket
-            // El href ya está configurado dinámicamente en showTicketDetails
-        }
-
-        // Configurar el botón de editar finalización
-        const editFinishBtn = document.getElementById('editFinishBtn');
-        if (editFinishBtn) {
-            // La lógica del botón de editar se configura dinámicamente en showTicketDetails
-        }
-
-        AuthController.initializeAuthListener();
+        // ** INICIAR LA LÓGICA DE LA APLICACIÓN **
+        initializeAppLogic();
         
         // Hacer Swal disponible globalmente
         window.Swal = Swal;
@@ -1753,7 +1525,6 @@
                 navigator.serviceWorker.register('../../sw.js')
                     .then(registration => {
                         console.log('ServiceWorker registrado:', registration.scope);
-                        // Escuchar clics en notificaciones
                         navigator.serviceWorker.addEventListener('message', event => {
                             if (event.data && event.data.action === 'view') {
                                 TicketsController.showTicketDetails(event.data.ticketId);
@@ -1768,7 +1539,6 @@
     });
 
     function closeModals(e) {
-        // Prevenir comportamiento por defecto si es un evento
         if (e) e.preventDefault();
         
         const modals = ['detailModal', 'imageViewerModal', 'pdfProgressModal'];
@@ -1779,11 +1549,9 @@
             }
         });
         
-        // Limpiar el ticket actual
         ticketManager.clearCurrentTicket();
     }
 
-    // Función para abrir el modal con la imagen en grande
     window.openImageModal = function(imageSrc) {
         const modal = document.getElementById('imageViewerModal');
         const img = document.getElementById('expandedImage');
@@ -1793,7 +1561,6 @@
         }
     };
 
-    // Función para cerrar el modal de imagen
     function closeImageModal() {
         const modal = document.getElementById('imageViewerModal');
         if (modal) {
@@ -1801,13 +1568,11 @@
         }
     }
 
-    // Configurar el evento de clic para cerrar el modal de imagen
     const imageModalClose = document.querySelector('#imageViewerModal .close');
     if (imageModalClose) {
         imageModalClose.addEventListener('click', closeImageModal);
     }
 
-    // Cerrar al hacer clic fuera de la imagen
     const imageViewerModal = document.getElementById('imageViewerModal');
     if (imageViewerModal) {
         imageViewerModal.addEventListener('click', function(e) {
@@ -1817,7 +1582,6 @@
         });
     }
 
-    // Función para actualizar el estado del ticket
     async function updateTicketStatus(ticketId, newStatus) {
         try {
             Utils.showLoading('Actualizando estado...');
@@ -1829,7 +1593,6 @@
                 fechaActualizacion: serverTimestamp()
             });
             
-            // Si el estado es "cerrado", agregar fecha de finalización
             if (newStatus === 'cerrado') {
                 await updateDoc(ticketRef, {
                     fechaFinalizacion: serverTimestamp()
@@ -1845,12 +1608,10 @@
                 confirmButtonColor: '#3085d6'
             });
             
-            // Actualizar la vista de detalles si está abierta
             if (document.getElementById('detailModal').style.display === 'block') {
                 await TicketsController.showTicketDetails(ticketId);
             }
             
-            // Actualizar la lista de tickets
             await TicketsController.loadUserTickets();
             
         } catch (error) {
@@ -1859,12 +1620,10 @@
         }
     }
 
-    // Modificamos la función que inserta el select
     const originalShowTicketDetails = TicketsController.showTicketDetails;
     TicketsController.showTicketDetails = async function(ticketId) {
         await originalShowTicketDetails.call(this, ticketId);
         
-        // Crear contenedor principal
         const modalContent = document.getElementById('detailContent');
         const statusControl = document.createElement('div');
         statusControl.className = 'status-control-container';
@@ -1880,14 +1639,12 @@
             flex-wrap: wrap;
         `;
         
-        // Obtener datos del ticket
         const ticketRef = doc(db, 'ticketsmesa', ticketId);
         const ticketSnap = await getDoc(ticketRef);
         const ticketData = ticketSnap.data();
         let currentStatus = ticketData.estado || 'pendiente_de_aceptación';
         let pauseComment = ticketData.pauseComment || '';
         
-        // Contenedor para estado + comentario
         const statusInfoContainer = document.createElement('div');
         statusInfoContainer.style.cssText = `
             display: flex;
@@ -1896,7 +1653,6 @@
             flex-grow: 1;
         `;
         
-        // Badge de estado
         const statusBadge = document.createElement('span');
         statusBadge.className = `current-status-badge ${currentStatus}`;
         statusBadge.textContent = currentStatus.replace(/_/g, ' ');
@@ -1913,7 +1669,6 @@
         `;
         statusInfoContainer.appendChild(statusBadge);
         
-        // Mostrar comentario existente
         if (currentStatus === 'en_proceso' && pauseComment) {
             const wordCount = pauseComment.trim().split(/\s+/).length;
             const commentBadge = document.createElement('div');
@@ -1930,7 +1685,6 @@
         
         statusControl.appendChild(statusInfoContainer);
         
-        // Selector de estados
         const statusSelect = document.createElement('select');
         statusSelect.className = 'status-select';
         statusSelect.style.cssText = `
@@ -1961,7 +1715,6 @@
         
         statusControl.appendChild(statusSelect);
         
-        // Botón de guardar
         const saveButton = document.createElement('button');
         saveButton.className = 'save-status-btn';
         saveButton.innerHTML = '<i class="fas fa-save"></i>';
@@ -1975,7 +1728,6 @@
             transition: background-color 0.3s;
         `;
         
-        // --- EVENT LISTENER DEL BOTÓN GUARDAR ---
         saveButton.onclick = async () => {
             const newStatus = statusSelect.value;
             let comment = pauseComment;
@@ -2028,29 +1780,22 @@
             }
             
             try {
-                // 1. Prepara los datos para guardar
                 const updateData = {
                     estado: newStatus,
                     updatedAt: serverTimestamp(),
                     ...(newStatus === 'en_proceso' ? { pauseComment: comment } : { pauseComment: '' })
                 };
                 
-                // 2. Guarda en la base de datos y ESPERA a que termine
                 await updateDoc(ticketRef, updateData);
-                
-                // ✅ INICIA CÓDIGO PARA ACTUALIZACIÓN INMEDIATA ✅
-                // Esta parte se ejecuta DESPUÉS de que la base de datos se actualizó correctamente.
                 
                 currentStatus = newStatus;
                 pauseComment = newStatus === 'en_proceso' ? comment : '';
                 
-                // 3. Actualiza el badge de estado en el modal
                 statusBadge.className = `current-status-badge ${newStatus}`;
                 statusBadge.textContent = newStatus.replace(/_/g, ' ');
                 statusBadge.style.backgroundColor = getStatusColor(newStatus);
                 statusBadge.style.color = newStatus === 'pendiente_de_aceptación' ? '#000' : '#fff';
                 
-                // 4. Actualiza el comentario de pausa en el modal
                 const existingComment = statusInfoContainer.querySelector('.pause-comment-badge');
                 if (existingComment) existingComment.remove();
                 
@@ -2068,9 +1813,6 @@
                     statusInfoContainer.appendChild(commentBadge);
                 }
                 
-                // ✅ TERMINA CÓDIGO PARA ACTUALIZACIÓN INMEDIATA ✅
-                
-                // 5. Muestra la alerta de éxito
                 await Swal.fire({
                     icon: 'success',
                     title: '¡Actualizado!',
@@ -2097,7 +1839,6 @@
         modalContent.insertBefore(statusControl, modalContent.firstChild);
     };
 
-    // Función auxiliar para colores de estado
     function getStatusColor(status) {
         const colors = {
             'pendiente_de_aceptación': '#ffc107',
@@ -2112,22 +1853,17 @@
     </script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Crear botón hamburguesa
         const hamburgerBtn = document.createElement('button');
         hamburgerBtn.className = 'sidebar-toggle';
         hamburgerBtn.innerHTML = '<span></span><span></span><span></span>';
         document.body.appendChild(hamburgerBtn);
 
-        // Crear overlay
         const overlay = document.createElement('div');
         overlay.className = 'sidebar-overlay';
         document.body.appendChild(overlay);
 
-        // Elementos existentes
         const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-
-        // Evento para abrir/cerrar menú
+        
         hamburgerBtn.addEventListener('click', function() {
             this.classList.toggle('active');
             sidebar.classList.toggle('active');
@@ -2135,7 +1871,6 @@
             document.body.classList.toggle('menu-open');
         });
 
-        // Cerrar menú al hacer clic en overlay
         overlay.addEventListener('click', function() {
             hamburgerBtn.classList.remove('active');
             sidebar.classList.remove('active');
@@ -2143,11 +1878,9 @@
             document.body.classList.remove('menu-open');
         });
 
-        // Cerrar menú al hacer clic en enlaces del sidebar
         const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar button');
         sidebarLinks.forEach(link => {
             link.addEventListener('click', function() {
-                // Solo cerrar si es un enlace (no botones de acción)
                 if (this.tagName === 'A') {
                     hamburgerBtn.classList.remove('active');
                     sidebar.classList.remove('active');
@@ -2157,7 +1890,6 @@
             });
         });
 
-        // Mejorar accesibilidad
         hamburgerBtn.setAttribute('aria-label', 'Menú de navegación');
         hamburgerBtn.setAttribute('aria-expanded', 'false');
         
