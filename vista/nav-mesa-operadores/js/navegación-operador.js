@@ -565,12 +565,12 @@
                 
                 <div class="menu-nav-buttons-container">
                     
-                    <a href="../personalizacion.html" class="menu-nav-btn">
+                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                         <i class="fas fa-palette"></i> Personalizar Interfaz
                     </a>
                     
-                    <a href="../gestion_Tickets.html" class="menu-nav-btn">
-                        <i class="fas fa-ticket-alt"></i> Ver mis tickets
+                    <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
+                        <i class="fas fa-money-bill-transfer"></i> Reembolsos
                     </a>
 
                     <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">

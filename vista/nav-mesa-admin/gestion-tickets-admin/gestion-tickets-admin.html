@@ -319,7 +319,7 @@
                 <td><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></td>
                 <td>${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</td>
                 <td>${ticket.area || 'N/A'}</td>
-                <td>${ticket.levantadoPor || 'N/A'}</td>
+                <td>${ticket.levantadoPor || 'Rsi'}</td>
                 <td>${formatDate(ticket.fechaCreacion)}</td>
                 <td>
                     <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
