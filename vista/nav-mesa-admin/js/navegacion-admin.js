@@ -564,27 +564,27 @@
                 </div>
                 
                 <div class="menu-nav-buttons-container">
-                    <a href="../nav-operadores/nuevo-ticket.html" class="menu-nav-btn">
+                    <a href="../nuevo-ticket/nuevo-ticket.html" class="menu-nav-btn">
                         <i class="fas fa-plus-circle"></i> Levantar Ticket
                     </a>
                     
-                    <a href="../personalizacion.html" class="menu-nav-btn">
+                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                         <i class="fas fa-palette"></i> Personalizar Interfaz
                     </a>
                     
-                    <a href="../nav-operadores/gestion_Tickets.html" class="menu-nav-btn">
+                    <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                         <i class="fas fa-ticket-alt"></i> Ver mis tickets
                     </a>
                     
-                    <a href="../nav-operadores/graficasdetickest.html" class="menu-nav-btn">
+                    <a href="../graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
                         <i class="fas fa-chart-bar"></i> Ver Estadisticas
                     </a>
                     
-                    <a href="../nav-admin/admin-asistencia.html" class="menu-nav-btn">
+                    <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
                         <i class="fas fa-calendar-check"></i> Ver asistencias
                     </a>
 
-                    <a href="../nav-facturas/coti.html" class="menu-nav-btn">
+                    <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
                         <i class="fas fa-file-invoice-dollar"></i> Cotizar
                     </a>
                     
@@ -1021,7 +1021,7 @@
                 });
                 
                 // Redirigir sin cerrar sesión
-                window.location.href = '../fin-asistencia.html';
+                window.location.href = '../fin-asistencia/fin-asistencia.html';
                 
             } catch (error) {
                 console.error("Error al terminar asistencia:", error);
