@@ -1,11 +1,768 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Toma de Asistencias</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="asistencia.css">    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-    
+    <div class="attendance-container app-hidden" id="attendanceContainer">
+        <div class="attendance-form-content" id="attendanceFormContent">
+            <div class="attendance-header">
+                <h1>Toma de Asistencias</h1>
+                <p>Registra tu estatus laboral para el día de hoy</p>
+            </div>
+
+            <div class="employee-info">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Empleado" class="employee-avatar" id="employeeAvatar"> 
+                <div class="employee-details">
+                    <h3>Cargando...</h3> 
+                    <p><strong>Área:</strong> Cargando...</p> 
+                    <p><strong>ID Empleado:</strong> Cargando...</p>
+                </div>
+            </div>
+
+            <div class="attendance-options">
+                <div class="attendance-date" id="attendanceDate">
+                    <i class="fas fa-calendar-day"></i> <span id="currentDate">Cargando fecha...</span>
+                </div>
+
+                <div class="options-grid">
+                    <div class="attendance-option" data-value="office">
+                        <div class="checkbox"></div>
+                        <div class="option-icon"><i class="fas fa-building"></i></div>
+                        <div class="option-label">En oficina</div>
+                        <div class="option-desc">Asistencia presencial en oficina principal</div>
+                    </div>
+
+                    <div class="attendance-option" data-value="site">
+                        <div class="checkbox"></div>
+                        <div class="option-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="option-label">En sitio</div>
+                        <div class="option-desc">Trabajando en ubicación del cliente</div>
+                    </div>
+
+                    <div class="attendance-option" data-value="iztapaluca">
+                        <div class="checkbox"></div>
+                        <div class="option-icon"><i class="fas fa-building"></i></div>
+                        <div class="option-label">En oficina de Ixtapaluca</div>
+                        <div class="option-desc">Trabajando en oficina de Ixtapaluca</div>
+                    </div>
+
+                    <div class="attendance-option" data-value="sick">
+                        <div class="checkbox"></div>
+                        <div class="option-icon"><i class="fas fa-procedures"></i></div>
+                        <div class="option-label">Incapacidad</div>
+                        <div class="option-desc">Ausencia por enfermedad/incapacidad</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="submit-btn" id="submitAttendance">
+                <i class="fas fa-check-circle"></i> Registrar Asistencia
+            </button>
+        </div>
+
+        <div id="tetris-container" class="app-hidden">
+            <h2 id="tetris-title">Tiempo Extra: ¡Hora de Tetris!</h2>
+            <p id="tetris-message">Tu asistencia excede los limites, juega un rato hasta el día de mañana y no olvides registrar tu asistencia a tu hora de entrada.</p>
+            <div id="game-info">
+                <div>Puntuación: <span id="score">0</span></div>
+                <div>Récord: <span id="highScore">0</span></div>
+            </div>
+            <canvas id="tetris-canvas"></canvas> 
+            <div id="tetris-controls">
+                <p>Flechas: Mover / Rotar | Abajo: Caída suave | Espacio: Caída rápida</p>
+                <button onclick="startGame()" id="start-btn">Iniciar Juego</button>
+            </div>
+            
+            <div class="touch-controls" id="touchControls">
+                <button class="control-button" data-action="left"><i class="fas fa-arrow-left"></i></button>
+                <button class="control-button" data-action="rotate"><i class="fas fa-sync-alt"></i></button>
+                <button class="control-button" data-action="down"><i class="fas fa-arrow-down"></i></button>
+                <button class="control-button" data-action="drop"><i class="fas fa-caret-down"></i></button>
+                <button class="control-button" data-action="right"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTES Y CONFIGURACIÓN ---
+        const LONG_PRESS_DELAY = 5000;
+        const GEOLOCATION_TIMEOUT = 15000;
+        const REDIRECT_DELAY = 3000;
+        const FALLBACK_ACCURACY = 5000;
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+            measurementId: "G-38F2DBG9HE"
+        };
+
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Estado de la aplicación
+        const AppState = {
+            currentUser: null,
+            userData: null,
+            userRole: null,
+            userCoordinates: null,
+            isLocationRequested: false,
+            isSubmitting: false,
+            longPressTimer: null
+        };
+
+        // --- FUNCIONES DE UTILIDAD CORREGIDAS ---
+
+        // Función central de alerta - CORREGIDA
+        async function showAlert(type, title, message) {
+            // Si las funciones personalizadas existen, usarlas
+            if (typeof window.showCustomAlert === 'function') {
+                switch(type) {
+                    case 'success':
+                        if (typeof window.showCustomSuccess === 'function') {
+                            return await window.showCustomSuccess(title, message);
+                        }
+                        break;
+                    case 'error':
+                        if (typeof window.showCustomError === 'function') {
+                            return await window.showCustomError(title, message);
+                        }
+                        break;
+                    case 'info':
+                        if (typeof window.showCustomWarning === 'function') {
+                            return await window.showCustomWarning(title, message, 'Entendido');
+                        }
+                        break;
+                }
+                // Fallback a la función genérica
+                return await window.showCustomAlert({ 
+                    title, 
+                    text: message, 
+                    icon: type 
+                });
+            } else {
+                // Fallback a Swal.fire estándar
+                return await Swal.fire({ 
+                    icon: type, 
+                    title: title, 
+                    html: message, 
+                    confirmButtonColor: '#4e54c8',
+                    allowOutsideClick: false
+                });
+            }
+        }
+
+        // Función específica para alertas de ubicación
+        async function showLocationAlert() {
+            return await Swal.fire({
+                title: 'Ubicación Requerida',
+                html: 'Para registrar tu asistencia, necesitamos acceder a tu ubicación actual. Esto nos ayuda a verificar tu presencia en el lugar de trabajo.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Permitir Ubicación',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#4e54c8',
+                allowOutsideClick: false
+            });
+        }
+
+        // Obtener fecha y hora formateada
+        function getFormattedDateTime() {
+            const now = new Date();
+            return {
+                timestamp: firebase.firestore.Timestamp.fromDate(now),
+                dateString: now.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                }),
+                timeString: now.toLocaleTimeString('es-ES'),
+                fullDateTime: now.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                })
+            };
+        }
+
+        // --- FUNCIONES DE DATOS ---
+
+        // Obtener rol del usuario
+        async function getUserRole(email) {
+            try {
+                const querySnapshot = await db.collection('usuarios')
+                    .where('email', '==', email)
+                    .limit(1)
+                    .get();
+                return !querySnapshot.empty ? querySnapshot.docs[0].data().rol : null;
+            } catch (error) {
+                console.error("Error al obtener rol del usuario:", error);
+                return null;
+            }
+        }
+
+        // Obtener datos del usuario
+        async function getUserData(email) {
+            try {
+                let querySnapshot = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (querySnapshot.empty) {
+                    querySnapshot = await db.collection('colaboradores')
+                        .where('CORREO ELECTRÓNICO EMPRESARIAL', '>=', email.toLowerCase())
+                        .where('CORREO ELECTRÓNICO EMPRESARIAL', '<=', email.toLowerCase() + '\uf8ff')
+                        .limit(1)
+                        .get();
+                }
+                
+                return !querySnapshot.empty ? { 
+                    id: querySnapshot.docs[0].id, 
+                    ...querySnapshot.docs[0].data() 
+                } : null;
+            } catch (error) { 
+                console.error("Error al obtener datos del usuario:", error); 
+                return null; 
+            }
+        }
+
+        // Verificar asistencia activa
+        async function checkActiveAttendanceFromCollaborators(email) {
+            try {
+                const collaboratorQuery = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (collaboratorQuery.empty) return null;
+                
+                const collaboratorData = collaboratorQuery.docs[0].data();
+                const collaboratorId = collaboratorQuery.docs[0].id;
+                
+                if (collaboratorData.asistencia?.estado === true && collaboratorData.asistencia?.fecha) {
+                    const lastAttendanceDate = collaboratorData.asistencia.fecha.toDate();
+                    const today = new Date();
+                    
+                    if (lastAttendanceDate.getDate() === today.getDate() && 
+                        lastAttendanceDate.getMonth() === today.getMonth() && 
+                        lastAttendanceDate.getFullYear() === today.getFullYear()) {
+                        return { 
+                            id: collaboratorId, 
+                            ...collaboratorData, 
+                            horaRegistro: lastAttendanceDate.toLocaleTimeString('es-ES') 
+                        };
+                    }
+                }
+                return null;
+            } catch (error) { 
+                console.error("Error al verificar asistencia activa:", error); 
+                return null; 
+            }
+        }
+
+        // --- FUNCIONES DE UI ---
+
+        // Mostrar información del usuario
+        function displayUserInfo(user) {
+            const employeeDetails = document.querySelector('.employee-details');
+            const employeeAvatar = document.getElementById('employeeAvatar');
+            
+            if (!employeeDetails) return;
+
+            const area = user['ÁREA'] || 'No especificado';
+            const nit = user.NIT || 'ID no disponible';
+            const rfc = user.RFC || 'No disponible';
+            const telefono = user['TELÉFONO MOVIL'] || 'No disponible';
+            
+            const successColor = 'var(--success-color, #4CAF50)';
+            const errorColor = 'var(--error-color, #f44336)';
+
+            employeeDetails.innerHTML = `
+                <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
+                <p><strong>Área:</strong> ${area}</p>
+                <p><strong>ID Empleado:</strong> ${nit}</p>
+                <p><strong>RFC:</strong> ${rfc}</p>
+                <p><strong>Teléfono:</strong> ${telefono}</p>
+                <p><strong>Asistencia hoy:</strong> ${user.asistencia?.estado ? 
+                    `<span style="color: ${successColor};">Presente</span>` : 
+                    `<span style="color: ${errorColor};">Pendiente</span>`}</p>
+            `;
+            
+            if (user.imagen) {
+                employeeAvatar.src = user.imagen;
+            } else {
+                const name = user.NOMBRE || '';
+                const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=4e54c8&color=fff&size=128`;
+            }
+        }
+
+        // Actualizar fecha y hora actual
+        function updateDateTime() {
+            const currentDateElement = document.getElementById('currentDate');
+            if (currentDateElement) {
+                currentDateElement.textContent = getFormattedDateTime().fullDateTime;
+            }
+        }
+
+        // Configurar opciones de selección
+        function setupAttendanceOptions() {
+            const attendanceOptions = document.querySelectorAll('.attendance-option');
+            
+            attendanceOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    attendanceOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+        }
+
+        // Redirigir según el rol
+        function redirectByRole(role) {
+            const rolePaths = {
+                'puntoVenta': '../nav-puntoVenta/inicio.html',
+                'facturas': '../nav-facturas/facturas.html',
+                'colaborador': '../nav-operadores/gestion_Tickets.html',
+                'admincolaborador': '../gestion-tickets/gestion-tickets.html'
+            };
+            
+            const redirectPath = rolePaths[role] || "../nav-operadores/gestion_Tickets.html";
+            window.location.href = redirectPath;
+        }
+
+        // Obtener nombre del tipo de asistencia
+        function getAttendanceTypeName(type) {
+            const types = { 
+                'office': 'En oficina', 
+                'site': 'En sitio', 
+                'iztapaluca': 'En oficina de Iztapaluca', 
+                'sick': 'Incapacidad' 
+            };
+            return types[type] || type;
+        }
+
+        // --- FUNCIONES DE GEOLOCALIZACIÓN ---
+
+        // Obtener ubicación precisa
+        function getLocation() { 
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocalización no soportada por el navegador"));
+                    return;
+                }
+
+                const timeout = setTimeout(() => {
+                    reject(new Error("Tiempo de espera agotado al obtener ubicación"));
+                }, GEOLOCATION_TIMEOUT); 
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        clearTimeout(timeout); 
+                        if (position.coords.accuracy > 100) {
+                            reject(new Error("La precisión de la ubicación es demasiado baja. Intenta en un área con mejor señal."));
+                            return;
+                        }
+
+                        const coordinates = {
+                            latitude: Math.round(position.coords.latitude * 1000) / 1000, 
+                            longitude: Math.round(position.coords.longitude * 1000) / 1000, 
+                            accuracy: position.coords.accuracy,
+                            timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+                        };
+                        
+                        sessionStorage.setItem('userCoordinates', JSON.stringify(coordinates));
+                        resolve(coordinates);
+                    },
+                    (error) => {
+                        clearTimeout(timeout); 
+                        let errorMessage = "Error desconocido";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED: 
+                                errorMessage = "Permiso de ubicación denegado. Por favor habilita los permisos."; 
+                                break;
+                            case error.POSITION_UNAVAILABLE: 
+                                errorMessage = "La información de ubicación no está disponible."; 
+                                break;
+                            case error.TIMEOUT: 
+                                errorMessage = "La solicitud de ubicación ha caducado. Intenta nuevamente."; 
+                                break;
+                        }
+                        reject(new Error(errorMessage));
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            });
+        }
+
+        // Obtener ubicación por IP (fallback)
+        async function getFallbackLocation() { 
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                return {
+                    latitude: data.latitude || 0,
+                    longitude: data.longitude || 0,
+                    accuracy: FALLBACK_ACCURACY, 
+                    source: 'ip'
+                };
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // Obtener ubicación con fallback
+        async function getUserLocation() {
+            try {
+                const storedCoords = sessionStorage.getItem('userCoordinates');
+                if (storedCoords) {
+                    return JSON.parse(storedCoords);
+                }
+                
+                return await getLocation();
+            } catch (error) {
+                console.warn("No se pudo obtener ubicación precisa, intentando con fallback...", error);
+                return await getFallbackLocation();
+            }
+        }
+
+        // Función para mostrar modal de permisos de ubicación
+        async function showLocationPermissionModal(callbackSubmitButton, userData) {
+            try {
+                const result = await showLocationAlert();
+                
+                if (result && result.isConfirmed) {
+                    try {
+                        const coords = await getLocation();
+                        AppState.userCoordinates = coords;
+                        await showAlert('success', 'Ubicación obtenida', 'Ahora puedes registrar tu asistencia.');
+                        
+                        if (callbackSubmitButton && userData) {
+                            callbackSubmitButton(userData);
+                        }
+                        
+                        return true;
+                    } catch (error) {
+                        console.error("Error obteniendo ubicación:", error);
+                        await showAlert('error', 'Error de ubicación', error.message || 'No se pudo obtener tu ubicación. Intenta de nuevo.');
+                        return false;
+                    }
+                } else {
+                    await showAlert('info', 'Ubicación requerida', 'La ubicación es necesaria para registrar tu asistencia. Puedes intentar de nuevo cuando estés listo.');
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error en el modal de ubicación:", error);
+                await showAlert('error', 'Error', 'Hubo un problema al solicitar permisos de ubicación.');
+                return false;
+            }
+        }
+
+        // --- FUNCIONES DE ASISTENCIA ---
+
+        // Validar horario de registro
+        function isTimeValid() {
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hourCycle: 'h23',
+                timeZone: 'America/Mexico_City'
+            });
+            
+            const parts = formatter.formatToParts(now);
+            const hourPart = parts.find(p => p.type === 'hour');
+            const currentHour = parseInt(hourPart.value, 10);
+            
+            if (currentHour >= 5) {
+                return { valid: true, error: null };
+            } else {
+                return { 
+                    valid: false, 
+                    error: '¡Aún no es hora!', 
+                    message: 'El registro de asistencia está disponible a partir de las 05:00 AM (Hora de México).' 
+                };
+            }
+        }
+
+        // Registrar asistencia en Firebase - CORREGIDA
+        async function registerAttendance(attendanceType, userData) {
+            try {
+                const datetime = getFormattedDateTime();
+                
+                if (!AppState.userCoordinates) {
+                    AppState.userCoordinates = await getUserLocation();
+                }
+                
+                // Actualizar colaborador
+                await db.collection('colaboradores').doc(userData.id).update({
+                    asistencia: { 
+                        estado: true, 
+                        tipo: attendanceType, 
+                        fecha: datetime.timestamp 
+                    },
+                    ultimaAsistencia: datetime.timestamp
+                });
+
+                // Crear registro de asistencia
+                const attendanceData = {
+                    userId: userData.id, 
+                    email: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                    nombre: userData.NOMBRE,
+                    area: userData['ÁREA'], 
+                    tipo: attendanceType, 
+                    fecha: datetime.timestamp,
+                    dia: datetime.dateString,
+                    horaRegistro: datetime.timeString, 
+                    activo: true, 
+                    ubicacion: AppState.userCoordinates,
+                    detalles: { 
+                        correoPersonal: userData['CORREO ELECTRONICO PERSONAL'], 
+                        correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                        rfc: userData.RFC 
+                    }
+                };
+
+                // Guardar en asistencias
+                const batch = db.batch();
+                const attendanceRef = db.collection('asistencias').doc();
+                batch.set(attendanceRef, attendanceData);
+                await batch.commit();
+                
+                // Obtener rol para redirección
+                const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                const tipoAsistencia = getAttendanceTypeName(attendanceType);
+                const ubicacionMsg = attendanceType === 'office' || attendanceType === 'iztapaluca' ? 
+                    'Oficina verificada' : 'Ubicación del cliente verificada';
+                
+                // MENSAJE CORREGIDO - sin HTML
+                const mensajeExito = `Tu asistencia ha sido registrada correctamente.\n\nTipo: ${tipoAsistencia}\nUbicación: ${ubicacionMsg}\n\nSerás redirigido en 3 segundos...`;
+                
+                await showAlert('success', 'Asistencia registrada', mensajeExito);
+                
+                setTimeout(() => { 
+                    redirectByRole(userRole); 
+                }, REDIRECT_DELAY);
+                
+                return true;
+            } catch (error) { 
+                console.error("Error al registrar asistencia:", error); 
+                await showAlert('error', 'Error', 'No se pudo registrar la asistencia. Intenta nuevamente.');
+                return false; 
+            }
+        }
+
+        // Configurar botón de envío
+        function setupSubmitButton(userData) {
+            const submitBtn = document.getElementById('submitAttendance');
+            const optionsGrid = document.querySelector('.options-grid');
+            
+            submitBtn.addEventListener('click', async function() {
+                if (AppState.isSubmitting) return;
+                
+                const selectedOption = document.querySelector('.attendance-option.selected');
+                
+                if (!selectedOption) {
+                    await showAlert('error', 'Selecciona una opción', 'Debes seleccionar un tipo de asistencia antes de continuar.');
+                    if (optionsGrid) { 
+                        optionsGrid.style.animation = 'shake 0.5s'; 
+                        setTimeout(() => { optionsGrid.style.animation = ''; }, 500); 
+                    }
+                    return;
+                }
+
+                const timeCheck = isTimeValid();
+                if (!timeCheck.valid) {
+                    await showAlert('error', timeCheck.error, timeCheck.message);
+                    return;
+                }
+
+                const attendanceType = selectedOption.getAttribute('data-value');
+                AppState.isSubmitting = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+                submitBtn.disabled = true;
+
+                try {
+                    const success = await registerAttendance(attendanceType, userData);
+                    if (!success) {
+                        submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
+                        submitBtn.disabled = false;
+                        AppState.isSubmitting = false;
+                    }
+                } catch (error) {
+                    console.error("Error en el proceso de registro:", error);
+                    await showAlert('error', 'Error', 'Ocurrió un error inesperado. Intenta nuevamente.');
+                    submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
+                    submitBtn.disabled = false;
+                    AppState.isSubmitting = false;
+                }
+            });
+        }
+
+        // --- VALIDACIONES Y FLUJO PRINCIPAL ---
+
+        // Validar permisos de usuario
+        function validateUserPermissions(userRole) {
+            const deniedRoles = ['user', 'admin'];
+            return !deniedRoles.includes(userRole);
+        }
+
+        // Manejar usuario autenticado - CORREGIDA
+        async function handleAuthenticatedUser(user) {
+            try {
+                AppState.userData = await getUserData(user.email);
+                
+                if (!AppState.userData) {
+                    throw new Error('No se encontraron datos para este usuario');
+                }
+
+                AppState.userRole = await getUserRole(user.email);
+                
+                if (!validateUserPermissions(AppState.userRole)) {
+                    throw new Error('No tienes permisos para acceder a esta función');
+                }
+
+                displayUserInfo(AppState.userData);
+                
+                const activeAttendance = await checkActiveAttendanceFromCollaborators(user.email);
+                
+                if (activeAttendance) {
+                    // MENSAJE CORREGIDO - sin HTML
+                    const mensajeAsistencia = `Ya registraste tu asistencia hoy a las ${activeAttendance.horaRegistro}.\n\nSerás redirigido al panel en 3 segundos...`;
+                    await showAlert('info', 'Asistencia ya registrada', mensajeAsistencia);
+                    
+                    setTimeout(() => { 
+                        redirectByRole(AppState.userRole); 
+                    }, REDIRECT_DELAY);
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Error manejando usuario autenticado:", error);
+                await showAlert('error', 'Error', error.message);
+                
+                setTimeout(() => {
+                    auth.signOut().then(() => {
+                        window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                    });
+                }, REDIRECT_DELAY);
+                
+                return false;
+            }
+        }
+
+        // Inicializar flujo de ubicación
+        async function initializeLocationFlow(userData) {
+            const storedCoords = sessionStorage.getItem('userCoordinates');
+            if (storedCoords) {
+                AppState.userCoordinates = JSON.parse(storedCoords);
+                AppState.isLocationRequested = true;
+                return true;
+            }
+            
+            if (!AppState.isLocationRequested) {
+                const locationConfirmed = await showLocationPermissionModal(setupSubmitButton, userData);
+                AppState.isLocationRequested = true;
+                return locationConfirmed;
+            }
+            
+            return true;
+        }
+
+        // Configurar listeners de autenticación
+        function setupAuthListener() {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    AppState.currentUser = user;
+                    
+                    const userValid = await handleAuthenticatedUser(user);
+                    if (!userValid) return;
+                    
+                    const timeCheck = isTimeValid();
+                    
+                    const locationInitialized = await initializeLocationFlow(AppState.userData);
+                    
+                    if (locationInitialized) {
+                        setupSubmitButton(AppState.userData);
+                    }
+                    
+                    if (!timeCheck.valid) {
+                        await showAlert('error', timeCheck.error, timeCheck.message);
+                    }
+                    
+                } else {
+                    window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                }
+            });
+        }
+
+        // --- INICIALIZACIÓN DE LA APLICACIÓN ---
+
+        // Inicializar aplicación
+        function initApp() {
+            const attendanceContainer = document.getElementById('attendanceContainer');
+            const attendanceFormContent = document.getElementById('attendanceFormContent');
+            const tetrisContainer = document.getElementById('tetris-container');
+            
+            if (attendanceContainer) {
+                attendanceContainer.classList.add('loaded');
+                attendanceContainer.classList.remove('app-hidden');
+            }
+            if (attendanceFormContent) {
+                attendanceFormContent.classList.remove('app-hidden');
+            }
+            if (tetrisContainer) {
+                tetrisContainer.classList.add('app-hidden');
+            }
+
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            setupAttendanceOptions();
+            setupAuthListener();
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Estilos de animación
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-8px); }
+                40%, 80% { transform: translateX(8px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+    <script src="../js/personalizacion-colores.js"></script>
 </body>
 </html>
