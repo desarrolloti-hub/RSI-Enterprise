@@ -1050,7 +1050,88 @@
     </script>
 
     <!-- El script de navegación se carga al final para que pueda acceder a las funciones definidas -->
-    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/navegación-operador.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
+    <script>
+// Script para corregir visibilidad del texto en tema claro
+document.addEventListener('DOMContentLoaded', function() {
+    function corregirColoresTemaClaro() {
+        // Verificar si estamos en tema claro
+        const prefs = localStorage.getItem('personalizationPreferences');
+        let esTemaClaro = true; // Por defecto asumimos tema claro
+        
+        if (prefs) {
+            const preferencias = JSON.parse(prefs);
+            esTemaClaro = preferencias.background === 'light';
+        }
+        
+        if (esTemaClaro) {
+            console.log('🔧 Aplicando correcciones para tema claro');
+            
+            // Aplicar estilos para texto visible en tema claro
+            const estilo = document.createElement('style');
+            estilo.id = 'correccion-tema-claro';
+            estilo.textContent = `
+                /* Forzar texto negro en tema claro */
+                .note-content,
+                .note-content p,
+                .note-checklist,
+                .checklist-item label,
+                .note-meta,
+                .note-form-container,
+                .form-control,
+                .form-label,
+                .collaborator-checkbox label,
+                .note-shared-with,
+                .no-collaborators,
+                .empty-notes,
+                .empty-notes h3,
+                .empty-notes p {
+                    color: #000000 !important;
+                }
+                
+                /* Asegurar contraste en bordes */
+                .note-card {
+                    border-color: rgba(0,0,0,0.1) !important;
+                }
+                
+                .form-control {
+                    border-color: rgba(0,0,0,0.2) !important;
+                }
+                
+                /* Asegurar que los placeholders sean visibles */
+                .form-control::placeholder {
+                    color: #666 !important;
+                    opacity: 1 !important;
+                }
+                
+                /* Texto de metadatos */
+                .note-creator,
+                .note-completer,
+                .note-date {
+                    color: #333 !important;
+                }
+            `;
+            
+            // Remover estilo anterior si existe
+            const estiloAnterior = document.getElementById('correccion-tema-claro');
+            if (estiloAnterior) {
+                estiloAnterior.remove();
+            }
+            
+            document.head.appendChild(estilo);
+        }
+    }
+    
+    // Ejecutar inmediatamente
+    corregirColoresTemaClaro();
+    
+    // También ejecutar cuando cambien las preferencias
+    window.addEventListener('storage', corregirColoresTemaClaro);
+    
+    // Verificar cada segundo por cambios (fallback)
+    setInterval(corregirColoresTemaClaro, 1000);
+});
+</script>
 </body>
 </html>
