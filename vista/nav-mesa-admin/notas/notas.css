@@ -1,3 +1,511 @@
-h1{
-    
+        /* ESTILOS ESPECÍFICOS PARA EL SISTEMA DE NOTAS */
+        .notes-container {
+            align-items: center;
+            padding: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .notes-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .notes-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .notes-tab {
+            padding: 6px 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 400;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .notes-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .notes-content {
+            display: none;
+        }
+
+        .notes-content.active {
+            display: block;
+            background-color: transparent !important;
+        }
+
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .note-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .note-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .note-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .note-action-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .note-action-btn.delete:hover {
+            background: #e74c3c;
+        }
+
+        .note-content {
+            flex: 1;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .note-checklist {
+            margin-top: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+
+        .checklist-item:hover {
+            background: rgba(0,0,0,0.03);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: rgba(0,0,0,0.5);
+        }
+
+        .note-meta {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            font-size: 0.8rem;
+            color: rgba(0,0,0,0.6);
+        }
+
+        .note-creator, .note-completer {
+            margin-bottom: 5px;
+        }
+
+        .note-date {
+            font-style: italic;
+        }
+
+        .empty-notes {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-color);
+        }
+
+        .empty-notes i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        .empty-notes h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-notes p {
+            font-size: 1rem;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* FORMULARIO DE NUEVA NOTA */
+        .note-form-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+        }
+
+        .note-form-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(108, 67, 224, 0.2);
+        }
+
+        .checklist-items-container {
+            margin-top: 10px;
+        }
+
+        .checklist-item-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .checklist-item-input input {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .remove-checklist-item {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .remove-checklist-item:hover {
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .add-checklist-item {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .add-checklist-item:hover {
+            background: rgba(108, 67, 224, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 400;
+            font-size: 0.9rem;
+            border: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-color);
+            border-color: rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .notes-header {
+                align-items: center;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .notes-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .notes-tabs {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .note-form-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notes-container {
+                padding: 15px;
+            }
+
+            .note-card {
+                padding: 15px;
+            }
+
+            .note-form-container {
+                padding: 15px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .header-title-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .header .title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            color: white;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        /* Forzar texto negro cuando el tema activo es claro */
+body[data-background-theme="light"] .note-content,
+body[data-background-theme="light"] .note-content p,
+body[data-background-theme="light"] .note-checklist,
+body[data-background-theme="light"] .checklist-item label,
+body[data-background-theme="light"] .note-meta,
+body[data-background-theme="light"] .note-form-container,
+body[data-background-theme="light"] input,
+body[data-background-theme="light"] textarea {
+    color: #000 !important;
 }
+
+        /* Estilos adicionales para la sección de colaboradores */
+        .collaborators-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            background: var(--card-bg);
+        }
+
+        .collaborator-checkbox {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+
+        .collaborator-checkbox:hover {
+            background: rgba(0,0,0,0.03);
+        }
+
+        .collaborator-checkbox input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .collaborator-checkbox label {
+            flex: 1;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .shared-badge {
+            background: rgba(108, 67, 224, 0.1);
+            color: var(--primary-color);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .note-shared-with {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: rgba(0,0,0,0.7);
+        }
+
+        .collaborator-search {
+            margin-bottom: 15px;
+        }
+
+        .collaborator-search input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .collaborator-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .no-collaborators {
+            text-align: center;
+            padding: 20px;
+            color: rgba(0,0,0,0.5);
+            font-style: italic;
+        }
+
+        /* Forzar texto negro cuando el tema activo es claro */
+        body[data-background-theme="light"] .note-shared-with,
+        body[data-background-theme="light"] .no-collaborators {
+            color: #000 !important;
+        }
