@@ -505,7 +505,7 @@
             sidebar.className = 'menu-nav-sidebar';
             sidebar.id = 'menuNavSidebar';
             
-            sidebar.innerHTML = `
+            sidebar.innerHTML =/*html*/ `
                 <div class="menu-nav-user-profile">
                     <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
                     <h2 class="menu-nav-user-name" id="menuNavUserName">Cargando...</h2>
@@ -564,18 +564,23 @@
                 </div>
                 
                 <div class="menu-nav-buttons-container">
+
+                    <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
+                        <i class="fas fa-list-alt"></i> Gestión de tickets
+                    </a>
+
                     <a href="../nuevo-ticket/nuevo-ticket.html" class="menu-nav-btn">
                         <i class="fas fa-plus-circle"></i> Levantar Ticket
-                    </a>
-                    
-                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
-                        <i class="fas fa-palette"></i> Personalizar Interfaz
                     </a>
                     
                     <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                         <i class="fas fa-ticket-alt"></i> Ver mis tickets
                     </a>
                     
+                    <a href="../notas/notas.html" class="menu-nav-btn">
+                        <i class="fas fa-clipboard-check"></i> Ver mis notas
+                    </a>
+
                     <a href="../graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
                         <i class="fas fa-chart-bar"></i> Ver Estadisticas
                     </a>
@@ -586,6 +591,14 @@
 
                     <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
                         <i class="fas fa-file-invoice-dollar"></i> Cotizar
+                    </a>
+                    
+                    <a href="../manuales/manuales.html" class="menu-nav-btn">
+                        <i class="fas fa-file-alt"></i> Ver manuales
+                    </a>
+
+                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
+                        <i class="fas fa-palette"></i> Personalizar Interfaz
                     </a>
                     
                     <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">

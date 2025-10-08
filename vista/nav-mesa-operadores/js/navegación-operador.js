@@ -900,7 +900,7 @@ body {
             sidebar.className = 'menu-nav-sidebar';
             sidebar.id = 'menuNavSidebar';
             
-            sidebar.innerHTML = `
+            sidebar.innerHTML =/*html*/ `
                 <div class="menu-nav-user-profile">
                     <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
                     <h2 class="menu-nav-user-name" id="menuNavUserName">Cargando...</h2>
@@ -964,15 +964,23 @@ body {
                     <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                         <i class="fas fa-ticket-alt"></i>  Ver Mis Tickets
                     </a>
-                    
-                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
-                        <i class="fas fa-palette"></i> Personalizar Interfaz
+
+                    <a href="../notas/notas.html" class="menu-nav-btn">
+                        <i class="fas fa-clipboard-check"></i> Ver mis notas
                     </a>
                     
                     <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
                         <i class="fas fa-money-bill-transfer"></i> Reembolsos
                     </a>
 
+                    <a href="../manuales/manuales.html" class="menu-nav-btn">
+                        <i class="fas fa-file-alt"></i> Ver manuales
+                    </a>
+                                        
+                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
+                        <i class="fas fa-palette"></i> Personalizar Interfaz
+                    </a>
+                    
                     <a href="../fin-asistencia/fin-asistencia.html" class="menu-nav-btn">
                         <i class="fas fa-flag-checkered"></i> Terminar Asistencia
                     </a>
