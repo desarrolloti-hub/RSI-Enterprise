@@ -1,316 +1,396 @@
+/* ==============================================
+   editar-ticket.css - Estilos para Finalizar Ticket
+   (CORREGIDO: Estilo del botón CANCELAR mejorado)
+   ==============================================
+   Utiliza variables CSS inyectadas por personalizacion-colores.js:
+   --primary-color, --text-color, --card-bg, --card-shadow, --accent-color
+   ============================================== */
 
-        /* Variables de color */
-        :root {
-            --primary-color: #007bff;
-            --primary-dark: #0056b3;
-            --secondary-color: #6c757d;
-            --background-color: #f8f9fa;
-            --card-background: #ffffff;
-            --border-color: #dee2e6;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --info-background: #e9ecef;
-        }
+/* 1. Base y Resets */
+body {
+    font-family: 'Inter', sans-serif; /* Asumiendo una fuente moderna */
+    margin: 0;
+    padding: 0;
+    /* Las variables se aplican aquí desde personalizacion-colores.js */
+    background-color: var(--background-color, #f5f5f5);
+    color: var(--text-color, #333);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Alinear arriba en lugar de centrar verticalmente */
+    padding: 20px;
+}
 
-        /* Estilos Generales y Reseteo Básico */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: var(--background-color);
-            margin: 0;
-            padding: 20px;
-            color: #343a40;
-            line-height: 1.6;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        h1, h3 {
-            color: var(--primary-dark);
-        }
+/* 2. Estructura principal */
+.container {
+    width: 100%;
+    max-width: 900px; /* Ancho máximo para el contenido principal */
+    background-color: transparent; /* El fondo lo maneja el body/tarjeta */
+    padding: 0;
+    margin-top: 50px; /* Espacio para el botón flotante del menú */
+}
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--card-background);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
+/* 3. Encabezado y Botón de Regreso */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 10px;
+    flex-wrap: wrap; /* Para responsividad */
+}
 
-        /* Encabezado y Botón de Volver */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }
+.header h1 {
+    font-size: 1.8rem;
+    color: var(--primary-color, #6C43E0);
+    font-weight: 700;
+    margin: 0;
+    padding: 5px 0;
+}
 
-        .header h1 {
-            font-size: 1.8rem;
-            margin: 0;
-        }
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-color, #333) !important;
+    border: 1px solid var(--accent-color, #ccc);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--card-shadow-subtle, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
 
-        .header h1 i {
-            margin-right: 10px;
-            color: var(--success-color);
-        }
+.back-btn i {
+    margin-right: 8px;
+    color: var(--primary-color, #6C43E0);
+}
 
-        .back-btn {
-            text-decoration: none;
-            color: var(--secondary-color);
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
+.back-btn:hover {
+    background-color: var(--primary-color, #6C43E0);
+    color: white !important;
+    border-color: var(--primary-color, #6C43E0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
 
-        .back-btn:hover {
-            background-color: var(--border-color);
-            color: #343a40;
-        }
+.back-btn:hover i {
+    color: white;
+}
 
-        .back-btn i {
-            margin-right: 5px;
-        }
+/* 4. Contenedor Principal del Formulario y Tarjetas */
+.finish-ticket-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
 
-        /* Contenedor Principal del Formulario/Ticket */
-        .finish-ticket-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+/* 5. Tarjeta de Información del Ticket */
+.ticket-info-card {
+    background-color: var(--card-bg, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(108, 67, 224, 0.1);
+}
 
-        /* Tarjeta de Información del Ticket */
-        .ticket-info-card {
-            background-color: var(--info-background);
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 5px solid var(--primary-color);
-        }
+.ticket-info-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-color, #6C43E0);
+    border-bottom: 2px solid var(--accent-color, #6C43E0);
+    padding-bottom: 5px;
+    font-size: 1.2rem;
+}
 
-        .ticket-info-card h3 {
-            margin-top: 0;
-            font-size: 1.25rem;
-            color: var(--primary-color);
-        }
+.ticket-info-card p {
+    margin: 8px 0;
+    font-size: 1rem;
+    color: var(--text-color, #444);
+}
 
-        .ticket-info-card p {
-            margin: 5px 0;
-            font-size: 0.95rem;
-        }
+.ticket-info-card strong {
+    color: var(--primary-color, #6C43E0);
+    font-weight: 600;
+}
 
-        .ticket-info-card strong {
-            font-weight: 600;
-            color: #495057;
-            min-width: 90px;
-            display: inline-block;
-        }
+/* 6. Formulario de Finalización */
+.finish-form {
+    background-color: var(--card-bg, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(108, 67, 224, 0.1);
+}
 
-        /* Estilo específico para la descripción (añadida dinámicamente) */
-        #ticketInfo #ticketDescriptionDisplay strong {
-            display: block; 
-            margin-bottom: 5px;
-        }
-        #ticketInfo #ticketDescriptionDisplay span {
-            white-space: pre-wrap;
-            display: block; 
-            margin-top: 5px; 
-            background-color: var(--card-background); 
-            padding: 10px; 
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            font-size: 0.9rem;
-        }
-        
-        /* Formulario de Finalización */
-        .finish-form {
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background-color: var(--card-background);
-        }
+.form-group {
+    margin-bottom: 20px;
+}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--primary-color, #6C43E0);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
-        }
+.form-group label i {
+    margin-right: 8px;
+}
 
-        .form-group label i {
-            margin-right: 5px;
-            color: var(--primary-color);
-        }
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--accent-color, #ced4da);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-color, #333);
+    background-color: var(--card-bg, #fff);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    resize: vertical;
+}
 
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-sizing: border-box; 
-            transition: border-color 0.2s ease;
-            resize: vertical;
-            font-size: 1rem;
-        }
+.form-control:focus {
+    border-color: var(--primary-color, #6C43E0);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-color, #6C43E0)30;
+}
 
-        .form-control:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
+/* Contador de caracteres */
+.char-counter {
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--accent-color, #6c757d);
+    margin-top: 5px;
+}
 
-        .char-counter {
-            text-align: right;
-            font-size: 0.8rem;
-            color: var(--secondary-color);
-            margin-top: 4px;
-        }
+.char-counter span {
+    font-weight: bold;
+}
 
-        .form-text.text-muted {
-            font-size: 0.85rem;
-            color: var(--secondary-color) !important;
-            display: block;
-            margin-top: 5px;
-        }
+/* 7. Botones de Acción */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+}
 
-        /* Vista Previa de Imágenes */
-        .image-preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px dashed var(--border-color);
-            border-radius: 4px;
-            min-height: 50px; 
-        }
+.action-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
 
-        .image-preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
+.action-btn i {
+    margin-right: 8px;
+}
 
-        .image-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+.confirm-btn {
+    /* Estilo para Guardar/Confirmar (usa color primario) */
+    background-color: var(--primary-color, #6C43E0) !important;
+    color: white !important;
+    box-shadow: 0 4px 10px var(--primary-color, #6C43E0)40;
+}
 
-        .delete-image-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: var(--danger-color);
-            color: var(--card-background);
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            transition: background-color 0.2s;
-            opacity: 0.9;
-        }
+.confirm-btn:hover {
+    background-color: var(--secondary-color, #5a35c7) !important;
+    transform: translateY(-2px);
+}
 
-        .delete-image-btn:hover {
-            background-color: #a71d2a;
-            opacity: 1;
-        }
+.cancel-btn {
+    /* ESTILO CORREGIDO PARA CANCELAR (usa color neutro con borde primario) */
+    background-color: var(--card-bg, #ffffff) !important;
+    color: var(--text-color, #495057) !important;
+    border: 2px solid var(--primary-color, #6C43E0) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
-        /* Acciones del Formulario */
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-            margin-top: 20px;
-        }
+.cancel-btn:hover {
+    /* Hover más sutil para no competir con el botón principal */
+    background-color: var(--primary-color, #6C43E0)10 !important; /* Ligeramente más claro/oscuro */
+    color: var(--primary-color, #6C43E0) !important;
+    transform: translateY(-1px);
+}
 
-        .action-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.2s ease, opacity 0.2s;
-        }
+/* 8. Estilos de Previsualización de Imágenes */
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px dashed var(--accent-color, #ced4da);
+    border-radius: 8px;
+}
 
-        .action-btn i {
-            margin-right: 5px;
-        }
+.image-preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border: 2px solid var(--primary-color, #6C43E0);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-        .cancel-btn {
-            background-color: var(--secondary-color);
-            color: var(--card-background);
-        }
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-        .cancel-btn:hover {
-            background-color: #5a6268;
-        }
+.delete-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(220, 53, 69, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: background-color 0.2s;
+    opacity: 0.9;
+}
 
-        .confirm-btn {
-            background-color: var(--success-color);
-            color: var(--card-background);
-        }
+.delete-image-btn:hover {
+    background-color: #dc3545;
+    opacity: 1;
+}
 
-        .confirm-btn:hover {
-            background-color: #1e7e34;
-        }
+/* 9. Modal del Visor de Imágenes */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 2000; /* Asegurar que esté por encima de todo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.85); /* Fondo muy oscuro */
+    justify-content: center;
+    align-items: center;
+}
 
-        .action-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+}
 
-        /* Modal de Visualización de Imágenes */
-        .modal {
-            display: none; 
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.9); 
-            justify-content: center;
-            align-items: center;
-        }
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
 
-        .close {
-            color: #fff !important; 
-            opacity: 0.8;
-            transition: opacity 0.2s;
-            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5); 
-        }
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
 
-        .close:hover,
-        .close:focus {
-            color: #fff !important;
-            opacity: 1;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        
-        /* Responsividad básica */
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .container { padding: 15px; box-shadow: none; }
-            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .form-actions { flex-direction: column; gap: 10px; }
-            .action-btn { width: 100%; }
-        }
+/* 10. Estilos Responsivos */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+        margin-top: 70px; /* Más espacio para el botón flotante en móvil */
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .finish-ticket-container {
+        gap: 15px;
+    }
+
+    .ticket-info-card,
+    .finish-form {
+        padding: 20px;
+        border-radius: 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse; /* Pone Confirmar/Guardar arriba */
+        gap: 10px;
+    }
+
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 15px 20px;
+    }
+    
+    .image-preview-container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .ticket-info-card,
+    .finish-form {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+
+    .back-btn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    .form-group label {
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .char-counter {
+        font-size: 0.8rem;
+    }
+    
+    .image-preview-item {
+        width: 80px;
+        height: 80px;
+    }
+}

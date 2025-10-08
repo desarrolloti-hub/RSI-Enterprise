@@ -1,21 +1,20 @@
-/* =============================== */
-/* === Estilos Base (Reutilizados) === */
-/* =============================== */
+/* ========================================================= */
+/* === Estilos Base (ADAPTADO A VARIABLES DE NAVEGACIÓN) === */
+/* ========================================================= */
 
+/* Las variables de color globales (ej: --primary) se eliminan o se mapean a las variables del script de navegación */
 :root {
-    --primary: #c84e4e; /* Rojo/Granate principal de RSI */
-    --secondary: #3b5998; /* Un color secundario si se necesita */
-    --success: #28a745;
-    --error: #dc3545;
-    --background: #f4f4f9;
-    --text-color: #333;
-    --card-background: #fff;
-    --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Mapeo de colores estáticos a variables dinámicas (si existen) o fallbacks */
+    --primary-color-fallback: #c84e4e; 
+    --success-color: #28a745;
+    --error-color: #dc3545;
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background-color: var(--background);
+    /* Usar variables dinámicas de personalizacion-colores.js */
+    font-family: 'Inter', sans-serif; /* Asumiendo que el script usa Inter o Arial */
+    background-color: var(--background-color, #f4f4f9);
+    color: var(--text-color, #333);
     margin: 0;
     padding: 0;
     display: flex;
@@ -25,10 +24,11 @@ body {
 }
 
 .attendance-container {
-    background-color: var(--card-background);
+    /* Usar color de fondo y sombra dinámica */
+    background-color: var(--card-bg, #fff); 
     padding: 30px;
     border-radius: 12px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--card-shadow, 0 4px 8px rgba(0, 0, 0, 0.1));
     max-width: 400px;
     width: 90%;
     margin: 30px 0;
@@ -36,16 +36,18 @@ body {
 }
 
 .attendance-header h1 {
-    color: var(--primary);
+    /* Usar color primario dinámico */
+    color: var(--primary-color, var(--primary-color-fallback)); 
     font-size: 1.8em;
     margin-bottom: 5px;
 }
 
 .attendance-header p {
-    color: #666;
+    color: var(--text-color, #666);
+    opacity: 0.7;
     margin-top: 0;
     margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--accent-color, #eee); 
     padding-bottom: 15px;
 }
 
@@ -56,9 +58,10 @@ body {
     gap: 15px;
     margin-bottom: 25px;
     padding: 10px;
-    background-color: #f9f9f9;
+    /* Usar un color ligeramente distinto o transparente si el fondo es oscuro */
+    background-color: var(--card-bg, #f9f9f9)40; 
     border-radius: 8px;
-    border: 1px solid #eee;
+    border: 1px solid var(--accent-color, #eee);
 }
 
 .employee-avatar {
@@ -66,30 +69,32 @@ body {
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--primary);
+    /* Usar color primario dinámico */
+    border: 3px solid var(--primary-color, var(--primary-color-fallback));
 }
 
 .employee-details h3 {
     margin: 0 0 5px 0;
-    color: var(--text-color);
+    color: var(--text-color, #333);
 }
 
 .employee-details p {
     margin: 0;
     font-size: 0.9em;
-    color: #555;
+    color: var(--text-color, #555);
+    opacity: 0.8;
 }
 
 hr {
     border: 0;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--accent-color, #ddd);
     margin: 15px 0;
 }
 
 
-/* =============================== */
-/* === Estilos del Formulario de Reembolso === */
-/* =============================== */
+/* ======================================================== */
+/* === Estilos del Formulario de Reembolso (ADAPTADO) === */
+/* ======================================================== */
 
 .reimbursement-form {
     display: flex;
@@ -100,7 +105,7 @@ hr {
 
 .reimbursement-form label {
     font-weight: bold;
-    color: var(--text-color);
+    color: var(--primary-color, var(--primary-color-fallback)); /* Usar color primario para labels */
     margin-bottom: 5px;
     display: block;
     font-size: 1em;
@@ -110,17 +115,20 @@ hr {
 .reimbursement-form textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--accent-color, #ccc);
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 16px;
+    color: var(--text-color, #333);
+    background-color: var(--card-bg, #fff);
     transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .reimbursement-form input[type="number"]:focus,
 .reimbursement-form textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(200, 78, 78, 0.2);
+    /* Usar color primario dinámico para el focus */
+    border-color: var(--primary-color, var(--primary-color-fallback));
+    box-shadow: 0 0 0 3px var(--primary-color, var(--primary-color-fallback))30;
     outline: none;
 }
 
@@ -131,8 +139,8 @@ hr {
 
 /* Estilo para la carga de archivos */
 .file-upload-container {
-    border: 2px dashed #bbb;
-    background-color: #fafafa;
+    border: 2px dashed var(--accent-color, #bbb);
+    background-color: var(--card-bg, #fafafa);
     border-radius: 8px;
     padding: 20px;
     text-align: center;
@@ -141,18 +149,20 @@ hr {
 }
 
 .file-upload-container:hover {
-    border-color: var(--primary);
-    background-color: #fff0f0;
+    /* Usar color primario dinámico para el hover */
+    border-color: var(--primary-color, var(--primary-color-fallback));
+    background-color: var(--primary-color, #fff0f0)10; 
 }
 
 .file-upload-container i {
-    color: var(--primary);
+    color: var(--primary-color, var(--primary-color-fallback));
     margin-bottom: 10px;
 }
 
 #fileText {
+    color: var(--text-color, #666);
+    opacity: 0.8;
     margin: 0;
-    color: #666;
     font-size: 0.9em;
 }
 
@@ -161,14 +171,15 @@ hr {
     max-height: 250px;
     margin-top: 15px;
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--accent-color, #ddd);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     object-fit: contain;
 }
 
-/* --- Botón de Envío --- */
+/* --- Botón de Envío (Primario) --- */
 .submit-btn {
-    background-color: var(--primary);
+    /* Usar color primario dinámico */
+    background-color: var(--primary-color, var(--primary-color-fallback));
     color: white;
     padding: 15px;
     border: none;
@@ -184,18 +195,146 @@ hr {
 }
 
 .submit-btn:hover:not(:disabled) {
-    background-color: #b04141;
+    /* Usar color secundario dinámico para el hover */
+    background-color: var(--secondary-color, #b04141);
 }
 
 .submit-btn:disabled {
-    background-color: #ccc;
+    background-color: var(--accent-color, #ccc);
+    color: var(--text-color, #666);
     cursor: not-allowed;
 }
 
+/* --- Botones Adicionales (Toggle y Tickets) --- */
+.toggle-btn {
+    background-color: var(--text-color, #4a4a4a); /* Usar el color del texto como base */
+    color: var(--card-bg, white);
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+    transition: background-color 0.2s;
+    font-weight: bold;
+}
+.toggle-btn:hover {
+    background-color: var(--primary-color, #333)80;
+}
 
-/* =============================== */
-/* === Estilos de Alerta (Reutilizados) === */
-/* =============================== */
+/* Estilo específico para el botón de ir a Tickets */
+#goToTicketsBtn {
+    /* Usamos un color de éxito o primario para destacar la acción */
+    background-color: var(--success-color, #5cb85c); 
+    margin-bottom: 20px;
+    padding: 15px; /* Lo hacemos más grande */
+    font-size: 1.1em;
+}
+#goToTicketsBtn:hover {
+    background-color: var(--success-color, #4cae4c);
+    filter: brightness(0.9);
+}
+
+/* ========================================================= */
+/* === Estilos del Historial y Tags de Estado === */
+/* ========================================================= */
+
+.reimbursement-history h2 { 
+    color: var(--primary-color, #333); 
+    border-bottom: 2px solid var(--accent-color, #c84e4e); 
+    padding-bottom: 5px; 
+    margin-bottom: 15px; 
+}
+.reimbursement-list { 
+    list-style: none; 
+    padding: 0; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
+.reimbursement-item { 
+    background-color: var(--card-bg, #fff); /* Usar fondo de tarjeta */
+    border: 1px solid var(--accent-color, #eee);
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: var(--card-shadow-subtle, 0 1px 3px rgba(0,0,0,0.05)); 
+    font-size: 0.9em; 
+    color: var(--text-color, #333);
+}
+.reimbursement-item strong { 
+    color: var(--primary-color, #c84e4e); 
+}
+.status-tag { 
+    display: inline-block; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    font-size: 0.8em; 
+    margin-left: 10px; 
+}
+/* Colores de estado fijos o basados en fallbacks */
+.status-Pendiente { 
+    background-color: #ffc107; 
+    color: #333; 
+}
+.status-Aprobado { 
+    background-color: var(--success-color); 
+    color: white; 
+}
+.status-Rechazado { 
+    background-color: var(--error-color); 
+    color: white; 
+}
+#loadingHistory { 
+    text-align: center; 
+    padding: 20px; 
+    color: var(--text-color, #666); 
+    opacity: 0.8;
+}
+
+/* ======================================================== */
+/* === Estilos de Alerta (ADAPTADO) === */
+/* ======================================================== */
+
+.alert-box {
+    background: var(--card-bg, white);
+    /* ... otros estilos se mantienen ... */
+}
+
+.alert-icon i {
+    color: var(--success-color);
+}
+
+.error-alert-box .alert-icon i {
+    color: var(--error-color);
+}
+
+.alert-title {
+    color: var(--primary-color, var(--text-color, #333));
+}
+
+.alert-btn {
+    background-color: var(--primary-color, var(--primary-color-fallback));
+    color: white;
+    /* ... otros estilos se mantienen ... */
+}
+.alert-btn:hover {
+    background-color: var(--secondary-color, #b04141);
+}
+
+/* Evitar que los estilos duplicados en el HTML anulen los estilos dinámicos */
+/* (Esos bloques CSS duplicados en tu HTML deben ser removidos idealmente) */
+/* =============================================== */
+/* === Estilos de Alerta (ADAPTADO A VARIABLES) === */
+/* =============================================== */
+
+/* Variables de Fallback para estados de alerta (si no vienen de personalizacion-colores.js) */
+:root {
+    --primary-color-fallback: #c84e4e;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+}
 
 .alert-overlay {
     position: fixed;
@@ -203,26 +342,34 @@ hr {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: none;
+    /* Fondo oscuro semitransparente compatible con modos claros/oscuros */
+    background: rgba(0, 0, 0, 0.6); 
+    display: none; /* Oculto por defecto */
     justify-content: center;
     align-items: center;
     z-index: 1000;
     backdrop-filter: blur(3px);
 }
 
+/* Solo las alertas con la clase 'show' se deben mostrar (se maneja en JS) */
 .alert-overlay.show {
     display: flex;
 }
 
 .alert-box {
-    background: white;
+    /* Usar fondo de tarjeta dinámico */
+    background: var(--card-bg, white); 
     padding: 30px;
     border-radius: 12px;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    /* Usar sombra dinámica */
+    box-shadow: var(--card-shadow, 0 10px 25px rgba(0, 0, 0, 0.2));
     max-width: 350px;
     width: 80%;
+    /* Asegurar que el color del texto de la alerta sea visible */
+    color: var(--text-color, #333); 
+    
+    /* Animación */
     transform: scale(0.9);
     opacity: 0;
     transition: all 0.3s ease-out;
@@ -235,28 +382,34 @@ hr {
 
 .alert-icon i {
     font-size: 3em;
-    color: var(--success);
+    /* Usar el color de éxito definido o fallback */
+    color: var(--success-color); 
     margin-bottom: 15px;
 }
 
 .error-alert-box .alert-icon i {
-    color: var(--error);
+    /* Usar el color de error definido o fallback */
+    color: var(--error-color);
 }
 
 .alert-title {
     margin: 0 0 10px 0;
     font-size: 1.5em;
-    color: var(--text-color);
+    /* Usar color de texto dinámico */
+    color: var(--text-color, #333); 
 }
 
 .alert-message {
-    color: #666;
+    /* Usar color de texto más claro/opaco */
+    color: var(--text-color, #666); 
+    opacity: 0.8;
     margin-bottom: 20px;
     line-height: 1.4;
 }
 
 .alert-btn {
-    background-color: var(--primary);
+    /* Usar color primario dinámico para el botón de acción */
+    background-color: var(--primary-color, var(--primary-color-fallback)); 
     color: white;
     padding: 10px 20px;
     border: none;
@@ -264,74 +417,11 @@ hr {
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.2s;
+    font-weight: bold;
 }
 
-
-        /* Estilos CSS incluidos aquí para asegurar la apariencia si el archivo externo falla */
-        .reimbursement-form, .reimbursement-history { padding: 20px; border-top: 1px solid #eee; margin-top: 20px; }
-        .reimbursement-form { display: flex; flex-direction: column; gap: 15px; padding: 0; }
-        .reimbursement-form label { font-weight: bold; color: #333; margin-bottom: 5px; display: block; }
-        .reimbursement-form input[type="number"], .reimbursement-form textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .reimbursement-form textarea { resize: vertical; }
-        .file-upload-container { border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.3s; }
-        .reimbursement-history h2 { color: #333; border-bottom: 2px solid #c84e4e; padding-bottom: 5px; margin-bottom: 15px; }
-        .reimbursement-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-        .reimbursement-item { background-color: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9em; }
-        .reimbursement-item strong { color: #c84e4e; }
-        .status-tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; margin-left: 10px; }
-        .status-Pendiente { background-color: #ffc107; color: #333; }
-        .status-Aprobado { background-color: #28a745; color: white; }
-        .status-Rechazado { background-color: #dc3545; color: white; }
-        #loadingHistory { text-align: center; padding: 20px; color: #666; }
-        .employee-info { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 10px; background-color: #f9f9f9; border-radius: 8px; }
-        .employee-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #c84e4e; }
-        .employee-details h3, .employee-details p { margin: 0; }
-        .submit-btn { background-color: #c84e4e; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
-        /* Estilos CSS incluidos aquí para asegurar la apariencia si el archivo externo falla */
-        .reimbursement-form, .reimbursement-history { padding: 20px; border-top: 1px solid #eee; margin-top: 20px; }
-        .reimbursement-form { display: flex; flex-direction: column; gap: 15px; padding: 0; }
-        .reimbursement-form label { font-weight: bold; color: #333; margin-bottom: 5px; display: block; }
-        .reimbursement-form input[type="number"], .reimbursement-form textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .reimbursement-form textarea { resize: vertical; }
-        .file-upload-container { border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.3s; }
-        .reimbursement-history h2 { color: #333; border-bottom: 2px solid #c84e4e; padding-bottom: 5px; margin-bottom: 15px; }
-        .reimbursement-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-        .reimbursement-item { background-color: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.9em; }
-        .reimbursement-item strong { color: #c84e4e; }
-        .status-tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; margin-left: 10px; }
-        .status-Pendiente { background-color: #ffc107; color: #333; }
-        .status-Aprobado { background-color: #28a745; color: white; }
-        .status-Rechazado { background-color: #dc3545; color: white; }
-        #loadingHistory { text-align: center; padding: 20px; color: #666; }
-        .employee-info { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 10px; background-color: #f9f9f9; border-radius: 8px; }
-        .employee-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #c84e4e; }
-        .employee-details h3, .employee-details p { margin: 0; }
-        .submit-btn { background-color: #c84e4e; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; margin-top: 10px; }
-
-        /* Estilo para el botón de alternar y el nuevo botón de tickets */
-        .toggle-btn {
-            background-color: #4a4a4a; /* Un gris oscuro para diferenciarse */
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
-            transition: background-color 0.2s;
-        }
-        .toggle-btn:hover {
-            background-color: #333;
-        }
-        /* Estilo específico para el nuevo botón principal */
-        #goToTicketsBtn {
-            background-color: #5cb85c; /* Verde para acción principal */
-            margin-bottom: 20px;
-            padding: 10px 15px;
-            font-size: 1.1em;
-            width: 100%;
-        }
-        #goToTicketsBtn:hover {
-            background-color: #4cae4c;
-        }
+.alert-btn:hover {
+    /* Usar color secundario dinámico o un tono oscuro del primario */
+    background-color: var(--secondary-color, #b04141);
+    filter: brightness(1.1);
+}
