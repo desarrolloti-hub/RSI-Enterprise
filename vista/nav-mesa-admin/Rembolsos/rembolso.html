@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud y Historial de Reembolso | RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="rembolso.css"> 
+</head>
+<body>
+    <div class="attendance-container" id="reimbursementContainer">
+        
+        <div class="attendance-header">
+            <h1>Solicitud de Reembolso</h1>
+            <p>Envía tu comprobante y detalles del gasto</p>
+        </div>
+
+        <div class="employee-info">
+            <img src="https://ui-avatars.com/api/?name=RS&background=c84e4e&color=fff&size=128" alt="Empleado" class="employee-avatar" id="employeeAvatar">
+            <div class="employee-details" id="employeeDetails">
+                <h3>Cargando Nombre...</h3>
+                <p><strong>Estatus:</strong> <span>Verificando...</span></p>
+            </div>
+        </div>
+
+        <hr>
+
+        <form class="reimbursement-form" id="reimbursementForm">
+            <h2>Nuevo Reembolso</h2>
+            <div>
+                <label for="amount">Monto a Reembolsar ($)</label>
+                <input type="number" id="amount" placeholder="Ej: 150.75" required step="0.01" min="0">
+            </div>
+            <div>
+                <label for="description">Descripción del Gasto</label>
+                <textarea id="description" rows="3" placeholder="Ej: Comida con cliente 'Juan Pérez' de la empresa X" required></textarea>
+            </div>
+            <div>
+                <label>Comprobante de Gasto (Foto/Ticket)</label>
+                <div class="file-upload-container" onclick="document.getElementById('photoFile').click();">
+                    <i class="fas fa-camera fa-2x"></i>
+                    <p id="fileText">Haz clic para subir una imagen</p>
+                    <input type="file" id="photoFile" accept="image/*" style="display: none;" required>
+                </div>
+                <img id="previewImage" alt="Vista previa de la imagen" style="display: none; max-width: 100%; max-height: 200px; margin-top: 10px; border-radius: 8px;">
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitReimbursement">
+                <i class="fas fa-paper-plane"></i> Enviar Solicitud de Reembolso
+            </button>
+            
+            <button type="button" class="toggle-btn" id="toggleHistoryBtn" style="margin-top: 15px;">
+                <i class="fas fa-list-alt"></i> Ver Historial de Reembolsos
+            </button>
+            
+            <button type="button" class="toggle-btn" id="goToTicketsBtn">
+                <i class="fas fa-ticket-alt"></i> Ver Mis Tickets
+            </button>
+        </form>
+
+        <hr id="historyDivider" style="display: none;">
+        
+        <div class="reimbursement-history" id="reimbursementHistory" style="display: none;">
+            <button class="toggle-btn" id="backToFormBtn">
+                <i class="fas fa-arrow-left"></i> Regresar al Formulario
+            </button>
+
+            <h2>Historial de Mis Reembolsos</h2>
+            <div id="loadingHistory"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</div>
+            <ul class="reimbursement-list" id="reimbursementList">
+            </ul>
+            <p id="noReimbursements" style="display:none; text-align:center; color:#999;">No tienes solicitudes de reembolso registradas.</p>
+        </div>
+    </div>
+
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-box">
+            <div class="alert-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="alert-title">¡Reembolso Enviado!</h3>
+            <p class="alert-message">Tu solicitud ha sido enviada para revisión. Serás redirigido.</p>
+            <button class="alert-btn" id="alertBtn">Aceptar</button>
+        </div>
+    </div>
+
+    <div class="alert-overlay" id="errorAlert">
+        <div class="alert-box error-alert-box">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h3 class="alert-title">¡Error!</h3>
+            <p class="alert-message">Hubo un problema al enviar el reembolso.</p>
+            <button class="alert-btn" id="errorBtn">Entendido</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    
+    <script>
+    // La configuración de Firebase solo es referencial.
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+        measurementId: "G-38F2DBG9HE"
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let db;
+        let auth;
+        
+        // =========================================================================
+        // SOLUCIÓN DE COMPATIBILIDAD: Esperar a que navegacion-operador.js inicialice Firebase
+        // =========================================================================
+        const checkFirebaseReady = setInterval(() => {
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                clearInterval(checkFirebaseReady);
+
+                // Obtener instancias sin re-inicializar
+                db = firebase.firestore();
+                auth = firebase.auth();
+                
+                initializeReimbursementLogic(db, auth);
+            }
+        }, 100);
+        // =========================================================================
+
+
+        function initializeReimbursementLogic(db, auth) {
+            // Elementos del DOM
+            const employeeAvatar = document.getElementById('employeeAvatar');
+            const employeeDetails = document.getElementById('employeeDetails');
+            const reimbursementForm = document.getElementById('reimbursementForm');
+            const submitBtn = document.getElementById('submitReimbursement');
+            const amountInput = document.getElementById('amount');
+            const descriptionInput = document.getElementById('description');
+            const photoFileInput = document.getElementById('photoFile');
+            const previewImage = document.getElementById('previewImage');
+            const fileText = document.getElementById('fileText');
+            const alertOverlay = document.getElementById('alertOverlay');
+            const alertBtn = document.getElementById('alertBtn');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorBtn = document.getElementById('errorBtn');
+            const reimbursementHistory = document.getElementById('reimbursementHistory');
+            const reimbursementList = document.getElementById('reimbursementList');
+            const loadingHistory = document.getElementById('loadingHistory');
+            const noReimbursements = document.getElementById('noReimbursements');
+            const toggleHistoryBtn = document.getElementById('toggleHistoryBtn'); 
+            const backToFormBtn = document.getElementById('backToFormBtn'); 
+            const goToTicketsBtn = document.getElementById('goToTicketsBtn');
+            
+            let current_userData = null; 
+
+            // --- Funcionalidad de Alternar Vistas ---
+            function toggleView(showForm) {
+                const hrDivider = document.querySelector('.attendance-container > hr');
+
+                if (showForm) {
+                    reimbursementForm.style.display = 'flex';
+                    toggleHistoryBtn.style.display = 'block';
+                    reimbursementHistory.style.display = 'none';
+                    hrDivider.style.display = 'block';
+
+                } else {
+                    reimbursementForm.style.display = 'none';
+                    toggleHistoryBtn.style.display = 'none';
+                    reimbursementHistory.style.display = 'block';
+                    hrDivider.style.display = 'none';
+                    
+                    if (current_userData && current_userData['CORREO ELECTRÓNICO EMPRESARIAL']) {
+                        loadReimbursementHistory(current_userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                    }
+                }
+            }
+
+            // Event Listeners para alternar
+            toggleHistoryBtn.addEventListener('click', () => toggleView(false));
+            backToFormBtn.addEventListener('click', () => toggleView(true));
+
+            // Event Listener para el botón principal de tickets
+            goToTicketsBtn.addEventListener('click', function() {
+                window.location.href = '../gestion-tickets/gestion-tickets.html';
+            });
+
+
+            // --- Utilidades ---
+            function showAlert(type, title, message) {
+                alertOverlay.classList.remove('show');
+                errorAlert.classList.remove('show');
+                
+                const targetAlert = type === 'error' ? errorAlert : alertOverlay;
+                const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+                const iconElement = targetAlert.querySelector('.alert-icon i');
+
+                targetAlert.querySelector('.alert-title').textContent = title;
+                targetAlert.querySelector('.alert-message').innerHTML = message;
+                iconElement.className = `fas ${icon}`;
+                
+                targetAlert.classList.add('show');
+            }
+
+            async function getUserData(email) {
+                try {
+                    const querySnapshot = await db.collection('colaboradores')
+                        .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                        .limit(1)
+                        .get();
+                    if (!querySnapshot.empty) {
+                        return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+                    }
+                    return null;
+                } catch (error) {
+                    console.error("Error al obtener datos del usuario:", error);
+                    return null;
+                }
+            }
+            
+            function displayUserInfo(user) {
+                employeeDetails.innerHTML = `
+                    <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
+                    <p><strong>Área:</strong> ${user['ÁREA'] || 'No especificado'}</p>
+                    <p><strong>ID Empleado:</strong> ${user.NIT || 'ID no disponible'}</p>
+                    <p><strong>Email:</strong> ${user['CORREO ELECTRÓNICO EMPRESARIAL'] || 'No disponible'}</p>
+                `;
+                
+                if (user.imagen) {
+                    employeeAvatar.src = user.imagen;
+                } else {
+                    const name = user.NOMBRE || '';
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=c84e4e&color=fff&size=128`;
+                }
+            }
+            
+            function fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    if (!file) {
+                        return resolve(null);
+                    }
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            }
+
+            photoFileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    fileText.textContent = `Archivo seleccionado: ${file.name}`;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewImage.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    fileText.textContent = 'Haz clic para subir una imagen';
+                    previewImage.style.display = 'none';
+                    previewImage.src = '';
+                }
+            });
+
+            // --- Lógica de Envío del Reembolso ---
+            async function submitReimbursement(userData) {
+                if (!userData || !userData.id) {
+                    throw new Error("Datos de usuario no cargados. Intenta recargar la página.");
+                }
+                const amount = parseFloat(amountInput.value);
+                const description = descriptionInput.value.trim();
+                const photoFile = photoFileInput.files[0];
+
+                if (isNaN(amount) || amount <= 0 || !description || !photoFile) {
+                    throw new Error("Por favor, completa todos los campos correctamente.");
+                }
+
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando Solicitud...';
+                submitBtn.disabled = true;
+
+                const photoBase64 = await fileToBase64(photoFile);
+                const now = new Date();
+                const timestamp = firebase.firestore.Timestamp.fromDate(now);
+
+                const reimbursementData = {
+                    userId: userData.id,
+                    nombre: userData.NOMBRE,
+                    emailEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'],
+                    area: userData['ÁREA'],
+                    monto: amount,
+                    descripcion: description,
+                    comprobanteBase64: photoBase64, 
+                    fechaSolicitud: timestamp,
+                    estado: 'Pendiente',
+                    detallesColaborador: {
+                        nombre: userData.NOMBRE || 'N/A', 
+                        rfc: userData.RFC || 'N/A',
+                        nit: userData.NIT || 'N/A',
+                    }
+                };
+
+                await db.collection('Reembolsos').add(reimbursementData);
+
+                showAlert(
+                    'success', 
+                    '¡Reembolso Enviado!', 
+                    `Monto: $${amount.toFixed(2)}<br>Tu solicitud ha sido enviada con éxito.`
+                );
+                
+                setTimeout(() => {
+                    alertOverlay.classList.remove('show');
+                    toggleView(false); 
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud de Reembolso';
+                    submitBtn.disabled = false;
+                    reimbursementForm.reset();
+                    previewImage.style.display = 'none';
+                    fileText.textContent = 'Haz clic para subir una imagen';
+                }, 1500); 
+            }
+
+            reimbursementForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                try {
+                    await submitReimbursement(current_userData);
+                } catch (error) {
+                    console.error("Error al procesar el reembolso:", error);
+                    showAlert(
+                        'error', 
+                        'Error al enviar', 
+                        error.message || 'Hubo un problema desconocido. Intenta nuevamente.'
+                    );
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud de Reembolso';
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // --- Lógica de Carga y Filtrado del Historial (CORREGIDO PARA EVITAR ÍNDICE) ---
+            function createStatusTag(status) {
+                let statusText = status;
+                let statusClass = status.replace(/\s/g, ''); 
+
+                if (status === 'Pendiente') statusText = 'Pendiente';
+                else if (status === 'Aprobado') statusText = 'Aprobado';
+                else if (status === 'Rechazado') statusText = 'Rechazado';
+                
+                return `<span class="status-tag status-${statusClass}">${statusText}</span>`;
+            }
+
+            async function loadReimbursementHistory(collaboratorEmail) {
+                reimbursementList.innerHTML = '';
+                loadingHistory.style.display = 'block';
+                noReimbursements.style.display = 'none';
+
+                try {
+                    // ✅ CORRECCIÓN: Quitamos el .orderBy() para evitar el error de índice compuesto.
+                    // Ahora solo filtra por email.
+                    const querySnapshot = await db.collection('Reembolsos')
+                        .where('emailEmpresarial', '==', collaboratorEmail) 
+                        .get(); 
+
+                    loadingHistory.style.display = 'none';
+
+                    if (querySnapshot.empty) {
+                        noReimbursements.style.display = 'block';
+                        return;
+                    }
+
+                    // Dado que no hay .orderBy, procesamos la lista y la ordenamos manualmente.
+                    let reimbursements = [];
+                    querySnapshot.forEach(doc => {
+                        reimbursements.push(doc.data());
+                    });
+
+                    // Ordenar manualmente por fechaSolicitud (del más reciente al más antiguo)
+                    reimbursements.sort((a, b) => {
+                        const dateA = a.fechaSolicitud ? a.fechaSolicitud.toDate().getTime() : 0;
+                        const dateB = b.fechaSolicitud ? b.fechaSolicitud.toDate().getTime() : 0;
+                        return dateB - dateA; // Orden descendente
+                    });
+
+
+                    reimbursements.forEach(data => {
+                        
+                        let date = 'N/A';
+                        let time = '';
+                        if (data.fechaSolicitud && typeof data.fechaSolicitud.toDate === 'function') {
+                            date = data.fechaSolicitud.toDate().toLocaleDateString('es-ES');
+                            time = data.fechaSolicitud.toDate().toLocaleTimeString('es-ES');
+                        }
+
+                        const statusTag = createStatusTag(data.estado);
+
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('reimbursement-item');
+                        listItem.innerHTML = `
+                            <div>
+                                <strong>Monto:</strong> $${data.monto.toFixed(2)} ${statusTag}
+                            </div>
+                            <div>
+                                <strong>Descripción:</strong> ${data.descripcion}
+                            </div>
+                            <div>
+                                <strong>Fecha Solicitud:</strong> ${date} ${time ? ' a las ' + time : ''}
+                            </div>
+                        `;
+                        reimbursementList.appendChild(listItem);
+                    });
+
+                } catch (error) {
+                    // Este error ya no debería aparecer si solo es por el índice
+                    console.error("Error al cargar el historial de reembolsos (Final):", error);
+                    loadingHistory.style.display = 'none';
+                    
+                    reimbursementList.innerHTML = `<li style="color:#d9534f; background:#f2dede; border-radius: 8px; padding: 15px; text-align:center;">
+                        ⚠️ Error desconocido al cargar el historial. Consulta la consola.
+                    </li>`;
+                }
+            }
+
+
+            // --- Inicialización y Autenticación ---
+
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    const userData = await getUserData(user.email);
+                    current_userData = userData; 
+
+                    if (!userData || !userData.NOMBRE) {
+                        showAlert('error', 'Datos no encontrados', 
+                            'No se encontró el nombre del usuario. Intenta recargar la página o contacta a soporte.');
+                        employeeDetails.innerHTML = `<h3>${user.email}</h3><p><strong>Estatus:</strong> <span>Datos incompletos</span></p>`;
+                        return;
+                    }
+                    
+                    displayUserInfo(userData);
+                    toggleView(true); 
+                    
+                } else {
+                    // El script navegacion-operador.js se encargará de la redirección
+                }
+            });
+
+            // Botón de alerta
+            alertBtn.addEventListener('click', function() { alertOverlay.classList.remove('show'); });
+            errorBtn.addEventListener('click', function() { errorAlert.classList.remove('show'); });
+        }
+    });
+</script>
+    
+    <script src="../js/navegación-operador.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+</body>
+</html>

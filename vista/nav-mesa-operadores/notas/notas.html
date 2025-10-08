@@ -1,11 +1,1056 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>RSI Enterprise - Sistema de Notas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="notas.css">
 </head>
 <body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
     
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <center><h2 class="title" style="color:#fff !important;">Sistema de Notas</h2></center>
+            </div>
+        </div>
+
+        <div class="notes-container">
+            <div class="notes-header">
+                <h2>Mis Notas</h2>
+                <div class="notes-actions">
+                    <button class="btn btn-primary" id="newGeneralNoteBtn">
+                        <i class="fas fa-plus"></i> <i class="fas fa-users"></i>
+                        Nota General
+                    </button>
+                    <button class="btn btn-primary" id="newPersonalNoteBtn">
+                        <i class="fas fa-plus"></i><i class="fas fa-user"></i>
+                        Nota Personal
+                    </button>
+                    <!-- Botón para notas compartidas -->
+                    <button class="btn btn-primary" id="newSharedNoteBtn">
+                        <i class="fas fa-plus"></i><i class="fas fa-share-alt"></i>
+                        Nota Compartida
+                    </button>
+                </div>
+            </div>
+
+            <div class="notes-tabs">
+                <button class="notes-tab active" data-tab="general">Notas Generales</button>
+                <button class="notes-tab" data-tab="personal">Notas Personales</button>
+                <button class="notes-tab" data-tab="shared">Notas Compartidas</button>
+            </div>
+
+            <!-- Formulario para nueva nota (oculto inicialmente) -->
+            <div class="note-form-container" id="noteFormContainer" style="display: none;">
+                <h3 class="note-form-title" id="noteFormTitle">Nueva Nota</h3>
+                <form id="noteForm">
+                    <input type="hidden" id="noteId">
+                    <input type="hidden" id="noteType">
+                    
+                    <div class="form-group">
+                        <label for="noteTitle" class="form-label">Título</label>
+                        <input type="text" id="noteTitle" class="form-control" placeholder="Título de la nota" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="noteContent" class="form-label">Contenido</label>
+                        <textarea id="noteContent" class="form-control" rows="3" placeholder="Descripción de la nota"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Checklist</label>
+                        <div class="checklist-items-container" id="checklistItemsContainer">
+                            <!-- Los items del checklist se agregarán aquí dinámicamente -->
+                        </div>
+                        <button type="button" class="add-checklist-item" id="addChecklistItem">
+                            <i class="fas fa-plus"></i>
+                            Agregar elemento al checklist
+                        </button>
+                    </div>
+                    
+                    <!-- Sección para seleccionar colaboradores (solo para notas compartidas) -->
+                    <div class="form-group" id="sharedCollaboratorsSection" style="display: none;">
+                        <label class="form-label">Compartir con colaboradores</label>
+                        <div class="collaborator-search">
+                            <input type="text" id="collaboratorSearch" placeholder="Buscar colaborador por nombre..." class="form-control">
+                        </div>
+                        <div class="collaborators-container" id="collaboratorsContainer">
+                            <!-- Los colaboradores se cargarán aquí dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelNoteBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="saveNoteBtn">Guardar Nota</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Contenido de notas generales -->
+            <div class="notes-content active" id="generalNotesContent">
+                <div class="notes-grid" id="generalNotesGrid">
+                    <!-- Las notas generales se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- Contenido de notas personales -->
+            <div class="notes-content" id="personalNotesContent">
+                <div class="notes-grid" id="personalNotesGrid">
+                    <!-- Las notas personales se cargarán aquí -->
+                </div>
+            </div>
+
+            <!-- Contenido de notas compartidas -->
+            <div class="notes-content" id="sharedNotesContent">
+                <div class="notes-grid" id="sharedNotesGrid">
+                    <!-- Las notas compartidas se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Estado de la aplicación
+        const appState = {
+            currentUser: null,
+            userData: null,
+            currentTab: 'general',
+            notes: {
+                general: [],
+                personal: [],
+                shared: []
+            },
+            editingNote: null,
+            collaborators: [],
+            filteredCollaborators: []
+        };
+
+        // =================================================================================
+        // FUNCIONES PRINCIPALES
+        // =================================================================================
+
+        async function initialLoad() {
+            try {
+                await loadUserProfile();
+                await loadCollaborators();
+                setupEventListeners();
+                loadNotes();
+            } catch (error) {
+                console.error("Error en la carga inicial:", error);
+                showError('No se pudieron cargar los datos iniciales.');
+            }
+        }
+
+        async function loadUserProfile() {
+            const user = auth.currentUser;
+            if (!user) {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                return;
+            }
+            
+            try {
+                const querySnapshot = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const userData = doc.data();
+                    appState.currentUser = {
+                        id: doc.id,
+                        nombre: userData.NOMBRE,
+                        area: userData.ÁREA,
+                        imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
+                    };
+                    appState.userData = appState.currentUser;
+                    sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
+                }
+            } catch (error) {
+                console.error("Error al cargar perfil:", error);
+            }
+        }
+
+        // Cargar lista de colaboradores para compartir notas
+        async function loadCollaborators() {
+            try {
+                const collaboratorsSnapshot = await db.collection("colaboradores").get();
+                appState.collaborators = collaboratorsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        nombre: data.NOMBRE || 'Sin nombre',
+                        correo: data["CORREO ELECTRÓNICO EMPRESARIAL"] || '',
+                        area: data.ÁREA || 'Sin área'
+                    };
+                }).filter(collaborator => collaborator.id !== appState.currentUser?.id);
+                
+                appState.filteredCollaborators = [...appState.collaborators];
+                console.log("Colaboradores cargados:", appState.collaborators);
+            } catch (error) {
+                console.error("Error al cargar colaboradores:", error);
+            }
+        }
+
+        // Filtrar colaboradores por búsqueda
+        function filterCollaborators(searchTerm) {
+            if (!searchTerm) {
+                appState.filteredCollaborators = [...appState.collaborators];
+            } else {
+                const term = searchTerm.toLowerCase();
+                appState.filteredCollaborators = appState.collaborators.filter(collaborator => 
+                    collaborator.nombre.toLowerCase().includes(term) ||
+                    collaborator.area.toLowerCase().includes(term) ||
+                    collaborator.correo.toLowerCase().includes(term)
+                );
+            }
+            renderCollaborators();
+        }
+
+        async function loadNotes() {
+            try {
+                // Cargar notas generales
+                const generalSnapshot = await db.collection('notasGenerales').get();
+                
+                appState.notes.general = generalSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        fechaCreacion: data.fechaCreacion ? data.fechaCreacion.toDate() : new Date(),
+                        fechaCompletado: data.fechaCompletado ? data.fechaCompletado.toDate() : null
+                    };
+                }).sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+
+                // Cargar notas personales
+                if (appState.currentUser) {
+                    const personalSnapshot = await db.collection('notasPersonales')
+                        .where('usuarioId', '==', appState.currentUser.id)
+                        .get();
+                    
+                    appState.notes.personal = personalSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            ...data,
+                            fechaCreacion: data.fechaCreacion ? data.fechaCreacion.toDate() : new Date(),
+                            fechaCompletado: data.fechaCompletado ? data.fechaCompletado.toDate() : null
+                        };
+                    }).sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+                }
+
+                // Cargar notas compartidas (sin índices complejos)
+                await loadSharedNotes();
+
+                displayNotes();
+            } catch (error) {
+                console.error("Error al cargar notas:", error);
+                showError('No se pudieron cargar las notas. ' + error.message);
+            }
+        }
+
+        // Cargar notas compartidas sin usar índices complejos
+        async function loadSharedNotes() {
+            try {
+                if (!appState.currentUser) return;
+
+                // Cargar todas las notas compartidas y filtrar en el cliente
+                const allSharedNotesSnapshot = await db.collection('notasCompartidas').get();
+                
+                const allSharedNotes = allSharedNotesSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        fechaCreacion: data.fechaCreacion ? data.fechaCreacion.toDate() : new Date(),
+                        fechaCompletado: data.fechaCompletado ? data.fechaCompletado.toDate() : null,
+                        esCreador: data.creadorId === appState.currentUser.id
+                    };
+                });
+
+                // Filtrar en el cliente: notas donde el usuario es creador o destinatario
+                appState.notes.shared = allSharedNotes.filter(note => 
+                    note.creadorId === appState.currentUser.id || 
+                    (note.destinatarios && note.destinatarios.includes(appState.currentUser.id))
+                ).sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+                
+            } catch (error) {
+                console.error("Error al cargar notas compartidas:", error);
+            }
+        }
+
+        function displayNotes() {
+            displayGeneralNotes();
+            displayPersonalNotes();
+            displaySharedNotes();
+        }
+
+        function displayGeneralNotes() {
+            const container = document.getElementById('generalNotesGrid');
+            
+            if (!appState.notes.general || appState.notes.general.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-notes">
+                        <i class="fas fa-sticky-note"></i>
+                        <h3>No hay notas generales</h3>
+                        <p>Las notas generales son visibles para todos los usuarios.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appState.notes.general.map(note => `
+                <div class="note-card" data-id="${note.id}">
+                    <div class="note-header">
+                        <h3 class="note-title">${note.titulo || 'Sin título'}</h3>
+                        <div class="note-actions">
+                            ${note.creadorId === appState.currentUser.id ? `
+                                <button class="note-action-btn edit" title="Editar nota">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="note-action-btn delete" title="Eliminar nota">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="note-content">
+                        ${note.contenido ? `<p>${note.contenido}</p>` : ''}
+                        
+                        ${note.checklist && note.checklist.length > 0 ? `
+                            <div class="note-checklist">
+                                ${note.checklist.map((item, index) => `
+                                    <div class="checklist-item ${item.completado ? 'completed' : ''}">
+                                        <input type="checkbox" ${item.completado ? 'checked' : ''} 
+                                               data-note-id="${note.id}" data-item-index="${index}" 
+                                               ${note.creadorId !== appState.currentUser.id && note.completadoPor ? 'disabled' : ''}>
+                                        <label>${item.texto}</label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="note-meta">
+                        <div class="note-creator">
+                            <strong>Creada por:</strong> ${note.creadorNombre || 'Usuario desconocido'}
+                        </div>
+                        <div class="note-date">
+                            <strong>Fecha:</strong> ${formatDateTime(note.fechaCreacion)}
+                        </div>
+                        ${note.completadoPor ? `
+                            <div class="note-completer">
+                                <strong>Completada por:</strong> ${note.completadoPorNombre || 'Usuario desconocido'}
+                            </div>
+                            <div class="note-date">
+                                <strong>Fecha de completado:</strong> ${formatDateTime(note.fechaCompletado)}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Agregar event listeners para checkboxes
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handleChecklistChange);
+            });
+
+            // Agregar event listeners para botones de acción
+            container.querySelectorAll('.note-action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const noteId = this.closest('.note-card').dataset.id;
+                    editNote(noteId, 'general');
+                });
+            });
+
+            container.querySelectorAll('.note-action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const noteId = this.closest('.note-card').dataset.id;
+                    deleteNote(noteId, 'general');
+                });
+            });
+        }
+
+        function displayPersonalNotes() {
+            const container = document.getElementById('personalNotesGrid');
+            
+            if (!appState.notes.personal || appState.notes.personal.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-notes">
+                        <i class="fas fa-sticky-note"></i>
+                        <h3>No hay notas personales</h3>
+                        <p>Crea notas personales que solo tú puedes ver.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appState.notes.personal.map(note => `
+                <div class="note-card" data-id="${note.id}">
+                    <div class="note-header">
+                        <h3 class="note-title">${note.titulo || 'Sin título'}</h3>
+                        <div class="note-actions">
+                            <button class="note-action-btn edit" title="Editar nota">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="note-action-btn delete" title="Eliminar nota">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="note-content">
+                        ${note.contenido ? `<p>${note.contenido}</p>` : ''}
+                        
+                        ${note.checklist && note.checklist.length > 0 ? `
+                            <div class="note-checklist">
+                                ${note.checklist.map((item, index) => `
+                                    <div class="checklist-item ${item.completado ? 'completed' : ''}">
+                                        <input type="checkbox" ${item.completado ? 'checked' : ''} 
+                                               data-note-id="${note.id}" data-item-index="${index}">
+                                        <label>${item.texto}</label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="note-meta">
+                        <div class="note-date">
+                            <strong>Fecha:</strong> ${formatDateTime(note.fechaCreacion)}
+                        </div>
+                        ${note.completado ? `
+                            <div class="note-date">
+                                <strong>Completada:</strong> ${formatDateTime(note.fechaCompletado)}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Agregar event listeners para checkboxes
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handleChecklistChange);
+            });
+
+            // Agregar event listeners para botones de acción
+            container.querySelectorAll('.note-action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const noteId = this.closest('.note-card').dataset.id;
+                    editNote(noteId, 'personal');
+                });
+            });
+
+            container.querySelectorAll('.note-action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const noteId = this.closest('.note-card').dataset.id;
+                    deleteNote(noteId, 'personal');
+                });
+            });
+        }
+
+        function displaySharedNotes() {
+            const container = document.getElementById('sharedNotesGrid');
+            
+            if (!appState.notes.shared || appState.notes.shared.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-notes">
+                        <i class="fas fa-sticky-note"></i>
+                        <h3>No hay notas compartidas</h3>
+                        <p>Las notas compartidas son visibles solo para ti y las personas con quienes las compartas.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appState.notes.shared.map(note => `
+                <div class="note-card" data-id="${note.id}">
+                    <div class="note-header">
+                        <h3 class="note-title">${note.titulo || 'Sin título'}</h3>
+                        <div class="note-actions">
+                            ${note.esCreador ? `
+                                <button class="note-action-btn edit" title="Editar nota">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="note-action-btn delete" title="Eliminar nota">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : `
+                                <span class="shared-badge">
+                                    <i class="fas fa-share-alt"></i> Compartida contigo
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                    
+                    <div class="note-content">
+                        ${note.contenido ? `<p>${note.contenido}</p>` : ''}
+                        
+                        ${note.checklist && note.checklist.length > 0 ? `
+                            <div class="note-checklist">
+                                ${note.checklist.map((item, index) => `
+                                    <div class="checklist-item ${item.completado ? 'completed' : ''}">
+                                        <input type="checkbox" ${item.completado ? 'checked' : ''} 
+                                               data-note-id="${note.id}" data-item-index="${index}">
+                                        <label>${item.texto}</label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="note-meta">
+                        <div class="note-creator">
+                            <strong>Creada por:</strong> ${note.creadorNombre || 'Usuario desconocido'}
+                        </div>
+                        <div class="note-date">
+                            <strong>Fecha:</strong> ${formatDateTime(note.fechaCreacion)}
+                        </div>
+                        ${note.completado ? `
+                            <div class="note-date">
+                                <strong>Completada:</strong> ${formatDateTime(note.fechaCompletado)}
+                            </div>
+                        ` : ''}
+                        ${note.destinatariosNombres && note.destinatariosNombres.length > 0 ? `
+                            <div class="note-shared-with">
+                                <strong>Compartida con:</strong> ${note.destinatariosNombres.join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Agregar event listeners para checkboxes
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handleChecklistChange);
+            });
+
+            // Agregar event listeners para botones de acción (solo para notas creadas por el usuario)
+            container.querySelectorAll('.note-action-btn.edit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const noteId = this.closest('.note-card').dataset.id;
+                    editNote(noteId, 'shared');
+                });
+            });
+
+            container.querySelectorAll('.note-action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const noteId = this.closest('.note-card').dataset.id;
+                    deleteNote(noteId, 'shared');
+                });
+            });
+        }
+
+        // =================================================================================
+        // FUNCIONES DE GESTIÓN DE NOTAS
+        // =================================================================================
+
+        function showNoteForm(type = null, note = null) {
+            const formContainer = document.getElementById('noteFormContainer');
+            const formTitle = document.getElementById('noteFormTitle');
+            const sharedSection = document.getElementById('sharedCollaboratorsSection');
+            
+            // Mostrar/ocultar sección de colaboradores según el tipo de nota
+            if (type === 'shared') {
+                sharedSection.style.display = 'block';
+                loadCollaboratorsToForm();
+            } else {
+                sharedSection.style.display = 'none';
+            }
+            
+            // Limpiar formulario
+            document.getElementById('noteForm').reset();
+            document.getElementById('checklistItemsContainer').innerHTML = '';
+            document.getElementById('collaboratorSearch').value = '';
+            
+            if (note) {
+                // Modo edición
+                formTitle.textContent = 'Editar Nota';
+                document.getElementById('noteId').value = note.id;
+                document.getElementById('noteType').value = type;
+                document.getElementById('noteTitle').value = note.titulo || '';
+                document.getElementById('noteContent').value = note.contenido || '';
+                
+                // Agregar items del checklist
+                if (note.checklist && note.checklist.length > 0) {
+                    note.checklist.forEach(item => {
+                        addChecklistItemToForm(item.texto);
+                    });
+                }
+                
+                // Para notas compartidas, cargar destinatarios seleccionados
+                if (type === 'shared' && note.destinatarios) {
+                    loadSelectedCollaborators(note.destinatarios);
+                }
+                
+                appState.editingNote = note;
+            } else {
+                // Modo creación
+                formTitle.textContent = type === 'general' ? 'Nueva Nota General' : 
+                                       type === 'personal' ? 'Nueva Nota Personal' : 
+                                       'Nueva Nota Compartida';
+                document.getElementById('noteId').value = '';
+                document.getElementById('noteType').value = type;
+                appState.editingNote = null;
+                
+                // Agregar un item vacío por defecto
+                addChecklistItemToForm();
+            }
+            
+            formContainer.style.display = 'block';
+            document.getElementById('noteTitle').focus();
+        }
+
+        // Cargar colaboradores en el formulario de notas compartidas
+        function loadCollaboratorsToForm() {
+            renderCollaborators();
+        }
+
+        // Renderizar colaboradores en el formulario
+        function renderCollaborators() {
+            const container = document.getElementById('collaboratorsContainer');
+            
+            if (appState.filteredCollaborators.length === 0) {
+                container.innerHTML = `
+                    <div class="no-collaborators">
+                        <i class="fas fa-search"></i>
+                        <p>No se encontraron colaboradores</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = appState.filteredCollaborators.map(collaborator => {
+                const collaboratorId = `collaborator-${collaborator.id}`;
+                return `
+                    <div class="collaborator-checkbox">
+                        <input type="checkbox" id="${collaboratorId}" value="${collaborator.id}" 
+                               data-nombre="${collaborator.nombre}">
+                        <label for="${collaboratorId}">
+                            <strong>${collaborator.nombre}</strong><br>
+                            <small>${collaborator.area} • ${collaborator.correo}</small>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Cargar colaboradores seleccionados (para edición)
+        function loadSelectedCollaborators(selectedIds) {
+            selectedIds.forEach(id => {
+                const checkbox = document.querySelector(`input[value="${id}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+
+        function hideNoteForm() {
+            document.getElementById('noteFormContainer').style.display = 'none';
+            appState.editingNote = null;
+        }
+
+        function addChecklistItemToForm(text = '') {
+            const container = document.getElementById('checklistItemsContainer');
+            const itemId = 'checklist-item-' + Date.now();
+            
+            const itemHtml = `
+                <div class="checklist-item-input" id="${itemId}">
+                    <input type="text" class="form-control" placeholder="Elemento del checklist" value="${text}" required>
+                    <button type="button" class="remove-checklist-item" data-item-id="${itemId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', itemHtml);
+            
+            // Agregar event listener al botón de eliminar
+            document.querySelector(`[data-item-id="${itemId}"]`).addEventListener('click', function() {
+                document.getElementById(itemId).remove();
+            });
+        }
+
+        async function saveNote(formData) {
+            try {
+                const noteData = {
+                    titulo: formData.titulo,
+                    contenido: formData.contenido,
+                    checklist: formData.checklistItems.map(item => ({
+                        texto: item,
+                        completado: false
+                    })),
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (formData.id) {
+                    // Actualizar nota existente
+                    if (formData.type === 'general') {
+                        await db.collection('notasGenerales').doc(formData.id).update(noteData);
+                    } else if (formData.type === 'personal') {
+                        await db.collection('notasPersonales').doc(formData.id).update(noteData);
+                    } else if (formData.type === 'shared') {
+                        // Para notas compartidas, también actualizar destinatarios si se proporcionan
+                        if (formData.destinatarios) {
+                            noteData.destinatarios = formData.destinatarios;
+                            noteData.destinatariosNombres = formData.destinatariosNombres;
+                        }
+                        await db.collection('notasCompartidas').doc(formData.id).update(noteData);
+                    }
+                    
+                    showSuccess('Nota actualizada correctamente.');
+                } else {
+                    // Crear nueva nota
+                    const baseData = {
+                        ...noteData,
+                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+                        completado: false
+                    };
+
+                    if (formData.type === 'general') {
+                        await db.collection('notasGenerales').add({
+                            ...baseData,
+                            creadorId: appState.currentUser.id,
+                            creadorNombre: appState.currentUser.nombre
+                        });
+                    } else if (formData.type === 'personal') {
+                        await db.collection('notasPersonales').add({
+                            ...baseData,
+                            usuarioId: appState.currentUser.id
+                        });
+                    } else if (formData.type === 'shared') {
+                        // Para notas compartidas, agregar información de destinatarios
+                        // INCLUIR AL USUARIO ACTUAL EN LOS DESTINATARIOS
+                        const destinatarios = formData.destinatarios || [];
+                        const destinatariosNombres = formData.destinatariosNombres || [];
+                        
+                        // Agregar al usuario actual si no está incluido
+                        if (!destinatarios.includes(appState.currentUser.id)) {
+                            destinatarios.push(appState.currentUser.id);
+                            destinatariosNombres.push(appState.currentUser.nombre);
+                        }
+                        
+                        await db.collection('notasCompartidas').add({
+                            ...baseData,
+                            creadorId: appState.currentUser.id,
+                            creadorNombre: appState.currentUser.nombre,
+                            destinatarios: destinatarios,
+                            destinatariosNombres: destinatariosNombres
+                        });
+                    }
+                    
+                    showSuccess('Nota creada correctamente.');
+                }
+                
+                hideNoteForm();
+                loadNotes();
+            } catch (error) {
+                console.error("Error al guardar nota:", error);
+                showError('No se pudo guardar la nota.');
+            }
+        }
+
+        async function handleChecklistChange(event) {
+            const checkbox = event.target;
+            const noteId = checkbox.dataset.noteId;
+            const itemIndex = parseInt(checkbox.dataset.itemIndex);
+            const isChecked = checkbox.checked;
+            
+            try {
+                // Determinar si es una nota general, personal o compartida
+                let noteType = 'personal';
+                let noteRef = db.collection('notasPersonales').doc(noteId);
+                
+                // Verificar si existe en notas generales
+                const generalNote = await db.collection('notasGenerales').doc(noteId).get();
+                if (generalNote.exists) {
+                    noteType = 'general';
+                    noteRef = db.collection('notasGenerales').doc(noteId);
+                } else {
+                    // Verificar si existe en notas compartidas
+                    const sharedNote = await db.collection('notasCompartidas').doc(noteId).get();
+                    if (sharedNote.exists) {
+                        noteType = 'shared';
+                        noteRef = db.collection('notasCompartidas').doc(noteId);
+                    }
+                }
+                
+                // Actualizar el estado del item del checklist
+                const noteDoc = await noteRef.get();
+                const noteData = noteDoc.data();
+                const updatedChecklist = [...noteData.checklist];
+                updatedChecklist[itemIndex].completado = isChecked;
+                
+                // Verificar si todos los items están completados
+                const allCompleted = updatedChecklist.every(item => item.completado);
+                
+                const updateData = {
+                    checklist: updatedChecklist,
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Si es una nota general y se completó, registrar quién la completó
+                if (noteType === 'general' && allCompleted && !noteData.completado) {
+                    updateData.completado = true;
+                    updateData.completadoPor = appState.currentUser.id;
+                    updateData.completadoPorNombre = appState.currentUser.nombre;
+                    updateData.fechaCompletado = firebase.firestore.FieldValue.serverTimestamp();
+                }
+                
+                // Si es una nota personal o compartida y se completó
+                if ((noteType === 'personal' || noteType === 'shared') && allCompleted && !noteData.completado) {
+                    updateData.completado = true;
+                    updateData.fechaCompletado = firebase.firestore.FieldValue.serverTimestamp();
+                }
+                
+                // Si se desmarcó un item y la nota estaba completada
+                if (!allCompleted && noteData.completado) {
+                    updateData.completado = false;
+                    updateData.completadoPor = null;
+                    updateData.completadoPorNombre = null;
+                    updateData.fechaCompletado = null;
+                }
+                
+                await noteRef.update(updateData);
+                loadNotes();
+            } catch (error) {
+                console.error("Error al actualizar checklist:", error);
+                showError('No se pudo actualizar el checklist.');
+                // Revertir el cambio visual
+                checkbox.checked = !isChecked;
+            }
+        }
+
+        async function editNote(noteId, type) {
+            try {
+                let noteRef;
+                if (type === 'general') {
+                    noteRef = db.collection('notasGenerales').doc(noteId);
+                } else if (type === 'personal') {
+                    noteRef = db.collection('notasPersonales').doc(noteId);
+                } else if (type === 'shared') {
+                    noteRef = db.collection('notasCompartidas').doc(noteId);
+                }
+                
+                const noteDoc = await noteRef.get();
+                
+                if (noteDoc.exists) {
+                    const noteData = noteDoc.data();
+                    showNoteForm(type, {
+                        id: noteId,
+                        ...noteData
+                    });
+                } else {
+                    showError('La nota no existe.');
+                }
+            } catch (error) {
+                console.error("Error al cargar nota para editar:", error);
+                showError('No se pudo cargar la nota para editar.');
+            }
+        }
+
+        async function deleteNote(noteId, type) {
+            try {
+                const result = await Swal.fire({
+                    title: '¿Eliminar nota?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#6C43E0',
+                    cancelButtonColor: '#dc3545'
+                });
+
+                if (result.isConfirmed) {
+                    if (type === 'general') {
+                        await db.collection('notasGenerales').doc(noteId).delete();
+                    } else if (type === 'personal') {
+                        await db.collection('notasPersonales').doc(noteId).delete();
+                    } else if (type === 'shared') {
+                        await db.collection('notasCompartidas').doc(noteId).delete();
+                    }
+                    
+                    showSuccess('Nota eliminada correctamente.');
+                    loadNotes();
+                }
+            } catch (error) {
+                console.error("Error al eliminar nota:", error);
+                showError('No se pudo eliminar la nota.');
+            }
+        }
+
+        // =================================================================================
+        // FUNCIONES AUXILIARES
+        // =================================================================================
+
+        function formatDateTime(date) {
+            if (!date) return 'N/A';
+            
+            try {
+                const d = new Date(date);
+                return d.toLocaleDateString('es-MX') + ' ' + d.toLocaleTimeString('es-MX', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return 'Fecha inválida';
+            }
+        }
+
+        function showError(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#6C43E0'
+            });
+        }
+
+        function showSuccess(message) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: message,
+                icon: 'success',
+                confirmButtonColor: '#6C43E0',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+        function setupEventListeners() {
+            // Event listeners para pestañas
+            document.querySelectorAll('.notes-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Actualizar pestañas activas
+                    document.querySelectorAll('.notes-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Actualizar contenido activo
+                    document.querySelectorAll('.notes-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    const tabType = this.dataset.tab;
+                    document.getElementById(`${tabType}NotesContent`).classList.add('active');
+                    appState.currentTab = tabType;
+                });
+            });
+            
+            // Event listeners para botones de nueva nota
+            document.getElementById('newGeneralNoteBtn').addEventListener('click', () => {
+                showNoteForm('general');
+            });
+            
+            document.getElementById('newPersonalNoteBtn').addEventListener('click', () => {
+                showNoteForm('personal');
+            });
+            
+            document.getElementById('newSharedNoteBtn').addEventListener('click', () => {
+                showNoteForm('shared');
+            });
+            
+            // Event listener para agregar items al checklist
+            document.getElementById('addChecklistItem').addEventListener('click', () => {
+                addChecklistItemToForm();
+            });
+            
+            // Event listener para cancelar
+            document.getElementById('cancelNoteBtn').addEventListener('click', hideNoteForm);
+            
+            // Event listener para búsqueda de colaboradores
+            document.getElementById('collaboratorSearch').addEventListener('input', (e) => {
+                filterCollaborators(e.target.value);
+            });
+            
+            // Event listener para guardar nota
+            document.getElementById('noteForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    id: document.getElementById('noteId').value,
+                    type: document.getElementById('noteType').value,
+                    titulo: document.getElementById('noteTitle').value.trim(),
+                    contenido: document.getElementById('noteContent').value.trim(),
+                    checklistItems: []
+                };
+                
+                // Obtener items del checklist
+                document.querySelectorAll('.checklist-item-input input').forEach(input => {
+                    if (input.value.trim()) {
+                        formData.checklistItems.push(input.value.trim());
+                    }
+                });
+                
+                // Para notas compartidas, obtener destinatarios seleccionados
+                if (formData.type === 'shared') {
+                    const selectedCollaborators = [];
+                    const selectedCollaboratorNames = [];
+                    
+                    document.querySelectorAll('#collaboratorsContainer input[type="checkbox"]:checked').forEach(checkbox => {
+                        selectedCollaborators.push(checkbox.value);
+                        selectedCollaboratorNames.push(checkbox.dataset.nombre);
+                    });
+                    
+                    formData.destinatarios = selectedCollaborators;
+                    formData.destinatariosNombres = selectedCollaboratorNames;
+                }
+                
+                // Validaciones
+                if (!formData.titulo) {
+                    showError('El título es obligatorio.');
+                    return;
+                }
+                
+                if (formData.checklistItems.length === 0) {
+                    showError('Debe agregar al menos un elemento al checklist.');
+                    return;
+                }
+                
+                saveNote(formData);
+            });
+        }
+
+        // Inicializar la aplicación cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    await initialLoad();
+                } else {
+                    window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                }
+            });
+        });
+    </script>
+
+    <!-- El script de navegación se carga al final para que pueda acceder a las funciones definidas -->
+    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
 </body>
 </html>

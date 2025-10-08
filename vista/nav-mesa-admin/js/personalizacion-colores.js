@@ -1,7 +1,8 @@
+
 // personalizacion-colores.js - Función autónoma para cargar colores personalizados
 (function() {
     'use strict';
-    
+
     // Configuración de Firebase (debe estar disponible globalmente)
     const firebaseConfig = {
         apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
@@ -47,7 +48,8 @@
         userData: null,
         preferences: {
             background: 'light',
-            theme: 'purple'
+            theme: 'purple',
+            backgroundImage: null
         }
     };
 
@@ -60,12 +62,63 @@
         return '#f0f0f0';
     }
 
+    // Aplicar imagen de fondo si está disponible
+    function applyBackgroundImage(backgroundImage) {
+        console.log('🖼️ Aplicando imagen de fondo:', backgroundImage ? 'Sí' : 'No');
+        
+        // Remover imagen de fondo anterior si existe
+        const existingBg = document.getElementById('custom-background-image');
+        if (existingBg) {
+            existingBg.remove();
+        }
+        
+        // Si hay una imagen de fondo, aplicarla
+if (backgroundImage && backgroundImage.startsWith('data:image/')) {
+    const bgElement = document.createElement('div');
+    bgElement.id = 'custom-background-image';
+    bgElement.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 700px;  /* Tamaño fijo en píxeles */
+        height: 700px;
+        background-image: url('${backgroundImage}');
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: -1;  /* ¡CAMBIO CLAVE! Por detrás de todo */
+        pointer-events: none; /* Para que no interfiera con clics */
+    `;
+    document.body.appendChild(bgElement);
+
+    // Asegurarse de que el body tenga posición relativa
+    document.body.style.position = 'relative';
+    document.body.style.minHeight = '100vh';
+
+    console.log('✅ Imagen de fondo aplicada correctamente');
+} else if (backgroundImage) {
+    console.warn('⚠️ Formato de imagen de fondo no reconocido:', backgroundImage.substring(0, 50) + '...');
+}
+    }
+
     // Aplicar estilos CSS personalizados
     function applyCustomStyles(preferences) {
         console.log('🎨 Aplicando estilos personalizados:', preferences);
         
         const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
         const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
+        
+        // Aplicar imagen de fondo si está disponible
+        if (preferences.backgroundImage) {
+            applyBackgroundImage(preferences.backgroundImage);
+        } else {
+            // Remover imagen de fondo si no hay
+            const existingBg = document.getElementById('custom-background-image');
+            if (existingBg) {
+                existingBg.remove();
+            }
+        }
         
         const styleId = 'personalizacion-colores-styles';
         let styleElement = document.getElementById(styleId);
@@ -96,7 +149,32 @@
                 background-color: ${getSubtleBackground(selectedBackground.color)} !important;
                 color: var(--text-color) !important;
                 transition: background-color 0.3s ease, color 0.3s ease;
+                position: relative;
+                min-height: 100vh;
             }
+            
+            /* Si hay imagen de fondo, ajustar la opacidad del contenido */
+            ${preferences.backgroundImage ? `
+                body::before {
+                    content: '';
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: ${getSubtleBackground(selectedBackground.color)};
+                    opacity: 0.9;
+                    z-index: -1;
+                }
+                
+                .card,
+                .panel,
+                .container-custom,
+                .content-box {
+                   background-color: ${selectedBackground.cardBg} !important;
+                    backdrop-filter: blur(10px);
+                }
+            ` : ''}
             
             /* Botones primarios */
             .btn-primary, 
@@ -553,11 +631,17 @@
                     
                     if (!prefsDoc.empty) {
                         const prefsData = prefsDoc.docs[0].data();
-                        applyCustomStyles(prefsData.preferences);
+                        const preferences = {
+                            background: prefsData.preferences?.background || 'light',
+                            theme: prefsData.preferences?.theme || 'purple',
+                            backgroundImage: prefsData.preferences?.backgroundImage || null
+                        };
+                        
+                        applyCustomStyles(preferences);
                         // Guardar en localStorage para acceso rápido
-                        localStorage.setItem('personalizationPreferences', JSON.stringify(prefsData.preferences));
+                        localStorage.setItem('personalizationPreferences', JSON.stringify(preferences));
                         console.log('✅ Preferencias cargadas desde Firebase');
-                        return prefsData.preferences;
+                        return preferences;
                     }
                 }
             }
@@ -584,6 +668,11 @@
         } else {
             loadPersonalizationPreferences();
         }
+    };
+
+    // Función para aplicar solo la imagen de fondo
+    window.aplicarImagenFondo = function(backgroundImage) {
+        applyBackgroundImage(backgroundImage);
     };
 
     // Inicializar la carga de colores

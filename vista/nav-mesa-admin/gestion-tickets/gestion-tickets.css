@@ -1,3 +1,521 @@
-h1{
-    
+/*
+ * =======================================================
+ * CSS de Gestión de Tickets (Usando Variables Globales)
+ * =======================================================
+ * * NOTA: Los colores son tomados de las variables CSS (--primary-color, etc.)
+ * inyectadas por el script 'personalizacion-colores.js'.
+ */
+
+/* BASE DEL DOCUMENTO */
+body {
+    /* El fondo y color de texto base se toma de las variables inyectadas en :root */
+    background-color: var(--background-color, #1a1a1a) !important; 
+    color: var(--text-color, #f5f5f5) !important; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
+
+/* CONTENIDO PRINCIPAL */
+.main-content {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    /* Ajuste para dejar espacio al menú flotante */
+    padding-top: 80px; 
+}
+
+/* ENCABEZADO Y TÍTULOS */
+.crud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--text-color, #333)1A; /* Borde sutil basado en el texto */
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color, #6C43E0) !important; /* Color primario */
+    margin: 0;
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* BOTÓN DE FILTRO */
+.filter-btn {
+    background-color: var(--card-bg, #2a2a2a);
+    color: var(--text-color, #f5f5f5);
+    border: 1px solid var(--text-color, #555)40;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background-color: var(--primary-color, #6C43E0);
+    border-color: var(--primary-color, #6C43E0);
+    color: var(--card-bg, #ffffff); /* Usar el color de la tarjeta como color de texto en hover */
+}
+
+/*
+ * =======================================================
+ * Grid de Tickets
+ * =======================================================
+ */
+
+.tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* TARJETA DE TICKET */
+.ticket-card {
+    background-color: var(--card-bg, #2a2a2a);
+    border: 1px solid var(--text-color, #444)30;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--card-shadow, 0 4px 15px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.ticket-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px var(--primary-color, #6C43E0)20;
+    border-color: var(--primary-color, #6C43E0);
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.ticket-id {
+    font-weight: 700;
+    color: var(--accent-color, #8B5FEB); /* Color de acento */
+}
+
+.ticket-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 5px 0 10px;
+    color: var(--text-color, #f5f5f5);
+}
+
+.ticket-desc {
+    font-size: 0.9rem;
+    color: var(--text-color, #aaa)70;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.ticket-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.ticket-date {
+    font-size: 0.8rem;
+    color: var(--text-color, #888)50;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--text-color, #333)30;
+}
+
+/* BADGES Y PRIORIDAD */
+.badge {
+    /* Usar colores fijos para el estado y prioridad para mantener la convención de UI (Rojo=Peligro, Verde=Éxito) */
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge-success { background-color: #28a74530; color: #28a745; border: 1px solid #28a745; }
+.badge-warning { background-color: #ffc10730; color: #ffc107; border: 1px solid #ffc107; }
+.badge-danger { background-color: #dc354530; color: #dc3545; border: 1px solid #dc3545; }
+.badge-info { background-color: var(--primary-color)30; color: var(--primary-color); border: 1px solid var(--primary-color)50; } /* Info usa color primario */
+.badge-primary { background-color: var(--primary-color)30; color: var(--accent-color); border: 1px solid var(--primary-color)30; }
+
+.priority-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.priority-high { background-color: #dc3545; }
+.priority-medium { background-color: #ffc107; }
+.priority-low { background-color: #28a745; }
+
+/* BOTONES DE ACCIÓN */
+.action-btn.view {
+    background-color: var(--primary-color, #6C43E0);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.action-btn.view:hover {
+    background-color: var(--secondary-color, #5a35c7);
+}
+
+/* Contenedor sin tickets */
+.no-tickets {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    background-color: var(--card-bg, #2a2a2a);
+    border-radius: 12px;
+    border: 1px dashed var(--text-color, #444)70;
+    color: var(--text-color, #888)80;
+}
+
+.no-tickets i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: var(--primary-color, #6C43E0);
+}
+
+.no-tickets h3 {
+    margin: 0 0 10px 0;
+    color: var(--text-color, #f5f5f5);
+}
+
+/*
+ * =======================================================
+ * Modales (Detalles, Visor de Imágenes, PDF)
+ * =======================================================
+ */
+
+.modal {
+    display: none;
+    position: fixed;
+
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    background-color: var(--card-bg, #1e1e1e);
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid var(--text-color, #444);
+    width: 90%;
+    max-width: 800px;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px var(--card-shadow, rgba(0, 0, 0, 0.6));
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--text-color, #333)30;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    color: var(--primary-color, #6C43E0) !important;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.close {
+    color: var(--text-color, #f5f5f5);
+    font-size: 30px;
+    font-weight: bold;
+    transition: color 0.3s;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #dc3545; /* Color fijo para cerrar (peligro) */
+    text-decoration: none;
+}
+
+/* SECCIONES DE DETALLE */
+.detail-section {
+    background-color: var(--card-bg, #2a2a2a);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary-color, #6C43E0);
+}
+
+.detail-section strong {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--accent-color, #8B5FEB);
+    margin-bottom: 10px;
+    border-bottom: 1px dashed var(--text-color, #444)30;
+    padding-bottom: 5px;
+}
+
+.detail-section p {
+    margin: 5px 0;
+    font-size: 0.95rem;
+    color: var(--text-color, #ccc)80;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-color, #f5f5f5);
+    margin-right: 5px;
+}
+
+.description-text {
+    background-color: var(--background-color, #1a1a1a);
+    padding: 10px;
+    border-radius: 6px;
+    color: var(--text-color, #ccc);
+    font-style: italic;
+    white-space: pre-wrap;
+}
+
+/* FOOTER DEL MODAL Y BOTONES DE ACCIÓN */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid var(--text-color, #333)30;
+    margin-top: 20px;
+}
+
+.action-btn, .cancel-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.finish-btn {
+    background-color: #676767; /* Verde fijo (Éxito) */
+    color: white;
+}
+.finish-btn:hover { background-color: #218838; }
+
+.edit-btn {
+    background-color: var(--accent-color, #17a2b8);
+    color: white;
+}
+.edit-btn:hover { background-color: var(--secondary-color, #138496); }
+
+.cancel-btn, #closeDetailBtn {
+    background-color: var(--text-color, #6c757d)70; /* Gris basado en el tema */
+    color: var(--card-bg, white);
+}
+.cancel-btn:hover, #closeDetailBtn:hover { background-color: var(--text-color, #5a6268)80; }
+
+/*
+ * =======================================================
+ * Responsive Design
+ * =======================================================
+ */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 10px;
+        padding-top: 60px;
+    }
+
+    .crud-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        text-align: left;
+    }
+
+    .filter-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tickets-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+    }
+}
+
+/* =======================================================
+ * ESTILOS MODAL Y CONTROL DE ESTADO (Restaurados con Variables Globales)
+ * =======================================================
+ * Estos estilos reemplazan el CSS inline que fue eliminado del JS.
+ */
+
+/* --- ESTILOS INYECTADOS EN EL MODAL DE DETALLES --- */
+
+/* Contenedor del control de estado */
+.status-control-container {
+    background-color: var(--card-bg, #2c3e50); 
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    color: var(--text-color, white);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    /* Estilos adicionales para un look integrado */
+    border: 2px solid var(--primary-color, #6C43E0)30;
+    box-shadow: var(--card-shadow);
+}
+
+.status-info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-grow: 1;
+}
+
+/* Selector de estado (Dropdown) */
+.status-select {
+    background-color: var(--background-color, #333);
+    color: var(--text-color, white);
+    border: 1px solid var(--primary-color, #444)50;
+    padding: 6px 10px;
+    border-radius: 4px;
+    min-width: 200px;
+    flex-grow: 1;
+    max-width: 100%;
+}
+
+/* Botón de Guardar Estado */
+.save-status-btn {
+    /* Toma estilos de .btn-primary definidos en personalizacion-colores.js */
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Badge de estado actual dentro del modal (Necesario para el layout) */
+.current-status-badge {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-transform: capitalize;
+    margin-bottom: 8px;
+    display: inline-block;
+    width: fit-content;
+}
+/* Nota: el background-color y color de este badge se aplica dinámicamente
+   por la función getStatusColor() en el JS, pero los colores del
+   SweetAlert se aplican por el script de personalización global. */
+
+/* Estilos para la Razón de Pausa */
+.pause-comment-badge {
+    border-left: 3px solid var(--accent-color, #17a2b8); /* Color de acento para la barra */
+    padding-left: 10px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-color, #e0e0e0);
+}
+
+.pause-comment-label {
+    color: var(--text-color, white);
+    font-weight: 600;
+}
+
+.pause-comment-text {
+    margin: 5px 0 0 0;
+    max-height: 100px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    color: var(--text-color, #e0e0e0)90;
+}
+
+.pause-comment-word-count {
+    color: var(--text-color, #aaa)70;
+    font-size: 0.8em;
+    text-align: right;
+}
+
+
+/* --- CORRECCIONES DE ESTILOS GLOBALES DENTRO DE MODALES (Visor de Imagen/PDF) --- */
+
+#imageViewerModal .modal-content {
+    /* Sobrescribir estilos fijos dejados en el HTML */
+    background: transparent !important; 
+    box-shadow: none !important;
+}
+
+#imageViewerModal .close {
+    /* La "X" del visor de imágenes, usando variables */
+    color: var(--text-color, #000) !important; 
+}
+
+
+/* --- RESPONSIVE ADICIONAL PARA CONTROL DE ESTADO --- */
+@media (max-width: 480px) {
+    .status-control-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .status-select, .save-status-btn {
+        width: 100%;
+    }
+}
+
+#particles-js {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; 
+            background-color: transparent;
+            display: none; 
+        }

@@ -1,0 +1,427 @@
+/* ========================================================= */
+/* === Estilos Base (ADAPTADO A VARIABLES DE NAVEGACIÓN) === */
+/* ========================================================= */
+
+/* Las variables de color globales (ej: --primary) se eliminan o se mapean a las variables del script de navegación */
+:root {
+    /* Mapeo de colores estáticos a variables dinámicas (si existen) o fallbacks */
+    --primary-color-fallback: #c84e4e; 
+    --success-color: #28a745;
+    --error-color: #dc3545;
+}
+
+body {
+    /* Usar variables dinámicas de personalizacion-colores.js */
+    font-family: 'Inter', sans-serif; /* Asumiendo que el script usa Inter o Arial */
+    background-color: var(--background-color, #f4f4f9);
+    color: var(--text-color, #333);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.attendance-container {
+    /* Usar color de fondo y sombra dinámica */
+    background-color: var(--card-bg, #fff); 
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 8px rgba(0, 0, 0, 0.1));
+    max-width: 400px;
+    width: 90%;
+    margin: 30px 0;
+    transition: all 0.5s ease-in-out;
+}
+
+.attendance-header h1 {
+    /* Usar color primario dinámico */
+    color: var(--primary-color, var(--primary-color-fallback)); 
+    font-size: 1.8em;
+    margin-bottom: 5px;
+}
+
+.attendance-header p {
+    color: var(--text-color, #666);
+    opacity: 0.7;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--accent-color, #eee); 
+    padding-bottom: 15px;
+}
+
+/* --- Info del Colaborador --- */
+.employee-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 10px;
+    /* Usar un color ligeramente distinto o transparente si el fondo es oscuro */
+    background-color: var(--card-bg, #f9f9f9)40; 
+    border-radius: 8px;
+    border: 1px solid var(--accent-color, #eee);
+}
+
+.employee-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    /* Usar color primario dinámico */
+    border: 3px solid var(--primary-color, var(--primary-color-fallback));
+}
+
+.employee-details h3 {
+    margin: 0 0 5px 0;
+    color: var(--text-color, #333);
+}
+
+.employee-details p {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--text-color, #555);
+    opacity: 0.8;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--accent-color, #ddd);
+    margin: 15px 0;
+}
+
+
+/* ======================================================== */
+/* === Estilos del Formulario de Reembolso (ADAPTADO) === */
+/* ======================================================== */
+
+.reimbursement-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0;
+}
+
+.reimbursement-form label {
+    font-weight: bold;
+    color: var(--primary-color, var(--primary-color-fallback)); /* Usar color primario para labels */
+    margin-bottom: 5px;
+    display: block;
+    font-size: 1em;
+}
+
+.reimbursement-form input[type="number"],
+.reimbursement-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--accent-color, #ccc);
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: var(--text-color, #333);
+    background-color: var(--card-bg, #fff);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.reimbursement-form input[type="number"]:focus,
+.reimbursement-form textarea:focus {
+    /* Usar color primario dinámico para el focus */
+    border-color: var(--primary-color, var(--primary-color-fallback));
+    box-shadow: 0 0 0 3px var(--primary-color, var(--primary-color-fallback))30;
+    outline: none;
+}
+
+.reimbursement-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Estilo para la carga de archivos */
+.file-upload-container {
+    border: 2px dashed var(--accent-color, #bbb);
+    background-color: var(--card-bg, #fafafa);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.file-upload-container:hover {
+    /* Usar color primario dinámico para el hover */
+    border-color: var(--primary-color, var(--primary-color-fallback));
+    background-color: var(--primary-color, #fff0f0)10; 
+}
+
+.file-upload-container i {
+    color: var(--primary-color, var(--primary-color-fallback));
+    margin-bottom: 10px;
+}
+
+#fileText {
+    color: var(--text-color, #666);
+    opacity: 0.8;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+#previewImage {
+    max-width: 100%;
+    max-height: 250px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-color, #ddd);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    object-fit: contain;
+}
+
+/* --- Botón de Envío (Primario) --- */
+.submit-btn {
+    /* Usar color primario dinámico */
+    background-color: var(--primary-color, var(--primary-color-fallback));
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.submit-btn:hover:not(:disabled) {
+    /* Usar color secundario dinámico para el hover */
+    background-color: var(--secondary-color, #b04141);
+}
+
+.submit-btn:disabled {
+    background-color: var(--accent-color, #ccc);
+    color: var(--text-color, #666);
+    cursor: not-allowed;
+}
+
+/* --- Botones Adicionales (Toggle y Tickets) --- */
+.toggle-btn {
+    background-color: var(--text-color, #4a4a4a); /* Usar el color del texto como base */
+    color: var(--card-bg, white);
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+    transition: background-color 0.2s;
+    font-weight: bold;
+}
+.toggle-btn:hover {
+    background-color: var(--primary-color, #333)80;
+}
+
+/* Estilo específico para el botón de ir a Tickets */
+#goToTicketsBtn {
+    /* Usamos un color de éxito o primario para destacar la acción */
+    background-color: var(--success-color, #5cb85c); 
+    margin-bottom: 20px;
+    padding: 15px; /* Lo hacemos más grande */
+    font-size: 1.1em;
+}
+#goToTicketsBtn:hover {
+    background-color: var(--success-color, #4cae4c);
+    filter: brightness(0.9);
+}
+
+/* ========================================================= */
+/* === Estilos del Historial y Tags de Estado === */
+/* ========================================================= */
+
+.reimbursement-history h2 { 
+    color: var(--primary-color, #333); 
+    border-bottom: 2px solid var(--accent-color, #c84e4e); 
+    padding-bottom: 5px; 
+    margin-bottom: 15px; 
+}
+.reimbursement-list { 
+    list-style: none; 
+    padding: 0; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
+.reimbursement-item { 
+    background-color: var(--card-bg, #fff); /* Usar fondo de tarjeta */
+    border: 1px solid var(--accent-color, #eee);
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: var(--card-shadow-subtle, 0 1px 3px rgba(0,0,0,0.05)); 
+    font-size: 0.9em; 
+    color: var(--text-color, #333);
+}
+.reimbursement-item strong { 
+    color: var(--primary-color, #c84e4e); 
+}
+.status-tag { 
+    display: inline-block; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    font-size: 0.8em; 
+    margin-left: 10px; 
+}
+/* Colores de estado fijos o basados en fallbacks */
+.status-Pendiente { 
+    background-color: #ffc107; 
+    color: #333; 
+}
+.status-Aprobado { 
+    background-color: var(--success-color); 
+    color: white; 
+}
+.status-Rechazado { 
+    background-color: var(--error-color); 
+    color: white; 
+}
+#loadingHistory { 
+    text-align: center; 
+    padding: 20px; 
+    color: var(--text-color, #666); 
+    opacity: 0.8;
+}
+
+/* ======================================================== */
+/* === Estilos de Alerta (ADAPTADO) === */
+/* ======================================================== */
+
+.alert-box {
+    background: var(--card-bg, white);
+    /* ... otros estilos se mantienen ... */
+}
+
+.alert-icon i {
+    color: var(--success-color);
+}
+
+.error-alert-box .alert-icon i {
+    color: var(--error-color);
+}
+
+.alert-title {
+    color: var(--primary-color, var(--text-color, #333));
+}
+
+.alert-btn {
+    background-color: var(--primary-color, var(--primary-color-fallback));
+    color: white;
+    /* ... otros estilos se mantienen ... */
+}
+.alert-btn:hover {
+    background-color: var(--secondary-color, #b04141);
+}
+
+/* Evitar que los estilos duplicados en el HTML anulen los estilos dinámicos */
+/* (Esos bloques CSS duplicados en tu HTML deben ser removidos idealmente) */
+/* =============================================== */
+/* === Estilos de Alerta (ADAPTADO A VARIABLES) === */
+/* =============================================== */
+
+/* Variables de Fallback para estados de alerta (si no vienen de personalizacion-colores.js) */
+:root {
+    --primary-color-fallback: #c84e4e;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+}
+
+.alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Fondo oscuro semitransparente compatible con modos claros/oscuros */
+    background: rgba(0, 0, 0, 0.6); 
+    display: none; /* Oculto por defecto */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+/* Solo las alertas con la clase 'show' se deben mostrar (se maneja en JS) */
+.alert-overlay.show {
+    display: flex;
+}
+
+.alert-box {
+    /* Usar fondo de tarjeta dinámico */
+    background: var(--card-bg, white); 
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    /* Usar sombra dinámica */
+    box-shadow: var(--card-shadow, 0 10px 25px rgba(0, 0, 0, 0.2));
+    max-width: 350px;
+    width: 80%;
+    /* Asegurar que el color del texto de la alerta sea visible */
+    color: var(--text-color, #333); 
+    
+    /* Animación */
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.3s ease-out;
+}
+
+.alert-overlay.show .alert-box {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.alert-icon i {
+    font-size: 3em;
+    /* Usar el color de éxito definido o fallback */
+    color: var(--success-color); 
+    margin-bottom: 15px;
+}
+
+.error-alert-box .alert-icon i {
+    /* Usar el color de error definido o fallback */
+    color: var(--error-color);
+}
+
+.alert-title {
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+    /* Usar color de texto dinámico */
+    color: var(--text-color, #333); 
+}
+
+.alert-message {
+    /* Usar color de texto más claro/opaco */
+    color: var(--text-color, #666); 
+    opacity: 0.8;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.alert-btn {
+    /* Usar color primario dinámico para el botón de acción */
+    background-color: var(--primary-color, var(--primary-color-fallback)); 
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+    font-weight: bold;
+}
+
+.alert-btn:hover {
+    /* Usar color secundario dinámico o un tono oscuro del primario */
+    background-color: var(--secondary-color, #b04141);
+    filter: brightness(1.1);
+}

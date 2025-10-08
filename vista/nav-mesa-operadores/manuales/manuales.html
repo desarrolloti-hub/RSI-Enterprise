@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Manuales Técnicos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ESTILOS BASE - SERÁN SOBREESCRITOS POR personalizacion-colores.js */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6C43E0;
+            --secondary-color: #5a35c7;
+            --accent-color: #8B5FEB;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .main-c {
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-title-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .header .title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            color: white;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-width: 300px;
+            flex: 0 1 400px;
+        }
+
+        .search-container i {
+            color: white;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .search-container input {
+            border: none;
+            background: transparent;
+            color: white;
+            outline: none;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .search-container input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .btn {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* CONTENEDOR DE MANUALES */
+        .manuals-container {
+            padding: 30px;
+        }
+
+        .manuals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .manual-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .manual-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .manual-preview {
+            height: 200px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .manual-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pdf-icon {
+            font-size: 4rem;
+            color: white;
+            opacity: 0.8;
+        }
+
+        .manual-info {
+            padding: 20px;
+        }
+
+        .manual-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .manual-description {
+            color: var(--text-color);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .manual-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .manual-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .btn-view {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            color: var(--text-color);
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-color);
+            grid-column: 1 / -1;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .loading p {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* MODAL PARA VISUALIZAR PDF */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            width: 90%;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* PAGINACIÓN */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination-btn {
+            padding: 10px 15px;
+            border: 2px solid var(--primary-color);
+            background: var(--card-bg);
+            color: var(--primary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .pagination-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header .title {
+                font-size: 1.5rem;
+            }
+
+            .header-controls {
+                justify-content: center;
+                gap: 30px;
+            }
+            
+            .search-container {
+                flex: 0 1 400px;
+            }
+
+            .manuals-container {
+                padding: 20px;
+            }
+
+            .manuals-grid {
+                grid-template-columns: 1fr; /* Solo una tarjeta en móvil */
+                gap: 20px;
+            }
+
+            .manual-card {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+
+            .modal-content {
+                width: 95%;
+                height: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header .title {
+                font-size: 1.3rem;
+            }
+
+            .manuals-container {
+                padding: 15px;
+            }
+
+            .manual-info {
+                padding: 15px;
+            }
+
+            .manual-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+
+            .modal-header {
+                padding: 15px;
+            }
+
+            .modal-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Manuales Técnicos</h2>
+            </div>
+            <div class="header-controls">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar manuales...">
+                </div>
+                <a href="../nuevo-manual/nuevo-manual.html" class="btn">
+                    <i class="fas fa-plus"></i>
+                    Nuevo Manual
+                </a>
+            </div>
+        </div>
+
+        <div class="manuals-container">
+            <div class="manuals-grid" id="manualsGrid">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando manuales...</p>
+                </div>
+            </div>
+
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="pagination-btn" id="prevBtn" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <span class="pagination-info" id="pageInfo">Página 1 de 1</span>
+                <button class="pagination-btn" id="nextBtn" disabled>
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para visualizar PDF -->
+    <div class="modal" id="pdfModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Manual PDF</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <iframe class="pdf-viewer" id="pdfViewer" src=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Estado de la aplicación
+        const appState = {
+            currentUser: null,
+            manuals: [],
+            filteredManuals: [],
+            currentPage: 1,
+            manualsPerPage: 12,
+            searchTerm: ''
+        };
+
+        // =================================================================================
+        // FUNCIONES PRINCIPALES
+        // =================================================================================
+
+        async function initialLoad() {
+            try {
+                await loadUserProfile();
+                setupEventListeners();
+                loadManuals();
+            } catch (error) {
+                console.error("Error en la carga inicial:", error);
+                showError('No se pudieron cargar los manuales.');
+            }
+        }
+
+        async function loadUserProfile() {
+            const user = auth.currentUser;
+            if (!user) {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                return;
+            }
+            
+            try {
+                const querySnapshot = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const userData = doc.data();
+                    appState.currentUser = {
+                        id: doc.id,
+                        nombre: userData.NOMBRE,
+                        area: userData.ÁREA
+                    };
+                }
+            } catch (error) {
+                console.error("Error al cargar perfil:", error);
+            }
+        }
+
+        async function loadManuals() {
+            try {
+                const querySnapshot = await db.collection('manualesTecnicosPDF')
+                    .orderBy('fechaCreacion', 'desc')
+                    .get();
+
+                appState.manuals = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                applySearchFilter();
+                displayManuals();
+                
+            } catch (error) {
+                console.error("Error al cargar manuales:", error);
+                showError('No se pudieron cargar los manuales.');
+            }
+        }
+
+        function applySearchFilter() {
+            const searchTerm = appState.searchTerm.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                appState.filteredManuals = [...appState.manuals];
+            } else {
+                appState.filteredManuals = appState.manuals.filter(manual => 
+                    manual.nombre.toLowerCase().includes(searchTerm) ||
+                    manual.descripcion.toLowerCase().includes(searchTerm) ||
+                    manual.creadoPor.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            appState.currentPage = 1;
+            updatePagination();
+        }
+
+        function displayManuals() {
+            const manualsGrid = document.getElementById('manualsGrid');
+            
+            if (!appState.filteredManuals || appState.filteredManuals.length === 0) {
+                manualsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-pdf"></i>
+                        <h3>No hay manuales para mostrar</h3>
+                        <p>${appState.searchTerm ? 
+                            'No se encontraron manuales que coincidan con tu búsqueda' : 
+                            'No se han cargado manuales técnicos todavía'}</p>
+                        ${!appState.searchTerm ? '<a href="nuevo-manual.html" class="btn" style="margin-top: 20px;"><i class="fas fa-plus"></i> Cargar Primer Manual</a>' : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            // Calcular manuales para la página actual
+            const startIndex = (appState.currentPage - 1) * appState.manualsPerPage;
+            const endIndex = startIndex + appState.manualsPerPage;
+            const manualsToDisplay = appState.filteredManuals.slice(startIndex, endIndex);
+
+            const manualsHTML = manualsToDisplay.map(manual => `
+                <div class="manual-card">
+                    <div class="manual-preview">
+                        <i class="fas fa-file-pdf pdf-icon"></i>
+                    </div>
+                    <div class="manual-info">
+                        <h3 class="manual-title">${manual.nombre}</h3>
+                        <p class="manual-description">${manual.descripcion || 'Sin descripción'}</p>
+                        <div class="manual-meta">
+                            <span><i class="fas fa-user"></i> ${manual.creadoPor}</span>
+                            <span><i class="fas fa-calendar"></i> ${formatDate(manual.fechaCreacion)}</span>
+                        </div>
+                        <div class="manual-actions">
+                            <button class="action-btn btn-view" onclick="viewManual('${manual.id}', '${manual.nombre}', '${manual.archivoURL}')">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                            <button class="action-btn btn-delete" onclick="deleteManual('${manual.id}', '${manual.nombre}')">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            manualsGrid.innerHTML = manualsHTML;
+        }
+
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+
+            const totalPages = Math.ceil(appState.filteredManuals.length / appState.manualsPerPage);
+
+            if (totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+
+            pagination.style.display = 'flex';
+            prevBtn.disabled = appState.currentPage === 1;
+            nextBtn.disabled = appState.currentPage === totalPages;
+            pageInfo.textContent = `Página ${appState.currentPage} de ${totalPages}`;
+        }
+
+        // =================================================================================
+        // FUNCIONES DE ACCIÓN
+        // =================================================================================
+
+        function viewManual(manualId, manualName, pdfUrl) {
+            const modal = document.getElementById('pdfModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const pdfViewer = document.getElementById('pdfViewer');
+
+            modalTitle.textContent = manualName;
+            pdfViewer.src = pdfUrl;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function deleteManual(manualId, manualName) {
+            try {
+                const result = await Swal.fire({
+                    title: '¿Eliminar manual?',
+                    html: `¿Estás seguro de que quieres eliminar el manual <strong>"${manualName}"</strong>?<br>Esta acción no se puede deshacer.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#e74c3c',
+                    cancelButtonColor: '#6C43E0'
+                });
+
+                if (result.isConfirmed) {
+                    // Obtener información del manual antes de eliminar
+                    const manualDoc = await db.collection('manualesTecnicosPDF').doc(manualId).get();
+                    const manualData = manualDoc.data();
+
+                    // Eliminar archivo de Storage
+                    if (manualData.archivoPath) {
+                        const fileRef = storage.refFromURL(manualData.archivoURL);
+                        await fileRef.delete();
+                    }
+
+                    // Eliminar documento de Firestore
+                    await db.collection('manualesTecnicosPDF').doc(manualId).delete();
+
+                    Swal.fire({
+                        title: '¡Eliminado!',
+                        text: 'El manual ha sido eliminado correctamente.',
+                        icon: 'success',
+                        confirmButtonColor: '#6C43E0'
+                    });
+
+                    // Recargar manuales
+                    loadManuals();
+                }
+            } catch (error) {
+                console.error('Error al eliminar manual:', error);
+                showError('No se pudo eliminar el manual.');
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('pdfModal');
+            const pdfViewer = document.getElementById('pdfViewer');
+            
+            modal.classList.remove('active');
+            pdfViewer.src = '';
+            document.body.style.overflow = 'auto';
+        }
+
+        // =================================================================================
+        // FUNCIONES AUXILIARES
+        // =================================================================================
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'Fecha no disponible';
+            try {
+                if (timestamp.toDate) {
+                    return timestamp.toDate().toLocaleDateString('es-MX');
+                }
+                return new Date(timestamp).toLocaleDateString('es-MX');
+            } catch (error) {
+                return 'Fecha inválida';
+            }
+        }
+
+        function showError(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#6C43E0'
+            });
+        }
+
+        // =================================================================================
+        // CONFIGURACIÓN DE EVENT LISTENERS
+        // =================================================================================
+
+        function setupEventListeners() {
+            // Búsqueda
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function() {
+                appState.searchTerm = this.value;
+                applySearchFilter();
+                displayManuals();
+            });
+
+            // Modal
+            const modalClose = document.getElementById('modalClose');
+            const modal = document.getElementById('pdfModal');
+            
+            modalClose.addEventListener('click', closeModal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Paginación
+            document.getElementById('prevBtn').addEventListener('click', function() {
+                if (appState.currentPage > 1) {
+                    appState.currentPage--;
+                    displayManuals();
+                    updatePagination();
+                }
+            });
+
+            document.getElementById('nextBtn').addEventListener('click', function() {
+                const totalPages = Math.ceil(appState.filteredManuals.length / appState.manualsPerPage);
+                if (appState.currentPage < totalPages) {
+                    appState.currentPage++;
+                    displayManuals();
+                    updatePagination();
+                }
+            });
+
+            // Cerrar modal con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        }
+
+        // =================================================================================
+        // INICIALIZACIÓN
+        // =================================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log('Usuario autenticado:', user.email);
+                    initialLoad();
+                } else {
+                    console.log('No hay usuario autenticado, redirigiendo...');
+                    window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                }
+            });
+        });
+    </script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+</body>
+</html>

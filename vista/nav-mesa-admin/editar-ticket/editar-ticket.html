@@ -1,11 +1,621 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Finalizar Ticket | RSI Enterprise</title>
+    <link rel="stylesheet" href="editar-ticket.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
-    
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-check-circle"></i> Finalizar Ticket</h1>
+            <a href="../gestion-tickets/gestion-tickets.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Volver a Mis Tickets
+            </a>
+        </div>
+
+        <div class="finish-ticket-container">
+            <div class="ticket-info-card">
+                <h3>Información del Ticket</h3>
+                <div id="ticketInfo">
+                    <p><strong>ID:</strong> <span id="ticketIdDisplay">Cargando...</span></p>
+                    <p><strong>Título:</strong> <span id="ticketTitle">Cargando...</span></p>
+                    <p><strong>Estado:</strong> <span id="ticketStatus">Cargando...</span></p>
+                    <p><strong>Prioridad:</strong> <span id="ticketPriority">Cargando...</span></p>
+                    <p><strong>Área:</strong> <span id="ticketArea">Cargando...</span></p>
+                </div>
+            </div>
+
+            <form id="finishTicketForm" class="finish-form">
+                <div class="form-group">
+                    <label for="projectDescription">
+                        <i class="fas fa-file-alt"></i> Descripción del proyecto finalizado
+                    </label>
+                    <textarea 
+                        id="projectDescription" 
+                        class="form-control" 
+                        rows="8" 
+                        minlength="10" 
+                        maxlength="10000" 
+                        placeholder="Describa en detalle el trabajo realizado (mínimo 10 caracteres, máximo 10,000 caracteres)"
+                        required></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span>/10,000 caracteres
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="imageUpload">
+                        <i class="fas fa-images"></i> Subir evidencia (1-20 imágenes)
+                    </label>
+                    <input type="file" id="imageUpload" accept="image/*" class="form-control" multiple>
+                    <small class="form-text text-muted">Puedes seleccionar entre 1 y 20 imágenes</small>
+                </div>
+
+                <div class="image-preview-container" id="imagePreviewContainer">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" id="cancelBtn">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="action-btn confirm-btn">
+                        <i class="fas fa-check"></i> Finalizar Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="imageViewerModal" class="modal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh; background: transparent; box-shadow: none;">
+            <span class="close" style="position: absolute; top: 15px; right: 15px; color: rgb(255, 255, 255); font-size: 35px; z-index: 100;">&times;</span>
+            <img id="expandedImage" style="width: 100%; height: auto; max-height: 90vh; object-fit: contain;">
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTES DE VALIDACIÓN ACTUALIZADAS ---
+        const MAX_IMAGES = 20;
+        const MIN_IMAGES = 1;
+        const MAX_DESCRIPTION_LENGTH = 10000;
+        const MIN_DESCRIPTION_LENGTH = 10;
+        // ---------------------------------------------
+        
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Estado de la aplicación
+        const AppState = {
+            currentUser: null,
+            userData: null,
+            currentTicketId: null,
+            selectedImages: [],
+            currentEvidenciaId: null
+        };
+
+        // Obtener parámetros de la URL
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                ticketId: urlParams.get('ticketId'),
+                edit: urlParams.get('edit') === 'true'
+            };
+        }
+
+        // Función auxiliar para mostrar alertas de SweetAlert2
+        function showLoading(message = 'Cargando...') {
+            if (typeof window.showCustomAlert === 'function') {
+                window.showCustomAlert({
+                    title: message,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            } else {
+                Swal.fire({
+                    title: message,
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            }
+        }
+
+        // Ocultar loading
+        function hideLoading() {
+            Swal.close();
+        }
+
+        // Mostrar error
+        function showError(message, title = 'Error') {
+            if (typeof window.showCustomError === 'function') {
+                window.showCustomError(title, message);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: title,
+                    text: message,
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        }
+
+        // Mostrar éxito
+        async function showSuccess(message, title = '¡Éxito!') {
+            if (typeof window.showCustomSuccess === 'function') {
+                await window.showCustomSuccess(title, message);
+            } else {
+                await Swal.fire({
+                    icon: 'success',
+                    title: title,
+                    text: message,
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        }
+
+        // Obtener nombres de colaboradores
+        async function getColaboradorNames(colaboradorIds) {
+            if (!colaboradorIds || colaboradorIds.length === 0) return 'Ninguno';
+
+            try {
+                const promises = colaboradorIds.map(async (id) => {
+                    const colabRef = db.collection('colaboradores').doc(id);
+                    const colabSnap = await colabRef.get();
+                    return colabSnap.exists ? colabSnap.data().NOMBRE : 'Desconocido';
+                });
+                const names = await Promise.all(promises);
+                return names.join(', ');
+            } catch (error) {
+                console.error("Error obteniendo nombres de colaboradores:", error);
+                return 'Error de carga';
+            }
+        }
+
+        // Comprimir imagen
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 600;
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(compressedBase64);
+                    };
+                };
+                
+                reader.onerror = () => resolve(null);
+            });
+        }
+
+        // Actualizar vista previa de imágenes
+        function updateImagePreviews() {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            if (!previewContainer) return;
+            
+            previewContainer.innerHTML = '';
+            
+            AppState.selectedImages.forEach((img, index) => {
+                const imgPreview = document.createElement('div');
+                imgPreview.className = 'image-preview-item';
+                imgPreview.innerHTML = `
+                    <img src="${img}" alt="Preview" style="cursor: pointer;">
+                    <button class="delete-image-btn" data-index="${index}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                previewContainer.appendChild(imgPreview);
+                
+                imgPreview.querySelector('img').addEventListener('click', function() {
+                    document.getElementById('expandedImage').src = img;
+                    document.getElementById('imageViewerModal').style.display = 'flex';
+                });
+                
+                imgPreview.querySelector('.delete-image-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    AppState.selectedImages.splice(idx, 1);
+                    updateImagePreviews();
+                });
+            });
+        }
+
+        // Validar formulario
+        function validateForm(description, imageCount) {
+            if (description.length < MIN_DESCRIPTION_LENGTH) {
+                throw new Error(`La descripción debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`);
+            }
+            
+            if (imageCount < MIN_IMAGES) {
+                throw new Error(`Debes subir al menos ${MIN_IMAGES} imagen como evidencia`);
+            }
+            
+            if (imageCount > MAX_IMAGES) {
+                throw new Error(`No puedes subir más de ${MAX_IMAGES} imágenes`);
+            }
+            
+            return true;
+        }
+
+        // Cargar información del ticket
+        async function loadTicketInfo(ticketId) {
+            try {
+                showLoading('Cargando información del ticket...');
+                
+                const ticketRef = db.collection('ticketsmesa').doc(ticketId);
+                const ticketSnap = await ticketRef.get();
+                
+                if (!ticketSnap.exists) {
+                    throw new Error('El ticket no existe');
+                }
+                
+                const ticketData = ticketSnap.data();
+                const shortId = ticketId.substring(0, 8);
+                
+                // Obtener nombres de colaboradores
+                const colaboradorNames = await getColaboradorNames(ticketData.colaboradores);
+
+                // Actualizar UI básica
+                document.getElementById('ticketIdDisplay').textContent = `#${shortId.toUpperCase()}`;
+                document.getElementById('ticketTitle').textContent = ticketData.titulo || 'Sin título';
+                document.getElementById('ticketStatus').textContent = ticketData.estado || 'Desconocido';
+                document.getElementById('ticketPriority').textContent = ticketData.prioridad || 'Media';
+                document.getElementById('ticketArea').textContent = ticketData.area || 'General';
+                
+                // AGREGAR DESCRIPCIÓN Y COLABORADORES dinámicamente
+                const ticketInfoDiv = document.getElementById('ticketInfo');
+                if (ticketInfoDiv) {
+                    document.getElementById('ticketDescriptionDisplay')?.remove();
+                    document.getElementById('ticketColaboradoresDisplay')?.remove();
+                    
+                    // 1. Mostrar Descripción
+                    const descriptionP = document.createElement('p');
+                    descriptionP.id = 'ticketDescriptionDisplay';
+                    descriptionP.innerHTML = `
+                        <strong>Descripción:</strong> 
+                        <span style="display:block; margin-top: 5px; background-color: var(--card-background); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); white-space: pre-wrap; font-size: 0.9rem;">
+                            ${ticketData.descripcionActividades || 'No se proporcionó descripción.'}
+                        </span>
+                    `;
+                    ticketInfoDiv.appendChild(descriptionP);
+                    
+                    // 2. Mostrar Colaboradores
+                    const colaboradoresP = document.createElement('p');
+                    colaboradoresP.id = 'ticketColaboradoresDisplay';
+                    colaboradoresP.innerHTML = `<strong>Colaboradores:</strong> <span style="font-style: italic;">${colaboradorNames}</span>`;
+                    ticketInfoDiv.appendChild(colaboradoresP);
+                }
+
+                // Cargar evidencias existentes
+                await loadExistingEvidences(ticketId);
+                
+                hideLoading();
+                
+            } catch (error) {
+                console.error("Error cargando información del ticket:", error);
+                hideLoading();
+                showError('No se pudo cargar la información del ticket');
+            }
+        }
+
+        // Cargar evidencias existentes
+        async function loadExistingEvidences(ticketId) {
+            try {
+                const evidenciasRef = db.collection('evidenciatickets');
+                const q = evidenciasRef
+                    .where("ticketId", "==", ticketId)
+                    .where("colaboradorId", "==", AppState.userData.colaboradorId)
+                    .get();
+                
+                const querySnapshot = await q;
+                
+                if (!querySnapshot.empty) {
+                    const evidencia = querySnapshot.docs[0].data();
+                    AppState.currentEvidenciaId = querySnapshot.docs[0].id;
+                    
+                    document.getElementById('projectDescription').value = evidencia.descripcion || '';
+                    document.getElementById('charCount').textContent = evidencia.descripcion?.length || 0;
+                    
+                    AppState.selectedImages = evidencia.imagenes || [];
+                    updateImagePreviews();
+                    
+                    const urlParams = getUrlParams();
+                    const isEditMode = urlParams.edit;
+                    
+                    if (isEditMode) {
+                        document.querySelector('.confirm-btn').innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+                        document.querySelector('h1').innerHTML = '<i class="fas fa-edit"></i> Modificar Finalización';
+                    }
+                }
+            } catch (error) {
+                console.error("Error cargando evidencias existentes:", error);
+            }
+        }
+
+        // Guardar o actualizar evidencia
+        async function saveOrUpdateEvidence(description) {
+            const evidenciaData = {
+                ticketId: AppState.currentTicketId,
+                colaboradorId: AppState.userData.colaboradorId,
+                colaboradorNombre: AppState.userData.NOMBRE,
+                descripcion: description,
+                imagenes: AppState.selectedImages,
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                estado: 'completado'
+            };
+
+            if (AppState.currentEvidenciaId) {
+                // Actualizar evidencia existente
+                await db.collection('evidenciatickets').doc(AppState.currentEvidenciaId).update(evidenciaData);
+            } else {
+                // Crear nueva evidencia
+                evidenciaData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
+                const result = await db.collection('evidenciatickets').add(evidenciaData);
+                AppState.currentEvidenciaId = result.id;
+            }
+        }
+
+        // Actualizar estado del ticket
+        async function updateTicketStatus() {
+            const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
+            const ticketSnap = await ticketRef.get();
+            
+            if (!ticketSnap.exists) return;
+            
+            const ticketData = ticketSnap.data();
+            let evidenciasCompletadas = ticketData.evidenciasCompletadas || [];
+            
+            if (!evidenciasCompletadas.includes(AppState.userData.colaboradorId)) {
+                evidenciasCompletadas.push(AppState.userData.colaboradorId);
+            }
+            
+            const colaboradores = ticketData.colaboradores || [];
+            const todosCompletados = colaboradores.every(colabId => 
+                evidenciasCompletadas.includes(colabId)
+            );
+            
+            const updateData = {
+                evidenciasCompletadas,
+                estado: todosCompletados ? 'finalizado' : 'en_proceso',
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if (todosCompletados) {
+                updateData.fechaFinalizacion = firebase.firestore.FieldValue.serverTimestamp();
+            }
+            
+            await ticketRef.update(updateData);
+        }
+
+        // Manejar envío del formulario
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            
+            try {
+                const description = document.getElementById('projectDescription').value;
+                
+                // Validar formulario
+                validateForm(description, AppState.selectedImages.length);
+                
+                showLoading('Guardando información...');
+                
+                // Guardar o actualizar evidencia
+                await saveOrUpdateEvidence(description);
+                
+                // Actualizar estado del ticket
+                await updateTicketStatus();
+                
+                hideLoading();
+                await showSuccess('Tus evidencias han sido guardadas correctamente');
+                
+                // REDIRECCIÓN
+                window.location.href = '../gestion-tickets/gestion-tickets.html';
+                
+            } catch (error) {
+                console.error("Error guardando evidencias:", error);
+                showError(error.message || 'No se pudieron guardar las evidencias');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                hideLoading();
+            }
+        }
+        
+        // Cargar datos del usuario
+        async function loadUserData(user) {
+            try {
+                const colaboradoresRef = db.collection('colaboradores');
+                const q = colaboradoresRef.where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email).get();
+                const collabSnapshot = await q;
+
+                if (collabSnapshot.empty) {
+                    showError('No se encontraron tus datos de colaborador');
+                    return false;
+                }
+
+                collabSnapshot.forEach(doc => {
+                    AppState.userData = doc.data();
+                    AppState.userData.colaboradorId = doc.id;
+                    AppState.userData.NOMBRE = doc.data().NOMBRE;
+                });
+                return true;
+            } catch (error) {
+                console.error("Error cargando datos de colaborador:", error);
+                showError('Error al cargar tus datos de colaborador.');
+                return false;
+            }
+        }
+
+        // Manejar carga de imágenes
+        async function handleImageUpload(files) {
+            // VALIDACIÓN DEL MÁXIMO DE FOTOS (20)
+            if (AppState.selectedImages.length + files.length > MAX_IMAGES) {
+                showError(`Solo puedes subir hasta ${MAX_IMAGES} imágenes en total`);
+                return;
+            }
+            
+            const newFiles = Array.from(files);
+            const compressionPromises = [];
+            
+            newFiles.forEach((file) => {
+                if (!file.type.match('image.*')) return;
+                
+                compressionPromises.push(
+                    compressImage(file).then(compressedBase64 => {
+                        if (compressedBase64) {
+                            AppState.selectedImages.push(compressedBase64);
+                        }
+                    })
+                );
+            });
+            
+            await Promise.all(compressionPromises);
+            updateImagePreviews();
+        }
+
+        // Configurar eventos del DOM
+        function setupEventListeners() {
+            const textarea = document.getElementById('projectDescription');
+            const counter = document.getElementById('charCount');
+            const input = document.getElementById('imageUpload');
+            const finishForm = document.getElementById('finishTicketForm');
+            const cancelBtn = document.getElementById('cancelBtn');
+            
+            // Contador de caracteres
+            textarea.addEventListener('input', function() {
+                const length = Math.min(this.value.length, MAX_DESCRIPTION_LENGTH);
+                counter.textContent = length;
+                
+                if (this.value.length > MAX_DESCRIPTION_LENGTH) {
+                    this.value = this.value.substring(0, MAX_DESCRIPTION_LENGTH);
+                }
+            });
+            
+            // Carga de imágenes
+            input.addEventListener('change', function(e) {
+                handleImageUpload(e.target.files);
+                e.target.value = ''; 
+            });
+            
+            // Envío del formulario
+            finishForm.addEventListener('submit', handleFormSubmit);
+            
+            // Botón cancelar
+            cancelBtn.addEventListener('click', function() {
+                window.location.href = '../gestion-tickets/gestion-tickets.html';
+            });
+            
+            // Configurar modal de imágenes
+            const imageModalClose = document.querySelector('#imageViewerModal .close');
+            const imageViewerModal = document.getElementById('imageViewerModal');
+            
+            if (imageModalClose) {
+                imageModalClose.addEventListener('click', function() {
+                    imageViewerModal.style.display = 'none';
+                });
+            }
+            
+            if (imageViewerModal) {
+                imageViewerModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        imageViewerModal.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // Inicializar aplicación
+        async function initApp() {
+            const { ticketId } = getUrlParams();
+            
+            if (!ticketId) {
+                showError('No se especificó un ticket');
+                return;
+            }
+            
+            AppState.currentTicketId = ticketId;
+            
+            // Esperar a que el usuario esté autenticado
+            return new Promise((resolve) => {
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        AppState.currentUser = user;
+                        const loaded = await loadUserData(user);
+                        if (loaded) {
+                            await loadTicketInfo(ticketId);
+                            setupEventListeners();
+                        }
+                        resolve();
+                    } else {
+                        showError('Debes iniciar sesión para acceder a esta página');
+                        setTimeout(() => {
+                            window.location.href = '/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html';
+                        }, 2000);
+                        resolve();
+                    }
+                });
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegación-operador.js"></script>
 </body>
 </html>
