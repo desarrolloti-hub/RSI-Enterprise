@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Cargar Manual Técnico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="nuevo-manual.css">
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Cargar Manual Técnico</h2>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <form id="manualForm">
+                <div class="form-group">
+                    <label for="manualName" class="form-label">Nombre del Manual</label>
+                    <input type="text" id="manualName" class="form-control" placeholder="Ingresa el nombre del manual" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="manualDescription" class="form-label">Descripción</label>
+                    <textarea id="manualDescription" class="form-control" placeholder="Describe el contenido del manual" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Archivo PDF</label>
+                    <div class="file-upload-container" id="fileUploadContainer">
+                        <div class="file-upload-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="file-upload-text">
+                            Arrastra y suelta tu archivo PDF aquí o haz clic para seleccionar
+                        </div>
+                        <div class="file-upload-hint">
+                            Solo se permiten archivos PDF. Tamaño máximo: 10MB
+                        </div>
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf">
+                    </div>
+                    <div class="file-preview" id="filePreview">
+                        <div class="file-preview-info">
+                            <i class="fas fa-file-pdf file-preview-icon"></i>
+                            <span class="file-preview-name" id="fileName"></span>
+                            <button type="button" class="file-preview-remove" id="removeFile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons-container">
+                    <button type="button" class="btn btn-secondary" onclick="cancelForm()">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                        <i class="fas fa-save"></i>
+                        Guardar Manual
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.firebasestorage.app",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Estado de la aplicación
+        const appState = {
+            currentUser: null,
+            userData: null,
+            selectedFile: null
+        };
+
+        // =================================================================================
+        // FUNCIONES PRINCIPALES
+        // =================================================================================
+
+        async function initialLoad() {
+            try {
+                await loadUserProfile();
+                setupEventListeners();
+            } catch (error) {
+                console.error("Error en la carga inicial:", error);
+                showError('No se pudieron cargar los datos iniciales.');
+            }
+        }
+
+        async function loadUserProfile() {
+            const user = auth.currentUser;
+            if (!user) {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                return;
+            }
+            
+            try {
+                const querySnapshot = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const userData = doc.data();
+                    appState.currentUser = {
+                        id: doc.id,
+                        nombre: userData.NOMBRE,
+                        area: userData.ÁREA,
+                        imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
+                    };
+                    appState.userData = userData;
+                    sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
+                }
+            } catch (error) {
+                console.error("Error al cargar perfil:", error);
+            }
+        }
+
+        // =================================================================================
+        // MANEJO DE ARCHIVOS
+        // =================================================================================
+
+        function setupEventListeners() {
+            const fileInput = document.getElementById('fileInput');
+            const fileUploadContainer = document.getElementById('fileUploadContainer');
+            const removeFileBtn = document.getElementById('removeFile');
+            const form = document.getElementById('manualForm');
+
+            // Click en el contenedor para abrir el selector de archivos
+            fileUploadContainer.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Cambio en el input de archivo
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            fileUploadContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUploadContainer.classList.add('dragover');
+            });
+
+            fileUploadContainer.addEventListener('dragleave', () => {
+                fileUploadContainer.classList.remove('dragover');
+            });
+
+            fileUploadContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUploadContainer.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            // Eliminar archivo seleccionado
+            removeFileBtn.addEventListener('click', removeSelectedFile);
+
+            // Envío del formulario
+            form.addEventListener('submit', handleFormSubmit);
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            // Validar que sea un PDF
+            if (file.type !== 'application/pdf') {
+                showError('Solo se permiten archivos PDF.');
+                return;
+            }
+
+            // Validar tamaño (10MB máximo)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
+                return;
+            }
+
+            appState.selectedFile = file;
+            updateFilePreview(file.name);
+            updateSubmitButton();
+        }
+
+        function updateFilePreview(fileName) {
+            const filePreview = document.getElementById('filePreview');
+            const fileNameElement = document.getElementById('fileName');
+            
+            fileNameElement.textContent = fileName;
+            filePreview.classList.add('active');
+        }
+
+        function removeSelectedFile() {
+            appState.selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.remove('active');
+            updateSubmitButton();
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const form = document.getElementById('manualForm');
+            
+            // Verificar que todos los campos estén completos
+            const isFormValid = form.checkValidity() && appState.selectedFile;
+            submitBtn.disabled = !isFormValid;
+        }
+
+        // =================================================================================
+        // MANEJO DEL FORMULARIO
+        // =================================================================================
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const manualName = document.getElementById('manualName').value.trim();
+            const manualDescription = document.getElementById('manualDescription').value.trim();
+            
+            if (!manualName || !manualDescription || !appState.selectedFile) {
+                showError('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            try {
+                // Mostrar indicador de carga
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                // Subir archivo a Firebase Storage
+                const fileRef = storage.ref().child(`manuales/${Date.now()}_${appState.selectedFile.name}`);
+                const uploadTask = fileRef.put(appState.selectedFile);
+
+                // Esperar a que se complete la subida
+                const snapshot = await uploadTask;
+                const downloadURL = await snapshot.ref.getDownloadURL();
+
+                // Guardar información en Firestore
+                await db.collection('manualesTecnicosPDF').add({
+                    nombre: manualName,
+                    descripcion: manualDescription,
+                    archivoURL: downloadURL,
+                    archivoPath: snapshot.ref.fullPath,
+                    nombreArchivo: appState.selectedFile.name,
+                    creadoPor: appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido',
+                    creadoPorId: appState.currentUser ? appState.currentUser.id : 'unknown',
+                    fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaCreacionLocal: new Date().toLocaleString('es-MX')
+                });
+
+                // Mostrar mensaje de éxito
+                await showCustomSuccess('¡Manual guardado!', 'El manual técnico se ha guardado correctamente.');
+                
+                // Limpiar formulario
+                resetForm();
+                
+            } catch (error) {
+                console.error('Error al guardar el manual:', error);
+                showError('No se pudo guardar el manual. Por favor, intenta nuevamente.');
+            } finally {
+                // Restaurar botón
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Manual';
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('manualForm').reset();
+            removeSelectedFile();
+        }
+
+        function cancelForm() {
+            showCustomConfirm(
+                '¿Cancelar operación?', 
+                'Los datos no guardados se perderán.', 
+                'Sí, cancelar', 
+                'Continuar editando'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    resetForm();
+                }
+            });
+        }
+
+        // =================================================================================
+        // FUNCIONES DE UTILIDAD
+        // =================================================================================
+
+        function showError(message) {
+            if (typeof showCustomError === 'function') {
+                showCustomError('Error', message);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#6C43E0'
+                });
+            }
+        }
+
+        // =================================================================================
+        // INICIALIZACIÓN
+        // =================================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Actualizar botón de envío cuando cambien los campos
+            document.getElementById('manualForm').addEventListener('input', updateSubmitButton);
+            
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log('Usuario autenticado:', user.email);
+                    initialLoad();
+                } else {
+                    console.log('No hay usuario autenticado, redirigiendo...');
+                    window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                }
+            });
+        });
+    </script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+</body>
+</html>
