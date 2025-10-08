@@ -288,7 +288,402 @@
                     border: none;
                     border-radius: 8px;
                     cursor: button;
-                    transition: all 0.3s ease;
+                    transition: all 0.3s ease;/* ==============================================
+   editar-ticket.css - Estilos para Finalizar Ticket
+   (CORREGIDO: Estilo del botón CANCELAR mejorado)
+   ==============================================
+   Utiliza variables CSS inyectadas por personalizacion-colores.js:
+   --primary-color, --text-color, --card-bg, --card-shadow, --accent-color
+   ============================================== */
+
+/* 1. Base y Resets */
+body {
+    font-family: 'Inter', sans-serif; /* Asumiendo una fuente moderna */
+    margin: 0;
+    padding: 0;
+    /* Las variables se aplican aquí desde personalizacion-colores.js */
+    background-color: var(--background-color, #f5f5f5);
+    color: var(--text-color, #333);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Alinear arriba en lugar de centrar verticalmente */
+    padding: 20px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* 2. Estructura principal */
+.container {
+    width: 100%;
+    max-width: 900px; /* Ancho máximo para el contenido principal */
+    background-color: transparent; /* El fondo lo maneja el body/tarjeta */
+    padding: 0;
+    margin-top: 50px; /* Espacio para el botón flotante del menú */
+}
+
+/* 3. Encabezado y Botón de Regreso */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 10px;
+    flex-wrap: wrap; /* Para responsividad */
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    color: var(--primary-color, #6C43E0);
+    font-weight: 700;
+    margin: 0;
+    padding: 5px 0;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-color, #333) !important;
+    border: 1px solid var(--accent-color, #ccc);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--card-shadow-subtle, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.back-btn i {
+    margin-right: 8px;
+    color: var(--primary-color, #6C43E0);
+}
+
+.back-btn:hover {
+    background-color: var(--primary-color, #6C43E0);
+    color: white !important;
+    border-color: var(--primary-color, #6C43E0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.back-btn:hover i {
+    color: white;
+}
+
+/* 4. Contenedor Principal del Formulario y Tarjetas */
+.finish-ticket-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* 5. Tarjeta de Información del Ticket */
+.ticket-info-card {
+    background-color: var(--card-bg, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(108, 67, 224, 0.1);
+}
+
+.ticket-info-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-color, #6C43E0);
+    border-bottom: 2px solid var(--accent-color, #6C43E0);
+    padding-bottom: 5px;
+    font-size: 1.2rem;
+}
+
+.ticket-info-card p {
+    margin: 8px 0;
+    font-size: 1rem;
+    color: var(--text-color, #444);
+}
+
+.ticket-info-card strong {
+    color: var(--primary-color, #6C43E0);
+    font-weight: 600;
+}
+
+/* 6. Formulario de Finalización */
+.finish-form {
+    background-color: var(--card-bg, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(108, 67, 224, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--primary-color, #6C43E0);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-group label i {
+    margin-right: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--accent-color, #ced4da);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-color, #333);
+    background-color: var(--card-bg, #fff);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    resize: vertical;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color, #6C43E0);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-color, #6C43E0)30;
+}
+
+/* Contador de caracteres */
+.char-counter {
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--accent-color, #6c757d);
+    margin-top: 5px;
+}
+
+.char-counter span {
+    font-weight: bold;
+}
+
+/* 7. Botones de Acción */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.action-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.action-btn i {
+    margin-right: 8px;
+}
+
+.confirm-btn {
+    /* Estilo para Guardar/Confirmar (usa color primario) */
+    background-color: var(--primary-color, #6C43E0) !important;
+    color: white !important;
+    box-shadow: 0 4px 10px var(--primary-color, #6C43E0)40;
+}
+
+.confirm-btn:hover {
+    background-color: var(--secondary-color, #5a35c7) !important;
+    transform: translateY(-2px);
+}
+
+.cancel-btn {
+    /* ESTILO CORREGIDO PARA CANCELAR (usa color neutro con borde primario) */
+    background-color: var(--card-bg, #ffffff) !important;
+    color: var(--text-color, #495057) !important;
+    border: 2px solid var(--primary-color, #6C43E0) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cancel-btn:hover {
+    /* Hover más sutil para no competir con el botón principal */
+    background-color: var(--primary-color, #6C43E0)10 !important; /* Ligeramente más claro/oscuro */
+    color: var(--primary-color, #6C43E0) !important;
+    transform: translateY(-1px);
+}
+
+/* 8. Estilos de Previsualización de Imágenes */
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px dashed var(--accent-color, #ced4da);
+    border-radius: 8px;
+}
+
+.image-preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border: 2px solid var(--primary-color, #6C43E0);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.delete-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(220, 53, 69, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: background-color 0.2s;
+    opacity: 0.9;
+}
+
+.delete-image-btn:hover {
+    background-color: #dc3545;
+    opacity: 1;
+}
+
+/* 9. Modal del Visor de Imágenes */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 2000; /* Asegurar que esté por encima de todo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.85); /* Fondo muy oscuro */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 10. Estilos Responsivos */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+        margin-top: 70px; /* Más espacio para el botón flotante en móvil */
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .finish-ticket-container {
+        gap: 15px;
+    }
+
+    .ticket-info-card,
+    .finish-form {
+        padding: 20px;
+        border-radius: 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse; /* Pone Confirmar/Guardar arriba */
+        gap: 10px;
+    }
+
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 15px 20px;
+    }
+    
+    .image-preview-container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .ticket-info-card,
+    .finish-form {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+
+    .back-btn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    .form-group label {
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .char-counter {
+        font-size: 0.8rem;
+    }
+    
+    .image-preview-item {
+        width: 80px;
+        height: 80px;
+    }
+}cerr
                     font-family: inherit;
                     font-size: 0.95rem;
                     box-sizing: border-box;
@@ -565,6 +960,11 @@
                 
                 <div class="menu-nav-buttons-container">
                     
+                  
+                    <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
+                        <i class="fas fa-ticket-alt"></i>  Ver Mis Tickets
+                    </a>
+                    
                     <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                         <i class="fas fa-palette"></i> Personalizar Interfaz
                     </a>
@@ -573,9 +973,9 @@
                         <i class="fas fa-money-bill-transfer"></i> Reembolsos
                     </a>
 
-                    <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
+                    <a href="../fin-asistencia/fin-asistencia.html" class="menu-nav-btn">
                         <i class="fas fa-flag-checkered"></i> Terminar Asistencia
-                    </button>
+                    </a>
                     
                     <button class="menu-nav-btn menu-nav-btn-logout" id="menuNavLogoutBtn">
                         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión

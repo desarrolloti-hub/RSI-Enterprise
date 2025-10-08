@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toma de Asistencias</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="asistencia.css">    
-
- 
+    <link rel="stylesheet" href="asistencia.css">    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <div class="attendance-container app-hidden" id="attendanceContainer">
-        
         <div class="attendance-form-content" id="attendanceFormContent">
             <div class="attendance-header">
                 <h1>Toma de Asistencias</h1>
@@ -21,15 +23,15 @@
             <div class="employee-info">
                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Empleado" class="employee-avatar" id="employeeAvatar"> 
                 <div class="employee-details">
-                    <h3></h3> 
-                    <p></p> 
-                    <p></p>
+                    <h3>Cargando...</h3> 
+                    <p><strong>Área:</strong> Cargando...</p> 
+                    <p><strong>ID Empleado:</strong> Cargando...</p>
                 </div>
             </div>
 
             <div class="attendance-options">
                 <div class="attendance-date" id="attendanceDate">
-                    <i class="fas fa-calendar-day"></i> <span id="currentDate"></span>
+                    <i class="fas fa-calendar-day"></i> <span id="currentDate">Cargando fecha...</span>
                 </div>
 
                 <div class="options-grid">
@@ -90,238 +92,294 @@
             </div>
         </div>
     </div>
-    
-    <div class="alert-overlay" id="alertOverlay">
-        <div class="alert-box">
-            <div class="alert-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <h3 class="alert-title">¡Asistencia registrada!</h3>
-            <p class="alert-message">Tu asistencia ha sido registrada correctamente para el día de hoy.</p>
-            <button class="alert-btn" id="alertBtn">Aceptar</button>
-        </div>
-    </div>
 
-    <div class="alert-overlay" id="errorAlert">
-        <div class="alert-box error-alert-box">
-            <div class="alert-icon">
-                <i class="fas fa-exclamation-circle"></i>
-            </div>
-            <h3 class="alert-title">¡Selecciona una opción!</h3>
-            <p class="alert-message">Debes seleccionar un tipo de asistencia antes de continuar.</p>
-            <button class="alert-btn" id="errorBtn">Entendido</button>
-        </div>
-    </div>
-
-    <div class="alert-overlay" id="locationOverlay">
-        <div class="alert-box location-alert-box">
-            <div class="alert-icon">
-                <i class="fas fa-map-marker-alt"></i> </div>
-            <h3 class="alert-title">Otorga todos los permisos</h3>
-            <p class="alert-message">Otorgar todos los permisos te dara acceso completo a la app web Rsi.</p>
-            <button class="alert-btn location-alert-btn" id="locationBtn">Otorgar permisos</button>
-        </div>
-    </div>
-
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    
     <script>
+        // --- CONSTANTES Y CONFIGURACIÓN ---
+        const LONG_PRESS_DELAY = 5000;
+        const GEOLOCATION_TIMEOUT = 15000;
+        const REDIRECT_DELAY = 3000;
+        const FALLBACK_ACCURACY = 5000;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // ----------------------------------------------------------------------------------
-    // 1. Configuración y Elementos DOM
-    // ----------------------------------------------------------------------------------
-    const firebaseConfig = {
-        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-        authDomain: "rsienterprise.firebaseapp.com",
-        databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
-        projectId: "rsienterprise",
-        storageBucket: "rsienterprise.appspot.com",
-        messagingSenderId: "1063117165770",
-        appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
-        measurementId: "G-38F2DBG9HE"
-    };
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+            measurementId: "G-38F2DBG9HE"
+        };
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    
-    // Elementos del DOM
-    const attendanceContainer = document.getElementById('attendanceContainer');
-    const attendanceFormContent = document.getElementById('attendanceFormContent');
-    const tetrisContainer = document.getElementById('tetris-container');
-    const employeeAvatar = document.getElementById('employeeAvatar'); // <-- Elemento de la imagen
-    const employeeDetails = document.querySelector('.employee-details');
-    const currentDateElement = document.getElementById('currentDate');
-    const attendanceOptions = document.querySelectorAll('.attendance-option');
-    const submitBtn = document.getElementById('submitAttendance');
-    const optionsGrid = document.querySelector('.options-grid');
-    const alertOverlay = document.getElementById('alertOverlay');
-    const alertBtn = document.getElementById('alertBtn');
-    const errorAlert = document.getElementById('errorAlert');
-    const errorBtn = document.getElementById('errorBtn');
-    const locationOverlay = document.getElementById('locationOverlay');
-    const locationBtn = document.getElementById('locationBtn');
-    const tetrisTitle = document.getElementById('tetris-title');
-    const tetrisMessage = document.getElementById('tetris-message');
-
-    // Variables globales para el Easter Egg
-    let longPressTimer;
-    const LONG_PRESS_DELAY = 5000; // 5 segundos
-    
-    // ----------------------------------------------------------------------------------
-    // 2. Funciones de UTILIDAD y VALIDACIÓN
-    // ----------------------------------------------------------------------------------
-
-    async function getUserRole(email) {
-        try {
-            const querySnapshot = await db.collection('usuarios')
-                .where('email', '==', email)
-                .limit(1)
-                .get();
-            return !querySnapshot.empty ? querySnapshot.docs[0].data().rol : null;
-        } catch (error) {
-            console.error("Error al obtener rol del usuario:", error);
-            return null;
-        }
-    }
-
-    // MUESTRA EL JUEGO DE TETRIS (Añadido parámetro isEasterEgg)
-    function loadTetris(userName, isEasterEgg = false) {
-        
-        // Verificación de emergencia: Si el canvas o el contexto fallan, regresamos al formulario.
-        if (!canvas || !ctx) {
-             console.error("Fallo al inicializar el canvas de Tetris. Mostrando formulario de respaldo.");
-             attendanceFormContent.classList.remove('app-hidden');
-             tetrisContainer.classList.add('app-hidden');
-             showAlert('error', 'Error de carga', 'El juego no pudo cargarse.');
-             submitBtn.disabled = true;
-             return;
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
 
-        // OCULTA EL FORMULARIO Y MUESTRA EL JUEGO DENTRO DEL MISMO CONTENEDOR
-        attendanceFormContent.classList.add('app-hidden');
-        tetrisContainer.classList.remove('app-hidden');
-        
-        // Mensaje personalizado
-        if (isEasterEgg) {
-            tetrisTitle.textContent = '¡EASTER EGG ACTIVADO!';
-            tetrisMessage.innerHTML = '¡Encontraste el Easter Egg puesto por los ingenieros Emanuel Campa y Victor Ramirez! Ahora, ¡a jugar un momento!';
-        } else {
-            tetrisTitle.textContent = '¡Tu asistencia excede los límites!';
-            tetrisMessage.innerHTML = 'Juega un rato hasta el día de mañana y no olvides registrar tu asistencia a tu hora de entrada.';
-        }
-        
-        document.getElementById('highScore').textContent = highscore;
-        initTetris(); 
-        
-        // Iniciar el juego automáticamente (si no está ya iniciado/pausado)
-        if (!animationFrameId) {
-             startGame();
-        }
-    }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-    // Función de VALIDACIÓN DE HORA (De 05:00 AM a 14:00 PM hora México)
-    function isTimeValid() {
-        const now = new Date();
-        const formatter = new Intl.DateTimeFormat('es-MX', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hourCycle: 'h23',
-            timeZone: 'America/Mexico_City' // Zona horaria de la Ciudad de México
-        });
-        
-        const parts = formatter.formatToParts(now);
-        const hourPart = parts.find(p => p.type === 'hour');
-        const currentHour = parseInt(hourPart.value, 10);
-        
-        if (currentHour >= 5 && currentHour < 14) {
-            return { valid: true, error: null };
-        } else if (currentHour < 5) {
-            return { valid: false, error: '¡Aún no es hora!', message: 'El registro de asistencia está disponible a partir de las 05:00 AM (Hora de México).' };
-        } else { // currentHour >= 14 (2:00 PM o más tarde)
-             return { valid: false, error: '¡Hora límite superada!', message: 'El registro de asistencia ha cerrado. Ahora puedes relajarte y jugar un momento.' };
-        }
-    }
+        // Estado de la aplicación
+        const AppState = {
+            currentUser: null,
+            userData: null,
+            userRole: null,
+            userCoordinates: null,
+            isLocationRequested: false,
+            isSubmitting: false,
+            longPressTimer: null
+        };
 
-    async function getUserData(email) {
-        try {
-            let querySnapshot = await db.collection('colaboradores')
-                .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
-                .limit(1)
-                .get();
-            if (querySnapshot.empty) {
-                querySnapshot = await db.collection('colaboradores')
-                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '>=', email.toLowerCase())
-                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '<=', email.toLowerCase() + '\uf8ff')
+        // --- FUNCIONES DE UTILIDAD CORREGIDAS ---
+
+        // Función central de alerta - CORREGIDA
+        async function showAlert(type, title, message) {
+            // Si las funciones personalizadas existen, usarlas
+            if (typeof window.showCustomAlert === 'function') {
+                switch(type) {
+                    case 'success':
+                        if (typeof window.showCustomSuccess === 'function') {
+                            return await window.showCustomSuccess(title, message);
+                        }
+                        break;
+                    case 'error':
+                        if (typeof window.showCustomError === 'function') {
+                            return await window.showCustomError(title, message);
+                        }
+                        break;
+                    case 'info':
+                        if (typeof window.showCustomWarning === 'function') {
+                            return await window.showCustomWarning(title, message, 'Entendido');
+                        }
+                        break;
+                }
+                // Fallback a la función genérica
+                return await window.showCustomAlert({ 
+                    title, 
+                    text: message, 
+                    icon: type 
+                });
+            } else {
+                // Fallback a Swal.fire estándar
+                return await Swal.fire({ 
+                    icon: type, 
+                    title: title, 
+                    html: message, 
+                    confirmButtonColor: '#4e54c8',
+                    allowOutsideClick: false
+                });
+            }
+        }
+
+        // Función específica para alertas de ubicación
+        async function showLocationAlert() {
+            return await Swal.fire({
+                title: 'Ubicación Requerida',
+                html: 'Para registrar tu asistencia, necesitamos acceder a tu ubicación actual. Esto nos ayuda a verificar tu presencia en el lugar de trabajo.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Permitir Ubicación',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#4e54c8',
+                allowOutsideClick: false
+            });
+        }
+
+        // Obtener fecha y hora formateada
+        function getFormattedDateTime() {
+            const now = new Date();
+            return {
+                timestamp: firebase.firestore.Timestamp.fromDate(now),
+                dateString: now.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                }),
+                timeString: now.toLocaleTimeString('es-ES'),
+                fullDateTime: now.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                })
+            };
+        }
+
+        // --- FUNCIONES DE DATOS ---
+
+        // Obtener rol del usuario
+        async function getUserRole(email) {
+            try {
+                const querySnapshot = await db.collection('usuarios')
+                    .where('email', '==', email)
                     .limit(1)
                     .get();
+                return !querySnapshot.empty ? querySnapshot.docs[0].data().rol : null;
+            } catch (error) {
+                console.error("Error al obtener rol del usuario:", error);
+                return null;
             }
-            return !querySnapshot.empty ? { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } : null;
-        } catch (error) { console.error("Error al obtener datos del usuario:", error); return null; }
-    }
-
-    async function checkActiveAttendanceFromCollaborators(email) {
-        try {
-            const collaboratorQuery = await db.collection('colaboradores')
-                .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
-                .limit(1)
-                .get();
-            if (collaboratorQuery.empty) return null;
-            const collaboratorData = collaboratorQuery.docs[0].data();
-            const collaboratorId = collaboratorQuery.docs[0].id;
-            if (collaboratorData.asistencia?.estado === true && collaboratorData.asistencia?.fecha) {
-                const lastAttendanceDate = collaboratorData.asistencia.fecha.toDate();
-                const today = new Date();
-                if (lastAttendanceDate.getDate() === today.getDate() && lastAttendanceDate.getMonth() === today.getMonth() && lastAttendanceDate.getFullYear() === today.getFullYear()) {
-                    return { id: collaboratorId, ...collaboratorData, horaRegistro: lastAttendanceDate.toLocaleTimeString('es-ES') };
-                }
-            }
-            return null;
-        } catch (error) { console.error("Error al verificar asistencia activa:", error); return null; }
-    }
-
-    // CORRECCIÓN FINAL APLICADA AQUÍ para asegurar que se lean campos con caracteres especiales/acentos y reescribir todo el HTML interno
-    function displayUserInfo(user) {
-        // Aseguramos que los campos se lean con notación de corchetes
-        const area = user['ÁREA'] || 'No especificado';
-        const nit = user.NIT || 'ID no disponible'; // Asumiendo que NIT es el ID
-        const rfc = user.RFC || 'No disponible';
-        const telefono = user['TELÉFONO MOVIL'] || 'No disponible';
-
-        employeeDetails.innerHTML = `
-            <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
-            <p><strong>Área:</strong> ${area}</p>
-            <p><strong>ID Empleado:</strong> ${nit}</p>
-            <p><strong>RFC:</strong> ${rfc}</p>
-            <p><strong>Teléfono:</strong> ${telefono}</p>
-            <p><strong>Asistencia hoy:</strong> ${user.asistencia?.estado ? '<span style="color: var(--success);">Presente</span>' : '<span style="color: var(--error);">Pendiente</span>'}</p>
-        `;
-        
-        // Lógica para la imagen del avatar
-        if (user.imagen) {
-            employeeAvatar.src = user.imagen;
-        } else {
-            const name = user.NOMBRE || '';
-            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
-            // Generar avatar con iniciales si no hay imagen
-            employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=4e54c8&color=fff&size=128`;
         }
-    }
 
-    let userCoordinates = null;
-    function getLocation() { 
-          return new Promise((resolve, reject) => {
-            if (navigator.geolocation) {
+        // Obtener datos del usuario
+        async function getUserData(email) {
+            try {
+                let querySnapshot = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (querySnapshot.empty) {
+                    querySnapshot = await db.collection('colaboradores')
+                        .where('CORREO ELECTRÓNICO EMPRESARIAL', '>=', email.toLowerCase())
+                        .where('CORREO ELECTRÓNICO EMPRESARIAL', '<=', email.toLowerCase() + '\uf8ff')
+                        .limit(1)
+                        .get();
+                }
+                
+                return !querySnapshot.empty ? { 
+                    id: querySnapshot.docs[0].id, 
+                    ...querySnapshot.docs[0].data() 
+                } : null;
+            } catch (error) { 
+                console.error("Error al obtener datos del usuario:", error); 
+                return null; 
+            }
+        }
+
+        // Verificar asistencia activa
+        async function checkActiveAttendanceFromCollaborators(email) {
+            try {
+                const collaboratorQuery = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (collaboratorQuery.empty) return null;
+                
+                const collaboratorData = collaboratorQuery.docs[0].data();
+                const collaboratorId = collaboratorQuery.docs[0].id;
+                
+                if (collaboratorData.asistencia?.estado === true && collaboratorData.asistencia?.fecha) {
+                    const lastAttendanceDate = collaboratorData.asistencia.fecha.toDate();
+                    const today = new Date();
+                    
+                    if (lastAttendanceDate.getDate() === today.getDate() && 
+                        lastAttendanceDate.getMonth() === today.getMonth() && 
+                        lastAttendanceDate.getFullYear() === today.getFullYear()) {
+                        return { 
+                            id: collaboratorId, 
+                            ...collaboratorData, 
+                            horaRegistro: lastAttendanceDate.toLocaleTimeString('es-ES') 
+                        };
+                    }
+                }
+                return null;
+            } catch (error) { 
+                console.error("Error al verificar asistencia activa:", error); 
+                return null; 
+            }
+        }
+
+        // --- FUNCIONES DE UI ---
+
+        // Mostrar información del usuario
+        function displayUserInfo(user) {
+            const employeeDetails = document.querySelector('.employee-details');
+            const employeeAvatar = document.getElementById('employeeAvatar');
+            
+            if (!employeeDetails) return;
+
+            const area = user['ÁREA'] || 'No especificado';
+            const nit = user.NIT || 'ID no disponible';
+            const rfc = user.RFC || 'No disponible';
+            const telefono = user['TELÉFONO MOVIL'] || 'No disponible';
+            
+            const successColor = 'var(--success-color, #4CAF50)';
+            const errorColor = 'var(--error-color, #f44336)';
+
+            employeeDetails.innerHTML = `
+                <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
+                <p><strong>Área:</strong> ${area}</p>
+                <p><strong>ID Empleado:</strong> ${nit}</p>
+                <p><strong>RFC:</strong> ${rfc}</p>
+                <p><strong>Teléfono:</strong> ${telefono}</p>
+                <p><strong>Asistencia hoy:</strong> ${user.asistencia?.estado ? 
+                    `<span style="color: ${successColor};">Presente</span>` : 
+                    `<span style="color: ${errorColor};">Pendiente</span>`}</p>
+            `;
+            
+            if (user.imagen) {
+                employeeAvatar.src = user.imagen;
+            } else {
+                const name = user.NOMBRE || '';
+                const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=4e54c8&color=fff&size=128`;
+            }
+        }
+
+        // Actualizar fecha y hora actual
+        function updateDateTime() {
+            const currentDateElement = document.getElementById('currentDate');
+            if (currentDateElement) {
+                currentDateElement.textContent = getFormattedDateTime().fullDateTime;
+            }
+        }
+
+        // Configurar opciones de selección
+        function setupAttendanceOptions() {
+            const attendanceOptions = document.querySelectorAll('.attendance-option');
+            
+            attendanceOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    attendanceOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+        }
+
+        // Redirigir según el rol
+        function redirectByRole(role) {
+            const rolePaths = {
+                'puntoVenta': '../nav-puntoVenta/inicio.html',
+                'facturas': '../nav-facturas/facturas.html',
+                'colaborador': '../nav-operadores/gestion_Tickets.html',
+                'admincolaborador': '../gestion-tickets/gestion-tickets.html'
+            };
+            
+            const redirectPath = rolePaths[role] || "../nav-operadores/gestion_Tickets.html";
+            window.location.href = redirectPath;
+        }
+
+        // Obtener nombre del tipo de asistencia
+        function getAttendanceTypeName(type) {
+            const types = { 
+                'office': 'En oficina', 
+                'site': 'En sitio', 
+                'iztapaluca': 'En oficina de Iztapaluca', 
+                'sick': 'Incapacidad' 
+            };
+            return types[type] || type;
+        }
+
+        // --- FUNCIONES DE GEOLOCALIZACIÓN ---
+
+        // Obtener ubicación precisa
+        function getLocation() { 
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocalización no soportada por el navegador"));
+                    return;
+                }
+
                 const timeout = setTimeout(() => {
                     reject(new Error("Tiempo de espera agotado al obtener ubicación"));
-                }, 15000); 
+                }, GEOLOCATION_TIMEOUT); 
 
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -331,643 +389,380 @@ document.addEventListener('DOMContentLoaded', function() {
                             return;
                         }
 
-                        userCoordinates = {
+                        const coordinates = {
                             latitude: Math.round(position.coords.latitude * 1000) / 1000, 
                             longitude: Math.round(position.coords.longitude * 1000) / 1000, 
                             accuracy: position.coords.accuracy,
                             timestamp: firebase.firestore.Timestamp.fromDate(new Date())
                         };
                         
-                        sessionStorage.setItem('userCoordinates', JSON.stringify(userCoordinates));
-                        resolve(userCoordinates);
+                        sessionStorage.setItem('userCoordinates', JSON.stringify(coordinates));
+                        resolve(coordinates);
                     },
                     (error) => {
                         clearTimeout(timeout); 
                         let errorMessage = "Error desconocido";
                         switch(error.code) {
-                            case error.PERMISSION_DENIED: errorMessage = "Permiso de ubicación denegado. Por favor habilita los permisos."; break;
-                            case error.POSITION_UNAVAILABLE: errorMessage = "La información de ubicación no está disponible."; break;
-                            case error.TIMEOUT: errorMessage = "La solicitud de ubicación ha caducado. Intenta nuevamente."; break;
+                            case error.PERMISSION_DENIED: 
+                                errorMessage = "Permiso de ubicación denegado. Por favor habilita los permisos."; 
+                                break;
+                            case error.POSITION_UNAVAILABLE: 
+                                errorMessage = "La información de ubicación no está disponible."; 
+                                break;
+                            case error.TIMEOUT: 
+                                errorMessage = "La solicitud de ubicación ha caducado. Intenta nuevamente."; 
+                                break;
                         }
                         reject(new Error(errorMessage));
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
-            } else {
-                reject(new Error("Geolocalización no soportada por el navegador"));
-            }
-        });
-    }
-
-    async function getFallbackLocation() { 
-        try {
-            const response = await fetch('https://ipapi.co/json/');
-            const data = await response.json();
-            return {
-                latitude: data.latitude,
-                longitude: data.longitude,
-                accuracy: 5000, 
-                source: 'ip'
-            };
-        } catch (error) {
-            return null;
-        }
-    }
-
-    // Función actualizada para mostrar fecha y hora
-    function updateDateTime() {
-        const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        };
-        currentDateElement.textContent = now.toLocaleDateString('es-ES', options);
-    }
-    
-    async function registerAttendance(attendanceType, userData) {
-        try {
-            const now = new Date();
-            const timestamp = firebase.firestore.Timestamp.fromDate(now);
-            
-            if (!userCoordinates) {
-                try {
-                    const storedCoords = sessionStorage.getItem('userCoordinates');
-                    if (storedCoords) {
-                        userCoordinates = JSON.parse(storedCoords);
-                    } else {
-                        userCoordinates = await getLocation();
-                    }
-                } catch (error) {
-                    userCoordinates = await getFallbackLocation();
-                }
-            }
-            
-            await db.collection('colaboradores').doc(userData.id).update({
-                asistencia: { estado: true, tipo: attendanceType, fecha: timestamp },
-                ultimaAsistencia: timestamp
             });
-
-            const attendanceData = {
-                userId: userData.id, email: userData['CORREO ELECTRÓNICO EMPRESARIAL'], nombre: userData.NOMBRE,
-                area: userData['ÁREA'], tipo: attendanceType, fecha: timestamp,
-                dia: now.toLocaleDateString('es-ES', { weekday: 'long' }),
-                horaRegistro: now.toLocaleTimeString('es-ES'), activo: true, ubicacion: userCoordinates,
-                detalles: { correoPersonal: userData['CORREO ELECTRONICO PERSONAL'], correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'], rfc: userData.RFC }
-            };
-
-            const batch = db.batch();
-            const attendanceRef = db.collection('asistencias').doc();
-            batch.set(attendanceRef, attendanceData);
-            await batch.commit();
-            
-            const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
-            const ubicacionMsg = attendanceType === 'office' || attendanceType === 'iztapaluca' ? 'Oficina verificada' : 'Ubicación del cliente verificada';
-            
-            showAlert('success', 'Asistencia registrada', 
-                `Tu asistencia ha sido registrada correctamente.<br><strong>Tipo:</strong> ${getAttendanceTypeName(attendanceType)}<br><strong>Ubicación:</strong> ${ubicacionMsg}<br>Serás redirigido en 3 segundos...`
-            );
-            
-            setTimeout(() => { redirectByRole(userRole); }, 3000);
-            return true;
-        } catch (error) { console.error("Error al registrar asistencia:", error); return false; }
-    }
-
-    function redirectByRole(role) {
-        switch(role) {
-            case 'puntoVenta': window.location.href = '../nav-puntoVenta/inicio.html'; break;
-            case 'facturas': window.location.href = '../nav-facturas/facturas.html'; break;
-            case 'colaborador': window.location.href = '../nav-operadores/gestion_Tickets.html'; break;
-            case 'admincolaborador': window.location.href = '../gestion-tickets/gestion-tickets.html'; break;
-            default: window.location.href = "../nav-operadores/gestion_Tickets.html";
         }
-    }
 
-    function getAttendanceTypeName(type) {
-        const types = { 'office': 'En oficina', 'site': 'En sitio', 'iztapaluca': 'En oficina de Iztapaluca', 'sick': 'Incapacidad' };
-        return types[type] || type;
-    }
-
-    // Mantener esta función de alerta para las alertas que NO usan SweetAlert2
-    function showAlert(type, title, message) {
-        alertOverlay.classList.remove('show');
-        errorAlert.classList.remove('show');
-        
-        const targetAlert = type === 'error' ? errorAlert : alertOverlay;
-        const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
-        
-        targetAlert.querySelector('.alert-title').textContent = title;
-        targetAlert.querySelector('.alert-message').innerHTML = message;
-        targetAlert.querySelector('.alert-icon i').className = `fas ${icon}`;
-        targetAlert.classList.add('show');
-    }
-
-    // Configurar el botón de enviar (MODIFICADO para Tetris)
-    function setupSubmitButton(userData) {
-        submitBtn.addEventListener('click', async function() {
-            const selectedOption = document.querySelector('.attendance-option.selected');
-            
-            if (!selectedOption) {
-                errorAlert.classList.add('show');
-                if(optionsGrid) { optionsGrid.style.animation = 'shake 0.5s'; setTimeout(() => { optionsGrid.style.animation = ''; }, 500); }
-                return;
+        // Obtener ubicación por IP (fallback)
+        async function getFallbackLocation() { 
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                return {
+                    latitude: data.latitude || 0,
+                    longitude: data.longitude || 0,
+                    accuracy: FALLBACK_ACCURACY, 
+                    source: 'ip'
+                };
+            } catch (error) {
+                return null;
             }
+        }
 
-            const timeCheck = isTimeValid();
-            if (!timeCheck.valid) {
-                if (timeCheck.error === '¡Hora límite superada!') {
-                    // Si la hora es inválida por límite, carga el Tetris en el mismo contenedor
-                    loadTetris(userData.NOMBRE, false); 
-                    return;
-                }
-                
-                showAlert('error', timeCheck.error, timeCheck.message);
-                return;
-            }
-
-            const attendanceType = selectedOption.getAttribute('data-value');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
-            submitBtn.disabled = true;
-
-            const success = await registerAttendance(attendanceType, userData);
-            
-            if (!success) {
-                showAlert('error', 'Error al registrar', 'Hubo un problema al registrar tu asistencia. Por favor intenta nuevamente.');
-                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
-                submitBtn.disabled = false;
-            }
-        });
-    }
-
-    // ----------------------------------------------------------------------------------
-    // 3. Lógica de AUTENTICACIÓN y CARGA 
-    // ----------------------------------------------------------------------------------
-    
-    // Inicializar fecha y hora
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-
-    // *********************************************************************************
-    // CORRECCIÓN CRÍTICA DE VISIBILIDAD: Muestra el contenedor y el formulario interno
-    attendanceContainer.classList.add('loaded'); 
-    attendanceContainer.classList.remove('app-hidden');
-    attendanceFormContent.classList.remove('app-hidden'); // Asegura que el formulario esté visible inicialmente
-    tetrisContainer.classList.add('app-hidden');         // Asegura que el Tetris esté oculto inicialmente
-    // *********************************************************************************
-
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            console.log("Usuario autenticado. Intentando cargar datos...");
-            const userData = await getUserData(user.email);
-            
-            if (!userData) { 
-                 console.error("No se encontraron datos de colaborador.");
-                 showAlert('error', 'Datos no encontrados', 'No se encontraron datos para este usuario. Serás redirigido a la página de inicio de sesión.');
-                 setTimeout(() => { auth.signOut().then(() => { window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html"; }); }, 3000);
-                 return; 
-            }
-            
-            const userRole = await getUserRole(user.email);
-            
-            // Revisa si el rol tiene permiso (evita 'user' y 'admin')
-            if (userRole === 'user' || userRole === 'admin') {
-                 console.warn("Rol sin permisos.");
-                 showAlert('error', 'Acceso denegado', 'No tienes permisos para acceder a esta función. Serás redirigido.');
-                 setTimeout(() => { auth.signOut().then(() => { window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html"; }); }, 3000);
-                 return;
-            }
-            
-            const activeAttendance = await checkActiveAttendanceFromCollaborators(user.email);
-            const timeCheck = isTimeValid();
-            
-            // 1. Caso: Asistencia ya registrada
-            if (activeAttendance) {
-                console.log("Asistencia ya registrada hoy. Redirigiendo...");
-                displayUserInfo(activeAttendance);
-                showAlert('info', '¡Asistencia ya registrada hoy!', `Ya registraste tu asistencia hoy a las ${activeAttendance.horaRegistro}.<br>Serás redirigido al panel en 3 segundos...`);
-                setTimeout(() => { redirectByRole(userRole); }, 3000);
-            
-            // 2. Caso: Hora límite superada (14:00 PM) Y sin asistencia
-            } else if (!timeCheck.valid && timeCheck.error === '¡Hora límite superada!') {
-                console.log("Hora límite superada. Intentando cargar Tetris...");
-                // Muestra Tetris
-                loadTetris(userData.NOMBRE, false);
-            
-            // 3. Caso: Dentro del horario permitido o Antes del horario permitido Y sin asistencia
-            } else { 
-                console.log("Dentro de horario o antes de las 5 AM. Mostrando formulario...");
-                
-                // Asegura que el formulario esté visible y Tetris oculto
-                attendanceFormContent.classList.remove('app-hidden'); 
-                tetrisContainer.classList.add('app-hidden');
-                
-                displayUserInfo(userData);
+        // Obtener ubicación con fallback
+        async function getUserLocation() {
+            try {
                 const storedCoords = sessionStorage.getItem('userCoordinates');
-                if (!storedCoords) { locationOverlay.classList.add('show'); }
-                setupSubmitButton(userData);
-                
-                // Si la hora es inválida (antes de las 05:00 AM), muestra la alerta
-                if (!timeCheck.valid) {
-                    showAlert('error', timeCheck.error, timeCheck.message);
+                if (storedCoords) {
+                    return JSON.parse(storedCoords);
                 }
-            }
-            
-        } else {
-            console.log("Usuario no autenticado. Redirigiendo a login.");
-            window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
-        }
-    });
-
-    // ----------------------------------------------------------------------------------
-    // 4. Lógica del Juego de Tetris (Tamaño Aumentado y Corrección de Color)
-    // ----------------------------------------------------------------------------------
-
-    const canvas = document.getElementById('tetris-canvas');
-    const ctx = canvas ? canvas.getContext('2d') : null;
-    
-    // TAMAÑO AUMENTADO PARA EL TETRIS
-    const gridSize = 25; // Tamaño del bloque en píxeles
-    const cols = 12;     // Columnas
-    const rows = 24;     // Filas
-    
-    if (ctx) {
-        canvas.width = cols * gridSize; 
-        canvas.height = rows * gridSize;
-    }
-
-    let board;
-    let currentPiece; // Ahora es un objeto { matrix, colorIndex }
-    let currentX;
-    let currentY;
-    let score = 0;
-    let highscore = localStorage.getItem('tetrisHighScore') || 0;
-    let isGameOver = false;
-    let dropCounter = 0;
-    let dropInterval = 1000; 
-    let lastTime = 0;
-    let animationFrameId;
-
-    const pieces = [
-        [[1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], // I (0)
-        [[1, 1], [1, 1]],                                         // O (1)
-        [[1, 1, 0], [0, 1, 1], [0, 0, 0]],                        // S (2)
-        [[0, 1, 1], [1, 1, 0], [0, 0, 0]],                        // Z (3)
-        [[1, 1, 1], [0, 1, 0], [0, 0, 0]],                        // T (4)
-        [[1, 0, 0], [1, 1, 1], [0, 0, 0]],                        // L (5)
-        [[0, 0, 1], [1, 1, 1], [0, 0, 0]]                         // J (6)
-    ];
-    // Colores usados en el canvas
-    const colors = ['cyan', 'yellow', 'lime', 'red', 'purple', 'orange', 'blue'];
-
-    function initTetris() {
-        if (!ctx) return; 
-        board = Array(rows).fill(0).map(() => Array(cols).fill(0));
-        updateScore(0);
-        document.getElementById('highScore').textContent = highscore;
-        newPiece();
-        drawBoard();
-        document.getElementById('start-btn').textContent = "Iniciar Juego";
-    }
-
-    function newPiece() {
-        const rand = Math.floor(Math.random() * pieces.length);
-        // Almacenar el índice + 1 para saber su color. 0 en el tablero significa vacío.
-        const pieceIndex = rand + 1; 
-        currentPiece = {
-            matrix: pieces[rand],
-            colorIndex: pieceIndex
-        };
-
-        currentX = Math.floor(cols / 2) - Math.floor(currentPiece.matrix[0].length / 2);
-        currentY = 0;
-        
-        if (!checkCollision(0, 0)) {
-            isGameOver = true;
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null; // Detener el loop
-            document.getElementById('start-btn').textContent = "Juego Terminado. Volver a empezar";
-            
-            if (score > highscore) {
-                highscore = score;
-                localStorage.setItem('tetrisHighScore', highscore);
-                document.getElementById('highScore').textContent = highscore;
+                
+                return await getLocation();
+            } catch (error) {
+                console.warn("No se pudo obtener ubicación precisa, intentando con fallback...", error);
+                return await getFallbackLocation();
             }
         }
-    }
 
-    function checkCollision(offsetX, offsetY, pieceMatrix = currentPiece.matrix) {
-        for (let y = 0; y < pieceMatrix.length; y++) {
-            for (let x = 0; x < pieceMatrix[y].length; x++) {
-                if (pieceMatrix[y][x]) {
-                    const newX = currentX + x + offsetX;
-                    const newY = currentY + y + offsetY;
-
-                    const isOutsideHorizontal = newX < 0 || newX >= cols;
-                    const isOutsideVertical = newY >= rows;
-                    // Verificar colisión con piezas ya fijas (valor > 0)
-                    const isCollidingWithBoard = newY >= 0 && board[newY] && board[newY][newX] > 0;
-
-                    if (isOutsideHorizontal || isOutsideVertical || isCollidingWithBoard) {
+        // Función para mostrar modal de permisos de ubicación
+        async function showLocationPermissionModal(callbackSubmitButton, userData) {
+            try {
+                const result = await showLocationAlert();
+                
+                if (result && result.isConfirmed) {
+                    try {
+                        const coords = await getLocation();
+                        AppState.userCoordinates = coords;
+                        await showAlert('success', 'Ubicación obtenida', 'Ahora puedes registrar tu asistencia.');
+                        
+                        if (callbackSubmitButton && userData) {
+                            callbackSubmitButton(userData);
+                        }
+                        
+                        return true;
+                    } catch (error) {
+                        console.error("Error obteniendo ubicación:", error);
+                        await showAlert('error', 'Error de ubicación', error.message || 'No se pudo obtener tu ubicación. Intenta de nuevo.');
                         return false;
                     }
+                } else {
+                    await showAlert('info', 'Ubicación requerida', 'La ubicación es necesaria para registrar tu asistencia. Puedes intentar de nuevo cuando estés listo.');
+                    return false;
                 }
-            }
-        }
-        return true;
-    }
-
-    function mergePiece() {
-        for (let y = 0; y < currentPiece.matrix.length; y++) {
-            for (let x = 0; x < currentPiece.matrix[y].length; x++) {
-                if (currentPiece.matrix[y][x]) {
-                    // Guardar el índice de color en el tablero
-                    board[currentY + y][currentX + x] = currentPiece.colorIndex; 
-                }
-            }
-        }
-        clearLines();
-        newPiece();
-    }
-
-    function clearLines() {
-        let linesCleared = 0;
-        for (let y = rows - 1; y >= 0; y--) {
-            // Un valor diferente de 0 significa que la celda tiene un color (está llena)
-            if (board[y].every(cell => cell !== 0)) {
-                board.splice(y, 1);
-                board.unshift(Array(cols).fill(0));
-                linesCleared++;
-                y++; 
-            }
-        }
-        if (linesCleared > 0) {
-            const points = [0, 40, 100, 300, 1200];
-            updateScore(score + points[linesCleared]);
-            // Aumentar la velocidad
-            dropInterval *= 0.95; 
-        }
-    }
-
-    function rotatePiece() {
-        const pieceMatrix = currentPiece.matrix;
-        const N = pieceMatrix.length;
-        const newPieceMatrix = Array(N).fill(0).map(() => Array(N).fill(0));
-        for (let y = 0; y < N; ++y) {
-            for (let x = 0; x < N; ++x) {
-                newPieceMatrix[x][N - 1 - y] = pieceMatrix[y][x];
-            }
-        }
-        if (checkCollision(0, 0, newPieceMatrix)) {
-            currentPiece.matrix = newPieceMatrix;
-        }
-    }
-
-    function updateScore(newScore) {
-        score = newScore;
-        document.getElementById('score').textContent = score;
-        if (score > highscore) {
-            highscore = score;
-            localStorage.setItem('tetrisHighScore', highscore);
-            document.getElementById('highScore').textContent = highscore;
-        }
-    }
-
-    // CORRECCIÓN DE COLOR APLICADA AQUÍ: Usa el colorIndex del objeto currentPiece
-    function drawBoard() {
-        if (!ctx) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Dibujar el tablero estático
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                const colorIndex = board[y][x];
-                if (colorIndex > 0) {
-                    // El color es colors[index - 1] porque los índices de color van de 1 a 7 (en el board) a 0 a 6 (en el array colors)
-                    ctx.fillStyle = colors[colorIndex - 1]; 
-                    ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(x * gridSize, y * gridSize, gridSize, gridSize);
-                }
+            } catch (error) {
+                console.error("Error en el modal de ubicación:", error);
+                await showAlert('error', 'Error', 'Hubo un problema al solicitar permisos de ubicación.');
+                return false;
             }
         }
 
-        // Dibujar la pieza actual en movimiento
-        if (!isGameOver && currentPiece) {
-            const pieceColor = colors[currentPiece.colorIndex - 1]; // Usa el color indexado
-            
-            for (let y = 0; y < currentPiece.matrix.length; y++) {
-                for (let x = 0; x < currentPiece.matrix[y].length; x++) {
-                    if (currentPiece.matrix[y][x]) {
-                        ctx.fillStyle = pieceColor;
-                        ctx.fillRect((currentX + x) * gridSize, (currentY + y) * gridSize, gridSize, gridSize);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect((currentX + x) * gridSize, (currentY + y) * gridSize, gridSize, gridSize);
-                    }
-                }
-            }
-        }
-    }
+        // --- FUNCIONES DE ASISTENCIA ---
 
-    function gameLoop(time = 0) {
-        if (isGameOver) return;
-        
-        const deltaTime = time - lastTime;
-        lastTime = time;
-        dropCounter += deltaTime;
-
-        if (dropCounter > dropInterval) {
-            if (checkCollision(0, 1)) {
-                currentY++;
-            } else {
-                mergePiece();
-            }
-            dropCounter = 0;
-        }
-
-        drawBoard();
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }
-
-    window.startGame = function() {
-        if (isGameOver) {
-            isGameOver = false;
-            dropInterval = 1000;
-            score = 0;
-            initTetris();
-            gameLoop();
-            document.getElementById('start-btn').textContent = "Reiniciar Juego";
-        } else if (!animationFrameId) {
-            // Reanudar o iniciar
-            gameLoop();
-            document.getElementById('start-btn').textContent = "Pausar/Continuar";
-        } else {
-            // Pausar
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
-            document.getElementById('start-btn').textContent = "Continuar Juego";
-        }
-    }
-    
-    // Función central de movimiento
-    function movePiece(action) {
-        // Ejecutar solo si el juego está activo y no terminado
-        if (tetrisContainer.classList.contains('app-hidden') || isGameOver || !animationFrameId) return;
-        
-        if (action === 'left') {
-            if (checkCollision(-1, 0)) currentX--;
-        } else if (action === 'right') {
-            if (checkCollision(1, 0)) currentX++;
-        } else if (action === 'rotate') {
-            rotatePiece();
-        } else if (action === 'down') {
-            if (checkCollision(0, 1)) {
-                currentY++;
-                updateScore(score + 1); 
-            }
-        } else if (action === 'drop') {
-            while (checkCollision(0, 1)) {
-                currentY++;
-                updateScore(score + 2); 
-            }
-            mergePiece();
-            dropCounter = 0;
-        }
-        drawBoard();
-    }
-    
-    // ----------------------------------------------------------------------------------
-    // 5. Controles (Teclado y Táctil), Alertas, y EASTER EGG (Click Largo)
-    // ----------------------------------------------------------------------------------
-    
-    // --- Lógica del EASTER EGG ---
-    
-    // Función para disparar fuegos artificiales
-    function shootConfetti() {
-        // Disparo principal
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-        // Disparo secundario (más disperso)
-        confetti({
-            particleCount: 50,
-            spread: 120,
-            origin: { y: 0.8 },
-            colors: ['#bb0000', '#ffffff', '#ffaa00']
-        });
-    }
-
-    // Función a ejecutar al detectar click largo
-    function activateEasterEgg() {
-        // Solo activar si no estamos ya en Tetris
-        if (tetrisContainer.classList.contains('app-hidden')) {
-            // 1. Muestra la alerta con SweetAlert2
-            Swal.fire({
-                title: '🎉 ¡EASTER EGG ENCONTRADO! 🎉',
-                text: 'Este juego fue puesto por los ingenieros Emanuel Campa y Victor Ramirez para el desestrés. ¡A disfrutar!',
-                icon: 'success',
-                confirmButtonText: '¡A Jugar!',
-                customClass: {
-                    container: 'my-swal-container' 
-                }
-            }).then(() => {
-                // 3. Carga Tetris después de cerrar la alerta (con el flag isEasterEgg en true)
-                loadTetris(auth.currentUser?.displayName || 'Colaborador', true);
+        // Validar horario de registro
+        function isTimeValid() {
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hourCycle: 'h23',
+                timeZone: 'America/Mexico_City'
             });
             
-            // 2. Dispara los fuegos artificiales
-            shootConfetti();
+            const parts = formatter.formatToParts(now);
+            const hourPart = parts.find(p => p.type === 'hour');
+            const currentHour = parseInt(hourPart.value, 10);
+            
+            if (currentHour >= 5) {
+                return { valid: true, error: null };
+            } else {
+                return { 
+                    valid: false, 
+                    error: '¡Aún no es hora!', 
+                    message: 'El registro de asistencia está disponible a partir de las 05:00 AM (Hora de México).' 
+                };
+            }
         }
-        clearTimeout(longPressTimer); // Limpiar el temporizador por si acaso
-    }
 
-    // Inicio de la pulsación (mousedown o touchstart)
-    function startLongPress() {
-        // Prevenir la activación si Tetris ya está visible
-        if (!tetrisContainer.classList.contains('app-hidden')) {
-            return;
+        // Registrar asistencia en Firebase - CORREGIDA
+        async function registerAttendance(attendanceType, userData) {
+            try {
+                const datetime = getFormattedDateTime();
+                
+                if (!AppState.userCoordinates) {
+                    AppState.userCoordinates = await getUserLocation();
+                }
+                
+                // Actualizar colaborador
+                await db.collection('colaboradores').doc(userData.id).update({
+                    asistencia: { 
+                        estado: true, 
+                        tipo: attendanceType, 
+                        fecha: datetime.timestamp 
+                    },
+                    ultimaAsistencia: datetime.timestamp
+                });
+
+                // Crear registro de asistencia
+                const attendanceData = {
+                    userId: userData.id, 
+                    email: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                    nombre: userData.NOMBRE,
+                    area: userData['ÁREA'], 
+                    tipo: attendanceType, 
+                    fecha: datetime.timestamp,
+                    dia: datetime.dateString,
+                    horaRegistro: datetime.timeString, 
+                    activo: true, 
+                    ubicacion: AppState.userCoordinates,
+                    detalles: { 
+                        correoPersonal: userData['CORREO ELECTRONICO PERSONAL'], 
+                        correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                        rfc: userData.RFC 
+                    }
+                };
+
+                // Guardar en asistencias
+                const batch = db.batch();
+                const attendanceRef = db.collection('asistencias').doc();
+                batch.set(attendanceRef, attendanceData);
+                await batch.commit();
+                
+                // Obtener rol para redirección
+                const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                const tipoAsistencia = getAttendanceTypeName(attendanceType);
+                const ubicacionMsg = attendanceType === 'office' || attendanceType === 'iztapaluca' ? 
+                    'Oficina verificada' : 'Ubicación del cliente verificada';
+                
+                // MENSAJE CORREGIDO - sin HTML
+                const mensajeExito = `Tu asistencia ha sido registrada correctamente.\n\nTipo: ${tipoAsistencia}\nUbicación: ${ubicacionMsg}\n\nSerás redirigido en 3 segundos...`;
+                
+                await showAlert('success', 'Asistencia registrada', mensajeExito);
+                
+                setTimeout(() => { 
+                    redirectByRole(userRole); 
+                }, REDIRECT_DELAY);
+                
+                return true;
+            } catch (error) { 
+                console.error("Error al registrar asistencia:", error); 
+                await showAlert('error', 'Error', 'No se pudo registrar la asistencia. Intenta nuevamente.');
+                return false; 
+            }
         }
-        // Configurar el temporizador para la activación
-        longPressTimer = setTimeout(activateEasterEgg, LONG_PRESS_DELAY);
-    }
 
-    // Fin de la pulsación (mouseup, mouseleave o touchend/touchcancel)
-    function cancelLongPress() {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-    }
+        // Configurar botón de envío
+        function setupSubmitButton(userData) {
+            const submitBtn = document.getElementById('submitAttendance');
+            const optionsGrid = document.querySelector('.options-grid');
+            
+            submitBtn.addEventListener('click', async function() {
+                if (AppState.isSubmitting) return;
+                
+                const selectedOption = document.querySelector('.attendance-option.selected');
+                
+                if (!selectedOption) {
+                    await showAlert('error', 'Selecciona una opción', 'Debes seleccionar un tipo de asistencia antes de continuar.');
+                    if (optionsGrid) { 
+                        optionsGrid.style.animation = 'shake 0.5s'; 
+                        setTimeout(() => { optionsGrid.style.animation = ''; }, 500); 
+                    }
+                    return;
+                }
 
-    // Asociar eventos a la imagen (mousedown/mouseup para PC, touchstart/touchend para móvil)
-    employeeAvatar.addEventListener('mousedown', startLongPress);
-    employeeAvatar.addEventListener('mouseup', cancelLongPress);
-    employeeAvatar.addEventListener('mouseleave', cancelLongPress);
+                const timeCheck = isTimeValid();
+                if (!timeCheck.valid) {
+                    await showAlert('error', timeCheck.error, timeCheck.message);
+                    return;
+                }
 
-    // Soporte táctil
-    employeeAvatar.addEventListener('touchstart', startLongPress);
-    employeeAvatar.addEventListener('touchend', cancelLongPress);
-    employeeAvatar.addEventListener('touchcancel', cancelLongPress);
+                const attendanceType = selectedOption.getAttribute('data-value');
+                AppState.isSubmitting = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+                submitBtn.disabled = true;
 
-    // --- Controles de Tetris y Alertas (Original) ---
-
-    // Controles de teclado
-    document.addEventListener('keydown', (e) => {
-        if (tetrisContainer.classList.contains('app-hidden') || isGameOver || !animationFrameId) return;
-
-        if (e.key === 'ArrowLeft') {
-            movePiece('left');
-        } else if (e.key === 'ArrowRight') {
-            movePiece('right');
-        } else if (e.key === 'ArrowUp') {
-            movePiece('rotate');
-        } else if (e.key === 'ArrowDown') {
-            movePiece('down');
-        } else if (e.key === ' ') {
-            e.preventDefault(); 
-            movePiece('drop');
+                try {
+                    const success = await registerAttendance(attendanceType, userData);
+                    if (!success) {
+                        submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
+                        submitBtn.disabled = false;
+                        AppState.isSubmitting = false;
+                    }
+                } catch (error) {
+                    console.error("Error en el proceso de registro:", error);
+                    await showAlert('error', 'Error', 'Ocurrió un error inesperado. Intenta nuevamente.');
+                    submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
+                    submitBtn.disabled = false;
+                    AppState.isSubmitting = false;
+                }
+            });
         }
-    });
 
-    // Controles Táctiles (Event Listeners)
-    document.getElementById('touchControls').querySelectorAll('.control-button').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault(); // Previene zoom o desplazamiento en algunos navegadores
-            const action = this.getAttribute('data-action');
-            movePiece(action);
-        });
-    });
-    
-    alertBtn.addEventListener('click', function() { alertOverlay.classList.remove('show'); });
-    errorBtn.addEventListener('click', function() { errorAlert.classList.remove('show'); });
-    
-    locationBtn.addEventListener('click', async function() {
-        locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Otorgando permisos';
-        locationBtn.disabled = true;
-        
-        try {
-            await getLocation();
-            locationOverlay.classList.remove('show');
-            showAlert('success', 'Perfil verificad@', 'Ahora puedes registrar tu asistencia.');
-        } catch (error) {
-            showAlert('error', 'Ubicación requerida', error.message || 'No podemos continuar sin acceso a tu ubicación.');
-            locationBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Intentar nuevamente';
-            locationBtn.disabled = false;
+        // --- VALIDACIONES Y FLUJO PRINCIPAL ---
+
+        // Validar permisos de usuario
+        function validateUserPermissions(userRole) {
+            const deniedRoles = ['user', 'admin'];
+            return !deniedRoles.includes(userRole);
         }
-    });
 
-    // Selección de opciones de asistencia 
-    attendanceOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            attendanceOptions.forEach(opt => opt.classList.remove('selected'));
-            this.classList.add('selected');
-        });
-    });
+        // Manejar usuario autenticado - CORREGIDA
+        async function handleAuthenticatedUser(user) {
+            try {
+                AppState.userData = await getUserData(user.email);
+                
+                if (!AppState.userData) {
+                    throw new Error('No se encontraron datos para este usuario');
+                }
 
-});
+                AppState.userRole = await getUserRole(user.email);
+                
+                if (!validateUserPermissions(AppState.userRole)) {
+                    throw new Error('No tienes permisos para acceder a esta función');
+                }
+
+                displayUserInfo(AppState.userData);
+                
+                const activeAttendance = await checkActiveAttendanceFromCollaborators(user.email);
+                
+                if (activeAttendance) {
+                    // MENSAJE CORREGIDO - sin HTML
+                    const mensajeAsistencia = `Ya registraste tu asistencia hoy a las ${activeAttendance.horaRegistro}.\n\nSerás redirigido al panel en 3 segundos...`;
+                    await showAlert('info', 'Asistencia ya registrada', mensajeAsistencia);
+                    
+                    setTimeout(() => { 
+                        redirectByRole(AppState.userRole); 
+                    }, REDIRECT_DELAY);
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Error manejando usuario autenticado:", error);
+                await showAlert('error', 'Error', error.message);
+                
+                setTimeout(() => {
+                    auth.signOut().then(() => {
+                        window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                    });
+                }, REDIRECT_DELAY);
+                
+                return false;
+            }
+        }
+
+        // Inicializar flujo de ubicación
+        async function initializeLocationFlow(userData) {
+            const storedCoords = sessionStorage.getItem('userCoordinates');
+            if (storedCoords) {
+                AppState.userCoordinates = JSON.parse(storedCoords);
+                AppState.isLocationRequested = true;
+                return true;
+            }
+            
+            if (!AppState.isLocationRequested) {
+                const locationConfirmed = await showLocationPermissionModal(setupSubmitButton, userData);
+                AppState.isLocationRequested = true;
+                return locationConfirmed;
+            }
+            
+            return true;
+        }
+
+        // Configurar listeners de autenticación
+        function setupAuthListener() {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    AppState.currentUser = user;
+                    
+                    const userValid = await handleAuthenticatedUser(user);
+                    if (!userValid) return;
+                    
+                    const timeCheck = isTimeValid();
+                    
+                    const locationInitialized = await initializeLocationFlow(AppState.userData);
+                    
+                    if (locationInitialized) {
+                        setupSubmitButton(AppState.userData);
+                    }
+                    
+                    if (!timeCheck.valid) {
+                        await showAlert('error', timeCheck.error, timeCheck.message);
+                    }
+                    
+                } else {
+                    window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                }
+            });
+        }
+
+        // --- INICIALIZACIÓN DE LA APLICACIÓN ---
+
+        // Inicializar aplicación
+        function initApp() {
+            const attendanceContainer = document.getElementById('attendanceContainer');
+            const attendanceFormContent = document.getElementById('attendanceFormContent');
+            const tetrisContainer = document.getElementById('tetris-container');
+            
+            if (attendanceContainer) {
+                attendanceContainer.classList.add('loaded');
+                attendanceContainer.classList.remove('app-hidden');
+            }
+            if (attendanceFormContent) {
+                attendanceFormContent.classList.remove('app-hidden');
+            }
+            if (tetrisContainer) {
+                tetrisContainer.classList.add('app-hidden');
+            }
+
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            setupAttendanceOptions();
+            setupAuthListener();
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Estilos de animación
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-8px); }
+                40%, 80% { transform: translateX(8px); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
+
+    <script src="../js/personalizacion-colores.js"></script>
 </body>
 </html>

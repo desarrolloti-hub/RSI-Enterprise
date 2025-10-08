@@ -11,8 +11,6 @@
 <body>
     <div class="attendance-container" id="reimbursementContainer">
         
-     
-
         <div class="attendance-header">
             <h1>Solicitud de Reembolso</h1>
             <p>Envía tu comprobante y detalles del gasto</p>
@@ -56,8 +54,7 @@
                 <i class="fas fa-list-alt"></i> Ver Historial de Reembolsos
             </button>
             
-
-            <button class="toggle-btn" id="goToTicketsBtn">
+            <button type="button" class="toggle-btn" id="goToTicketsBtn">
                 <i class="fas fa-ticket-alt"></i> Ver Mis Tickets
             </button>
         </form>
@@ -72,7 +69,7 @@
             <h2>Historial de Mis Reembolsos</h2>
             <div id="loadingHistory"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</div>
             <ul class="reimbursement-list" id="reimbursementList">
-                </ul>
+            </ul>
             <p id="noReimbursements" style="display:none; text-align:center; color:#999;">No tienes solicitudes de reembolso registradas.</p>
         </div>
     </div>
@@ -104,24 +101,40 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configuración de Firebase
-            const firebaseConfig = {
-                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-                authDomain: "rsienterprise.firebaseapp.com",
-                databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
-                projectId: "rsienterprise",
-                storageBucket: "rsienterprise.appspot.com",
-                messagingSenderId: "1063117165770",
-                appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
-                measurementId: "G-38F2DBG9HE"
-            };
+    // La configuración de Firebase solo es referencial.
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+        measurementId: "G-38F2DBG9HE"
+    };
 
-            // Inicializar Firebase
-            const app = firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
-            const auth = firebase.auth();
+    document.addEventListener('DOMContentLoaded', function() {
+        let db;
+        let auth;
+        
+        // =========================================================================
+        // SOLUCIÓN DE COMPATIBILIDAD: Esperar a que navegacion-operador.js inicialice Firebase
+        // =========================================================================
+        const checkFirebaseReady = setInterval(() => {
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                clearInterval(checkFirebaseReady);
 
+                // Obtener instancias sin re-inicializar
+                db = firebase.firestore();
+                auth = firebase.auth();
+                
+                initializeReimbursementLogic(db, auth);
+            }
+        }, 100);
+        // =========================================================================
+
+
+        function initializeReimbursementLogic(db, auth) {
             // Elementos del DOM
             const employeeAvatar = document.getElementById('employeeAvatar');
             const employeeDetails = document.getElementById('employeeDetails');
@@ -142,13 +155,12 @@
             const noReimbursements = document.getElementById('noReimbursements');
             const toggleHistoryBtn = document.getElementById('toggleHistoryBtn'); 
             const backToFormBtn = document.getElementById('backToFormBtn'); 
-            const goToTicketsBtn = document.getElementById('goToTicketsBtn'); // NUEVO BOTÓN
+            const goToTicketsBtn = document.getElementById('goToTicketsBtn');
             
             let current_userData = null; 
 
             // --- Funcionalidad de Alternar Vistas ---
             function toggleView(showForm) {
-                // Obtener el separador HR que está justo debajo del div employee-info
                 const hrDivider = document.querySelector('.attendance-container > hr');
 
                 if (showForm) {
@@ -163,8 +175,8 @@
                     reimbursementHistory.style.display = 'block';
                     hrDivider.style.display = 'none';
                     
-                    if (current_userData) {
-                        loadReimbursementHistory(current_userData.NOMBRE);
+                    if (current_userData && current_userData['CORREO ELECTRÓNICO EMPRESARIAL']) {
+                        loadReimbursementHistory(current_userData['CORREO ELECTRÓNICO EMPRESARIAL']);
                     }
                 }
             }
@@ -173,14 +185,13 @@
             toggleHistoryBtn.addEventListener('click', () => toggleView(false));
             backToFormBtn.addEventListener('click', () => toggleView(true));
 
-            // Event Listener para el botón principal de tickets (NUEVO)
+            // Event Listener para el botón principal de tickets
             goToTicketsBtn.addEventListener('click', function() {
-                // RUTA DEFINIDA POR EL USUARIO: Ruta al panel principal de tickets
-                window.location.href = '..//gestion-tickets/gestion-tickets.html';
+                window.location.href = '../gestion-tickets/gestion-tickets.html';
             });
 
 
-            // --- Utilidades (Mantenidas) ---
+            // --- Utilidades ---
             function showAlert(type, title, message) {
                 alertOverlay.classList.remove('show');
                 errorAlert.classList.remove('show');
@@ -226,37 +237,6 @@
                     const name = user.NOMBRE || '';
                     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
                     employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=c84e4e&color=fff&size=128`;
-                }
-            }
-            
-            async function getUserRole(email) {
-                try {
-                    const querySnapshot = await db.collection('usuarios')
-                        .where('email', '==', email)
-                        .limit(1)
-                        .get();
-                    return querySnapshot.empty ? null : querySnapshot.docs[0].data().rol;
-                } catch (error) {
-                    console.error("Error al obtener rol:", error);
-                    return null;
-                }
-            }
-
-            function redirectByRole(role) {
-                // Esta función se mantiene, pero la navegación principal ahora usa el botón goToTicketsBtn
-                switch(role) {
-                    case 'puntoVenta':
-                        window.location.href = '../nav-puntoVenta/inicio.html';
-                        break;
-                    case 'facturas':
-                        window.location.href = '../nav-facturas/facturas.html';
-                        break;
-                    case 'colaborador':
-                    case 'admincolaborador':
-                    default:
-                        // Redirección al panel de tickets si falla la autenticación inicial
-                        window.location.href = '../nav-operadores/gestion_Tickets.html'; 
-                        break;
                 }
             }
             
@@ -336,7 +316,6 @@
                 
                 setTimeout(() => {
                     alertOverlay.classList.remove('show');
-                    // Después de enviar, cambia automáticamente al historial
                     toggleView(false); 
                     submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud de Reembolso';
                     submitBtn.disabled = false;
@@ -362,7 +341,7 @@
                 }
             });
 
-            // --- Lógica de Carga y Filtrado del Historial ---
+            // --- Lógica de Carga y Filtrado del Historial (CORREGIDO PARA EVITAR ÍNDICE) ---
             function createStatusTag(status) {
                 let statusText = status;
                 let statusClass = status.replace(/\s/g, ''); 
@@ -374,15 +353,16 @@
                 return `<span class="status-tag status-${statusClass}">${statusText}</span>`;
             }
 
-            async function loadReimbursementHistory(collaboratorName) {
+            async function loadReimbursementHistory(collaboratorEmail) {
                 reimbursementList.innerHTML = '';
                 loadingHistory.style.display = 'block';
                 noReimbursements.style.display = 'none';
 
                 try {
-                    // Consulta simple (solo filtrar por nombre)
+                    // ✅ CORRECCIÓN: Quitamos el .orderBy() para evitar el error de índice compuesto.
+                    // Ahora solo filtra por email.
                     const querySnapshot = await db.collection('Reembolsos')
-                        .where('nombre', '==', collaboratorName)
+                        .where('emailEmpresarial', '==', collaboratorEmail) 
                         .get(); 
 
                     loadingHistory.style.display = 'none';
@@ -392,8 +372,21 @@
                         return;
                     }
 
+                    // Dado que no hay .orderBy, procesamos la lista y la ordenamos manualmente.
+                    let reimbursements = [];
                     querySnapshot.forEach(doc => {
-                        const data = doc.data();
+                        reimbursements.push(doc.data());
+                    });
+
+                    // Ordenar manualmente por fechaSolicitud (del más reciente al más antiguo)
+                    reimbursements.sort((a, b) => {
+                        const dateA = a.fechaSolicitud ? a.fechaSolicitud.toDate().getTime() : 0;
+                        const dateB = b.fechaSolicitud ? b.fechaSolicitud.toDate().getTime() : 0;
+                        return dateB - dateA; // Orden descendente
+                    });
+
+
+                    reimbursements.forEach(data => {
                         
                         let date = 'N/A';
                         let time = '';
@@ -414,16 +407,20 @@
                                 <strong>Descripción:</strong> ${data.descripcion}
                             </div>
                             <div>
-                                <strong>Fecha Solicitud:</strong> ${date} ${time ? 'a las ' + time : ''}
+                                <strong>Fecha Solicitud:</strong> ${date} ${time ? ' a las ' + time : ''}
                             </div>
                         `;
                         reimbursementList.appendChild(listItem);
                     });
 
                 } catch (error) {
-                    console.error("Error al cargar el historial de reembolsos:", error);
+                    // Este error ya no debería aparecer si solo es por el índice
+                    console.error("Error al cargar el historial de reembolsos (Final):", error);
                     loadingHistory.style.display = 'none';
-                    reimbursementList.innerHTML = '<li style="color:red; text-align:center;">⚠️ Error al cargar datos.</li>';
+                    
+                    reimbursementList.innerHTML = `<li style="color:#d9534f; background:#f2dede; border-radius: 8px; padding: 15px; text-align:center;">
+                        ⚠️ Error desconocido al cargar el historial. Consulta la consola.
+                    </li>`;
                 }
             }
 
@@ -437,12 +434,8 @@
 
                     if (!userData || !userData.NOMBRE) {
                         showAlert('error', 'Datos no encontrados', 
-                            'No se encontró el nombre del usuario. Redirigiendo.');
-                        setTimeout(() => {
-                            auth.signOut().then(() => {
-                                window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
-                            });
-                        }, 3000);
+                            'No se encontró el nombre del usuario. Intenta recargar la página o contacta a soporte.');
+                        employeeDetails.innerHTML = `<h3>${user.email}</h3><p><strong>Estatus:</strong> <span>Datos incompletos</span></p>`;
                         return;
                     }
                     
@@ -450,15 +443,18 @@
                     toggleView(true); 
                     
                 } else {
-                    window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
+                    // El script navegacion-operador.js se encargará de la redirección
                 }
             });
 
             // Botón de alerta
             alertBtn.addEventListener('click', function() { alertOverlay.classList.remove('show'); });
             errorBtn.addEventListener('click', function() { errorAlert.classList.remove('show'); });
-            
-        });
-    </script>
+        }
+    });
+</script>
+    
+    <script src="../js/navegación-operador.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
 </body>
 </html>

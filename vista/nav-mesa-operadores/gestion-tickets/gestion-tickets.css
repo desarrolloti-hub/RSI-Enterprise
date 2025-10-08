@@ -218,7 +218,7 @@ body {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1050;
+
     left: 0;
     top: 0;
     width: 100%;
@@ -330,7 +330,7 @@ body {
 }
 
 .finish-btn {
-    background-color: #28a745; /* Verde fijo (Éxito) */
+    background-color: #676767; /* Verde fijo (Éxito) */
     color: white;
 }
 .finish-btn:hover { background-color: #218838; }
@@ -508,3 +508,14 @@ body {
         width: 100%;
     }
 }
+
+#particles-js {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; 
+            background-color: transparent;
+            display: none; 
+        }
