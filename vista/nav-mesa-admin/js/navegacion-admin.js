@@ -276,31 +276,90 @@
                     box-sizing: border-box;
                 }
                 
+                /* ESTILOS PARA SECCIONES DESPLEGABLES */
+                .menu-nav-section {
+                    margin-bottom: 10px;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background: rgba(255,255,255,0.05);
+                }
+                
+                .menu-nav-section-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px 15px;
+                    background: rgba(108, 67, 224, 0.2);
+                    color: white;
+                    border: none;
+                    width: 100%;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-family: inherit;
+                    font-size: 0.95rem;
+                    text-align: left;
+                }
+                
+                .menu-nav-section-header:hover {
+                    background: rgba(108, 67, 224, 0.3);
+                }
+                
+                .menu-nav-section-header i:first-child {
+                    margin-right: 10px;
+                    width: 20px;
+                    text-align: center;
+                    flex-shrink: 0;
+                }
+                
+                .menu-nav-section-header i:last-child {
+                    transition: transform 0.3s ease;
+                    font-size: 0.8rem;
+                }
+                
+                .menu-nav-section-header.active i:last-child {
+                    transform: rotate(180deg);
+                }
+                
+                .menu-nav-section-content {
+                    max-height: 0;
+                    overflow: hidden;
+                    transition: max-height 0.3s ease;
+                    background: rgba(255,255,255,0.02);
+                }
+                
+                .menu-nav-section-content.active {
+                    max-height: 500px;
+                }
+                
                 .menu-nav-btn {
                     display: flex;
                     align-items: center;
                     width: 100%;
-                    padding: 12px 15px;
-                    margin-bottom: 10px;
-                    background: rgba(255,255,255,0.05);
+                    padding: 10px 15px 10px 45px;
+                    background: transparent;
                     color: white;
                     text-decoration: none;
                     border: none;
-                    border-radius: 8px;
+                    border-radius: 0;
                     cursor: button;
                     transition: all 0.3s ease;
                     font-family: inherit;
-                    font-size: 0.95rem;
+                    font-size: 0.9rem;
                     box-sizing: border-box;
                     word-wrap: break-word;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                }
+                
+                .menu-nav-btn:last-child {
+                    border-bottom: none;
                 }
                 
                 .menu-nav-btn:hover {
-                    background: rgba(108, 67, 224, 0.2);
-                    transform: translateX(5px);
+                    background: rgba(108, 67, 224, 0.1);
+                    padding-left: 50px;
                 }
                 
                 .menu-nav-btn i {
@@ -308,24 +367,25 @@
                     width: 20px;
                     text-align: center;
                     flex-shrink: 0;
+                    font-size: 0.8rem;
                 }
                 
                 .menu-nav-btn-logout {
-                    background: rgba(220, 53, 69, 0.2);
-                    margin-top: 20px;
+                    background: rgba(220, 53, 69, 0.1);
+                    color: #ff6b6b;
                 }
                 
                 .menu-nav-btn-logout:hover {
-                    background: rgba(220, 53, 69, 0.4);
+                    background: rgba(220, 53, 69, 0.2);
                 }
                 
                 .menu-nav-btn-finish {
-                    background: rgba(255, 193, 7, 0.2);
-                    margin-top: 10px;
+                    background: rgba(255, 193, 7, 0.1);
+                    color: #ffd93d;
                 }
                 
                 .menu-nav-btn-finish:hover {
-                    background: rgba(255, 193, 7, 0.4);
+                    background: rgba(255, 193, 7, 0.2);
                 }
                 
                 /* RESPONSIVE PARA ESCRITORIO */
@@ -429,9 +489,14 @@
                         padding: 10px;
                     }
                     
-                    .menu-nav-btn {
+                    .menu-nav-section-header {
                         padding: 10px 12px;
                         font-size: 0.9rem;
+                    }
+                    
+                    .menu-nav-btn {
+                        padding: 8px 12px 8px 40px;
+                        font-size: 0.85rem;
                     }
                     
                     .menu-nav-month-indicator {
@@ -459,18 +524,23 @@
                     }
                     
                     .menu-nav-btn {
-                        font-size: 0.85rem;
-                        padding: 8px 10px;
+                        font-size: 0.8rem;
+                        padding: 7px 10px 7px 35px;
                     }
                     
                     .menu-nav-btn i {
                         margin-right: 8px;
-                        font-size: 0.9rem;
+                        font-size: 0.75rem;
                     }
                     
                     .menu-nav-chart-label {
                         width: 70px;
                         font-size: 0.75rem;
+                    }
+                    
+                    .menu-nav-section-header {
+                        font-size: 0.85rem;
+                        padding: 8px 10px;
                     }
                 }
                 
@@ -487,7 +557,7 @@
             document.head.appendChild(style);
         }
         
-        // Crear HTML del menú CON ICONOS Y GRÁFICAS
+        // Crear HTML del menú CON SECCIONES DESPLEGABLES
         function createMenuHTML() {
             // Overlay
             const overlay = document.createElement('div');
@@ -564,50 +634,68 @@
                 </div>
                 
                 <div class="menu-nav-buttons-container">
-
-                    <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
-                        <i class="fas fa-list-alt"></i> Gestión de tickets
-                    </a>
-
-                    <a href="../nuevo-ticket/nuevo-ticket.html" class="menu-nav-btn">
-                        <i class="fas fa-plus-circle"></i> Levantar Ticket
-                    </a>
+                    <!-- SECCIÓN TICKETS -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="tickets">
+                            <i class="fas fa-ticket-alt"></i>
+                            <span>Tickets</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-tickets">
+                            <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
+                                <i class="fas fa-list-alt"></i> Gestionar tickets
+                            </a>
+                            <a href="../nuevo-ticket/nuevo-ticket.html" class="menu-nav-btn">
+                                <i class="fas fa-plus-circle"></i> Levantar ticket
+                            </a>
+                            <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
+                                <i class="fas fa-ticket-alt"></i> Ver mis tickets
+                            </a>
+                            <a href="../graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
+                                <i class="fas fa-chart-bar"></i> Ver estadísticas
+                            </a>
+                        </div>
+                    </div>
                     
-                    <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
-                        <i class="fas fa-ticket-alt"></i> Ver mis tickets
-                    </a>
+                    <!-- SECCIÓN ADMINISTRATIVO -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="administrativo">
+                            <i class="fas fa-cogs"></i>
+                            <span>Administrativo</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-administrativo">
+                            <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
+                                <i class="fas fa-calendar-check"></i> Ver asistencias
+                            </a>
+                            <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
+                                <i class="fas fa-file-invoice-dollar"></i> Cotizar
+                            </a>
+                            <a href="../manuales/manuales.html" class="menu-nav-btn">
+                                <i class="fas fa-file-alt"></i> Ver manuales
+                            </a>
+                        </div>
+                    </div>
                     
-                    <a href="../notas/notas.html" class="menu-nav-btn">
-                        <i class="fas fa-clipboard-check"></i> Ver mis notas
-                    </a>
-
-                    <a href="../graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
-                        <i class="fas fa-chart-bar"></i> Ver Estadisticas
-                    </a>
-                    
-                    <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
-                        <i class="fas fa-calendar-check"></i> Ver asistencias
-                    </a>
-
-                    <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
-                        <i class="fas fa-file-invoice-dollar"></i> Cotizar
-                    </a>
-                    
-                    <a href="../manuales/manuales.html" class="menu-nav-btn">
-                        <i class="fas fa-file-alt"></i> Ver manuales
-                    </a>
-
-                    <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
-                        <i class="fas fa-palette"></i> Personalizar Interfaz
-                    </a>
-                    
-                    <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
-                        <i class="fas fa-flag-checkered"></i> Terminar Asistencia
-                    </button>
-                    
-                    <button class="menu-nav-btn menu-nav-btn-logout" id="menuNavLogoutBtn">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                    </button>
+                    <!-- SECCIÓN CONFIGURACIÓN -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="configuracion">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>Configuración</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-configuracion">
+                            <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
+                                <i class="fas fa-palette"></i> Personalizar interfaz
+                            </a>
+                            <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
+                                <i class="fas fa-flag-checkered"></i> Terminar asistencia
+                            </button>
+                            <button class="menu-nav-btn menu-nav-btn-logout" id="menuNavLogoutBtn">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `;
             
@@ -615,6 +703,322 @@
             document.body.appendChild(floatingBtn);
             document.body.appendChild(sidebar);
         }
+        
+        // Configurar event listeners para secciones desplegables
+        function setupMenuEventListeners() {
+            const floatingBtn = document.getElementById('menuNavFloatingBtn');
+            const sidebar = document.getElementById('menuNavSidebar');
+            const overlay = document.getElementById('menuNavOverlay');
+            const finishBtn = document.getElementById('menuNavFinishAttendanceBtn');
+            const logoutBtn = document.getElementById('menuNavLogoutBtn');
+            
+            // Event listeners para el botón flotante y overlay
+            if (floatingBtn && sidebar && overlay) {
+                floatingBtn.addEventListener('click', () => {
+                    const isActive = sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    
+                    // CAMBIAR ÍCONO DEL BOTÓN FLOTANTE
+                    const icon = floatingBtn.querySelector('i');
+                    if (isActive) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+                
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    
+                    // RESTAURAR ÍCONO DE BARRAS
+                    const icon = floatingBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                });
+            }
+            
+            // Event listeners para secciones desplegables
+            const sectionHeaders = document.querySelectorAll('.menu-nav-section-header');
+            sectionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sectionId = this.getAttribute('data-section');
+                    const content = document.getElementById(`section-${sectionId}`);
+                    
+                    // Cerrar otras secciones
+                    sectionHeaders.forEach(otherHeader => {
+                        if (otherHeader !== this) {
+                            otherHeader.classList.remove('active');
+                            const otherSectionId = otherHeader.getAttribute('data-section');
+                            const otherContent = document.getElementById(`section-${otherSectionId}`);
+                            if (otherContent) {
+                                otherContent.classList.remove('active');
+                            }
+                        }
+                    });
+                    
+                    // Alternar sección actual
+                    this.classList.toggle('active');
+                    if (content) {
+                        content.classList.toggle('active');
+                    }
+                });
+            });
+            
+            // Event listeners para botones de acción
+            if (finishBtn) {
+                finishBtn.addEventListener('click', finishAttendance);
+            }
+            
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+        }
+        
+        // =============================================
+        // FUNCIONES DE PERSONALIZACIÓN
+        // =============================================
+        
+        // Cargar preferencias de personalización
+        async function loadPersonalizationPreferences() {
+            try {
+                // Cargar desde localStorage primero
+                const savedPrefs = localStorage.getItem('personalizationPreferences');
+                if (savedPrefs) {
+                    const preferences = JSON.parse(savedPrefs);
+                    applyCustomMenuStyles(preferences);
+                    console.log('✅ Preferencias cargadas desde localStorage');
+                }
+                
+                // Cargar desde Firebase si hay usuario
+                if (menuState.currentUser && menuState.userData) {
+                    const prefsDoc = await db.collection('personalizacion')
+                        .where('colaboradorId', '==', menuState.userData.id)
+                        .get();
+                    
+                    if (!prefsDoc.empty) {
+                        const prefsData = prefsDoc.docs[0].data();
+                        applyCustomMenuStyles(prefsData.preferences);
+                        // Guardar también en localStorage para acceso rápido
+                        localStorage.setItem('personalizationPreferences', JSON.stringify(prefsData.preferences));
+                        console.log('✅ Preferencias cargadas desde Firebase');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar preferencias de personalización:', error);
+            }
+        }
+        
+        // Aplicar estilos personalizados al menú
+        function applyCustomMenuStyles(preferences) {
+            console.log('🎨 Aplicando estilos personalizados al menú:', preferences);
+            
+            // Definir opciones de personalización
+            const backgroundOptions = [
+                { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
+                { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
+                { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
+            ];
+            
+            const themeOptions = [
+                { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
+                { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
+                { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
+                { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
+                { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
+                { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
+            ];
+            
+            // Obtener los colores seleccionados
+            const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
+            const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
+            
+            // Crear o actualizar estilos personalizados
+            const styleId = 'menu-nav-custom-styles';
+            let styleElement = document.getElementById(styleId);
+            
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                document.head.appendChild(styleElement);
+            }
+            
+            // Generar CSS personalizado
+            styleElement.textContent = `
+                /* ESTILOS PERSONALIZADOS PARA EL MENÚ */
+                .menu-nav-sidebar {
+                    background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
+                    color: ${selectedBackground.textColor} !important;
+                    border-right: 3px solid ${selectedTheme.primary} !important;
+                }
+                
+                .menu-nav-floating-btn {
+                    background: ${selectedTheme.primary} !important;
+                    box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
+                    border: 2px solid ${selectedTheme.secondary} !important;
+                }
+                
+                .menu-nav-floating-btn:hover {
+                    background: ${selectedTheme.secondary} !important;
+                    border-color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-user-profile {
+                    border-bottom: 2px solid ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-user-avatar {
+                    border: 3px solid ${selectedTheme.primary} !important;
+                    box-shadow: 0 0 0 2px ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-user-name {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-user-area {
+                    color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stats-container,
+                .menu-nav-charts-container {
+                    border-bottom: 2px solid ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stat-card {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    color: ${selectedBackground.textColor} !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+                }
+                
+                .menu-nav-stat-card:hover {
+                    background: ${selectedBackground.cardBg}40 !important;
+                    border-color: ${selectedTheme.accent}60 !important;
+                }
+                
+                .menu-nav-stat-title {
+                    color: ${selectedTheme.accent} !important;
+                }
+                
+                .menu-nav-stat-value {
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-month-indicator {
+                    color: ${selectedTheme.primary} !important;
+                    font-weight: 600;
+                }
+                
+                .menu-nav-chart-title {
+                    color: ${selectedTheme.primary} !important;
+                    font-weight: 600;
+                }
+                
+                .menu-nav-chart {
+                    background: ${selectedBackground.cardBg}20 !important;
+                    border: 2px solid ${selectedTheme.accent}30 !important;
+                    border-radius: 8px;
+                }
+                
+                .menu-nav-chart-progress {
+                    background: ${selectedBackground.cardBg}40 !important;
+                    border: 1px solid ${selectedTheme.accent}20 !important;
+                }
+                
+                .menu-nav-chart-value {
+                    color: ${selectedBackground.textColor} !important;
+                    font-weight: 600;
+                }
+                
+                /* ESTILOS PARA SECCIONES DESPLEGABLES PERSONALIZADAS */
+                .menu-nav-section {
+                    background: ${selectedBackground.cardBg}10 !important;
+                    border: 1px solid ${selectedTheme.accent}20 !important;
+                }
+                
+                .menu-nav-section-header {
+                    background: ${selectedTheme.primary}20 !important;
+                    color: ${selectedBackground.textColor} !important;
+                }
+                
+                .menu-nav-section-header:hover {
+                    background: ${selectedTheme.primary}30 !important;
+                }
+                
+                .menu-nav-section-header.active {
+                    background: ${selectedTheme.primary}40 !important;
+                }
+                
+                .menu-nav-section-content {
+                    background: ${selectedBackground.cardBg}05 !important;
+                }
+                
+                .menu-nav-btn {
+                    background: transparent !important;
+                    color: ${selectedBackground.textColor} !important;
+                    border-bottom: 1px solid ${selectedTheme.accent}10 !important;
+                }
+                
+                .menu-nav-btn:hover {
+                    background: ${selectedTheme.primary}15 !important;
+                }
+                
+                .menu-nav-btn-logout {
+                    background: rgba(220, 53, 69, 0.1) !important;
+                    color: #ff6b6b !important;
+                }
+                
+                .menu-nav-btn-logout:hover {
+                    background: rgba(220, 53, 69, 0.2) !important;
+                }
+                
+                .menu-nav-btn-finish {
+                    background: rgba(255, 193, 7, 0.1) !important;
+                    color: #ffd93d !important;
+                }
+                
+                .menu-nav-btn-finish:hover {
+                    background: rgba(255, 193, 7, 0.2) !important;
+                }
+                
+                /* Ajustes para modo oscuro */
+                ${selectedBackground.id === 'dark' ? `
+                    .menu-nav-stat-title,
+                    .menu-nav-chart-label {
+                        color: ${selectedTheme.accent} !important;
+                    }
+                ` : ''}
+            `;
+            
+            console.log('✅ Estilos personalizados aplicados al menú');
+        }
+        
+        // Función global para actualizar estilos (llamada desde personalizacion.html)
+        window.updateMenuStyles = function(preferences) {
+            console.log('🔄 Actualizando estilos del menú desde personalización');
+            applyCustomMenuStyles(preferences);
+            
+            // Guardar en localStorage
+            localStorage.setItem('personalizationPreferences', JSON.stringify(preferences));
+            
+            // Si hay usuario autenticado, guardar también en Firebase
+            if (menuState.currentUser && menuState.userData) {
+                db.collection('personalizacion').doc(menuState.userData.id).set({
+                    colaboradorId: menuState.userData.id,
+                    colaboradorNombre: menuState.userData.nombre,
+                    colaboradorEmail: menuState.userData.correoEmpresarial,
+                    preferences: preferences,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    console.log('✅ Preferencias guardadas en Firebase');
+                }).catch(error => {
+                    console.error('❌ Error al guardar en Firebase:', error);
+                });
+            }
+        };
         
         // Cargar datos del usuario
         async function loadUserProfile() {
@@ -728,12 +1132,13 @@
             const statusData = {
                 'pendiente': stats.pendiente,
                 'en_proceso': stats.en_proceso,
-                'finalizado': stats.finalizado
+                'finalizado': stats.finalizado,
+                'cancelado': stats.cancelado
             };
             
             Object.entries(statusData).forEach(([status, count]) => {
-                if (count > 0) {
-                    const percentage = Math.round((count / totalTickets) * 100);
+                if (count > 0 || status === 'pendiente' || status === 'en_proceso' || status === 'finalizado') {
+                    const percentage = totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0;
                     const color = statusColors[status] || '#6C43E0';
                     
                     const barHtml = `
@@ -751,6 +1156,15 @@
                 }
             });
             
+            // Si no hay datos, mostrar mensaje
+            if (chartBars.innerHTML === '') {
+                chartBars.innerHTML = `
+                    <div style="text-align: center; color: #a0a0c0; font-size: 0.8rem; padding: 10px;">
+                        No hay tickets para mostrar
+                    </div>
+                `;
+            }
+            
             // Gráfica de prioridad con datos reales
             priorityBars.innerHTML = '';
             const priorityData = {
@@ -761,7 +1175,7 @@
             
             Object.entries(priorityData).forEach(([priority, count]) => {
                 if (count > 0) {
-                    const percentage = Math.round((count / totalTickets) * 100);
+                    const percentage = totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0;
                     const color = priorityColors[priority] || '#6C43E0';
                     
                     const barHtml = `
@@ -778,6 +1192,15 @@
                     priorityBars.innerHTML += barHtml;
                 }
             });
+            
+            // Si no hay datos de prioridad, mostrar mensaje
+            if (priorityBars.innerHTML === '') {
+                priorityBars.innerHTML = `
+                    <div style="text-align: center; color: #a0a0c0; font-size: 0.8rem; padding: 10px;">
+                        No hay datos de prioridad
+                    </div>
+                `;
+            }
         }
         
         // Función auxiliar para formatear estados
@@ -804,7 +1227,15 @@
             return { firstDay, lastDay };
         }
         
-        // Cargar estadísticas del usuario POR MES ACTUAL
+        // Función para verificar si una fecha está en el mes actual
+        function isDateInCurrentMonth(date) {
+            const now = new Date();
+            const ticketDate = date.toDate();
+            return ticketDate.getMonth() === now.getMonth() && 
+                   ticketDate.getFullYear() === now.getFullYear();
+        }
+        
+        // Cargar estadísticas del usuario SOLO DEL MES ACTUAL
         async function loadUserStats() {
             try {
                 if (!menuState.userData || !menuState.userData.nombreCompleto) {
@@ -814,29 +1245,13 @@
                 
                 console.log('📊 Cargando estadísticas del mes actual para:', menuState.userData.nombreCompleto);
                 
-                // Obtener rango del mes actual
-                const { firstDay, lastDay } = getCurrentMonthRange();
-                
-                console.log('📅 Rango del mes:', {
-                    desde: firstDay.toLocaleDateString('es-MX'),
-                    hasta: lastDay.toLocaleDateString('es-MX')
-                });
-                
-                // Consultar tickets del usuario (como responsable o colaborador) DEL MES ACTUAL
                 const ticketsRef = db.collection('ticketsmesa');
                 const nombreResponsable = menuState.userData.nombreCompleto;
                 const colaboradorId = menuState.userData.colaboradorId;
                 
-                // Ejecutar ambas consultas con filtro por fecha
-                const qResponsable = ticketsRef
-                    .where("responsableNombre", "==", nombreResponsable)
-                    .where("fechaCreacion", ">=", firstDay)
-                    .where("fechaCreacion", "<=", lastDay);
-                
-                const qColaborador = ticketsRef
-                    .where("colaboradores", "array-contains", colaboradorId)
-                    .where("fechaCreacion", ">=", firstDay)
-                    .where("fechaCreacion", "<=", lastDay);
+                // Consultas SIMPLES sin filtros de fecha complejos
+                const qResponsable = ticketsRef.where("responsableNombre", "==", nombreResponsable);
+                const qColaborador = ticketsRef.where("colaboradores", "array-contains", colaboradorId);
                 
                 const [snapshotResponsable, snapshotColaborador] = await Promise.all([
                     qResponsable.get(),
@@ -854,11 +1269,28 @@
                     allTickets.set(doc.id, doc.data());
                 });
                 
-                console.log('🎫 Tickets del mes encontrados:', allTickets.size);
+                console.log('🎫 Tickets totales encontrados:', allTickets.size);
                 
-                // Calcular estadísticas
+                // Obtener rango del mes actual
+                const { firstDay, lastDay } = getCurrentMonthRange();
+                
+                // Filtrar tickets del mes actual localmente
+                const ticketsDelMes = Array.from(allTickets.values()).filter(ticket => {
+                    if (!ticket.fechaCreacion) return false;
+                    try {
+                        const fechaTicket = ticket.fechaCreacion.toDate();
+                        return fechaTicket >= firstDay && fechaTicket <= lastDay;
+                    } catch (error) {
+                        console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                        return false;
+                    }
+                });
+                
+                console.log('🎫 Tickets del mes actual:', ticketsDelMes.length);
+                
+                // Calcular estadísticas SOLO del mes actual
                 const stats = {
-                    total: allTickets.size,
+                    total: ticketsDelMes.length,
                     pendiente: 0,
                     en_proceso: 0,
                     finalizado: 0,
@@ -868,9 +1300,9 @@
                     baja: 0
                 };
                 
-                allTickets.forEach(ticket => {
+                ticketsDelMes.forEach(ticket => {
                     // Contar por estado
-                    if (stats[ticket.estado] !== undefined) {
+                    if (ticket.estado && stats[ticket.estado] !== undefined) {
                         stats[ticket.estado]++;
                     }
                     
@@ -901,69 +1333,11 @@
                 console.log('✅ Estadísticas del mes cargadas:', stats);
                 
             } catch (error) {
-                console.error("❌ Error al cargar estadísticas del mes:", error);
+                console.error("❌ Error al cargar estadísticas:", error);
                 
-                // En caso de error de índice, intentar sin filtro de fecha
-                if (error.code === 'failed-precondition') {
-                    console.log('⚠️ Índice faltante, intentando cargar sin filtro de fecha...');
-                    await loadUserStatsWithoutDateFilter();
-                }
-            }
-        }
-        
-        // Función alternativa sin filtro de fecha (para cuando falta índice)
-        async function loadUserStatsWithoutDateFilter() {
-            try {
-                if (!menuState.userData || !menuState.userData.nombreCompleto) {
-                    return;
-                }
-                
-                console.log('📊 Cargando estadísticas sin filtro de fecha para:', menuState.userData.nombreCompleto);
-                
-                const ticketsRef = db.collection('ticketsmesa');
-                const nombreResponsable = menuState.userData.nombreCompleto;
-                const colaboradorId = menuState.userData.colaboradorId;
-                
-                // Ejecutar ambas consultas sin filtro de fecha
-                const qResponsable = ticketsRef
-                    .where("responsableNombre", "==", nombreResponsable);
-                
-                const qColaborador = ticketsRef
-                    .where("colaboradores", "array-contains", colaboradorId);
-                
-                const [snapshotResponsable, snapshotColaborador] = await Promise.all([
-                    qResponsable.get(),
-                    qColaborador.get()
-                ]);
-                
-                // Combinar resultados evitando duplicados
-                const allTickets = new Map();
-                
-                snapshotResponsable.forEach(doc => {
-                    allTickets.set(doc.id, doc.data());
-                });
-                
-                snapshotColaborador.forEach(doc => {
-                    allTickets.set(doc.id, doc.data());
-                });
-                
-                console.log('🎫 Tickets totales encontrados:', allTickets.size);
-                
-                // Obtener rango del mes actual para filtrar manualmente
-                const { firstDay, lastDay } = getCurrentMonthRange();
-                
-                // Filtrar manualmente por mes
-                const ticketsDelMes = Array.from(allTickets.values()).filter(ticket => {
-                    if (!ticket.fechaCreacion) return false;
-                    const fechaTicket = ticket.fechaCreacion.toDate();
-                    return fechaTicket >= firstDay && fechaTicket <= lastDay;
-                });
-                
-                console.log('🎫 Tickets del mes (filtrados manualmente):', ticketsDelMes.length);
-                
-                // Calcular estadísticas
+                // En caso de error, mostrar datos por defecto
                 const stats = {
-                    total: ticketsDelMes.length,
+                    total: 0,
                     pendiente: 0,
                     en_proceso: 0,
                     finalizado: 0,
@@ -973,413 +1347,124 @@
                     baja: 0
                 };
                 
-                ticketsDelMes.forEach(ticket => {
-                    // Contar por estado
-                    if (stats[ticket.estado] !== undefined) {
-                        stats[ticket.estado]++;
-                    }
-                    
-                    // Contar por prioridad
-                    if (ticket.prioridad && stats[ticket.prioridad] !== undefined) {
-                        stats[ticket.prioridad]++;
-                    }
-                });
+                document.getElementById('menuNavTotalTickets').textContent = '0';
+                document.getElementById('menuNavPendingTickets').textContent = '0';
+                document.getElementById('menuNavInProgressTickets').textContent = '0';
+                document.getElementById('menuNavCompletedTickets').textContent = '0';
                 
-                // Actualizar UI
-                document.getElementById('menuNavTotalTickets').textContent = stats.total;
-                document.getElementById('menuNavPendingTickets').textContent = stats.pendiente;
-                document.getElementById('menuNavInProgressTickets').textContent = stats.en_proceso;
-                document.getElementById('menuNavCompletedTickets').textContent = stats.finalizado;
-                
-                // Actualizar mes actual
-                const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-                const now = new Date();
-                document.getElementById('menuNavMonthIndicator').textContent = 
-                    `Estadísticas de ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-                
-                menuState.stats = stats;
-                
-                // Crear gráficas
                 createCharts(stats);
-                
-                console.log('✅ Estadísticas del mes (filtro manual) cargadas:', stats);
-                
-            } catch (error) {
-                console.error("❌ Error al cargar estadísticas sin filtro:", error);
             }
         }
         
-        // Cargar datos completos del usuario
-        async function loadCompleteUserData() {
-            await loadUserProfile();
-            await loadUserStats();
-        }
-        
-        // Terminar asistencia
+        // Función para terminar asistencia
         async function finishAttendance() {
             try {
                 const user = auth.currentUser;
-                if (!user) {
-                    alert('No hay usuario autenticado');
-                    return;
+                if (!user) return;
+                
+                // Buscar en colaboradores
+                const colaboradorQuery = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!colaboradorQuery.empty) {
+                    const doc = colaboradorQuery.docs[0];
+                    const userData = doc.data();
+                    
+                    // Actualizar estado de asistencia
+                    await db.collection("asistencias").add({
+                        colaboradorId: doc.id,
+                        colaboradorNombre: userData.NOMBRE,
+                        area: userData.ÁREA,
+                        fecha: new Date(),
+                        tipo: "salida",
+                        timestamp: new Date()
+                    });
+                    
+                    alert('Asistencia registrada correctamente');
+                } else {
+                    alert('Usuario no encontrado en colaboradores');
                 }
-                
-                await db.collection('asistencias').add({
-                    usuarioId: user.uid,
-                    usuarioEmail: user.email,
-                    tipo: 'salida',
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    fechaLocal: new Date().toLocaleString('es-MX')
-                });
-                
-                // Redirigir sin cerrar sesión
-                window.location.href = '../fin-asistencia/fin-asistencia.html';
-                
             } catch (error) {
-                console.error("Error al terminar asistencia:", error);
-                alert('No se pudo registrar la salida.');
+                console.error('Error al registrar asistencia:', error);
+                alert('Error al registrar asistencia');
             }
         }
         
-        // Cerrar sesión
+        // Función para cerrar sesión
         async function logout() {
             try {
                 await auth.signOut();
-                sessionStorage.clear();
-                localStorage.clear();
-                window.location.href = '/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html';
+                window.location.href = "../../index.html";
             } catch (error) {
-                console.error("Error al cerrar sesión:", error);
+                console.error('Error al cerrar sesión:', error);
                 alert('Error al cerrar sesión');
-                // Forzar redirección incluso si hay error
-                window.location.href = '/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html';
             }
         }
         
-        // Configurar event listeners CON BOTÓN DINÁMICO
-        function setupMenuEventListeners() {
-            const floatingBtn = document.getElementById('menuNavFloatingBtn');
-            const sidebar = document.getElementById('menuNavSidebar');
-            const overlay = document.getElementById('menuNavOverlay');
-            const finishBtn = document.getElementById('menuNavFinishAttendanceBtn');
-            const logoutBtn = document.getElementById('menuNavLogoutBtn');
+        // Observar cambios en el DOM para detectar cuando se carga el usuario
+        function observeUserChanges() {
+            const auth = firebase.auth();
             
-            if (floatingBtn && sidebar && overlay) {
-                floatingBtn.addEventListener('click', () => {
-                    const isActive = sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                    
-                    // CAMBIAR ÍCONO DEL BOTÓN FLOTANTE
-                    const icon = floatingBtn.querySelector('i');
-                    if (isActive) {
-                        icon.classList.remove('fa-bars');
-                        icon.classList.add('fa-times');
-                    } else {
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    }
-                });
-                
-                overlay.addEventListener('click', () => {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                    
-                    // RESTAURAR ÍCONO DE BARRAS
-                    const icon = floatingBtn.querySelector('i');
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                });
-            }
-            
-            if (finishBtn) {
-                finishBtn.addEventListener('click', finishAttendance);
-            }
-            
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', logout);
-            }
-        }
-        
-        // =============================================
-        // FUNCIONES DE PERSONALIZACIÓN
-        // =============================================
-        
-        // Cargar preferencias de personalización
-        async function loadPersonalizationPreferences() {
-            try {
-                // Cargar desde localStorage primero
-                const savedPrefs = localStorage.getItem('personalizationPreferences');
-                if (savedPrefs) {
-                    const preferences = JSON.parse(savedPrefs);
-                    applyCustomMenuStyles(preferences);
-                    console.log('✅ Preferencias cargadas desde localStorage');
-                }
-                
-                // Cargar desde Firebase si hay usuario
-                if (menuState.currentUser && menuState.userData) {
-                    const prefsDoc = await db.collection('personalizacion')
-                        .where('colaboradorId', '==', menuState.userData.id)
-                        .get();
-                    
-                    if (!prefsDoc.empty) {
-                        const prefsData = prefsDoc.docs[0].data();
-                        applyCustomMenuStyles(prefsData.preferences);
-                        // Guardar también en localStorage para acceso rápido
-                        localStorage.setItem('personalizationPreferences', JSON.stringify(prefsData.preferences));
-                        console.log('✅ Preferencias cargadas desde Firebase');
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error al cargar preferencias de personalización:', error);
-            }
-        }
-        
-        // Aplicar estilos personalizados al menú
-        // Reemplazar la función applyCustomMenuStyles existente con esta versión mejorada
-function applyCustomMenuStyles(preferences) {
-    console.log('🎨 Aplicando estilos personalizados al menú con bordes pronunciados:', preferences);
-    
-    // Definir opciones de personalización
-    const backgroundOptions = [
-        { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
-        { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
-        { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
-    ];
-    
-    const themeOptions = [
-        { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
-        { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
-        { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
-        { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
-        { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
-        { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
-    ];
-    
-    // Obtener los colores seleccionados
-    const selectedBackground = backgroundOptions.find(bg => bg.id === preferences.background) || backgroundOptions[0];
-    const selectedTheme = themeOptions.find(theme => theme.id === preferences.theme) || themeOptions[0];
-    
-    // Crear o actualizar estilos personalizados
-    const styleId = 'menu-nav-custom-styles';
-    let styleElement = document.getElementById(styleId);
-    
-    if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = styleId;
-        document.head.appendChild(styleElement);
-    }
-    
-    // Generar CSS personalizado con bordes más pronunciados
-    styleElement.textContent = `
-        /* ESTILOS PERSONALIZADOS PARA EL MENÚ - BORDES PRONUNCIADOS */
-        .menu-nav-sidebar {
-            background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
-            color: ${selectedBackground.textColor} !important;
-            border-right: 3px solid ${selectedTheme.primary} !important;
-        }
-        
-        .menu-nav-floating-btn {
-            background: ${selectedTheme.primary} !important;
-            box-shadow: 0 4px 12px ${selectedTheme.primary}40 !important;
-            border: 2px solid ${selectedTheme.secondary} !important;
-        }
-        
-        .menu-nav-floating-btn:hover {
-            background: ${selectedTheme.secondary} !important;
-            border-color: ${selectedTheme.accent} !important;
-        }
-        
-        .menu-nav-user-profile {
-            border-bottom: 2px solid ${selectedTheme.accent} !important;
-        }
-        
-        .menu-nav-user-avatar {
-            border: 3px solid ${selectedTheme.primary} !important;
-            box-shadow: 0 0 0 2px ${selectedTheme.accent} !important;
-        }
-        
-        .menu-nav-user-name {
-            color: ${selectedBackground.textColor} !important;
-        }
-        
-        .menu-nav-user-area {
-            color: ${selectedTheme.accent} !important;
-        }
-        
-        .menu-nav-stats-container,
-        .menu-nav-charts-container {
-            border-bottom: 2px solid ${selectedTheme.accent} !important;
-        }
-        
-        .menu-nav-stat-card {
-            background: ${selectedBackground.cardBg}20 !important;
-            color: ${selectedBackground.textColor} !important;
-            border: 2px solid ${selectedTheme.accent}30 !important;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
-        }
-        
-        .menu-nav-stat-card:hover {
-            background: ${selectedBackground.cardBg}40 !important;
-            border-color: ${selectedTheme.accent}60 !important;
-        }
-        
-        .menu-nav-stat-title {
-            color: ${selectedTheme.accent} !important;
-        }
-        
-        .menu-nav-stat-value {
-            color: ${selectedBackground.textColor} !important;
-        }
-        
-        .menu-nav-month-indicator {
-            color: ${selectedTheme.primary} !important;
-            font-weight: 600;
-        }
-        
-        .menu-nav-chart-title {
-            color: ${selectedTheme.primary} !important;
-            font-weight: 600;
-        }
-        
-        .menu-nav-chart {
-            background: ${selectedBackground.cardBg}20 !important;
-            border: 2px solid ${selectedTheme.accent}30 !important;
-            border-radius: 8px;
-        }
-        
-        .menu-nav-chart-progress {
-            background: ${selectedBackground.cardBg}40 !important;
-            border: 1px solid ${selectedTheme.accent}20 !important;
-        }
-        
-        .menu-nav-chart-value {
-            color: ${selectedBackground.textColor} !important;
-            font-weight: 600;
-        }
-        
-        .menu-nav-btn {
-            background: ${selectedBackground.cardBg}20 !important;
-            color: ${selectedBackground.textColor} !important;
-            border: 2px solid ${selectedTheme.accent}30 !important;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-        }
-        
-        .menu-nav-btn:hover {
-            background: ${selectedTheme.primary}20 !important;
-            border-color: ${selectedTheme.primary} !important;
-        }
-        
-        .menu-nav-btn-logout {
-            background: rgba(220, 53, 69, 0.2) !important;
-            border-color: rgba(220, 53, 69, 0.4) !important;
-        }
-        
-        .menu-nav-btn-logout:hover {
-            background: rgba(220, 53, 69, 0.4) !important;
-            border-color: rgba(220, 53, 69, 0.8) !important;
-        }
-        
-        .menu-nav-btn-finish {
-            background: rgba(255, 193, 7, 0.2) !important;
-            border-color: rgba(255, 193, 7, 0.4) !important;
-        }
-        
-        .menu-nav-btn-finish:hover {
-            background: rgba(255, 193, 7, 0.4) !important;
-            border-color: rgba(255, 193, 7, 0.8) !important;
-        }
-        
-        /* Ajustes para modo oscuro */
-        ${selectedBackground.id === 'dark' ? `
-            .menu-nav-stat-title,
-            .menu-nav-chart-label {
-                color: ${selectedTheme.accent} !important;
-            }
-        ` : ''}
-    `;
-    
-    console.log('✅ Estilos personalizados con bordes pronunciados aplicados al menú');
-}
-        
-        // Función global para actualizar estilos (llamada desde personalizacion.html)
-        window.updateMenuStyles = function(preferences) {
-            console.log('🔄 Actualizando estilos del menú desde personalización');
-            applyCustomMenuStyles(preferences);
-            
-            // Guardar en localStorage
-            localStorage.setItem('personalizationPreferences', JSON.stringify(preferences));
-            
-            // Si hay usuario autenticado, guardar también en Firebase
-            if (menuState.currentUser && menuState.userData) {
-                db.collection('personalizacion').doc(menuState.userData.id).set({
-                    colaboradorId: menuState.userData.id,
-                    colaboradorNombre: menuState.userData.nombre,
-                    colaboradorEmail: menuState.userData.correoEmpresarial,
-                    preferences: preferences,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    console.log('✅ Preferencias guardadas en Firebase');
-                }).catch(error => {
-                    console.error('❌ Error al guardar en Firebase:', error);
-                });
-            }
-        };
-        
-        // =============================================
-        // INICIALIZACIÓN DEL MENÚ
-        // =============================================
-        
-        // Inicializar el menú
-        function initMenu() {
-            loadFontAwesome(); // Cargar FontAwesome primero
-            addMenuStyles();
-            createMenuHTML();
-            setupMenuEventListeners();
-            
-            // Esperar a que el usuario esté autenticado
-            auth.onAuthStateChanged((user) => {
+            auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     console.log('👤 Usuario autenticado detectado:', user.email);
-                    loadCompleteUserData();
-                    loadPersonalizationPreferences(); // Cargar preferencias de personalización
-                    
-                    // Actualizar estadísticas cada 30 segundos
-                    setInterval(loadUserStats, 30000);
-                    
+                    await loadUserProfile();
+                    await loadUserStats();
+                    await loadPersonalizationPreferences(); // Cargar preferencias de personalización
                 } else {
-                    console.log('🚫 No hay usuario autenticado');
-                    // Ocultar menú si no hay usuario
-                    const sidebar = document.getElementById('menuNavSidebar');
-                    const floatingBtn = document.getElementById('menuNavFloatingBtn');
-                    if (sidebar) sidebar.style.display = 'none';
-                    if (floatingBtn) floatingBtn.style.display = 'none';
+                    console.log('🔒 No hay usuario autenticado');
                 }
             });
-            
-            console.log('✅ Menú lateral autónomo cargado correctamente');
         }
         
-        // Esperar a que el DOM esté listo
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initMenu);
-        } else {
-            initMenu();
+        // Inicializar todo
+        function initializeMenu() {
+            console.log('🚀 Inicializando menú de navegación...');
+            
+            // Cargar FontAwesome
+            loadFontAwesome();
+            
+            // Agregar estilos
+            addMenuStyles();
+            
+            // Crear elementos HTML
+            createMenuHTML();
+            
+            // Configurar event listeners
+            setupMenuEventListeners();
+            
+            // Observar cambios de usuario
+            observeUserChanges();
+            
+            console.log('✅ Menú de navegación inicializado correctamente');
         }
+        
+        // Iniciar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMenu);
+        } else {
+            initializeMenu();
+        }
+        
     }
     
-    // Iniciar cuando Firebase esté listo
+    // Inicializar cuando Firebase esté listo
     if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
         init();
     } else {
         // Esperar a que Firebase se cargue
-        const checkFirebase = setInterval(() => {
+        const firebaseCheckInterval = setInterval(() => {
             if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-                clearInterval(checkFirebase);
+                clearInterval(firebaseCheckInterval);
                 init();
             }
         }, 100);
+        
+        // Timeout de seguridad
+        setTimeout(() => {
+            clearInterval(firebaseCheckInterval);
+        }, 5000);
     }
     
 })();

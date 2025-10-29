@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Papelera de Tickets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../gestion-tickets-admin/gestion-tickets-admin.css">
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Papelera de Tickets</h2>
+            </div>
+            <div class="header-controls">
+                <div class="buttons-row">
+                    <button class="btn" onclick="window.location.href='../gestion-tickets-admin/gestion-tickets-admin.html'">
+                        <i class="fas fa-arrow-left"></i>
+                        Volver a Tickets
+                    </button>
+                    <button class="btn btn-danger" onclick="emptyTrash()">
+                        <i class="fas fa-trash"></i>
+                        Vaciar Papelera
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <!-- TABLA PARA ESCRITORIO -->
+            <table class="desktop-table">
+                <thead>
+                    <tr>
+                        <th>ID Ticket</th>
+                        <th>Título</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Área</th>
+                        <th>Fecha Eliminación</th>
+                        <th>Eliminado por</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando tickets eliminados...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- TARJETAS PARA MÓVIL -->
+            <div class="mobile-cards" id="mobileCardsContainer">
+                <!-- Las tarjetas se generarán dinámicamente -->
+            </div>
+        </div>
+        
+        <div class="pagination-container"></div>
+    </div>
+
+    <!-- Modal para ver detalles del ticket -->
+    <div id="viewTicketModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTicketTitle">Detalles del Ticket</h2>
+                <span class="close" onclick="closeModal('viewTicketModal')">&times;</span>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Información del Ticket</strong>
+                <p><span class="detail-label">Estado:</span> <span id="modalTicketStatus"></span></p>
+                <p><span class="detail-label">Prioridad:</span> <span id="modalTicketPriority"></span></p>
+                <p><span class="detail-label">Área:</span> <span id="modalTicketArea"></span></p>
+                <p><span class="detail-label">Responsable:</span> <span id="modalTicketResponsible"></span></p>
+                <p><span class="detail-label">Fecha eliminación:</span> <span id="modalTicketDeletedDate"></span></p>
+                <p><span class="detail-label">Eliminado por:</span> <span id="modalTicketDeletedBy"></span></p>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Información del Cliente</strong>
+                <p><span class="detail-label">Cuenta:</span> <span id="modalTicketAccount"></span></p>
+                <p><span class="detail-label">Dirección Fiscal:</span> <span id="modalTicketAddress"></span></p>
+                <p><span class="detail-label">RFC:</span> <span id="modalTicketRFC"></span></p>
+                <p><span class="detail-label">Atención a:</span> <span id="modalTicketAttention"></span></p>
+                <p><span class="detail-label">Correo:</span> <span id="modalTicketEmail"></span></p>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Información del Servicio</strong>
+                <p><span class="detail-label">Proyecto:</span> <span id="modalTicketProject"></span></p>
+                <p><span class="detail-label">Servicio:</span> <span id="modalTicketService"></span></p>
+                <p><span class="detail-label">Sistemas:</span> <span id="modalTicketSystems"></span></p>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Descripción de Actividades</strong>
+                <div class="description-text" id="modalTicketDescription"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn" onclick="restoreSelectedTicket()">
+                    <i class="fas fa-undo"></i> Restaurar
+                </button>
+                <button class="btn btn-danger" onclick="permanentlyDeleteSelectedTicket()">
+                    <i class="fas fa-trash"></i> Eliminar Permanentemente
+                </button>
+                <button class="btn" onclick="closeModal('viewTicketModal')">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Estado de la aplicación
+    const appState = {
+        currentUser: null,
+        currentTicketId: null,
+        tickets: [],
+        allTickets: [],
+        pagination: {
+            currentPage: 1,
+            ticketsPerPage: 10,
+            lastVisible: null,
+            firstVisible: null,
+            pages: {}
+        },
+        unsubscribeTickets: null
+    };
+
+    // =================================================================================
+    // FUNCIONES PRINCIPALES
+    // =================================================================================
+
+    async function initialLoad() {
+        try {
+            await loadUserProfile();
+            setupEventListeners();
+            loadTicketsPage(1);
+        } catch (error) {
+            console.error("Error en la carga inicial:", error);
+            showError('No se pudieron cargar los datos iniciales.');
+        }
+    }
+
+    async function loadUserProfile() {
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            return;
+        }
+        
+        try {
+            const querySnapshot = await db.collection("colaboradores")
+                .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                .get();
+            
+            if (!querySnapshot.empty) {
+                const doc = querySnapshot.docs[0];
+                const userData = doc.data();
+                appState.currentUser = {
+                    id: doc.id,
+                    nombre: userData.NOMBRE,
+                    area: userData.ÁREA,
+                    imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
+                };
+                sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
+            }
+        } catch (error) {
+            console.error("Error al cargar perfil:", error);
+        }
+    }
+
+    function loadTicketsPage(pageNumber) {
+        if (appState.unsubscribeTickets) {
+            appState.unsubscribeTickets();
+        }
+
+        let query = db.collection('ticketsmesaPapelera').orderBy('fechaEliminacion', 'desc');
+        
+        query.get().then(snapshot => {
+            const totalFilteredTickets = snapshot.size;
+            setupPagination(totalFilteredTickets);
+
+            let pageQuery = query;
+            if (pageNumber > 1 && appState.pagination.pages[pageNumber - 1]) {
+                pageQuery = pageQuery.startAfter(appState.pagination.pages[pageNumber - 1]);
+            }
+            pageQuery = pageQuery.limit(appState.pagination.ticketsPerPage);
+
+            appState.unsubscribeTickets = pageQuery.onSnapshot(pageSnapshot => {
+                if (pageSnapshot.empty && pageNumber > 1) {
+                    // No hay más páginas
+                    return;
+                }
+
+                appState.allTickets = pageSnapshot.docs.map(doc => {
+                    const ticket = { id: doc.id, ...doc.data() };
+                    return ticket;
+                });
+
+                appState.pagination.firstVisible = pageSnapshot.docs[0];
+                appState.pagination.lastVisible = pageSnapshot.docs[pageSnapshot.docs.length - 1];
+                appState.pagination.pages[pageNumber] = appState.pagination.lastVisible;
+                appState.pagination.currentPage = pageNumber;
+
+                displayTickets(appState.allTickets);
+                
+            }, error => {
+                console.error("Error al cargar tickets:", error);
+                showError('No se pudieron cargar los tickets eliminados.');
+            });
+        }).catch(error => {
+            console.error("Error en consulta de tickets:", error);
+            showError('Error al consultar la base de datos.');
+        });
+    }
+
+    function displayTickets(tickets) {
+        const tbody = document.getElementById('ticketsTableBody');
+        const mobileContainer = document.getElementById('mobileCardsContainer');
+        
+        tbody.innerHTML = '';
+        mobileContainer.innerHTML = '';
+        
+        if (!tickets || tickets.length === 0) {
+            const emptyMessage = `
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <i class="fas fa-trash"></i>
+                        <h3>La papelera está vacía</h3>
+                        <p>No hay tickets eliminados para mostrar</p>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML = emptyMessage;
+            mobileContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-trash"></i>
+                    <h3>La papelera está vacía</h3>
+                    <p>No hay tickets eliminados para mostrar</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Mostrar tabla para escritorio
+        const rowsHtml = tickets.map(ticket => {
+            return `
+                <tr>
+                    <td><strong>${ticket.idTicket || ticket.id || 'N/A'}</strong></td>
+                    <td><strong>${ticket.titulo || 'Sin título'}</strong></td>
+                    <td><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></td>
+                    <td>${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</td>
+                    <td>${ticket.area || 'N/A'}</td>
+                    <td>${formatDateTime(ticket.fechaEliminacion)}</td>
+                    <td>${ticket.eliminadoPor || 'Sistema'}</td>
+                    <td>
+                        <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn" onclick="restoreTicket('${ticket.id}')" title="Restaurar Ticket">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="permanentlyDeleteTicket('${ticket.id}')" title="Eliminar Permanentemente">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.innerHTML = rowsHtml;
+
+        // Mostrar tarjetas para móvil
+        const cardsHtml = tickets.map(ticket => {
+            return `
+                <div class="ticket-card">
+                    <div class="card-row">
+                        <span class="card-label">ID del Ticket:</span>
+                        <span class="card-value"><strong>${ticket.idTicket || ticket.id || 'N/A'}</strong></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Título:</span>
+                        <span class="card-value"><strong>${ticket.titulo || 'Sin título'}</strong></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Estado:</span>
+                        <span class="card-value"><span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Prioridad:</span>
+                        <span class="card-value">${ticket.prioridad ? ticket.prioridad.charAt(0).toUpperCase() + ticket.prioridad.slice(1) : 'N/A'}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Área:</span>
+                        <span class="card-value">${ticket.area || 'N/A'}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Fecha Eliminación:</span>
+                        <span class="card-value">${formatDateTime(ticket.fechaEliminacion)}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Eliminado por:</span>
+                        <span class="card-value">${ticket.eliminadoPor || 'Sistema'}</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn" onclick="viewTicket('${ticket.id}')" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn" onclick="restoreTicket('${ticket.id}')" title="Restaurar Ticket">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="action-btn delete" onclick="permanentlyDeleteTicket('${ticket.id}')" title="Eliminar Permanentemente">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        mobileContainer.innerHTML = cardsHtml;
+    }
+
+    function setupPagination(totalTickets) {
+        const paginationContainer = document.querySelector('.pagination-container');
+        if (!paginationContainer) return;
+
+        paginationContainer.innerHTML = '';
+        const totalPages = Math.ceil(totalTickets / appState.pagination.ticketsPerPage);
+        
+        if (totalPages <= 1) {
+            return;
+        }
+
+        const { currentPage } = appState.pagination;
+        
+        // Botón Anterior
+        const prevButton = createPaginationButton(
+            '<i class="fas fa-chevron-left"></i>', 
+            'prev', 
+            currentPage === 1, 
+            () => loadTicketsPage(currentPage - 1)
+        );
+        paginationContainer.appendChild(prevButton);
+
+        // Números de página
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = createPaginationButton(
+                i, 
+                i === currentPage ? 'active' : '', 
+                false, 
+                () => loadTicketsPage(i)
+            );
+            paginationContainer.appendChild(pageButton);
+        }
+        
+        // Botón Siguiente
+        const nextButton = createPaginationButton(
+            '<i class="fas fa-chevron-right"></i>', 
+            'next', 
+            currentPage >= totalPages, 
+            () => loadTicketsPage(currentPage + 1)
+        );
+        paginationContainer.appendChild(nextButton);
+    }
+
+    function createPaginationButton(text, type, disabled, onClick) {
+        const button = document.createElement('button');
+        button.className = `pagination-btn ${type}`;
+        button.innerHTML = text;
+        button.disabled = disabled;
+        button.addEventListener('click', onClick);
+        return button;
+    }
+
+    // =================================================================================
+    // FUNCIONES DE ACCIÓN
+    // =================================================================================
+
+    async function viewTicket(ticketId) {
+        try {
+            const doc = await db.collection('ticketsmesaPapelera').doc(ticketId).get();
+            if (doc.exists) {
+                const ticket = doc.data();
+                appState.currentTicketId = ticketId;
+                
+                // Llenar el modal con los datos del ticket
+                document.getElementById('modalTicketTitle').textContent = ticket.titulo;
+                document.getElementById('modalTicketStatus').innerHTML = `
+                    <span class="badge badge-${getBadgeClass(ticket.estado)}">
+                        ${formatStatus(ticket.estado)}
+                    </span>
+                `;
+                document.getElementById('modalTicketPriority').innerHTML = `
+                    <span class="badge badge-${getPriorityBadgeClass(ticket.prioridad)}">
+                        ${formatPriority(ticket.prioridad)}
+                    </span>
+                `;
+                document.getElementById('modalTicketArea').textContent = ticket.area || 'N/A';
+                document.getElementById('modalTicketResponsible').textContent = ticket.responsableNombre || 'Sin asignar';
+                document.getElementById('modalTicketDeletedDate').textContent = formatDateTime(ticket.fechaEliminacion);
+                document.getElementById('modalTicketDeletedBy').textContent = ticket.eliminadoPor || 'Sistema';
+                
+                // Información del cliente
+                document.getElementById('modalTicketAccount').textContent = ticket.cuenta || 'N/A';
+                document.getElementById('modalTicketAddress').textContent = ticket.direccionFiscal || 'N/A';
+                document.getElementById('modalTicketRFC').textContent = ticket.rfc || 'N/A';
+                document.getElementById('modalTicketAttention').textContent = ticket.atencionA || 'N/A';
+                document.getElementById('modalTicketEmail').textContent = ticket.correo || 'N/A';
+                
+                // Información del servicio
+                document.getElementById('modalTicketProject').textContent = ticket.proyecto || 'N/A';
+                document.getElementById('modalTicketService').textContent = ticket.servicio || 'N/A';
+                document.getElementById('modalTicketSystems').textContent = ticket.sistemas?.join(', ') || 'Ninguno';
+                
+                // Descripción
+                document.getElementById('modalTicketDescription').textContent = ticket.descripcionActividades || 'Sin descripción';
+                
+                // Mostrar el modal
+                openModal('viewTicketModal');
+            }
+        } catch (error) {
+            console.error('Error al cargar ticket:', error);
+            showError('No se pudo cargar el ticket');
+        }
+    }
+
+    async function restoreTicket(ticketId) {
+        try {
+            const result = await Swal.fire({
+                title: '¿Restaurar ticket?',
+                text: 'El ticket será restaurado a la lista principal de tickets',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, restaurar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#6C43E0',
+                cancelButtonColor: '#dc3545'
+            });
+
+            if (result.isConfirmed) {
+                const doc = await db.collection('ticketsmesaPapelera').doc(ticketId).get();
+                if (doc.exists) {
+                    const ticketData = doc.data();
+                    
+                    // Eliminar campos específicos de la papelera
+                    delete ticketData.fechaEliminacion;
+                    delete ticketData.eliminadoPor;
+                    
+                    // Mover de vuelta a tickets activos
+                    await db.collection('ticketsmesa').doc(ticketId).set(ticketData);
+                    await db.collection('ticketsmesaPapelera').doc(ticketId).delete();
+                    
+                    Swal.fire({
+                        title: '¡Restaurado!',
+                        text: 'El ticket ha sido restaurado',
+                        icon: 'success',
+                        confirmButtonColor: '#6C43E0'
+                    });
+                    
+                    // Recargar la página actual
+                    loadTicketsPage(appState.pagination.currentPage);
+                } else {
+                    showError('El ticket no existe en la papelera.');
+                }
+            }
+        } catch (error) {
+            console.error('Error al restaurar ticket:', error);
+            showError('No se pudo restaurar el ticket.');
+        }
+    }
+
+    async function restoreSelectedTicket() {
+        if (!appState.currentTicketId) return;
+        await restoreTicket(appState.currentTicketId);
+        closeModal('viewTicketModal');
+    }
+
+    async function permanentlyDeleteTicket(ticketId) {
+        try {
+            const result = await Swal.fire({
+                title: '¿Eliminar permanentemente?',
+                text: 'Esta acción no se puede deshacer. El ticket será eliminado para siempre.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            });
+
+            if (result.isConfirmed) {
+                await db.collection('ticketsmesaPapelera').doc(ticketId).delete();
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: 'El ticket ha sido eliminado permanentemente',
+                    icon: 'success',
+                    confirmButtonColor: '#6C43E0'
+                });
+                
+                // Recargar la página actual
+                loadTicketsPage(appState.pagination.currentPage);
+            }
+        } catch (error) {
+            console.error('Error al eliminar ticket:', error);
+            showError('No se pudo eliminar el ticket.');
+        }
+    }
+
+    async function permanentlyDeleteSelectedTicket() {
+        if (!appState.currentTicketId) return;
+        await permanentlyDeleteTicket(appState.currentTicketId);
+        closeModal('viewTicketModal');
+    }
+
+    async function emptyTrash() {
+        try {
+            const result = await Swal.fire({
+                title: '¿Vaciar la papelera?',
+                text: 'Todos los tickets en la papelera serán eliminados permanentemente',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, vaciar papelera',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            });
+
+            if (result.isConfirmed) {
+                // Obtener todos los tickets en la papelera
+                const snapshot = await db.collection('ticketsmesaPapelera').get();
+                
+                // Eliminar cada documento
+                const batch = db.batch();
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+                
+                Swal.fire({
+                    title: '¡Papelera vaciada!',
+                    text: 'Todos los tickets han sido eliminados permanentemente',
+                    icon: 'success',
+                    confirmButtonColor: '#6C43E0'
+                });
+                
+                // Recargar la página actual
+                loadTicketsPage(1);
+            }
+        } catch (error) {
+            console.error('Error al vaciar la papelera:', error);
+            showError('No se pudo vaciar la papelera.');
+        }
+    }
+
+    // =================================================================================
+    // FUNCIONES AUXILIARES
+    // FUNCIONES AUXILIARES
+    // =================================================================================
+
+    // Funciones auxiliares
+    const getBadgeClass = (status) => {
+        const statusMap = {
+            'finalizado': 'success',
+            'en_proceso': 'warning', 
+            'pendiente': 'danger',
+            'cancelado': 'secondary'
+        };
+        return statusMap[status] || 'secondary';
+    };
+
+    const getPriorityBadgeClass = (priority) => {
+        switch(priority) {
+            case 'alta': return 'danger';
+            case 'media': return 'warning';
+            case 'baja': return 'success';
+            default: return 'info';
+        }
+    };
+
+    const formatStatus = (status) => {
+        if (!status) return 'N/A';
+        return status.replace('_', ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+    };
+
+    const formatPriority = (priority) => {
+        return priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : 'N/A';
+    };
+
+    const formatDateTime = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        try {
+            if (timestamp.toDate) {
+                const date = timestamp.toDate();
+                return date.toLocaleDateString('es-MX') + ' ' + date.toLocaleTimeString('es-MX');
+            }
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('es-MX') + ' ' + date.toLocaleTimeString('es-MX');
+        } catch (error) {
+            return 'Fecha inválida';
+        }
+    };
+
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function showError(message) {
+        Swal.fire({
+            title: 'Error',
+            text: message,
+            icon: 'error',
+            confirmButtonColor: '#6C43E0'
+        });
+    }
+
+    // =================================================================================
+    // CONFIGURACIÓN DE EVENT LISTENERS
+    // =================================================================================
+    function setupEventListeners() {
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const viewModal = document.getElementById('viewTicketModal');
+            if (event.target === viewModal) {
+                closeModal('viewTicketModal');
+            }
+        }
+    }
+
+    // =================================================================================
+    // INICIALIZACIÓN
+    // =================================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log('Usuario autenticado:', user.email);
+                initialLoad();
+            } else {
+                console.log('No hay usuario autenticado, redirigiendo...');
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+            }
+        });
+    });
+</script>
+<script src="../js/personalizacion-colores.js"></script>
+<script src="../js/navegacion-admin.js"></script>
+</body>
+</html>
