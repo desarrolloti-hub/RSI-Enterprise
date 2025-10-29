@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSI Enterprise - Nuevo Ticket</title>
+    <script type="module" src="/vista/js/fcm-manager.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -217,6 +218,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -531,9 +533,72 @@
     // Guardar usando el ID del ticket como nombre del documento
     await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
     
+    if (selectedCollaboratorsIds.length > 0) {
+        await sendPushNotification(selectedCollaboratorsIds, ticketData);
+    }
+
     return idTicket;
 }
-    
+
+// En nuevo-ticket.html - Reemplaza la función sendPushNotification
+
+    async function sendPushNotification(colaboradorIds, ticketData) {
+    try {
+        console.log('📤 Enviando notificaciones push...');
+        
+        // Obtener tokens FCM de los colaboradores
+        const tokens = [];
+        
+        for (const colaboradorId of colaboradorIds) {
+            const userDoc = await db.collection('usuarios').doc(colaboradorId).get();
+            if (userDoc.exists && userDoc.data().fcmToken) {
+                tokens.push(userDoc.data().fcmToken);
+                console.log(`✅ Token encontrado para: ${userDoc.data().NOMBRE || colaboradorId}`);
+            } else {
+                console.log(`❌ Sin token para: ${colaboradorId}`);
+            }
+        }
+
+        if (tokens.length === 0) {
+            console.log('⚠️ No hay tokens disponibles para notificar');
+            return;
+        }
+
+        console.log(`🎯 Enviando a ${tokens.length} dispositivos`);
+
+        // ENCOLAR NOTIFICACIÓN PARA ENVÍO EN SEGUNDO PLANO
+        const notificationPayload = {
+            tokens: tokens,
+            title: '🎫 Nuevo Ticket Asignado - RSI',
+            body: `Tienes un nuevo ticket: ${ticketData.titulo}`,
+            data: {
+                ticketId: ticketData.idTicket,
+                type: 'new_ticket',
+                url: `https://rsienterprise.web.app/vista/nav-operadores/gestion_Tickets.html?ticketId=${ticketData.idTicket}`,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK'
+            },
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'pending'
+        };
+
+        await db.collection('notificationsQueue').add(notificationPayload);
+        console.log('✅ Notificación encolada para envío en segundo plano');
+
+        // MOSTRAR NOTIFICACIÓN LOCAL COMO BACKUP
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Ticket Creado', {
+                body: `Ticket ${ticketData.idTicket} asignado a ${tokens.length} colaboradores`,
+                icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png',
+                tag: ticketData.idTicket
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error enviando notificación:', error);
+    }
+}
+
+
     async function saveAdminTicket() {
     // Validar formulario
     if (!validateAdminForm()) {
@@ -691,6 +756,8 @@ async function obtenerYActualizarContador() {
             alert(title + ': ' + text);
         }
     }
+
+    
 
     // =================================================================================
     // INICIALIZACIÓN
