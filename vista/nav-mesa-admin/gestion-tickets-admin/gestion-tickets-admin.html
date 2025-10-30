@@ -491,7 +491,7 @@
     async function viewTicket(ticketId) {
         try {
             // Redirigir a la página de ver ticket
-            window.location.href = `ver-ticket.html?id=${ticketId}`;
+            window.location.href = `../verTicket/verTicket.html?id=${ticketId}`;
         } catch (error) {
             console.error('Error al ver ticket:', error);
             showError('No se pudo cargar el ticket.');
