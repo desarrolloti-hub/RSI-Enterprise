@@ -997,12 +997,12 @@
                 }
                 
                 if (finishBtn) {
-                    finishBtn.href = `../editar-ticket/editar-ticket.html?ticketId=${ticketId}`;
+                    finishBtn.href = `../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}`;
                 }
                 
                 if (editBtn && usuarioYaCompleto) {
                     editBtn.onclick = () => {
-                        window.location.href = `../editar-ticket/editar-ticket.html?ticketId=${ticketId}&edit=true`;
+                        window.location.href = `../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}&edit=true`;
                     };
                 }
                 

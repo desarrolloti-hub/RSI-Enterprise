@@ -425,3 +425,211 @@ hr {
     background-color: var(--secondary-color, #b04141);
     filter: brightness(1.1);
 }
+ 
+        /* Estilos esenciales para la funcionalidad CRUD y detalles */
+        .reimbursement-detail {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+        }
+        .reimbursement-detail h3 {
+            border-bottom: 2px solid #c84e4e;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .reimbursement-detail p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .reimbursement-detail img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .detail-back-btn {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px; /* Separación entre botones */
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+        .detail-back-btn:hover {
+            opacity: 0.9;
+        }
+        
+        /* Estilos de la Tabla (NUEVO) */
+        .reimbursement-table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .reimbursement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            min-width: 600px;
+        }
+        .reimbursement-table th, .reimbursement-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .reimbursement-table th {
+            background-color: #c84e4e; /* Color de encabezado de RSI Enterprise */
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        .reimbursement-table tbody tr:hover {
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+
+        /* Estilos de los Tags de Estado */
+        .status-tag { padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .status-Pendiente { background-color: #f0ad4e; color: white; }
+        .status-Aprobado { background-color: #5cb85c; color: white; }
+        .status-Rechazado { background-color: #d9534f; color: white; }
+        
+        /* Estilos para el nuevo formulario de carga rápida (MODAL) */
+        .quick-upload-form {
+            display: none; /* Se mostrará con JS */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .quick-upload-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+        .quick-upload-content .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .quick-upload-content .close-btn:hover,
+        .quick-upload-content .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .file-upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            border: 2px dashed #c84e4e;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .file-upload-container:hover {
+            background-color: #fcebeb;
+        }
+        .file-upload-container i {
+            color: #c84e4e;
+            margin-bottom: 10px;
+        }
+
+        /* Estilos de los iconos en el historial */
+        .history-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            justify-content: flex-end; /* Alinear a la derecha */
+        }
+        .control-icon {
+            font-size: 1.5em;
+            color: #c84e4e;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .control-icon:hover {
+            background-color: #fcebeb;
+        }
+        
+        /* Nuevos estilos para mejoras */
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-container select, .filter-container input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .pagination button.active {
+            background-color: #c84e4e;
+            color: white;
+            border-color: #c84e4e;
+        }
+        .pagination button:hover:not(.active) {
+            background-color: #f5f5f5;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .loading-skeleton {
+            display: none;
+        }
+        .skeleton-row {
+            height: 50px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .validation-error {
+            color: #d9534f;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
