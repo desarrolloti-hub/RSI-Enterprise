@@ -5,17 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial Global de Reembolso | RSI Enterprise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="rembolso.css"> 
-    
-
+    <link rel="stylesheet" href="rembolso.css">
 </head>
 <body>
     <div class="attendance-container" id="reimbursementContainer">
         
         <div class="attendance-header">
             <h1>Historial Global de Reembolsos</h1>
-            <p>Consulta las solicitudes y envía comprobantes rápidos.</p>
+            <p>Consulta todas las solicitudes de reembolso.</p>
+        </div>
+
+        <!-- Resumen financiero -->
+        <div class="financial-summary">
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="summary-info">
+                    <h3>Total Pendiente</h3>
+                    <p class="summary-amount" id="totalPending">$0.00</p>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon paid">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="summary-info">
+                    <h3>Total Pagado</h3>
+                    <p class="summary-amount" id="totalPaid">$0.00</p>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon total">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="summary-info">
+                    <h3>Total General</h3>
+                    <p class="summary-amount" id="totalGeneral">$0.00</p>
+                </div>
+            </div>
         </div>
 
         <div class="employee-info">
@@ -26,13 +54,12 @@
             </div>
         </div>
 
-        <hr id="historyDivider">
+        <hr>
         
         <div class="reimbursement-history" id="reimbursementHistory">
             
             <div class="history-controls">
-                <i class="fas fa-file-invoice-dollar control-icon" title="Nuevo Comprobante Rápido" id="quickUploadIcon"></i>
-                <i class="fas fa-eye control-icon" title="Ver Historial" id="viewHistoryIcon"></i> 
+                <i class="fas fa-sync-alt control-icon" title="Actualizar" id="refreshIcon"></i>
             </div>
 
             <!-- Filtros y búsqueda -->
@@ -42,8 +69,10 @@
                     <option value="Pendiente">Pendiente</option>
                     <option value="Aprobado">Aprobado</option>
                     <option value="Rechazado">Rechazado</option>
+                    <option value="Pagado">Pagado</option>
+                    <option value="Pago Parcial">Pago Parcial</option>
                 </select>
-                <input type="text" id="searchInput" placeholder="Buscar por nombre o área...">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, área o descripción...">
                 <select id="itemsPerPage">
                     <option value="10">10 por página</option>
                     <option value="25" selected>25 por página</option>
@@ -67,12 +96,13 @@
                 <table class="reimbursement-table" id="reimbursementTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Descripción</th>
                             <th>Monto</th>
                             <th>Colaborador</th>
                             <th>Área</th>
                             <th>Fecha Solicitud</th>
                             <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="reimbursementTableBody">
@@ -85,91 +115,22 @@
             
             <p id="noReimbursements" style="display:none; text-align:center; color:#999;">No hay solicitudes de reembolso registradas.</p>
         </div>
-        
-        <div class="reimbursement-detail" id="reimbursementDetail" style="display: none;">
-            <button class="detail-back-btn" id="backToHistoryBtn" style="background-color: #5cb85c;">
-                <i class="fas fa-arrow-left"></i> Regresar al Historial
-            </button>
-            <h3 id="detailTitle">Detalle del Reembolso</h3>
-            <p><strong>Monto:</strong> <span id="detailAmount"></span></p>
-            <p><strong>Colaborador:</strong> <span id="detailCollaborator"></span></p>
-            <p><strong>Área:</strong> <span id="detailArea"></span></p>
-            <p><strong>Estado:</strong> <span id="detailStatus"></span></p>
-            <p><strong>Descripción:</strong> <span id="detailDescription"></span></p>
-            <p><strong>Fecha de Solicitud:</strong> <span id="detailDate"></span></p>
-            
-            <div id="detailActions" style="margin-top: 20px; margin-bottom: 20px;">
-            </div>
-            
-            <p style="margin-top: 20px;"><strong>Comprobante:</strong></p>
-            <div id="imageLoading" style="display: none; text-align: center;">
-                <i class="fas fa-spinner fa-spin"></i> Cargando imagen...
-            </div>
-            <img id="detailImage" alt="Comprobante de Gasto" style="display: none;">
-        </div>
-    </div>
 
-    <div id="quickUploadModal" class="quick-upload-form">
-        <div class="quick-upload-content">
-            <span class="close-btn" id="closeQuickUploadModal">&times;</span>
-            <h2>Subir Comprobante Rápido</h2>
-            <p>Adjunta la imagen del gasto. Los datos del colaborador se adjuntarán automáticamente.</p>
-            <form id="quickUploadFormContent">
-                
-                <div style="margin-bottom: 15px;">
-                    <label for="quickAmount">Monto a Reembolsar ($)</label>
-                    <input type="number" id="quickAmount" placeholder="Ej: 150.75" required step="0.01" min="0">
-                    <div class="validation-error" id="amountError">El monto debe ser mayor a 0</div>
+        <!-- Modal para ver detalles -->
+        <div id="detailModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Detalles del Reembolso</h2>
+                <div class="modal-body" id="modalBody">
+                    <!-- Los detalles se cargarán aquí -->
                 </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label for="quickDescription">Descripción (Opcional)</label>
-                    <textarea id="quickDescription" rows="2" placeholder="Ej: Ticket de gasolina" maxlength="500"></textarea>
-                    <div class="validation-error" id="descriptionError">La descripción no puede exceder los 500 caracteres</div>
+                <!-- Botón Finalizar Reembolso -->
+                <div class="modal-footer" id="modalFooter" style="display: none; margin-top: 20px; text-align: center; border-top: 1px solid #eee; padding-top: 15px;">
+                    <button id="finalizeReimbursementBtn" class="btn-finalize">
+                        <i class="fas fa-check-circle"></i> Finalizar Reembolso
+                    </button>
                 </div>
-                
-                <div>
-                    <label>Comprobante de Gasto (Foto/Ticket)</label>
-                    <div class="file-upload-container" onclick="document.getElementById('quickPhotoFile').click();">
-                        <i class="fas fa-camera fa-2x"></i>
-                        <p id="quickFileText">Haz clic para subir una imagen</p>
-                        <input type="file" id="quickPhotoFile" accept="image/*" style="display: none;" required>
-                    </div>
-                    <div class="validation-error" id="fileError">Debe seleccionar una imagen válida (JPG, PNG, GIF)</div>
-                    <img id="quickPreviewImage" alt="Vista previa de la imagen" style="display: none; max-width: 100%; max-height: 200px; margin-top: 10px; border-radius: 8px;">
-                </div>
-                
-                <p style="margin-top: 20px; font-size: 0.9em;">
-                    <i class="fas fa-user-check"></i>
-                    **Datos automáticos:** <span id="quickUserDataInfo">Cargando...</span>
-                </p>
-
-                <button type="submit" class="submit-btn" id="submitQuickReimbursement" style="margin-top: 15px;">
-                    <i class="fas fa-upload"></i> Enviar Comprobante Rápido
-                </button>
-            </form>
-        </div>
-    </div>
-    
-    <div class="alert-overlay" id="alertOverlay">
-        <div class="alert-box">
-            <div class="alert-icon">
-                <i class="fas fa-check-circle"></i>
             </div>
-            <h3 class="alert-title">¡Reembolso Enviado!</h3>
-            <p class="alert-message">Tu solicitud ha sido enviada para revisión.</p>
-            <button class="alert-btn" id="alertBtn">Aceptar</button>
-        </div>
-    </div>
-
-    <div class="alert-overlay" id="errorAlert">
-        <div class="alert-box error-alert-box">
-            <div class="alert-icon">
-                <i class="fas fa-exclamation-circle"></i>
-            </div>
-            <h3 class="alert-title">¡Error!</h3>
-            <p class="alert-message">Hubo un problema.</p>
-            <button class="alert-btn" id="errorBtn">Entendido</button>
         </div>
     </div>
 
@@ -178,7 +139,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <script>
-    // La configuración de Firebase solo es referencial.
     const firebaseConfig = {
         apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
         authDomain: "rsienterprise.firebaseapp.com",
@@ -198,8 +158,8 @@
         let currentPage = 1;
         let itemsPerPage = 25;
         let filteredReimbursements = [];
+        let currentSelectedReimbursement = null;
 
-        // Inicializa Firebase si aún no está inicializado
         if (firebase.apps.length === 0) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -207,74 +167,36 @@
         const checkFirebaseReady = setInterval(() => {
             if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
                 clearInterval(checkFirebaseReady);
-
                 db = firebase.firestore();
                 auth = firebase.auth();
-                
-                initializeReimbursementLogic(db, auth);
+                initializeReimbursementLogic();
             }
         }, 100);
 
-        function initializeReimbursementLogic(db, auth) {
-            // Elementos del DOM de la TABLA y DETALLE
-            const reimbursementHistory = document.getElementById('reimbursementHistory');
+        function initializeReimbursementLogic() {
             const loadingHistory = document.getElementById('loadingHistory');
             const skeletonLoading = document.getElementById('skeletonLoading');
             const noReimbursements = document.getElementById('noReimbursements');
             const reimbursementTableBody = document.getElementById('reimbursementTableBody');
-            const reimbursementDetail = document.getElementById('reimbursementDetail');
-            const backToHistoryBtn = document.getElementById('backToHistoryBtn');
-            const viewHistoryIcon = document.getElementById('viewHistoryIcon');
+            const refreshIcon = document.getElementById('refreshIcon');
+            const detailModal = document.getElementById('detailModal');
+            const closeModal = document.querySelector('.close-modal');
+            const finalizeReimbursementBtn = document.getElementById('finalizeReimbursementBtn');
+            const modalFooter = document.getElementById('modalFooter');
             
             // Elementos de filtros y paginación
             const statusFilter = document.getElementById('statusFilter');
             const searchInput = document.getElementById('searchInput');
             const itemsPerPageSelect = document.getElementById('itemsPerPage');
             const paginationContainer = document.getElementById('paginationContainer');
-            
-            // Elementos del Nuevo Formulario Rápido
-            const quickUploadIcon = document.getElementById('quickUploadIcon');
-            const quickUploadModal = document.getElementById('quickUploadModal');
-            const closeQuickUploadModal = document.getElementById('closeQuickUploadModal');
-            const quickUploadFormContent = document.getElementById('quickUploadFormContent');
-            const quickPhotoFile = document.getElementById('quickPhotoFile');
-            const quickFileText = document.getElementById('quickFileText');
-            const quickPreviewImage = document.getElementById('quickPreviewImage');
-            const submitQuickBtn = document.getElementById('submitQuickReimbursement');
-            const quickAmountInput = document.getElementById('quickAmount');
-            const quickDescriptionInput = document.getElementById('quickDescription');
-            const quickUserDataInfo = document.getElementById('quickUserDataInfo');
-            
-            // Elementos de validación
-            const amountError = document.getElementById('amountError');
-            const descriptionError = document.getElementById('descriptionError');
-            const fileError = document.getElementById('fileError');
 
-            // Ocultar elementos originales del formulario (ya que solo queremos tabla/detalle)
-            document.getElementById('reimbursementContainer').querySelectorAll('.attendance-header, .employee-info, hr').forEach(el => el.style.display = 'block');
+            // Elementos del resumen financiero
+            const totalPending = document.getElementById('totalPending');
+            const totalPaid = document.getElementById('totalPaid');
+            const totalGeneral = document.getElementById('totalGeneral');
 
-            // =========================================================================
-            // --- Funcionalidad de Alternar Vistas (Simplificado) ---
-            // =========================================================================
-            function toggleView(view) {
-                reimbursementHistory.style.display = 'none';
-                reimbursementDetail.style.display = 'none';
-
-                if (view === 'history') {
-                    reimbursementHistory.style.display = 'block';
-                    loadAllReimbursementHistory(); // Recargar la tabla
-                } else if (view === 'detail') {
-                    reimbursementDetail.style.display = 'block';
-                }
-            }
-
-            // Event Listeners para alternar
-            backToHistoryBtn.addEventListener('click', () => toggleView('history'));
-            viewHistoryIcon.addEventListener('click', () => toggleView('history'));
-
-            // =========================================================================
-            // --- Funcionalidad de Filtros y Búsqueda ---
-            // =========================================================================
+            // Event Listeners
+            refreshIcon.addEventListener('click', loadAllReimbursementHistory);
             statusFilter.addEventListener('change', applyFilters);
             searchInput.addEventListener('input', debounce(applyFilters, 300));
             itemsPerPageSelect.addEventListener('change', function() {
@@ -282,6 +204,71 @@
                 currentPage = 1;
                 applyFilters();
             });
+
+            // Modal events
+            closeModal.addEventListener('click', () => {
+                detailModal.style.display = 'none';
+                modalFooter.style.display = 'none';
+                currentSelectedReimbursement = null;
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == detailModal) {
+                    detailModal.style.display = 'none';
+                    modalFooter.style.display = 'none';
+                    currentSelectedReimbursement = null;
+                }
+            });
+
+            // Botón Finalizar Reembolso
+            finalizeReimbursementBtn.addEventListener('click', () => {
+                if (currentSelectedReimbursement) {
+                    finalizeReimbursement(currentSelectedReimbursement);
+                }
+            });
+
+            function finalizeReimbursement(reimbursement) {
+                // Crear parámetros para pasar al siguiente archivo
+                const params = new URLSearchParams();
+                params.append('id', reimbursement.id);
+                params.append('monto', reimbursement.monto);
+                params.append('nombre', reimbursement.nombre || '');
+                params.append('area', reimbursement.area || '');
+                params.append('descripcion', reimbursement.descripcion || '');
+                params.append('emailEmpresarial', reimbursement.emailEmpresarial || '');
+                params.append('estado', reimbursement.estado || 'Pendiente');
+                
+                if (reimbursement.fechaSolicitud && typeof reimbursement.fechaSolicitud.toDate === 'function') {
+                    params.append('fechaSolicitud', reimbursement.fechaSolicitud.toDate().toISOString());
+                }
+                
+                // Redirigir a la página de finalizar reembolso
+                window.location.href = `finalizar-reembolsos.html?${params.toString()}`;
+            }
+
+            function calculateFinancialSummary() {
+                let pendingTotal = 0;
+                let paidTotal = 0;
+                let generalTotal = 0;
+
+                allReimbursements.forEach(reimbursement => {
+                    if (reimbursement.estado === 'Pendiente' || reimbursement.estado === 'Aprobado') {
+                        pendingTotal += reimbursement.monto;
+                    } else if (reimbursement.estado === 'Pagado') {
+                        paidTotal += reimbursement.monto;
+                    } else if (reimbursement.estado === 'Pago Parcial') {
+                        // Sumar solo lo que ya se pagó en pagos parciales
+                        const montoPagado = reimbursement.montoPagado || 0;
+                        paidTotal += montoPagado;
+                        pendingTotal += (reimbursement.monto - montoPagado);
+                    }
+                    generalTotal += reimbursement.monto;
+                });
+
+                totalPending.textContent = `$${pendingTotal.toFixed(2)}`;
+                totalPaid.textContent = `$${paidTotal.toFixed(2)}`;
+                totalGeneral.textContent = `$${generalTotal.toFixed(2)}`;
+            }
 
             function applyFilters() {
                 const status = statusFilter.value;
@@ -291,7 +278,8 @@
                     const matchesStatus = !status || reimbursement.estado === status;
                     const matchesSearch = !searchTerm || 
                         (reimbursement.nombre && reimbursement.nombre.toLowerCase().includes(searchTerm)) ||
-                        (reimbursement.area && reimbursement.area.toLowerCase().includes(searchTerm));
+                        (reimbursement.area && reimbursement.area.toLowerCase().includes(searchTerm)) ||
+                        (reimbursement.descripcion && reimbursement.descripcion.toLowerCase().includes(searchTerm));
                     
                     return matchesStatus && matchesSearch;
                 });
@@ -312,9 +300,6 @@
                 };
             }
 
-            // =========================================================================
-            // --- Funcionalidad de Paginación ---
-            // =========================================================================
             function renderPagination() {
                 const totalPages = Math.ceil(filteredReimbursements.length / itemsPerPage);
                 paginationContainer.innerHTML = '';
@@ -385,248 +370,120 @@
                     }
 
                     const statusTag = createStatusTag(data.estado);
+                    
+                    // Truncar descripción si es muy larga
+                    const descripcion = data.descripcion || 'Sin descripción';
+                    const descripcionTruncada = descripcion.length > 50 ? 
+                        descripcion.substring(0, 50) + '...' : descripcion;
 
                     const tableRow = document.createElement('tr');
                     tableRow.setAttribute('data-id', data.id);
                     tableRow.innerHTML = `
-                        <td>${data.id.substring(0, 4)}...</td>
+                        <td title="${escapeHtml(descripcion)}">${escapeHtml(descripcionTruncada)}</td>
                         <td>$${data.monto.toFixed(2)}</td>
                         <td>${escapeHtml(data.nombre || 'N/A')}</td>
                         <td>${escapeHtml(data.area || 'N/A')}</td>
                         <td>${date}</td>
                         <td>${statusTag}</td>
+                        <td>
+                            <button class="view-detail-btn" data-id="${data.id}" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
                     `;
                     
-                    // Listener para ver el detalle
-                    tableRow.addEventListener('click', function() {
+                    reimbursementTableBody.appendChild(tableRow);
+                });
+
+                // Agregar event listeners a los botones de ver detalles
+                document.querySelectorAll('.view-detail-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
                         const reimbursementId = this.getAttribute('data-id');
                         const selectedReimbursement = allReimbursements.find(r => r.id === reimbursementId);
                         if (selectedReimbursement) {
                             showReimbursementDetail(selectedReimbursement);
                         }
                     });
-
-                    reimbursementTableBody.appendChild(tableRow);
                 });
             }
 
-            // =========================================================================
-            // --- Funcionalidad de Formulario Rápido (Mejorado) ---
-            // =========================================================================
-
-            quickUploadIcon.addEventListener('click', () => {
-                if (!current_userData) {
-                    showAlert('error', 'Cargando Datos', 'Aún estamos verificando tus datos. Intenta de nuevo en un momento.');
-                    return;
-                }
-                quickUploadModal.style.display = 'block';
-                // Resetear el formulario al abrir
-                quickUploadFormContent.reset();
-                quickPreviewImage.style.display = 'none';
-                quickPreviewImage.src = '';
-                quickFileText.textContent = 'Haz clic para subir una imagen';
-                submitQuickBtn.disabled = false;
-                submitQuickBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar Comprobante Rápido';
-                quickUserDataInfo.textContent = `${escapeHtml(current_userData.NOMBRE || 'N/A')} - ${escapeHtml(current_userData['ÁREA'] || 'N/A')}`;
+            function showReimbursementDetail(reimbursement) {
+                const modalBody = document.getElementById('modalBody');
+                const modalFooter = document.getElementById('modalFooter');
+                const date = reimbursement.fechaSolicitud && typeof reimbursement.fechaSolicitud.toDate === 'function' 
+                    ? reimbursement.fechaSolicitud.toDate().toLocaleDateString('es-ES') + ' ' + reimbursement.fechaSolicitud.toDate().toLocaleTimeString('es-ES') 
+                    : 'N/A';
                 
-                // Limpiar errores de validación
-                hideValidationErrors();
-            });
+                const statusTag = createStatusTag(reimbursement.estado);
 
-            closeQuickUploadModal.addEventListener('click', () => {
-                quickUploadModal.style.display = 'none';
-            });
+                modalBody.innerHTML = `
+                    <div class="detail-section">
+                        <h3>Información General</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <strong>ID:</strong>
+                                <span>${reimbursement.id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Monto:</strong>
+                                <span class="amount">$${reimbursement.monto.toFixed(2)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Estado:</strong>
+                                <span>${statusTag}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Fecha de Solicitud:</strong>
+                                <span>${date}</span>
+                            </div>
+                        </div>
+                    </div>
 
-            window.addEventListener('click', (event) => {
-                if (event.target == quickUploadModal) {
-                    quickUploadModal.style.display = 'none';
-                }
-            });
-            
-            // Validación en tiempo real
-            quickAmountInput.addEventListener('input', validateAmount);
-            quickDescriptionInput.addEventListener('input', validateDescription);
-            quickPhotoFile.addEventListener('change', function() {
-                validateFile();
-                const file = this.files[0];
-                if (file) {
-                    quickFileText.textContent = `Archivo seleccionado: ${file.name}`;
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        quickPreviewImage.src = e.target.result;
-                        quickPreviewImage.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
+                    <div class="detail-section">
+                        <h3>Información del Colaborador</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <strong>Nombre:</strong>
+                                <span>${escapeHtml(reimbursement.nombre || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Área:</strong>
+                                <span>${escapeHtml(reimbursement.area || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Email:</strong>
+                                <span>${escapeHtml(reimbursement.emailEmpresarial || 'N/A')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>Descripción</h3>
+                        <div class="description-box">
+                            <p>${escapeHtml(reimbursement.descripcion || 'Sin descripción')}</p>
+                        </div>
+                    </div>
+
+                    ${reimbursement.comprobanteBase64 ? `
+                    <div class="detail-section">
+                        <h3>Comprobante</h3>
+                        <div class="comprobante-container">
+                            <img src="${reimbursement.comprobanteBase64}" alt="Comprobante de gasto" class="comprobante-image">
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+
+                // Mostrar u ocultar botón de finalizar según el estado
+                if (reimbursement.estado === 'Pendiente' || reimbursement.estado === 'Aprobado' || reimbursement.estado === 'Pago Parcial') {
+                    modalFooter.style.display = 'block';
+                    currentSelectedReimbursement = reimbursement;
                 } else {
-                    quickFileText.textContent = 'Haz clic para subir una imagen';
-                    quickPreviewImage.style.display = 'none';
-                    quickPreviewImage.src = '';
-                }
-            });
-
-            function validateAmount() {
-                const amount = parseFloat(quickAmountInput.value);
-                if (isNaN(amount) || amount <= 0) {
-                    amountError.style.display = 'block';
-                    return false;
-                } else {
-                    amountError.style.display = 'none';
-                    return true;
-                }
-            }
-
-            function validateDescription() {
-                const description = quickDescriptionInput.value;
-                if (description.length > 500) {
-                    descriptionError.style.display = 'block';
-                    return false;
-                } else {
-                    descriptionError.style.display = 'none';
-                    return true;
-                }
-            }
-
-            function validateFile() {
-                const file = quickPhotoFile.files[0];
-                if (!file) {
-                    fileError.style.display = 'block';
-                    return false;
-                }
-                
-                // Validar tipo de archivo
-                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-                if (!validTypes.includes(file.type)) {
-                    fileError.style.display = 'block';
-                    return false;
-                }
-                
-                // Validar tamaño (máximo 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    fileError.textContent = 'La imagen no puede ser mayor a 5MB';
-                    fileError.style.display = 'block';
-                    return false;
-                }
-                
-                fileError.style.display = 'none';
-                return true;
-            }
-
-            function hideValidationErrors() {
-                amountError.style.display = 'none';
-                descriptionError.style.display = 'none';
-                fileError.style.display = 'none';
-            }
-
-            function validateForm() {
-                const isAmountValid = validateAmount();
-                const isDescriptionValid = validateDescription();
-                const isFileValid = validateFile();
-                
-                return isAmountValid && isDescriptionValid && isFileValid;
-            }
-
-            // Manejador de Envío Rápido
-            quickUploadFormContent.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                if (!validateForm()) {
-                    showAlert('error', 'Error de Validación', "Por favor, corrige los errores en el formulario.");
-                    return;
-                }
-                
-                if (!current_userData || !current_userData.id) {
-                    showAlert('error', 'Error de Usuario', "No se pudo obtener la información de tu cuenta. Recarga la página.");
-                    return;
-                }
-                
-                const amount = parseFloat(quickAmountInput.value);
-                const description = quickDescriptionInput.value.trim() || 'Sin descripción';
-                const photoFile = quickPhotoFile.files[0];
-
-                if (isNaN(amount) || amount <= 0 || !photoFile) {
-                    showAlert('error', 'Datos Faltantes', "Por favor, completa el monto y adjunta una imagen.");
-                    return;
+                    modalFooter.style.display = 'none';
+                    currentSelectedReimbursement = null;
                 }
 
-                submitQuickBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-                submitQuickBtn.disabled = true;
-
-                try {
-                    const photoBase64 = await fileToBase64(photoFile);
-                    const now = new Date();
-                    const timestamp = firebase.firestore.Timestamp.fromDate(now);
-
-                    const reimbursementData = {
-                        userId: current_userData.id,
-                        nombre: current_userData.NOMBRE,
-                        emailEmpresarial: current_userData['CORREO ELECTRÓNICO EMPRESARIAL'],
-                        area: current_userData['ÁREA'],
-                        monto: amount,
-                        descripcion: description,
-                        comprobanteBase64: photoBase64, 
-                        fechaSolicitud: timestamp,
-                        estado: 'Pendiente',
-                        tipoEnvio: 'Rápido', // Para diferenciarlo
-                        detallesColaborador: {
-                            nombre: current_userData.NOMBRE || 'N/A', 
-                            rfc: current_userData.RFC || 'N/A',
-                            nit: current_userData.NIT || 'N/A',
-                        }
-                    };
-
-                    await db.collection('Reembolsos').add(reimbursementData);
-
-                    quickUploadModal.style.display = 'none';
-                    showAlert('success', '¡Comprobante Enviado!', `Monto: $${amount.toFixed(2)}<br>Tu comprobante rápido está en revisión.`);
-                    
-                    setTimeout(() => {
-                        document.getElementById('alertOverlay').classList.remove('show');
-                        toggleView('history'); // Recarga el historial
-                    }, 1500); 
-
-                } catch (error) {
-                    console.error("Error al procesar el reembolso rápido:", error);
-                    showAlert('error', 'Error al Enviar', error.message || 'Hubo un problema desconocido al subir el comprobante.');
-                    submitQuickBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar Comprobante Rápido';
-                    submitQuickBtn.disabled = false;
-                }
-            });
-
-
-            // =========================================================================
-            // --- Utilidades (Mejoradas) ---
-            // =========================================================================
-            function showAlert(type, title, message) {
-                const alertOverlay = document.getElementById('alertOverlay');
-                const errorAlert = document.getElementById('errorAlert');
-                const alertBtn = document.getElementById('alertBtn');
-                const errorBtn = document.getElementById('errorBtn');
-
-                alertOverlay.classList.remove('show');
-                errorAlert.classList.remove('show');
-                
-                const targetAlert = type === 'error' ? errorAlert : alertOverlay;
-                const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
-                const iconElement = targetAlert.querySelector('.alert-icon i');
-
-                targetAlert.querySelector('.alert-title').textContent = title;
-                targetAlert.querySelector('.alert-message').innerHTML = message;
-                iconElement.className = `fas ${icon}`;
-                
-                targetAlert.classList.add('show');
-                
-                if (type !== 'error' && alertBtn) alertBtn.onclick = function() { alertOverlay.classList.remove('show'); };
-                else if (errorBtn) errorBtn.onclick = function() { errorAlert.classList.remove('show'); };
-            }
-
-            function fileToBase64(file) {
-                return new Promise((resolve, reject) => {
-                    if (!file) return resolve(null);
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = error => reject(error);
-                });
+                document.getElementById('detailModal').style.display = 'block';
             }
 
             function createStatusTag(status) {
@@ -645,9 +502,6 @@
                     .replace(/'/g, "&#039;");
             }
 
-            // =========================================================================
-            // --- READ (R) - Lógica de Historial GLOBAL (Mejorada) ---
-            // =========================================================================
             async function loadAllReimbursementHistory() {
                 reimbursementTableBody.innerHTML = '';
                 loadingHistory.style.display = 'block';
@@ -679,67 +533,18 @@
                     currentPage = 1;
                     renderTable();
                     renderPagination();
+                    calculateFinancialSummary();
 
                 } catch (error) {
                     console.error("Error al cargar el historial global de reembolsos:", error);
                     loadingHistory.style.display = 'none';
                     skeletonLoading.style.display = 'none';
-                    reimbursementTableBody.innerHTML = `<tr><td colspan="6" style="color:#d9534f; background:#f2dede; text-align:center;">
+                    reimbursementTableBody.innerHTML = `<tr><td colspan="7" style="color:#d9534f; background:#f2dede; text-align:center;">
                         ⚠️ Error al cargar el historial.
                     </td></tr>`;
                 }
             }
-            
-            // --- READ (R) - Lógica de Detalle (Mejorada) ---
-            function showReimbursementDetail(reimbursement) {
-                const detailAmount = document.getElementById('detailAmount');
-                const detailCollaborator = document.getElementById('detailCollaborator');
-                const detailArea = document.getElementById('detailArea');
-                const detailStatus = document.getElementById('detailStatus');
-                const detailDescription = document.getElementById('detailDescription');
-                const detailDate = document.getElementById('detailDate');
-                const detailImage = document.getElementById('detailImage');
-                const detailActions = document.getElementById('detailActions');
-                const imageLoading = document.getElementById('imageLoading');
-                
-                const date = reimbursement.fechaSolicitud && typeof reimbursement.fechaSolicitud.toDate === 'function' 
-                    ? reimbursement.fechaSolicitud.toDate().toLocaleDateString('es-ES') + ' ' + reimbursement.fechaSolicitud.toDate().toLocaleTimeString('es-ES') 
-                    : 'N/A';
-                
-                const statusTag = createStatusTag(reimbursement.estado);
 
-                document.getElementById('detailTitle').textContent = `Detalle de Reembolso ID: ${reimbursement.id.substring(0, 8)}`;
-                detailAmount.textContent = `$${reimbursement.monto.toFixed(2)}`;
-                detailCollaborator.textContent = reimbursement.nombre || 'N/A';
-                detailArea.textContent = reimbursement.area || 'N/A';
-                detailStatus.innerHTML = statusTag;
-                detailDescription.textContent = reimbursement.descripcion;
-                detailDate.textContent = date;
-                
-                // Carga lazy de imagen
-                detailImage.style.display = 'none';
-                if (reimbursement.comprobanteBase64) {
-                    imageLoading.style.display = 'block';
-                    detailImage.onload = function() {
-                        imageLoading.style.display = 'none';
-                        detailImage.style.display = 'block';
-                    };
-                    detailImage.src = reimbursement.comprobanteBase64;
-                } else {
-                    imageLoading.style.display = 'none';
-                    detailImage.style.display = 'none';
-                    detailImage.src = '';
-                }
-
-                // Las acciones de Editar/Eliminar se OCULTAN en este script
-                detailActions.innerHTML = '';
-
-                toggleView('detail');
-            }
-
-            // =========================================================================
-            // --- Inicialización y Autenticación (Mantenida) ---
-            // =========================================================================
             async function getUserData(email) {
                 try {
                     const querySnapshot = await db.collection('colaboradores')
@@ -782,26 +587,24 @@
                     current_userData = userData; 
 
                     if (!userData || !userData.NOMBRE) {
-                        showAlert('error', 'Datos no encontrados', 'No se encontró el nombre del usuario. Contacta a soporte.');
                         document.getElementById('employeeDetails').innerHTML = `<h3>${user.email}</h3><p><strong>Estatus:</strong> <span>Datos incompletos</span></p>`;
                         return;
                     }
                     
                     displayUserInfo(userData);
-                    // Iniciar en la vista de historial de inmediato
-                    toggleView('history'); 
+                    loadAllReimbursementHistory();
                     
                 } else {
-                    // Manejar el caso de no autenticación si es necesario
                     document.getElementById('employeeDetails').innerHTML = `<h3>No Autenticado</h3><p><strong>Estatus:</strong> <span>Inicia sesión</span></p>`;
-                    // Intentar cargar la tabla de todas formas (por si el acceso es público)
-                    toggleView('history'); 
+                    loadAllReimbursementHistory();
                 }
             });
-
         }
     });
-</script>
-    
-    <script src="../js/navegación-operador.js"></script>
+    </script>
+
+    <!-- Scripts compatibles con el menú de navegación -->
+    <script src="../js/navegacion-admin.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
+</body>
+</html>
