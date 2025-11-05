@@ -6,6 +6,7 @@
     <title>Historial Global de Reembolso | RSI Enterprise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="rembolso.css">
+
 </head>
 <body>
     <div class="attendance-container" id="reimbursementContainer">
@@ -97,7 +98,9 @@
                     <thead>
                         <tr>
                             <th>Descripción</th>
-                            <th>Monto</th>
+                            <th>Monto Total</th>
+                            <th>Pagado</th>
+                            <th>Pendiente</th>
                             <th>Colaborador</th>
                             <th>Área</th>
                             <th>Fecha Solicitud</th>
@@ -252,15 +255,16 @@
                 let generalTotal = 0;
 
                 allReimbursements.forEach(reimbursement => {
+                    const montoPagado = reimbursement.montoPagado || 0;
+                    const montoPendiente = reimbursement.monto - montoPagado;
+                    
                     if (reimbursement.estado === 'Pendiente' || reimbursement.estado === 'Aprobado') {
                         pendingTotal += reimbursement.monto;
                     } else if (reimbursement.estado === 'Pagado') {
                         paidTotal += reimbursement.monto;
                     } else if (reimbursement.estado === 'Pago Parcial') {
-                        // Sumar solo lo que ya se pagó en pagos parciales
-                        const montoPagado = reimbursement.montoPagado || 0;
                         paidTotal += montoPagado;
-                        pendingTotal += (reimbursement.monto - montoPagado);
+                        pendingTotal += montoPendiente;
                     }
                     generalTotal += reimbursement.monto;
                 });
@@ -376,11 +380,17 @@
                     const descripcionTruncada = descripcion.length > 50 ? 
                         descripcion.substring(0, 50) + '...' : descripcion;
 
+                    // Calcular montos pagados y pendientes
+                    const montoPagado = data.montoPagado || 0;
+                    const montoPendiente = data.monto - montoPagado;
+
                     const tableRow = document.createElement('tr');
                     tableRow.setAttribute('data-id', data.id);
                     tableRow.innerHTML = `
                         <td title="${escapeHtml(descripcion)}">${escapeHtml(descripcionTruncada)}</td>
                         <td>$${data.monto.toFixed(2)}</td>
+                        <td class="paid-amount">$${montoPagado.toFixed(2)}</td>
+                        <td class="pending-amount">$${montoPendiente.toFixed(2)}</td>
                         <td>${escapeHtml(data.nombre || 'N/A')}</td>
                         <td>${escapeHtml(data.area || 'N/A')}</td>
                         <td>${date}</td>
@@ -416,6 +426,11 @@
                 
                 const statusTag = createStatusTag(reimbursement.estado);
 
+                // Calcular montos
+                const montoPagado = reimbursement.montoPagado || 0;
+                const montoPendiente = reimbursement.monto - montoPagado;
+                const porcentajePagado = reimbursement.monto > 0 ? (montoPagado / reimbursement.monto) * 100 : 0;
+
                 modalBody.innerHTML = `
                     <div class="detail-section">
                         <h3>Información General</h3>
@@ -425,16 +440,36 @@
                                 <span>${reimbursement.id}</span>
                             </div>
                             <div class="detail-item">
-                                <strong>Monto:</strong>
-                                <span class="amount">$${reimbursement.monto.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-item">
                                 <strong>Estado:</strong>
                                 <span>${statusTag}</span>
                             </div>
                             <div class="detail-item">
                                 <strong>Fecha de Solicitud:</strong>
                                 <span>${date}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="amount-progress">
+                            <div class="amount-display">
+                                <div class="amount-item">
+                                    <div class="amount-value total-amount">$${reimbursement.monto.toFixed(2)}</div>
+                                    <div class="amount-label">Total</div>
+                                </div>
+                                <div class="amount-item">
+                                    <div class="amount-value paid-amount">$${montoPagado.toFixed(2)}</div>
+                                    <div class="amount-label">Pagado</div>
+                                </div>
+                                <div class="amount-item">
+                                    <div class="amount-value pending-amount">$${montoPendiente.toFixed(2)}</div>
+                                    <div class="amount-label">Pendiente</div>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${porcentajePagado}%"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span>${porcentajePagado.toFixed(1)}% completado</span>
+                                <span>$${montoPagado.toFixed(2)} de $${reimbursement.monto.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -466,10 +501,67 @@
 
                     ${reimbursement.comprobanteBase64 ? `
                     <div class="detail-section">
-                        <h3>Comprobante</h3>
+                        <h3>Comprobante Original</h3>
                         <div class="comprobante-container">
                             <img src="${reimbursement.comprobanteBase64}" alt="Comprobante de gasto" class="comprobante-image">
                         </div>
+                    </div>
+                    ` : ''}
+
+                    ${reimbursement.ultimoReembolsoPor ? `
+                    <div class="detail-section">
+                        <h3>Último Reembolso Realizado Por</h3>
+                        <div class="reimbursed-by">
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <strong>Nombre:</strong>
+                                    <span>${escapeHtml(reimbursement.ultimoReembolsoPor.nombre || 'N/A')}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Email:</strong>
+                                    <span>${escapeHtml(reimbursement.ultimoReembolsoPor.email || 'N/A')}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Área:</strong>
+                                    <span>${escapeHtml(reimbursement.ultimoReembolsoPor.area || 'N/A')}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Fecha y Hora:</strong>
+                                    <span>${escapeHtml(reimbursement.ultimoReembolsoPor.fechaHora || 'N/A')}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${reimbursement.transacciones && reimbursement.transacciones.length > 0 ? `
+                    <div class="detail-section transactions-section">
+                        <h3>Historial de Transacciones</h3>
+                        ${reimbursement.transacciones.map(transaccion => `
+                            <div class="transaction-item">
+                                <div class="transaction-header">
+                                    <span class="transaction-amount">$${transaccion.montoTransaccion || 0}</span>
+                                    <span class="transaction-date">${transaccion.fechaHora || 'Fecha no disponible'}</span>
+                                </div>
+                                <div class="transaction-details">
+                                    <div><strong>Registrado por:</strong> ${escapeHtml(transaccion.registradoPor?.nombre || 'N/A')}</div>
+                                    <div><strong>Área:</strong> ${escapeHtml(transaccion.registradoPor?.area || 'N/A')}</div>
+                                    <div><strong>Email:</strong> ${escapeHtml(transaccion.registradoPor?.email || 'N/A')}</div>
+                                    <div><strong>ID Transacción:</strong> ${escapeHtml(transaccion.id || 'N/A')}</div>
+                                </div>
+                                ${transaccion.notas ? `
+                                <div class="transaction-notes">
+                                    <strong>Notas:</strong> ${escapeHtml(transaccion.notas)}
+                                </div>
+                                ` : ''}
+                                ${transaccion.comprobanteBase64 ? `
+                                <div class="payment-proof">
+                                    <strong>Comprobante de Pago:</strong><br>
+                                    <img src="${transaccion.comprobanteBase64}" alt="Comprobante de pago">
+                                </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
                     </div>
                     ` : ''}
                 `;
@@ -539,7 +631,7 @@
                     console.error("Error al cargar el historial global de reembolsos:", error);
                     loadingHistory.style.display = 'none';
                     skeletonLoading.style.display = 'none';
-                    reimbursementTableBody.innerHTML = `<tr><td colspan="7" style="color:#d9534f; background:#f2dede; text-align:center;">
+                    reimbursementTableBody.innerHTML = `<tr><td colspan="9" style="color:#d9534f; background:#f2dede; text-align:center;">
                         ⚠️ Error al cargar el historial.
                     </td></tr>`;
                 }
