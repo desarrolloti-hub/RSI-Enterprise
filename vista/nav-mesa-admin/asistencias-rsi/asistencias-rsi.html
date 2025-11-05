@@ -1,11 +1,726 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Panel de Asistencias | Administrador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS para Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- Firebase App (el core de Firebase) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <link rel="stylesheet" href="asistencias-rsi.css">
 </head>
 <body>
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <h1>Control de Asistencias</h1>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar colaborador..." id="search-input">
+                    <button id="search-button"><i class="fas fa-search"></i></button>
+                </div>
+                <button class="btn btn-filter" id="show-all-btn">
+                    <i class="fas fa-list"></i> Ver todas
+                </button>
+                <button class="btn btn-export" id="export-btn">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="month">Mes</label>
+                <select id="month">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="year">Año</label>
+                <select id="year">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="quincena">Quincena</label>
+                <select id="quincena">
+                    <option value="1">1ra Quincena (1-15)</option>
+                    <option value="2">2da Quincena (16-fin de mes)</option>
+                </select>
+            </div>
+            <div class="filter-group" style="align-self: flex-end;">
+                <button id="applyFilters" class="btn btn-primary">Aplicar Filtros</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="card">
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="card-info">
+                    <h3 id="weekly-attendance">0</h3>
+                    <p>Asistencias esta quincena</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon bg-success">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="card-info">
+                    <h3 id="office-attendance">0</h3>
+                    <p>Oficina Principal</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon bg-warning">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="card-info">
+                    <h3 id="iztapaluca-attendance">0</h3>
+                    <p>Oficina Iztapaluca</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon bg-danger">
+                    <i class="fas fa-laptop-house"></i>
+                </div>
+                <div class="card-info">
+                    <h3 id="onsite-attendance">0</h3>
+                    <p>En Sitio</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary">
+            <h3>Resumen de Asistencia - Quincena Seleccionada</h3>
+            <div class="summary-grid">
+                <div class="summary-item present-summary">
+                    <h4>Días Presente</h4>
+                    <div class="value" id="summary-present">0</div>
+                </div>
+                <div class="summary-item absent-summary">
+                    <h4>Faltas</h4>
+                    <div class="value" id="summary-absent">0</div>
+                </div>
+                <div class="summary-item late-summary">
+                    <h4>Retardos</h4>
+                    <div class="value" id="summary-late">0</div>
+                </div>
+                <div class="summary-item hours-summary">
+                    <h4>Horas Trabajadas</h4>
+                    <div class="value" id="summary-hours">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Container -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <h3 id="currentMonthYear">Enero 2025 - 1ra Quincena</h3>
+            </div>
+            <div class="calendar-wrapper">
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+    projectId: "rsienterprise",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+    measurementId: "G-38F2DBG9HE"
+};
+
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Variables globales
+let attendanceRecords = [];
+let filteredRecords = [];
+let currentDate = new Date();
+let currentMonth = currentDate.getMonth();
+let currentYear = currentDate.getFullYear();
+let selectedQuincena = 1;
+let employees = [];
+let currentUser = null;
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthState();
+    initializeDateSelectors();
+    setupEventListeners();
+});
+
+// Verificar autenticación
+function checkAuthState() {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            loadUserProfile();
+            loadEmployees();
+            setupFirebaseListener();
+        } else {
+            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+        }
+    });
+}
+
+// Cargar perfil de usuario
+async function loadUserProfile() {
+    try {
+        const querySnapshot = await db.collection("colaboradores")
+            .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", currentUser.email)
+            .get();
+        
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            const userData = doc.data();
+            currentUser = {
+                id: doc.id,
+                nombre: userData.NOMBRE,
+                area: userData.ÁREA,
+                imagen: userData.imagen || 'https://randomuser.me/api/portraits/men/32.jpg'
+            };
+            
+            // Actualizar UI con datos del usuario
+            document.querySelector('.user-info .name').textContent = currentUser.nombre;
+            document.querySelector('.user-info .role').textContent = 'Administrador';
+            if (currentUser.imagen) {
+                document.querySelector('.avatar img').src = currentUser.imagen;
+            }
+        }
+    } catch (error) {
+        console.error("Error al cargar perfil:", error);
+    }
+}
+
+// Cargar empleados desde Firebase
+async function loadEmployees() {
+    try {
+        const snapshot = await db.collection('colaboradores').get();
+        employees = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data.NOMBRE || 'Sin nombre',
+                area: data.ÁREA || 'Sin área',
+                email: data['CORREO ELECTRÓNICO EMPRESARIAL'] || 'Sin email'
+            };
+        });
+        
+        renderCalendar();
+    } catch (error) {
+        console.error("Error al cargar colaboradores:", error);
+        // Usar datos de ejemplo si hay error
+        employees = [
+            { id: 1, name: 'Juan Pérez', area: 'Desarrollo de Software' },
+            { id: 2, name: 'María García', area: 'Recursos Humanos' },
+            { id: 3, name: 'Carlos López', area: 'Ventas' },
+            { id: 4, name: 'Ana Martínez', area: 'Marketing' }
+        ];
+        renderCalendar();
+    }
+}
+
+// Inicializar selectores de fecha
+function initializeDateSelectors() {
+    const monthSelect = document.getElementById('month');
+    const yearSelect = document.getElementById('year');
     
+    // Llenar meses
+    const months = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    months.forEach((month, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = month;
+        if (index === currentMonth) {
+            option.selected = true;
+        }
+        monthSelect.appendChild(option);
+    });
+    
+    // Llenar años (desde 2025 hasta el año actual)
+    const currentYear = new Date().getFullYear();
+    for (let year = 2025; year <= currentYear; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        if (year === currentYear) {
+            option.selected = true;
+        }
+        yearSelect.appendChild(option);
+    }
+}
+
+// Configurar event listeners
+function setupEventListeners() {
+    document.getElementById('applyFilters').addEventListener('click', applyFilters);
+    document.getElementById('quincena').addEventListener('change', function() {
+        selectedQuincena = parseInt(this.value);
+        renderCalendar();
+    });
+    
+    // Búsqueda
+    const searchButton = document.getElementById('search-button');
+    const searchInput = document.getElementById('search-input');
+    
+    if (searchButton && searchInput) {
+        searchButton.addEventListener('click', searchEmployees);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') searchEmployees();
+        });
+    }
+    
+    // Botón para ver todas las asistencias
+    const showAllBtn = document.getElementById('show-all-btn');
+    if (showAllBtn) {
+        showAllBtn.addEventListener('click', function() {
+            document.getElementById('search-input').value = '';
+            renderCalendar();
+        });
+    }
+
+    // Navegación móvil
+    const hamburger = document.querySelector('.nan_hamburger');
+    const closeBtn = document.querySelector('.nan_close');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (hamburger) {
+        hamburger.addEventListener('click', function() {
+            sidebar.classList.add('active');
+            hamburger.style.display = 'none';
+            closeBtn.style.display = 'block';
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            closeBtn.style.display = 'none';
+            hamburger.style.display = 'block';
+        });
+    }
+}
+
+// Buscar empleados
+function searchEmployees() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    if (!searchTerm) {
+        renderCalendar();
+        return;
+    }
+    
+    const filteredEmployees = employees.filter(employee => 
+        employee.name.toLowerCase().includes(searchTerm) || 
+        employee.area.toLowerCase().includes(searchTerm)
+    );
+    
+    renderCalendar(filteredEmployees);
+}
+
+// Aplicar filtros
+function applyFilters() {
+    const monthSelect = document.getElementById('month');
+    const yearSelect = document.getElementById('year');
+    
+    currentMonth = parseInt(monthSelect.value);
+    currentYear = parseInt(yearSelect.value);
+    
+    renderCalendar();
+}
+
+// Renderizar calendario
+function renderCalendar(employeesToShow = employees) {
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonthYear = document.getElementById('currentMonthYear');
+    
+    // Limpiar calendario
+    calendarGrid.innerHTML = '';
+    
+    // Actualizar título
+    const monthNames = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const quincenaText = selectedQuincena === 1 ? '1ra Quincena' : '2da Quincena';
+    currentMonthYear.textContent = `${monthNames[currentMonth]} ${currentYear} - ${quincenaText}`;
+    
+    // Determinar días a mostrar según la quincena
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let startDay, endDay;
+    
+    if (selectedQuincena === 1) {
+        startDay = 1;
+        endDay = Math.min(15, daysInMonth);
+    } else {
+        startDay = 16;
+        endDay = daysInMonth;
+    }
+    
+    // Obtener días laborales (excluyendo domingos)
+    const workDays = [];
+    for (let day = startDay; day <= endDay; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek !== 0) { // Excluir domingos
+            workDays.push({ day, dayOfWeek });
+        }
+    }
+    
+    // Calcular número total de columnas
+    const totalColumns = 1 + workDays.length + 4; // 1 columna empleados + días + 4 columnas resumen
+    
+    // Configurar grid columns
+    calendarGrid.style.gridTemplateColumns = `250px repeat(${workDays.length}, 1fr) 100px 100px 100px 120px`;
+    
+    // Crear fila de encabezados
+    const headerRow = document.createElement('div');
+    headerRow.className = 'calendar-row';
+    
+    // Encabezado de empleados
+    const employeeHeader = document.createElement('div');
+    employeeHeader.className = 'calendar-cell header-cell employee-header';
+    employeeHeader.textContent = 'Colaborador / Área';
+    headerRow.appendChild(employeeHeader);
+    
+    // Encabezados de días
+    workDays.forEach(({ day, dayOfWeek }) => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-cell header-cell';
+        const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const dayName = dayNames[dayOfWeek];
+        dayHeader.textContent = `${dayName} ${day}`;
+        headerRow.appendChild(dayHeader);
+    });
+    
+    // Encabezados de resumen
+    const summaryHeaders = ['Asistencias', 'Faltas', 'Retardos', 'Horas Trab.'];
+    summaryHeaders.forEach(header => {
+        const summaryHeader = document.createElement('div');
+        summaryHeader.className = 'calendar-cell header-cell';
+        summaryHeader.textContent = header;
+        headerRow.appendChild(summaryHeader);
+    });
+    
+    calendarGrid.appendChild(headerRow);
+    
+    // Variables para estadísticas generales
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    let totalLate = 0;
+    let totalHours = 0;
+    
+    // Crear filas de empleados
+    employeesToShow.forEach(employee => {
+        const employeeRow = document.createElement('div');
+        employeeRow.className = 'calendar-row';
+        
+        // Celda de información del empleado
+        const employeeCell = document.createElement('div');
+        employeeCell.className = 'calendar-cell employee-cell';
+        employeeCell.innerHTML = `
+            <div class="employee-name" data-id="${employee.id}">${employee.name}</div>
+            <div class="employee-area">${employee.area}</div>
+        `;
+        employeeRow.appendChild(employeeCell);
+        
+        // Variables para el resumen del empleado
+        let employeePresent = 0;
+        let employeeAbsent = 0;
+        let employeeLate = 0;
+        let employeeHours = 0;
+        
+        // Celdas de días
+        workDays.forEach(({ day }) => {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // Buscar registros de asistencia para este empleado en esta fecha
+            const employeeAttendance = attendanceRecords.filter(record => 
+                record.nombre === employee.name && record.fecha === dateStr
+            );
+            
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-cell';
+            
+            const attendanceInfo = document.createElement('div');
+            attendanceInfo.className = 'attendance-info';
+            
+            if (employeeAttendance.length > 0) {
+                // Mostrar entrada y salida
+                const entryRecord = employeeAttendance.find(record => record.tipoRegistro === 'entrada');
+                const exitRecord = employeeAttendance.find(record => record.tipoRegistro === 'salida');
+                
+                if (entryRecord) {
+                    const isLate = isRetardo(entryRecord.hora);
+                    const entryElement = document.createElement('p');
+                    entryElement.textContent = `E: ${entryRecord.hora}`;
+                    entryElement.className = isLate ? 'late' : 'present';
+                    attendanceInfo.appendChild(entryElement);
+                    
+                    if (isLate) {
+                        employeeLate++;
+                    } else {
+                        employeePresent++;
+                    }
+                }
+                
+                if (exitRecord) {
+                    const exitElement = document.createElement('p');
+                    exitElement.textContent = `S: ${exitRecord.hora}`;
+                    exitElement.className = 'present';
+                    attendanceInfo.appendChild(exitElement);
+                }
+                
+                // Calcular horas trabajadas (ejemplo simplificado)
+                if (entryRecord && exitRecord) {
+                    const entryTime = new Date(`2000-01-01T${entryRecord.hora}`);
+                    const exitTime = new Date(`2000-01-01T${exitRecord.hora}`);
+                    const hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60);
+                    if (hoursWorked > 0) {
+                        employeeHours += hoursWorked;
+                    }
+                }
+            } else {
+                const absentElement = document.createElement('p');
+                absentElement.textContent = 'Falta';
+                absentElement.className = 'absent';
+                attendanceInfo.appendChild(absentElement);
+                employeeAbsent++;
+            }
+            
+            dayCell.appendChild(attendanceInfo);
+            employeeRow.appendChild(dayCell);
+        });
+        
+        // Celdas de resumen del empleado
+        const summaryData = [
+            { value: employeePresent, className: 'asistencias' },
+            { value: employeeAbsent, className: 'faltas' },
+            { value: employeeLate, className: 'retardos' },
+            { value: employeeHours.toFixed(1), className: 'horas' }
+        ];
+        
+        summaryData.forEach(data => {
+            const summaryCell = document.createElement('div');
+            summaryCell.className = `calendar-cell summary-cell ${data.className}`;
+            summaryCell.textContent = data.value;
+            employeeRow.appendChild(summaryCell);
+        });
+        
+        calendarGrid.appendChild(employeeRow);
+        
+        // Actualizar totales generales
+        totalPresent += employeePresent;
+        totalAbsent += employeeAbsent;
+        totalLate += employeeLate;
+        totalHours += employeeHours;
+    });
+    
+    // Actualizar estadísticas
+    updateStats(totalPresent, totalAbsent, totalLate, totalHours, employeesToShow.length);
+    
+    // Añadir event listeners para los nombres de empleados
+    document.querySelectorAll('.employee-name').forEach(name => {
+        name.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-id');
+            const month = currentMonth + 1;
+            const year = currentYear;
+            const quincena = selectedQuincena;
+            
+            // Redirigir a la página de asistencia específica del usuario
+            window.location.href = `../asistenciaUsuarioEspecifico/asistenciaUsuarioEspecifico.html?id=${employeeId}&month=${month}&year=${year}&quincena=${quincena}`;
+        });
+    });
+}
+
+// Configurar listener de Firebase para asistencias
+function setupFirebaseListener() {
+    db.collection("asistencias").onSnapshot((querySnapshot) => {
+        attendanceRecords = [];
+        
+        querySnapshot.forEach((doc) => {
+            const registro = doc.data();
+            const { date: fecha, time: hora, dateObj } = processFirestoreTimestamp(registro.detalles?.fecha || registro.fecha);
+            
+            attendanceRecords.push({
+                id: doc.id,
+                nombre: registro.nombre || registro.colaboradorNombre || "Sin nombre",
+                email: registro.email || 'Sin email',
+                area: registro.area || 'Sin área',
+                tipo: registro.tipo || 'office',
+                tipoRegistro: registro.tipo === 'salida' ? 'salida' : 'entrada',
+                activo: registro.activo !== undefined ? registro.activo : true,
+                fecha: fecha,
+                hora: hora,
+                ubicacion: registro.ubicacion || null,
+                photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(registro.nombre || 'Usuario')}&background=random`,
+                rawData: registro,
+                dateObj: dateObj
+            });
+        });
+        
+        // Ordenar por fecha más reciente primero
+        attendanceRecords.sort((a, b) => b.dateObj - a.dateObj);
+        
+        // Mostrar todos los registros al cargar
+        filteredRecords = [...attendanceRecords];
+        updateStatsCards();
+        renderCalendar();
+    }, (error) => {
+        console.error("Error al leer datos:", error);
+    });
+}
+
+// Función para procesar timestamp de Firebase
+function processFirestoreTimestamp(timestamp) {
+    if (!timestamp) return { date: 'Sin fecha', time: 'Sin hora' };
+    
+    let date;
+    
+    if (timestamp.toDate) {
+        date = timestamp.toDate();
+    }
+    else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+    }
+    else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else {
+        return { date: 'Sin fecha', time: 'Sin hora' };
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
+    
+    return {
+        date: formattedDate,
+        time: formattedTime,
+        dateObj: date
+    };
+}
+
+// Función para determinar retardo
+function isRetardo(hora) {
+    if (!hora) return false;
+    const [hours, minutes] = hora.split(':').map(Number);
+    return hours > 8 || (hours === 8 && minutes > 45);
+}
+
+// Función para determinar horas extras
+function isHorasExtras(hora) {
+    if (!hora) return false;
+    const [hours, minutes] = hora.split(':').map(Number);
+    return hours > 18 || (hours === 18 && minutes > 0);
+}
+
+// Actualizar estadísticas
+function updateStats(totalPresent, totalAbsent, totalLate, totalHours, employeeCount) {
+    // Actualizar tarjetas de estadísticas
+    document.getElementById('weekly-attendance').textContent = employeeCount;
+    document.getElementById('office-attendance').textContent = Math.floor(employeeCount * 0.6);
+    document.getElementById('iztapaluca-attendance').textContent = Math.floor(employeeCount * 0.3);
+    document.getElementById('onsite-attendance').textContent = Math.floor(employeeCount * 0.1);
+    
+    // Actualizar resumen
+    document.getElementById('summary-present').textContent = totalPresent;
+    document.getElementById('summary-absent').textContent = totalAbsent;
+    document.getElementById('summary-late').textContent = totalLate;
+    document.getElementById('summary-hours').textContent = totalHours.toFixed(1);
+}
+
+// Actualizar las tarjetas de estadísticas
+function updateStatsCards() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = formatDate(today);
+    
+    // Usar filteredRecords si hay datos, de lo contrario usar attendanceRecords
+    const recordsToUse = filteredRecords.length > 0 ? filteredRecords : attendanceRecords;
+    
+    // Asistencias hoy
+    const todayCount = recordsToUse.filter(record => 
+        formatDate(record.fecha) === todayStr
+    ).length;
+    
+    // Asistencias por ubicación
+    const officeCount = recordsToUse.filter(record => 
+        record.tipo === 'office'
+    ).length;
+    
+    const iztapalucaCount = recordsToUse.filter(record => 
+        record.tipo === 'iztapaluca'
+    ).length;
+    
+    const onsiteCount = recordsToUse.filter(record => 
+        record.tipo === 'site'
+    ).length;
+    
+    // Actualizar los valores en las tarjetas
+    document.getElementById('weekly-attendance').textContent = recordsToUse.length;
+    document.getElementById('office-attendance').textContent = officeCount;
+    document.getElementById('iztapaluca-attendance').textContent = iztapalucaCount;
+    document.getElementById('onsite-attendance').textContent = onsiteCount;
+}
+
+// Función para formatear fecha como YYYY-MM-DD
+function formatDate(date) {
+    if (!date) return 'Sin fecha';
+    
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return date;
+    }
+    
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    
+    if (isNaN(dateObj.getTime())) {
+        return 'Fecha inválida';
+    }
+    
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+</script>
+
+<!-- Scripts de personalización y navegación -->
+<script src="../js/personalizacion-colores.js"></script>
+<script src="../js/navegacion-admin.js"></script>
 </body>
 </html>

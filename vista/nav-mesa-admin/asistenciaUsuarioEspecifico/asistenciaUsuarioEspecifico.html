@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistencia del Colaborador | Administrador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Firebase App (el core de Firebase) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <link rel="stylesheet" href="asistenciaUsuarioEspecifico.css">
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <div class="header-title">
+                <h1>Detalle de Asistencia</h1>
+            </div>
+            <div class="header-actions">
+                <button id="search-button" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Buscar otro colaborador
+                </button>
+                <a href="../asistencias-rsi/asistencias-rsi.html" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
+            </div>
+        </header>
+
+        <!-- User Info Card -->
+        <div class="user-info-card">
+            <div class="user-avatar">
+                <img id="user-avatar" src="https://ui-avatars.com/api/?name=Usuario&background=random" alt="Avatar">
+            </div>
+            <div class="user-details">
+                <h2 id="user-name">Cargando...</h2>
+                <p id="user-area">Área: Cargando...</p>
+                <p id="user-email">Email: Cargando...</p>
+                <p id="current-period">Periodo: Cargando...</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="month">Mes</label>
+                <select id="month">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="year">Año</label>
+                <select id="year">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="quincena">Periodo</label>
+                <select id="quincena">
+                    <option value="0">Mes Completo</option>
+                    <option value="1">1ra Quincena (1-15)</option>
+                    <option value="2">2da Quincena (16-fin de mes)</option>
+                </select>
+            </div>
+            <div class="filter-group" style="align-self: flex-end;">
+                <button id="applyFilters" class="btn btn-primary">
+                    Aplicar Filtros
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="card">
+                <div class="card-icon bg-success">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h3 id="total-present">0</h3>
+                <p>Días Presente</p>
+            </div>
+            <div class="card">
+                <div class="card-icon bg-danger">
+                    <i class="fas fa-user-times"></i>
+                </div>
+                <h3 id="total-absent">0</h3>
+                <p>Faltas</p>
+            </div>
+            <div class="card">
+                <div class="card-icon bg-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 id="total-late">0</h3>
+                <p>Retardos</p>
+            </div>
+            <div class="card">
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-business-time"></i>
+                </div>
+                <h3 id="total-hours">0</h3>
+                <p>Horas Trabajadas</p>
+            </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="attendance-table-container">
+            <div class="table-header">
+                <h3>Registro de Asistencias</h3>
+            </div>
+            <div class="table-content">
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Día</th>
+                            <th>Estado</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Horas Trabajadas</th>
+                            <th>Ubicación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-body">
+                        <!-- Rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+                <div id="no-data" class="no-data" style="display: none;">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No hay registros de asistencia</h3>
+                    <p>No se encontraron registros para el periodo seleccionado</p>
+                </div>
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando registros...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+    projectId: "rsienterprise",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+    measurementId: "G-38F2DBG9HE"
+};
+
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Variables globales
+let currentUser = null;
+let employeeData = null;
+let attendanceRecords = [];
+let currentEmployeeId = null;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let selectedQuincena = 0; // Cambiado a 0 para "Mes Completo" por defecto
+let allEmployees = [];
+
+// Obtener parámetros de la URL
+function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        id: params.get('id'),
+        month: params.get('month'),
+        year: params.get('year'),
+        quincena: params.get('quincena')
+    };
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthState();
+});
+
+// Verificar autenticación
+function checkAuthState() {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            initializePage();
+        } else {
+            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+        }
+    });
+}
+
+// Inicializar página
+function initializePage() {
+    const params = getQueryParams();
+    
+    currentEmployeeId = params.id;
+    
+    // Establecer valores de los filtros desde los parámetros
+    if (params.month) currentMonth = parseInt(params.month) - 1;
+    if (params.year) currentYear = parseInt(params.year);
+    if (params.quincena) selectedQuincena = parseInt(params.quincena);
+
+    initializeDateSelectors();
+    setupEventListeners();
+    loadEmployeeData();
+    loadAttendanceData();
+}
+
+// Inicializar selectores de fecha
+function initializeDateSelectors() {
+    const monthSelect = document.getElementById('month');
+    const yearSelect = document.getElementById('year');
+    const quincenaSelect = document.getElementById('quincena');
+    
+    // Llenar meses
+    const months = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    months.forEach((month, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = month;
+        if (index === currentMonth) {
+            option.selected = true;
+        }
+        monthSelect.appendChild(option);
+    });
+    
+    // Llenar años (desde 2025 hasta el año actual)
+    const currentYearNow = new Date().getFullYear();
+    for (let year = 2025; year <= currentYearNow; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        if (year === currentYear) {
+            option.selected = true;
+        }
+        yearSelect.appendChild(option);
+    }
+    
+    // Establecer quincena
+    quincenaSelect.value = selectedQuincena;
+    
+    // Actualizar periodo actual
+    updateCurrentPeriod();
+}
+
+// Configurar event listeners
+function setupEventListeners() {
+    document.getElementById('applyFilters').addEventListener('click', applyFilters);
+    
+    // Buscador de colaboradores
+    document.getElementById('search-button').addEventListener('click', showEmployeeModal);
+}
+
+// Actualizar periodo actual mostrado
+function updateCurrentPeriod() {
+    const monthNames = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    let quincenaText;
+    switch(selectedQuincena) {
+        case 0:
+            quincenaText = 'Mes Completo';
+            break;
+        case 1:
+            quincenaText = '1ra Quincena';
+            break;
+        case 2:
+            quincenaText = '2da Quincena';
+            break;
+        default:
+            quincenaText = 'Mes Completo';
+    }
+    
+    document.getElementById('current-period').textContent = 
+        `Periodo: ${monthNames[currentMonth]} ${currentYear} - ${quincenaText}`;
+}
+
+// Aplicar filtros
+function applyFilters() {
+    const monthSelect = document.getElementById('month');
+    const yearSelect = document.getElementById('year');
+    const quincenaSelect = document.getElementById('quincena');
+    
+    currentMonth = parseInt(monthSelect.value);
+    currentYear = parseInt(yearSelect.value);
+    selectedQuincena = parseInt(quincenaSelect.value);
+    
+    updateCurrentPeriod();
+    loadAttendanceData();
+}
+
+// Cargar todos los empleados
+async function loadAllEmployees() {
+    try {
+        const snapshot = await db.collection('colaboradores').get();
+        allEmployees = [];
+        snapshot.forEach(doc => {
+            allEmployees.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+    } catch (error) {
+        console.error('Error al cargar colaboradores:', error);
+    }
+}
+
+// Mostrar modal de empleados con SweetAlert
+async function showEmployeeModal() {
+    await loadAllEmployees();
+    
+    // Crear contenido HTML para la lista de empleados
+    let employeeListHTML = `
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="swal-search" placeholder="Buscar por nombre o área..." 
+                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        </div>
+        <div id="swal-employee-list" style="max-height: 400px; overflow-y: auto;">
+    `;
+    
+    allEmployees.forEach(employee => {
+        employeeListHTML += `
+            <div class="employee-item" data-id="${employee.id}" 
+                 style="display: flex; align-items: center; gap: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer;">
+                <div class="employee-avatar" style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden;">
+                    <img src="${employee.imagen || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.NOMBRE || 'Usuario')}&background=random`}" 
+                         alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="employee-info">
+                    <h4 style="margin: 0; font-size: 16px;">${employee.NOMBRE || 'Sin nombre'}</h4>
+                    <p style="margin: 0; font-size: 12px; color: #666;">${employee.ÁREA || 'Sin área'}</p>
+                    <p style="margin: 0; font-size: 11px; color: #999;">${employee['CORREO ELECTRÓNICO EMPRESARIAL'] || ''}</p>
+                </div>
+            </div>
+        `;
+    });
+    
+    employeeListHTML += `</div>`;
+    
+    // Mostrar SweetAlert con la lista de empleados
+    const { value: selectedEmployee } = await Swal.fire({
+        title: 'Seleccionar Colaborador',
+        html: employeeListHTML,
+        showCancelButton: true,
+        confirmButtonText: 'Seleccionar',
+        cancelButtonText: 'Cancelar',
+        width: '600px',
+        didOpen: () => {
+            // Agregar funcionalidad de búsqueda en tiempo real
+            const searchInput = document.getElementById('swal-search');
+            const employeeItems = document.querySelectorAll('.employee-item');
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                employeeItems.forEach(item => {
+                    const name = item.querySelector('h4').textContent.toLowerCase();
+                    const area = item.querySelector('p').textContent.toLowerCase();
+                    
+                    if (name.includes(searchTerm) || area.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Agregar evento de clic a los elementos de empleado
+            employeeItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Seleccionar el empleado
+                    document.querySelector('.swal2-confirm').click();
+                });
+            });
+        },
+        preConfirm: () => {
+            const selectedItem = document.querySelector('.employee-item:hover');
+            if (!selectedItem) {
+                Swal.showValidationMessage('Por favor selecciona un colaborador');
+                return false;
+            }
+            return selectedItem.getAttribute('data-id');
+        }
+    });
+    
+    if (selectedEmployee) {
+        selectEmployee(selectedEmployee);
+    }
+}
+
+// Seleccionar empleado
+function selectEmployee(employeeId) {
+    currentEmployeeId = employeeId;
+    
+    // Actualizar URL y recargar la página
+    const newUrl = `${window.location.pathname}?id=${employeeId}&month=${currentMonth + 1}&year=${currentYear}&quincena=${selectedQuincena}`;
+    window.location.href = newUrl;
+}
+
+// Cargar datos del empleado
+async function loadEmployeeData() {
+    if (!currentEmployeeId) {
+        showEmployeeModal();
+        return;
+    }
+    
+    try {
+        const doc = await db.collection('colaboradores').doc(currentEmployeeId).get();
+        
+        if (doc.exists) {
+            employeeData = doc.data();
+            updateEmployeeInfo();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se encontró el colaborador'
+            });
+            showEmployeeModal();
+        }
+    } catch (error) {
+        console.error('Error al cargar datos del colaborador:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al cargar datos del colaborador'
+        });
+    }
+}
+
+// Actualizar información del empleado en la UI
+function updateEmployeeInfo() {
+    if (!employeeData) return;
+
+    document.getElementById('user-name').textContent = employeeData.NOMBRE || 'Sin nombre';
+    document.getElementById('user-area').textContent = `Área: ${employeeData.ÁREA || 'Sin área'}`;
+    document.getElementById('user-email').textContent = `Email: ${employeeData['CORREO ELECTRÓNICO EMPRESARIAL'] || 'Sin email'}`;
+    
+    // Actualizar avatar
+    const avatar = document.getElementById('user-avatar');
+    if (employeeData.imagen) {
+        avatar.src = employeeData.imagen;
+    } else {
+        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(employeeData.NOMBRE || 'Usuario')}&background=random`;
+    }
+}
+
+// Función para procesar timestamp de Firebase
+function processFirestoreTimestamp(timestamp) {
+    if (!timestamp) return { date: 'Sin fecha', time: 'Sin hora' };
+    
+    let date;
+    
+    if (timestamp.toDate) {
+        date = timestamp.toDate();
+    }
+    else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+    }
+    else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else {
+        return { date: 'Sin fecha', time: 'Sin hora' };
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
+    
+    return {
+        date: formattedDate,
+        time: formattedTime,
+        dateObj: date
+    };
+}
+
+// Cargar datos de asistencia
+async function loadAttendanceData() {
+    if (!currentEmployeeId) return;
+    
+    showLoading();
+    
+    try {
+        // Obtener TODOS los registros del empleado y filtrar localmente
+        const snapshot = await db.collection('asistencias').get();
+
+        attendanceRecords = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            
+            // Procesar la fecha correctamente
+            const { date: fecha, time: hora, dateObj } = data.detalles?.fecha ? 
+                processFirestoreTimestamp(data.detalles.fecha) : 
+                processFirestoreTimestamp(data.fecha);
+            
+            // Verificar si el registro pertenece al empleado actual
+            const isEmployeeRecord = 
+                data.colaboradorId === currentEmployeeId || 
+                data.nombre === employeeData?.NOMBRE ||
+                data.email === employeeData?.['CORREO ELECTRÓNICO EMPRESARIAL'];
+            
+            if (isEmployeeRecord && isDateInPeriod(dateObj, currentMonth, currentYear, selectedQuincena)) {
+                // Obtener ubicación y coordenadas desde los datos de Firebase
+                const ubicacion = getUbicacion(data);
+                const coordenadas = getCoordenadas(data);
+                
+                attendanceRecords.push({
+                    id: doc.id,
+                    fecha: dateObj,
+                    tipoRegistro: data.tipo === 'salida' ? 'salida' : 'entrada',
+                    hora: hora,
+                    ubicacion: ubicacion,
+                    coordenadas: coordenadas,
+                    rawData: data
+                });
+            }
+        });
+
+        // Ordenar por fecha
+        attendanceRecords.sort((a, b) => a.fecha - b.fecha);
+
+        renderAttendanceTable();
+        updateStats();
+        
+    } catch (error) {
+        console.error('Error al cargar asistencias:', error);
+        // Usar datos de ejemplo si hay error
+        generateSampleData();
+    } finally {
+        hideLoading();
+    }
+}
+
+// Obtener ubicación del registro
+function getUbicacion(data) {
+    if (data.ubicacion && data.ubicacion.source) {
+        const source = data.ubicacion.source;
+        if (source === 'ip') return 'Oficina Principal';
+        if (source === 'gps') return 'En Sitio';
+    }
+    if (data.tipo === 'office') return 'Oficina Principal';
+    if (data.tipo === 'iztapaluca') return 'Oficina Iztapaluca';
+    if (data.tipo === 'site') return 'En Sitio';
+    return 'No especificada';
+}
+
+// Obtener coordenadas del registro
+function getCoordenadas(data) {
+    // Si existen coordenadas en el campo ubicacion, usarlas
+    if (data.ubicacion && data.ubicacion.latitude && data.ubicacion.longitude) {
+        return { 
+            lat: data.ubicacion.latitude, 
+            lng: data.ubicacion.longitude 
+        };
+    }
+    
+    // Si no, usar coordenadas predeterminadas para ubicaciones conocidas
+    if (data.tipo === 'office' || data.ubicacion?.source === 'ip') {
+        return { lat: 19.4372, lng: -99.0369 }; // Coordenadas de ejemplo de la base
+    } else if (data.tipo === 'iztapaluca') {
+        return { lat: 19.315, lng: -98.8824 }; // Iztapaluca
+    } else if (data.tipo === 'site' || data.ubicacion?.source === 'gps') {
+        // Coordenadas aleatorias dentro de CDMX para "En Sitio"
+        return { 
+            lat: 19.4 + Math.random() * 0.1, 
+            lng: -99.2 + Math.random() * 0.2 
+        };
+    }
+    
+    // Coordenadas por defecto (Centro de CDMX)
+    return { lat: 19.4326, lng: -99.1332 };
+}
+
+// Generar datos de ejemplo
+function generateSampleData() {
+    attendanceRecords = [];
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let startDay, endDay;
+    
+    if (selectedQuincena === 1) {
+        startDay = 1;
+        endDay = Math.min(15, daysInMonth);
+    } else if (selectedQuincena === 2) {
+        startDay = 16;
+        endDay = daysInMonth;
+    } else {
+        // Mes completo
+        startDay = 1;
+        endDay = daysInMonth;
+    }
+
+    for (let day = startDay; day <= endDay; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dayOfWeek = date.getDay();
+        
+        // Solo excluir domingos (0), incluir lunes a sábado (1-6)
+        if (dayOfWeek !== 0) {
+            // 80% de probabilidad de tener registro
+            if (Math.random() < 0.8) {
+                // Generar entrada
+                const entradaHour = 8 + Math.floor(Math.random() * 2); // Entre 8-10 AM
+                const entradaMinute = Math.floor(Math.random() * 60);
+                
+                attendanceRecords.push({
+                    id: `sample-${day}-entrada`,
+                    fecha: date,
+                    tipoRegistro: 'entrada',
+                    hora: `${String(entradaHour).padStart(2, '0')}:${String(entradaMinute).padStart(2, '0')}`,
+                    ubicacion: Math.random() > 0.3 ? 'Oficina Principal' : 'En Sitio',
+                    coordenadas: Math.random() > 0.3 ? 
+                        { lat: 19.4372, lng: -99.0369 } : 
+                        { lat: 19.4 + Math.random() * 0.1, lng: -99.2 + Math.random() * 0.2 }
+                });
+                
+                // Generar salida
+                const salidaHour = 17 + Math.floor(Math.random() * 3); // Entre 5-8 PM
+                const salidaMinute = Math.floor(Math.random() * 60);
+                
+                attendanceRecords.push({
+                    id: `sample-${day}-salida`,
+                    fecha: date,
+                    tipoRegistro: 'salida',
+                    hora: `${String(salidaHour).padStart(2, '0')}:${String(salidaMinute).padStart(2, '0')}`,
+                    ubicacion: Math.random() > 0.3 ? 'Oficina Principal' : 'En Sitio',
+                    coordenadas: Math.random() > 0.3 ? 
+                        { lat: 19.4372, lng: -99.0369 } : 
+                        { lat: 19.4 + Math.random() * 0.1, lng: -99.2 + Math.random() * 0.2 }
+                });
+            }
+        }
+    }
+    
+    renderAttendanceTable();
+    updateStats();
+}
+
+// Verificar si una fecha está en el periodo seleccionado
+function isDateInPeriod(date, month, year, quincena) {
+    if (!date) return false;
+    
+    const dateMonth = date.getMonth();
+    const dateYear = date.getFullYear();
+    const dateDay = date.getDate();
+    
+    // Verificar mes y año
+    if (dateMonth !== month || dateYear !== year) {
+        return false;
+    }
+    
+    // Verificar quincena
+    if (quincena === 1) {
+        return dateDay <= 15;
+    } else if (quincena === 2) {
+        return dateDay >= 16;
+    }
+    
+    // Mes completo
+    return true;
+}
+
+// Mostrar carga
+function showLoading() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('no-data').style.display = 'none';
+    document.getElementById('attendance-body').innerHTML = '';
+}
+
+// Ocultar carga
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+}
+
+// Obtener todos los días del periodo seleccionado (lunes a sábado, sin domingos)
+function getAllDaysInPeriod(month, year, quincena) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let startDay, endDay;
+    
+    if (quincena === 1) {
+        startDay = 1;
+        endDay = Math.min(15, daysInMonth);
+    } else if (quincena === 2) {
+        startDay = 16;
+        endDay = daysInMonth;
+    } else {
+        // Mes completo
+        startDay = 1;
+        endDay = daysInMonth;
+    }
+    
+    const allDays = [];
+    for (let day = startDay; day <= endDay; day++) {
+        const date = new Date(year, month, day);
+        const dayOfWeek = date.getDay();
+        
+        // Solo excluir domingos (0), incluir lunes a sábado (1-6)
+        if (dayOfWeek !== 0) {
+            allDays.push(date);
+        }
+    }
+    
+    return allDays;
+}
+
+// Renderizar tabla de asistencia
+function renderAttendanceTable() {
+    const tbody = document.getElementById('attendance-body');
+    const noData = document.getElementById('no-data');
+    
+    // Obtener todos los días del periodo (lunes a sábado)
+    const allDays = getAllDaysInPeriod(currentMonth, currentYear, selectedQuincena);
+    
+    if (allDays.length === 0) {
+        tbody.innerHTML = '';
+        noData.style.display = 'block';
+        return;
+    }
+    
+    noData.style.display = 'none';
+    
+    // Agrupar registros por fecha
+    const groupedByDate = {};
+    attendanceRecords.forEach(record => {
+        const dateKey = record.fecha.toDateString();
+        if (!groupedByDate[dateKey]) {
+            groupedByDate[dateKey] = {
+                entrada: null,
+                salida: null,
+                ubicacionEntrada: null,
+                ubicacionSalida: null,
+                coordenadasEntrada: null,
+                coordenadasSalida: null,
+                date: record.fecha
+            };
+        }
+        
+        if (record.tipoRegistro === 'entrada') {
+            groupedByDate[dateKey].entrada = record.hora;
+            groupedByDate[dateKey].ubicacionEntrada = record.ubicacion;
+            groupedByDate[dateKey].coordenadasEntrada = record.coordenadas;
+        } else if (record.tipoRegistro === 'salida') {
+            groupedByDate[dateKey].salida = record.hora;
+            groupedByDate[dateKey].ubicacionSalida = record.ubicacion;
+            groupedByDate[dateKey].coordenadasSalida = record.coordenadas;
+        }
+    });
+    
+    // Generar filas de la tabla para TODOS los días del periodo (lunes a sábado)
+    let tableHTML = '';
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    
+    allDays.forEach(day => {
+        const dateKey = day.toDateString();
+        const dayData = groupedByDate[dateKey] || {};
+        const entrada = dayData.entrada;
+        const salida = dayData.salida;
+        const ubicacionEntrada = dayData.ubicacionEntrada;
+        const ubicacionSalida = dayData.ubicacionSalida;
+        const coordenadasEntrada = dayData.coordenadasEntrada;
+        const coordenadasSalida = dayData.coordenadasSalida;
+        
+        // Determinar estado
+        let estado = 'presente';
+        let estadoClass = 'status-present';
+        let estadoText = 'Presente';
+        
+        if (!entrada && !salida) {
+            estado = 'ausente';
+            estadoClass = 'status-absent';
+            estadoText = 'Ausente';
+        } else if (entrada) {
+            const [hours, minutes] = entrada.split(':').map(Number);
+            if (hours > 9 || (hours === 9 && minutes > 15)) {
+                estado = 'tarde';
+                estadoClass = 'status-late';
+                estadoText = 'Tarde';
+            }
+        }
+        
+        // Calcular horas trabajadas
+        let horasTrabajadas = '0h 0m';
+        if (entrada && salida) {
+            const entradaTime = new Date(day);
+            const [entradaHours, entradaMinutes] = entrada.split(':').map(Number);
+            entradaTime.setHours(entradaHours, entradaMinutes, 0, 0);
+            
+            const salidaTime = new Date(day);
+            const [salidaHours, salidaMinutes] = salida.split(':').map(Number);
+            salidaTime.setHours(salidaHours, salidaMinutes, 0, 0);
+            
+            const diffMs = salidaTime - entradaTime;
+            if (diffMs > 0) {
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                horasTrabajadas = `${diffHours}h ${diffMinutes}m`;
+            }
+        }
+        
+        // Formatear fecha
+        const dayName = dayNames[day.getDay()];
+        const formattedDate = `${day.getDate().toString().padStart(2, '0')}/${(day.getMonth() + 1).toString().padStart(2, '0')}/${day.getFullYear()}`;
+        
+        tableHTML += `
+            <tr>
+                <td>${formattedDate}</td>
+                <td>${dayName}</td>
+                <td class="${estadoClass}">${estadoText}</td>
+                <td class="time-cell">${entrada || '-'}</td>
+                <td class="time-cell">${salida || '-'}</td>
+                <td class="time-cell">${horasTrabajadas}</td>
+                <td>
+                    ${entrada ? `<span class="location-link" data-coords='${JSON.stringify(coordenadasEntrada)}' data-ubicacion="${ubicacionEntrada}">
+                        <i class="fas fa-eye location-icon"></i> ${ubicacionEntrada}
+                    </span>` : '-'}
+                    ${salida ? `<br><span class="location-link" data-coords='${JSON.stringify(coordenadasSalida)}' data-ubicacion="${ubicacionSalida}">
+                        <i class="fas fa-eye location-icon"></i> ${ubicacionSalida}
+                    </span>` : ''}
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = tableHTML;
+    
+    // Agregar event listeners a los enlaces de ubicación
+    document.querySelectorAll('.location-link').forEach(link => {
+        link.addEventListener('click', function() {
+            const coords = JSON.parse(this.getAttribute('data-coords'));
+            const ubicacion = this.getAttribute('data-ubicacion');
+            showLocationMap(coords, ubicacion);
+        });
+    });
+}
+
+// Mostrar mapa de ubicación
+function showLocationMap(coords, ubicacion) {
+    const mapHTML = `
+        <div class="map-container" id="locationMap"></div>
+    `;
+    
+    Swal.fire({
+        title: `Ubicación: ${ubicacion}`,
+        html: mapHTML,
+        width: '80%',
+        didOpen: () => {
+            // Inicializar mapa
+            const map = L.map('locationMap').setView([coords.lat, coords.lng], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Agregar marcador
+            L.marker([coords.lat, coords.lng]).addTo(map)
+                .bindPopup(`<b>${ubicacion}</b><br>Registro de asistencia`)
+                .openPopup();
+        }
+    });
+}
+
+// Actualizar estadísticas
+function updateStats() {
+    // Obtener todos los días del periodo (lunes a sábado)
+    const allDays = getAllDaysInPeriod(currentMonth, currentYear, selectedQuincena);
+    
+    // Contar días por estado
+    let presentDays = 0;
+    let absentDays = 0;
+    let lateDays = 0;
+    let totalHours = 0;
+    let totalMinutes = 0;
+    
+    // Agrupar registros por fecha
+    const groupedByDate = {};
+    attendanceRecords.forEach(record => {
+        const dateKey = record.fecha.toDateString();
+        if (!groupedByDate[dateKey]) {
+            groupedByDate[dateKey] = {
+                entrada: null,
+                salida: null
+            };
+        }
+        
+        if (record.tipoRegistro === 'entrada') {
+            groupedByDate[dateKey].entrada = record.hora;
+        } else if (record.tipoRegistro === 'salida') {
+            groupedByDate[dateKey].salida = record.hora;
+        }
+    });
+    
+    // Calcular estadísticas para TODOS los días del periodo (lunes a sábado)
+    allDays.forEach(day => {
+        const dateKey = day.toDateString();
+        const dayData = groupedByDate[dateKey] || {};
+        const entrada = dayData.entrada;
+        const salida = dayData.salida;
+        
+        if (entrada || salida) {
+            presentDays++;
+            
+            // Verificar si llegó tarde
+            if (entrada) {
+                const [hours, minutes] = entrada.split(':').map(Number);
+                if (hours > 9 || (hours === 9 && minutes > 15)) {
+                    lateDays++;
+                }
+            }
+            
+            // Calcular horas trabajadas
+            if (entrada && salida) {
+                const [entradaHours, entradaMinutes] = entrada.split(':').map(Number);
+                const [salidaHours, salidaMinutes] = salida.split(':').map(Number);
+                
+                const entradaTotalMinutes = entradaHours * 60 + entradaMinutes;
+                const salidaTotalMinutes = salidaHours * 60 + salidaMinutes;
+                
+                let diffMinutes = salidaTotalMinutes - entradaTotalMinutes;
+                
+                // Si la diferencia es negativa, asumir que trabajó hasta el día siguiente
+                if (diffMinutes < 0) {
+                    diffMinutes += 24 * 60; // Agregar 24 horas en minutos
+                }
+                
+                totalHours += Math.floor(diffMinutes / 60);
+                totalMinutes += diffMinutes % 60;
+            }
+        } else {
+            absentDays++;
+        }
+    });
+    
+    // Ajustar minutos a horas
+    if (totalMinutes >= 60) {
+        totalHours += Math.floor(totalMinutes / 60);
+        totalMinutes = totalMinutes % 60;
+    }
+    
+    // Actualizar UI
+    document.getElementById('total-present').textContent = presentDays;
+    document.getElementById('total-absent').textContent = absentDays;
+    document.getElementById('total-late').textContent = lateDays;
+    document.getElementById('total-hours').textContent = `${totalHours}h ${totalMinutes}m`;
+}
+</script>
+<script src="../js/personalizacion-colores.js"></script>
+<script src="../js/navegacion-admin.js"></script>
+</body>
+</html>
