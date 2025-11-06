@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Vehículos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./automoviles.css">    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <div class="container">
+ s
+        
+        <main>
+            <section class="vehicles">
+                <h2>Vehículos Disponibles</h2>
+                
+                <div class="filters">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Buscar vehículos...">
+                    </div>
+                    <div>
+                        <select id="sortBy" class="sort-select">
+                            <option value="name">Ordenar por nombre</option>
+                            <option value="brand">Ordenar por marca</option>
+                            <option value="model">Ordenar por modelo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="vehicle-grid" id="vehicleGrid">
+                    <!-- Las tarjetas se cargarán aquí mediante JavaScript -->
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Los modales han sido reemplazados por SweetAlert2 -->
+
+    
+        
+
+<script src="./automoviles.js"></script>
+<script src="../js/navegacion-admin.js"></script>
+<script src="../js/personalizacion-colores.js"></script>
+</body>
+</html>

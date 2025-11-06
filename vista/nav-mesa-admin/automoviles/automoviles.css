@@ -1,0 +1,416 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    padding: 20px;
+    background-color: var(--background-color, #f5f5f5);
+    color: var(--text-color, #333);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--text-color, #333);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: var(--primary-color, #3498db);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: var(--subtle-bg, transparent);
+    border-radius: 15px;
+}
+
+
+      .vehicles {
+    padding: 25px;
+    
+}
+
+.vehicles h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: var(--text-color, #333);
+    font-size: 1.8rem;
+    border-bottom: 2px solid var(--primary-color, #3498db);
+    padding-bottom: 10px;
+}
+
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .vehicle-card {
+    background-color: var(--card-bg, #ffffff);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.vehicle-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+}
+
+.vehicle-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 3px solid var(--primary-color, #3498db);
+}
+
+.vehicle-card-content {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.vehicle-card h4 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    color: var(--text-color, #333);
+}
+
+.vehicle-card p {
+    color: var(--text-color-secondary, #666);
+    margin-bottom: 8px;
+}
+
+        .vehicle-card .brand {
+    display: inline-block;
+    background: var(--primary-color, #3498db);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.vehicle-card .vehicle-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.vehicle-card .vehicle-actions button {
+    background-color: var(--accent-color, #2ecc71);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.vehicle-card .vehicle-actions button:hover {
+    background-color: var(--secondary-color, #27ae60);
+}
+
+        /* Tarjeta de agregar vehículo */
+.add-vehicle-card {
+    background: linear-gradient(135deg, var(--primary-color, #3498db), var(--secondary-color, #2980b9));
+    border-radius: 12px;
+    overflow: hidden;
+    height: 100%;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.add-vehicle-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, var(--secondary-color, #2980b9), var(--primary-color, #3498db));
+}
+
+.add-vehicle-card .add-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.add-vehicle-card .add-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+}
+
+        /* Estilos para SweetAlert2 personalizados */
+.swal2-popup {
+    background-color: var(--card-bg, #ffffff) !important;
+    color: var(--text-color, #333) !important;
+}
+
+.swal2-title {
+    color: var(--text-color, #333) !important;
+}
+
+.swal2-html-container {
+    color: var(--text-color-secondary, #666) !important;
+}
+
+.swal2-input, 
+.swal2-select {
+    font-size: medium;
+    background-color: var(--input-bg, #fff) !important;
+    color: var(--text-color, #333) !important;
+    border-color: var(--border-color, #ddd) !important;
+}
+
+.swal2-radio-group {
+    margin: 15px 0;
+    text-align: left;
+}
+
+.radio-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.image-upload-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.image-upload-label {
+    display: inline-block;
+    padding: 12px 20px;
+    background: var(--primary-color, #3498db);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.image-upload-label:hover {
+    background: var(--secondary-color, #2980b9);
+}
+
+.image-upload-label i {
+    margin-right: 8px;
+}
+
+.image-preview {
+    margin-top: 15px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.image-preview img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.radio-group label {
+    margin-left: 5px;
+    color: var(--text-color, #333);
+}
+
+.swal2-confirm {
+    background-color: var(--primary-color, #3498db) !important;
+}
+
+.swal2-deny {
+    background-color: var(--danger-color, #e74c3c) !important;
+}
+
+.swal2-cancel {
+    background-color: var(--secondary-color, #95a5a6) !important;
+}
+
+/* Estilos para mensajes de retroalimentación */
+.swal2-toast {
+    background-color: var(--card-bg, #ffffff) !important;
+}
+
+.swal2-toast .swal2-title {
+    color: var(--text-color, #333) !important;
+    font-size: 1.1rem !important;
+}
+
+.swal2-toast .swal2-html-container {
+    color: var(--text-color-secondary, #666) !important;
+}
+
+        .filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    gap: 20px;
+}
+
+.search-box {
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-color, #333);
+    background-color: var(--input-bg, #fff);
+}
+
+.search-box input:focus {
+    border-color: var(--primary-color, #3498db);
+    outline: none;
+}
+
+.sort-select {
+    padding: 12px 15px;
+    border: 2px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-color, #333);
+    background-color: var(--input-bg, #fff);
+    cursor: pointer;
+}
+
+.sort-select:focus {
+    border-color: var(--primary-color, #3498db);
+    outline: none;
+}
+
+        /* Modal de detalles del vehículo */
+        .vehicle-details {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .vehicle-details img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .details-section {
+            margin-bottom: 20px;
+        }
+
+        .details-section h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .detail-item span:first-child {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .check-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .check-status.available {
+            background-color: #2ecc71;
+        }
+
+        .check-status.missing {
+            background-color: #e74c3c;
+        }
+
+        @media (max-width: 768px) {
+    .vehicle-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    .filters {
+        flex-direction: column;
+    }
+    
+    .search-box {
+        max-width: 100%;
+    }
+    
+    .add-vehicle-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .add-vehicle-btn i {
+        font-size: 20px;
+    }
+    
+    .swal2-popup {
+        width: 95% !important;
+        margin: 10px !important;
+    }
+}
+
+/* Para el contenedor de checkboxes */
+.checkbox-group.vertical-layout {
+    display: flex;
+    flex-direction: column; /* Vertical */
+    gap: 5px; /* Espacio entre cada checkbox */
+}
+
+/* Para cada fila de checkbox + label */
+.checkbox-group.vertical-layout > div {
+    display: flex;
+    align-items: center; /* Alinea verticalmente el checkbox con el texto */
+    gap: 8px; /* Espacio entre el checkbox y el texto */
+}
+
+/* Opcional: asegura que los labels tengan un ancho consistente */
+.checkbox-group.vertical-layout label {
+    margin: 0; /* elimina márgenes que puedan romper la alineación */
+}
