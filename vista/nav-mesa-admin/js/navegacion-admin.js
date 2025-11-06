@@ -689,7 +689,9 @@
                                 <i class="fas fa-palette"></i> Personalizar interfaz
                             </a>
                             <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
+                                <a href="../fin-asistencia/fin-asistencia.html">
                                 <i class="fas fa-flag-checkered"></i> Terminar asistencia
+                                </a>
                             </button>
                             <button class="menu-nav-btn menu-nav-btn-logout" id="menuNavLogoutBtn">
                                 <i class="fas fa-sign-out-alt"></i> Cerrar sesión
