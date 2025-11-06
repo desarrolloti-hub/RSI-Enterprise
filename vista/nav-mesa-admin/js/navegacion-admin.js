@@ -665,11 +665,17 @@
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="menu-nav-section-content" id="section-administrativo">
+                            <a href="../notas/notas.html" class="menu-nav-btn">
+                                <i class="fas fa-sticky-note"></i> Notas
+                            </a>
                             <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
                                 <i class="fas fa-calendar-check"></i> Ver asistencias
                             </a>
                             <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
                                 <i class="fas fa-file-invoice-dollar"></i> Cotizar
+                            </a>
+                            <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
+                                <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                             </a>
                             <a href="../manuales/manuales.html" class="menu-nav-btn">
                                 <i class="fas fa-file-alt"></i> Ver manuales
