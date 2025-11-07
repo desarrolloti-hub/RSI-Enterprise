@@ -148,7 +148,12 @@ async function showVehicleDetails(vehicle) {
         showCancelButton: true,
         confirmButtonText: 'Editar',
         denyButtonText: 'Eliminar',
-        cancelButtonText: 'Cerrar'
+        cancelButtonText: 'Cerrar',
+        showCloseButton: true,        
+        closeButtonHtml: '&times;',   
+        allowOutsideClick: false,     
+        allowEscapeKey: true,         
+        backdrop: true,
     });
 
     if (action === true) {
@@ -164,12 +169,31 @@ async function showEditVehicleForm(vehicleId, vehicleData) {
     const { value: formValues } = await Swal.fire({
         title: 'Editar Vehículo',
         html: `
-            <div class="swal2-form">
-                <input id="swal-name" class="swal2-input" placeholder="Nombre del Vehículo" value="${vehicleData.name || ''}">
-                <input id="swal-brand" class="swal2-input" placeholder="Marca" value="${vehicleData.brand || ''}">
-                <input id="swal-model" class="swal2-input" placeholder="Modelo" value="${vehicleData.model || ''}">
-                <input id="swal-color" class="swal2-input" placeholder="Color" value="${vehicleData.color || ''}">
-                <input id="swal-plates" class="swal2-input" placeholder="Placas" value="${vehicleData.plates || ''}">
+                      
+                <div class="swal2-form">
+                <div class="form-group">
+                    <label for="swal-name" class="form-label">Nombre del Vehículo</label>
+                    <input id="swal-name" class="swal2-input" placeholder="Ej: Toyota Corolla 2023" value="${vehicleData.name ||''}">
+                </div>
+                <div class="form-group">
+                    <label for="swal-brand" class="form-label">Marca</label>
+                    <input id="swal-brand" class="swal2-input" placeholder="Ej: Toyota" value="${vehicleData.brand || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="swal-model" class="form-label">Modelo</label>
+                    <input id="swal-model" class="swal2-input" placeholder="Ej: Corolla" value="${vehicleData.model || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="swal-color" class="form-label">Color</label>
+                    <input id="swal-color" class="swal2-input" placeholder="Ej: Rojo" value="${vehicleData.color || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="swal-plates" class="form-label">Placas</label>
+                    <input id="swal-plates" class="swal2-input" placeholder="Ej: ABC-123" value="${vehicleData.plates || ''}">
+                </div>
                 <select id="swal-type" class="swal2-input">
                     <option value="">Selecciona un tipo</option>
                     <option value="Sedán" ${vehicleData.type === 'Sedán' ? 'selected' : ''}>Sedán</option>
@@ -302,6 +326,11 @@ async function showEditVehicleForm(vehicleId, vehicleData) {
         showCancelButton: true,
         confirmButtonText: 'Actualizar',
         cancelButtonText: 'Cancelar',
+        showCloseButton: true,        
+        closeButtonHtml: '&times;',   
+        allowOutsideClick: false,     
+        allowEscapeKey: true,         
+        backdrop: true,    
         didOpen: () => {
             const imageInput = document.getElementById('swal-image');
             const imagePreview = document.getElementById('image-preview');
@@ -389,7 +418,12 @@ async function deleteVehicle(vehicleId)
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
+        cancelButtonText: 'Cancelar',
+        showCloseButton: true,        
+        closeButtonHtml: '&times;',   
+        allowOutsideClick: false,     
+        allowEscapeKey: true,         
+        backdrop: true,
     });
 
     if(result.isConfirmed)
@@ -560,14 +594,38 @@ async function showAddVehicleForm() {
         showCancelButton: true,
         confirmButtonText: 'Guardar',
         cancelButtonText: 'Cancelar',
+        showCloseButton: true,        
+        closeButtonHtml: '&times;',   
+        allowOutsideClick: false,     
+        allowEscapeKey: true,         
+        backdrop: true,
         didOpen: () => {
             const imageInput = document.getElementById('swal-image');
             const imagePreview = document.getElementById('image-preview');
             let base64Image = '';
 
+            // Configurar evento para los botones "Seleccionar Todos"
+            document.querySelectorAll('.select-all-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const groupName = this.getAttribute('data-group');
+                    const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+                    const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+                    
+                    // Alternar entre seleccionar todos y deseleccionar todos
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = !allChecked;
+                    });
+                    
+                    // Actualizar texto del botón
+                    this.innerHTML = allChecked 
+                        ? '<i class="fas fa-check-square"></i> Seleccionar Todos'
+                        : '<i class="fas fa-times-circle"></i> Deseleccionar Todos';
+                });
+            });
+
             imageInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
+                const file = e.target.files[0];
+                if (file) {
                     const errors = await validateImageFile(file);
                     if (errors.length > 0) {
                         Swal.showValidationMessage(errors.join('<br>'));
@@ -582,7 +640,7 @@ async function showAddVehicleForm() {
                     };
                     reader.readAsDataURL(file);
                 }
-                });
+            });
         },
         preConfirm: () => {
             const formData = {
@@ -595,7 +653,7 @@ async function showAddVehicleForm() {
                 image: document.querySelector('#image-preview img')?.src || '',
                 documentos: Array.from(document.querySelectorAll('input[name="documentos"]:checked')).map(checkbox => checkbox.value) || [],
                 accesorios: Array.from(document.querySelectorAll('input[name="accesorios"]:checked')).map(checkbox => checkbox.value) || [],
-                seguridad:Array.from(document.querySelectorAll('input[name="seguridad"]:checked')).map(checkbox => checkbox.value) || [],
+                seguridad: Array.from(document.querySelectorAll('input[name="seguridad"]:checked')).map(checkbox => checkbox.value) || [],
                 equipamiento: Array.from(document.querySelectorAll('input[name="equipamiento"]:checked')).map(checkbox => checkbox.value) || [],
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -624,8 +682,292 @@ async function showAddVehicleForm() {
         }
     }
 }
+async function showAddVehicleForm() {
+    const { value: formValues } = await Swal.fire({
+        title: 'Agregar Nuevo Vehículo',
+        html: `
+            <div class="swal2-form">
+                <div class="form-group">
+                    <label for="swal-name" class="form-label">Nombre del Vehículo</label>
+                    <input id="swal-name" class="swal2-input" placeholder="Ej: Toyota Corolla 2023">
+                </div>
+                <div class="form-group">
+                    <label for="swal-brand" class="form-label">Marca</label>
+                    <input id="swal-brand" class="swal2-input" placeholder="Ej: Toyota">
+                </div>
+                
+                <div class="form-group">
+                    <label for="swal-model" class="form-label">Modelo</label>
+                    <input id="swal-model" class="swal2-input" placeholder="Ej: Corolla">
+                </div>
+                
+                <div class="form-group">
+                    <label for="swal-color" class="form-label">Color</label>
+                    <input id="swal-color" class="swal2-input" placeholder="Ej: Rojo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="swal-plates" class="form-label">Placas</label>
+                    <input id="swal-plates" class="swal2-input" placeholder="Ej: ABC-123">
+                </div>
+                <select id="swal-type" class="swal2-input">
+                    <option value="">Selecciona un tipo</option>
+                    <option value="Sedán">Sedán</option>
+                    <option value="SUV">SUV</option>
+                    <option value="Camioneta">Camioneta</option>
+                    <option value="Deportivo">Deportivo</option>
+                    <option value="Hatchback">Hatchback</option>
+                </select>
+                <div class="image-upload-container">
+                    <label for="swal-image" class="image-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Seleccionar Imagen</span>
+                    </label>
+                    <input type="file" id="swal-image" accept="image/*" style="display: none;">
+                    <div id="image-preview" class="image-preview"></div>
+                </div>
 
-        // Event Listeners
+                <div class="swal2-radio-group">
+                    <div class="checkbox-group-header">
+                        <h4>Documentos</h4>
+                        <button type="button" class="select-all-btn" data-group="documentos">
+                            <i class="fas fa-check-square"></i> Seleccionar Todos
+                        </button>
+                    </div>
+                    <div class="checklist-group">
+                        <div>
+                            <input type="checkbox" name="documentos" id="doc-poliza" value="Póliza">
+                            <label for="doc-poliza">Póliza</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="documentos" id="doc-manuales" value="Manuales">
+                            <label for="doc-manuales">Manuales</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="documentos" id="doc-tarjeta" value="Tarjeta de Circulación">
+                            <label for="doc-tarjeta">Tarjeta de Circulación</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="swal2-radio-group">
+                    <div class="checkbox-group-header">
+                        <h4>Accesorios</h4>
+                        <button type="button" class="select-all-btn" data-group="accesorios">
+                            <i class="fas fa-check-square"></i> Seleccionar Todos
+                        </button>
+                    </div>
+                    <div class="checklist-group">
+                        <div>
+                            <input type="checkbox" name="accesorios" id="acc-radio" value="Radio">
+                            <label for="acc-radio">Radio</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="accesorios" id="acc-antena" value="Antena">
+                            <label for="acc-antena">Antena</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="accesorios" id="acc-rotulado" value="Rotulado">
+                            <label for="acc-rotulado">Rotulado</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="accesorios" id="acc-tapetes" value="Tapetes">
+                            <label for="acc-tapetes">Tapetes</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="accesorios" id="acc-tapones" value="Tapones de Birlos">
+                            <label for="acc-tapones">Tapones de Birlos</label>
+                        </div>
+                         <div>
+                            <input type="checkbox" name="accesorios" id="acc-corriente" value="Toma corriente">
+                            <label for="acc-corriente">Toma corriente</label>
+                        </div>
+                         <div>
+                            <input type="checkbox" name="accesorios" id="acc-clima" value="Clima">
+                            <label for="acc-clima">Clima</label>
+                        </div>
+                         <div>
+                            <input type="checkbox" name="accesorios" id="acc-retrovisor" value="Retrovisor">
+                            <label for="acc-retrovisor">Retrovisor</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="swal2-radio-group">
+                    <div class="checkbox-group-header">
+                        <h4>Seguridad</h4>
+                        <button type="button" class="select-all-btn" data-group="seguridad">
+                            <i class="fas fa-check-square"></i> Seleccionar Todos
+                        </button>
+                    </div>
+                    <div class="checklist-group">
+                        <div>
+                            <input type="checkbox" name="seguridad" id="seg-extintor" value="Extintor">
+                            <label for="seg-extintor">Extintor</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="seguridad" id="seg-intermitentes" value="Intermitentes">
+                            <label for="seg-intermitentes">Intermitentes</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="seguridad" id="seg-tapon" value="Tapón de Gasolina">
+                            <label for="seg-tapon">Tapón de Gasolina</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="seguridad" id="seg-cinturones" value="Cinturones">
+                            <label for="seg-cinturones">Cinturones</label>
+                        </div>
+                         <div>
+                            <input type="checkbox" name="seguridad" id="seg-cuartos" value="Cuartos">
+                            <label for="seg-cuartos">Cuartos</label>
+                        </div>
+                         <div>
+                            <input type="checkbox" name="seguridad" id="seg-cristales" value="Cristales">
+                            <label for="seg-cristales">Cristales</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="swal2-radio-group">
+                    <div class="checkbox-group-header">
+                        <h4>Equipamiento</h4>
+                        <button type="button" class="select-all-btn" data-group="equipamiento">
+                            <i class="fas fa-check-square"></i> Seleccionar Todos
+                        </button>
+                    </div>
+                    <div class="checklist-group">
+                        <div>
+                            <input type="checkbox" name="equipamiento" id="eq-gato" value="Gato">
+                            <label for="eq-gato">Gato</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="equipamiento" id="eq-maneral" value="Maneral">
+                            <label for="eq-maneral">Maneral</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="equipamiento" id="eq-llanta" value="Llanta de Refaccion">
+                            <label for="eq-llanta">Llanta de Refaccion</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="equipamiento" id="eq-reflejante" value="Reflejante">
+                            <label for="eq-reflejante">Reflejante</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        showCloseButton: true,
+        closeButtonHtml: '&times;',
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+        backdrop: true,
+        didOpen: () => {
+            const imageInput = document.getElementById('swal-image');
+            const imagePreview = document.getElementById('image-preview');
+            let base64Image = '';
+
+            // Configurar evento para los botones "Seleccionar Todos"
+            document.querySelectorAll('.select-all-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const groupName = this.getAttribute('data-group');
+                    const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+                    const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+                    
+                    // Alternar entre seleccionar todos y deseleccionar todos
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = !allChecked;
+                    });
+                    
+                    // Actualizar texto del botón
+                    this.innerHTML = allChecked 
+                        ? '<i class="fas fa-check-square"></i> Seleccionar Todos'
+                        : '<i class="fas fa-times-circle"></i> Deseleccionar Todos';
+                });
+            });
+
+            imageInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const errors = await validateImageFile(file);
+                    if (errors.length > 0) {
+                        Swal.showValidationMessage(errors.join('<br>'));
+                        imageInput.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        base64Image = e.target.result;
+                        imagePreview.innerHTML = `<img src="${base64Image}" alt="Vista previa">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        },
+        preConfirm: () => {
+            const formData = {
+                name: document.getElementById('swal-name').value,
+                brand: document.getElementById('swal-brand').value,
+                model: document.getElementById('swal-model').value,
+                color: document.getElementById('swal-color').value,
+                plates: document.getElementById('swal-plates').value,
+                type: document.getElementById('swal-type').value,
+                image: document.querySelector('#image-preview img')?.src || '',
+                documentos: Array.from(document.querySelectorAll('input[name="documentos"]:checked')).map(checkbox => checkbox.value) || [],
+                accesorios: Array.from(document.querySelectorAll('input[name="accesorios"]:checked')).map(checkbox => checkbox.value) || [],
+                seguridad: Array.from(document.querySelectorAll('input[name="seguridad"]:checked')).map(checkbox => checkbox.value) || [],
+                equipamiento: Array.from(document.querySelectorAll('input[name="equipamiento"]:checked')).map(checkbox => checkbox.value) || [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Validación
+            const requiredFields = ['name', 'brand', 'model', 'plates', 'type'];
+            const emptyFields = requiredFields.filter(field => !formData[field]);
+            
+            if (emptyFields.length > 0) {
+                Swal.showValidationMessage(`Por favor complete los campos: ${emptyFields.join(', ')}`);
+                return false;
+            }
+
+            return formData;
+        }
+    });
+
+    if (formValues) {
+        try {
+            await db.collection('automoviles').add(formValues);
+            showFeedback('success', '¡Éxito!', 'Vehículo agregado correctamente');
+            loadVehicles();
+        } catch (error) {
+            console.error('Error al agregar vehículo:', error);
+            showFeedback('error', 'Error', 'No se pudo agregar el vehículo'+ error.message);
+        }
+    }
+}
+
+// Agregar soporte para personalización en los botones "Seleccionar Todo"
+const selectAllButtons = document.querySelectorAll('.select-all-btn');
+
+selectAllButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const checkboxGroup = button.closest('.checkbox-group');
+        const checkboxes = checkboxGroup.querySelectorAll('input[type="checkbox"]');
+        const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = !allChecked;
+        });
+
+        // Aplicar estilos personalizados según el estado
+        button.style.backgroundColor = allChecked ? 'var(--primary-color, #3498db)' : 'var(--secondary-color, #2980b9)';
+    });
+});
+
+// Event Listeners
 document.addEventListener('DOMContentLoaded', async () => {
     // Cargar vehículos al inicio
     await loadVehicles();
