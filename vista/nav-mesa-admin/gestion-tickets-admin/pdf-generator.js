@@ -6,11 +6,46 @@ const pdfManager = {
     featuredItem: null,
     currentPage: 1,
     totalPages: 1,
+    
+    // Constantes para márgenes y espacios protegidos
+    PAGE_MARGINS: {
+        top: 25,    // Espacio reservado para encabezado
+        bottom: 20, // Espacio reservado para pie de página
+        left: 15,
+        right: 15
+    },
+    HEADER_HEIGHT: 25,
+    FOOTER_HEIGHT: 15,
+    COLOR_AZUL_MARINO: '#002D62',
+    COLOR_DORADO: '#D4AF37',
 
     // Inicializar el manager
     initialize(colaboradores, db) {
         this.colaboradores = colaboradores;
         this.db = db;
+    },
+
+    // NUEVA FUNCIÓN: Verificar espacio disponible considerando encabezado y pie
+    getAvailableHeight(doc, currentY) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        return pageHeight - currentY - this.PAGE_MARGINS.bottom;
+    },
+
+    // NUEVA FUNCIÓN: Verificar si necesitamos nueva página
+    needsNewPage(doc, currentY, requiredHeight) {
+        return this.getAvailableHeight(doc, currentY) < requiredHeight;
+    },
+
+    // NUEVA FUNCIÓN: Agregar nueva página con encabezado
+    addNewPageWithHeader(doc, reportTitle) {
+        this.addFooter(doc);
+        doc.addPage();
+        this.currentPage++;
+        
+        const y = this.PAGE_MARGINS.top;
+        this.addHeaderNewFormat(doc, reportTitle, this.PAGE_MARGINS.left, y);
+        
+        return y + this.HEADER_HEIGHT + 5;
     },
 
     // Preparar la generación del PDF con SweetAlert2
@@ -97,13 +132,21 @@ const pdfManager = {
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                this.featuredItem = { type: 'image', data: event.target.result };
+                this.featuredItem = { 
+                    type: 'image', 
+                    data: event.target.result,
+                    fileName: file.name
+                };
             };
             reader.readAsDataURL(file);
         } else if (file.type === 'application/pdf') {
             const reader = new FileReader();
             reader.onload = (event) => {
-                this.featuredItem = { type: 'pdf', data: event.target.result };
+                this.featuredItem = { 
+                    type: 'pdf', 
+                    data: event.target.result,
+                    fileName: file.name
+                };
             };
             reader.readAsDataURL(file);
         } else {
@@ -177,18 +220,14 @@ const pdfManager = {
 
     // NUEVA FUNCIÓN: Generar contenido del PDF en el formato de la imagen
     async generatePdfContentNewFormat(doc, ticketData, reportTitle) {
-        const MARGIN = 15;
+        const MARGIN = this.PAGE_MARGINS.left;
         const PAGE_WIDTH = doc.internal.pageSize.getWidth();
         const CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
-        let y = MARGIN;
-
-        // Constantes de estilo basadas en la imagen
-        const COLOR_AZUL_MARINO = '#002D62'; // Azul marino para títulos
-        const COLOR_DORADO = '#D4AF37'; // Color dorado/amarillo para líneas
+        let y = this.PAGE_MARGINS.top;
 
         // ===== ENCABEZADO =====
         await this.addHeaderNewFormat(doc, reportTitle, MARGIN, y);
-        y += 25;
+        y += this.HEADER_HEIGHT;
 
         // ===== TABLA DE INFORMACIÓN UNIFICADA =====
         y = this.addInfoTableUnified(doc, ticketData, MARGIN, y, PAGE_WIDTH);
@@ -267,7 +306,7 @@ const pdfManager = {
         // Título principal - Agency FB en azul marino
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(18);
-        doc.setTextColor(COLOR_AZUL_MARINO);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
         doc.text(reportTitle, doc.internal.pageSize.getWidth() / 2, y + 10, { align: 'center' });
         
         // Información de la empresa
@@ -360,13 +399,20 @@ const pdfManager = {
             getDynamicValue(ticketData.servicio, 'Revision y mantenimiento'), 
             midX + 2, y + 29, CONTENT_WIDTH/2 - 2);
         
-        // Fila 5: CORREO | TÉCNICO
+        // Fila 5: CORREO | TÉCNICO RESPONSABLE
         this.addTableFieldUnified(doc, 'CORREO:', 
             getDynamicValue(ticketData.correo, 'N/A'), 
             MARGIN, y + 37, CONTENT_WIDTH/2 - 2);
         
-        this.addTableFieldUnified(doc, 'TÉCNICO:', 
-            getDynamicValue(ticketData.nombresColaboradores, 'Samuel Alejandro Aragón Vilchez'), 
+        // SOLO EL PRIMER COLABORADOR como técnico responsable
+        let tecnicoResponsable = 'Samuel Alejandro Aragón Vilchez';
+        if (ticketData.nombresColaboradores && ticketData.nombresColaboradores !== 'Ninguno') {
+            const colaboradoresArray = ticketData.nombresColaboradores.split(',');
+            tecnicoResponsable = colaboradoresArray[0].trim();
+        }
+
+        this.addTableFieldUnified(doc, 'TÉCNICO RESPONSABLE:', 
+            getDynamicValue(tecnicoResponsable, 'Samuel Alejandro Aragón Vilchez'), 
             midX + 2, y + 37, CONTENT_WIDTH/2 - 2);
 
         return y + TABLE_HEIGHT + 5;
@@ -377,7 +423,7 @@ const pdfManager = {
         // Título de la sección en azul marino
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(COLOR_AZUL_MARINO);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
         doc.text('SISTEMAS:', MARGIN, y);
         
         y += 8;
@@ -440,17 +486,14 @@ const pdfManager = {
     // DESCRIPCIÓN DE ACTIVIDADES SIN TABLA
     addActivityDescriptionSimple(doc, ticketData, MARGIN, y, CONTENT_WIDTH) {
         // Verificar si necesitamos nueva página
-        if (y > doc.internal.pageSize.getHeight() - 50) {
-            this.addFooter(doc);
-            doc.addPage();
-            this.currentPage++;
-            y = MARGIN;
+        if (this.needsNewPage(doc, y, 50)) {
+            y = this.addNewPageWithHeader(doc, 'REPORTE FOTOGRÁFICO');
         }
 
         // Título de la sección en azul marino
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(COLOR_AZUL_MARINO);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
         doc.text('DESCRIPCIÓN DE ACTIVIDADES', MARGIN, y);
         
         y += 8;
@@ -465,29 +508,38 @@ const pdfManager = {
                                'Se realizara revisión de cctv y visión de cámaras, peinado de site y mantenimiento a grabador, como tambien el mantenimiento preventivo a sistema de detección de incendio. Al llegar al lugar se realizó la revisión del DVR y cámaras ya que la imagen ya se había perdido, el motivo de la perdida de video fue por una mala configuración de IP en las cámaras y el DVR, se realizó la configuración de la IP adecuada en el DVR y las cámaras se dejó funcionando el equipo adecuadamente.';
         
         const splitDescripcion = doc.splitTextToSize(descripcionText, CONTENT_WIDTH);
+        
+        // Verificar espacio para la descripción
+        const descHeight = splitDescripcion.length * 4;
+        if (this.needsNewPage(doc, y, descHeight)) {
+            y = this.addNewPageWithHeader(doc, 'REPORTE FOTOGRÁFICO');
+            doc.text('DESCRIPCIÓN DE ACTIVIDADES (continuación)', MARGIN, y);
+            y += 8;
+        }
+        
         doc.text(splitDescripcion, MARGIN, y);
         
-        return y + (splitDescripcion.length * 4) + 10;
+        return y + descHeight + 10;
     },
 
-    // EVIDENCIAS FOTOGRÁFICAS EN GRID (máximo 3 por fila)
+    // EVIDENCIAS FOTOGRÁFICAS EN GRID (máximo 3 por fila) - MEJORADA
     async addEvidenceImagesGrid(doc, ticketData, MARGIN, y, CONTENT_WIDTH) {
         if (!ticketData.imagenes || ticketData.imagenes.length === 0) {
             return y;
         }
 
-        // Verificar si necesitamos nueva página
-        if (y > doc.internal.pageSize.getHeight() - 80) {
-            this.addFooter(doc);
-            doc.addPage();
-            this.currentPage++;
-            y = MARGIN;
+        const reportTitle = 'REPORTE FOTOGRÁFICO';
+        
+        // Verificar si necesitamos nueva página antes de empezar
+        const minSpaceForTitle = 20;
+        if (this.needsNewPage(doc, y, minSpaceForTitle)) {
+            y = this.addNewPageWithHeader(doc, reportTitle);
         }
 
         // Título de la sección en azul marino
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(COLOR_AZUL_MARINO);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
         doc.text('EVIDENCIAS FOTOGRÁFICAS', MARGIN, y);
         y += 10;
 
@@ -496,13 +548,31 @@ const pdfManager = {
 
         // Configuración del grid
         const imagesPerRow = 3;
-        const imageWidth = (CONTENT_WIDTH - 10) / imagesPerRow; // 10mm de espacio entre imágenes
-        const imageHeight = 45; // Altura fija para todas las imágenes
+        const imageWidth = (CONTENT_WIDTH - 10) / imagesPerRow;
+        const imageHeight = 45;
+        const rowSpacing = 15;
+        
         let currentX = MARGIN;
         let currentY = y;
 
-        // Procesar todas las imágenes
-        const imagePromises = ticketData.imagenes.map(async (imageUrl, index) => {
+        // Procesar todas las imágenes con gestión de páginas mejorada
+        for (let i = 0; i < ticketData.imagenes.length; i++) {
+            const imageUrl = ticketData.imagenes[i];
+            
+            // Verificar si necesitamos nueva página para la siguiente imagen
+            const spaceNeeded = imageHeight + rowSpacing;
+            if (this.needsNewPage(doc, currentY, spaceNeeded)) {
+                currentY = this.addNewPageWithHeader(doc, reportTitle);
+                currentX = MARGIN;
+                
+                // Re-agregar título de sección en nueva página
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor(this.COLOR_AZUL_MARINO);
+                doc.text('EVIDENCIAS FOTOGRÁFICAS (continuación)', MARGIN, currentY);
+                currentY += 10;
+            }
+
             try {
                 const imageDataUrl = await this.loadImageAsDataURL(imageUrl);
                 if (imageDataUrl) {
@@ -532,34 +602,37 @@ const pdfManager = {
                     currentX += imageWidth + 5;
                     
                     // Si hemos llegado al máximo de imágenes por fila, pasar a la siguiente
-                    if ((index + 1) % imagesPerRow === 0) {
+                    if ((i + 1) % imagesPerRow === 0) {
                         currentX = MARGIN;
-                        currentY += imageHeight + 15;
+                        currentY += imageHeight + rowSpacing;
                     }
                 }
             } catch (error) {
-                console.error(`Error al procesar imagen ${index}:`, error);
+                console.error(`Error al procesar imagen ${i}:`, error);
+                // Continuar con la siguiente imagen
             }
-        });
+        }
 
-        // Esperar a que todas las imágenes se procesen
-        await Promise.all(imagePromises);
-
-        // Si hay imágenes procesadas, actualizar la posición Y
+        // Actualizar posición Y final
         if (ticketData.imagenes.length > 0) {
-            // Calcular cuántas filas completas hay
             const fullRows = Math.floor(ticketData.imagenes.length / imagesPerRow);
             const remainingImages = ticketData.imagenes.length % imagesPerRow;
             
             if (remainingImages > 0) {
-                currentY += imageHeight + 15;
+                currentY += imageHeight + rowSpacing;
             } else if (fullRows > 0) {
-                currentY += 5; // Espacio adicional después de la última fila completa
+                currentY += 5;
             }
         }
 
         // Agregar descripción general de evidencias al final
         if (ticketData.descripcionEvidencias) {
+            const descHeight = 20; // Altura estimada para la descripción
+            
+            if (this.needsNewPage(doc, currentY, descHeight)) {
+                currentY = this.addNewPageWithHeader(doc, reportTitle);
+            }
+            
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor('#000000');
@@ -576,7 +649,7 @@ const pdfManager = {
         // Label en azul marino y negrita
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
-        doc.setTextColor(COLOR_AZUL_MARINO);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
         
         // Ajustar posición para evitar superposición
         const labelWidth = doc.getTextWidth(label);
@@ -604,27 +677,28 @@ const pdfManager = {
         }
     },
 
-   // NUEVO ELEMENTO DESTACADO - CORREGIDO PARA MANEJAR PDFs EN NUEVA PÁGINA
+    // NUEVO ELEMENTO DESTACADO - MEJORADO SIN TEXTO INNECESARIO
+// NUEVO ELEMENTO DESTACADO - MEJORADO CON VALIDACIÓN DE CONTENIDO
 async addFeaturedItemNewFormat(doc, MARGIN, y, CONTENT_WIDTH) {
-    const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+    const reportTitle = 'REPORTE FOTOGRÁFICO';
+    
+    // Guardar posición Y inicial para verificar si se agregó contenido
+    const initialY = y;
+    const initialPage = this.currentPage;
     
     // SIEMPRE CREAR NUEVA PÁGINA PARA EL DOCUMENTO ADICIONAL
-    this.addFooter(doc);
-    doc.addPage();
-    this.currentPage++;
-    y = MARGIN;
-
-    // Título en azul marino
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(COLOR_AZUL_MARINO);
-    doc.text('DOCUMENTO ADICIONAL', MARGIN, y);
-    y += 15;
+    y = this.addNewPageWithHeader(doc, reportTitle);
 
     if (this.featuredItem) {
         try {
             if (this.featuredItem.type === 'image') {
-                // Procesar imagen
+                // Verificar espacio para imagen
+                const imageHeight = 120;
+                if (this.needsNewPage(doc, y, imageHeight)) {
+                    y = this.addNewPageWithHeader(doc, reportTitle);
+                }
+                
+                // Procesar imagen directamente sin título
                 const imageDataUrl = this.featuredItem.data;
                 const currentTime = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
                 const address = 'C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx.';
@@ -632,456 +706,212 @@ async addFeaturedItemNewFormat(doc, MARGIN, y, CONTENT_WIDTH) {
                 const imageWithWatermark = await this.addWatermarkNewFormat(imageDataUrl, address, currentTime);
                 const img = await this.loadImage(imageWithWatermark);
                 
-                // Imagen más pequeña para documento adicional
-                const maxImageHeight = 120; // Más grande ya que está en página separada
                 const imgWidth = CONTENT_WIDTH;
-                const imgHeight = Math.min((img.height * imgWidth) / img.width, maxImageHeight);
-
-                // Verificar si la imagen cabe en la página actual
-                if (y + imgHeight > PAGE_HEIGHT - 30) {
-                    this.addFooter(doc);
-                    doc.addPage();
-                    this.currentPage++;
-                    y = MARGIN;
-                }
+                const imgHeight = Math.min((img.height * imgWidth) / img.width, imageHeight);
 
                 doc.addImage(imageWithWatermark, 'JPEG', MARGIN, y, imgWidth, imgHeight);
                 y += imgHeight + 15;
                 
             } else if (this.featuredItem.type === 'pdf') {
-                // Procesar PDF - SOLUCIÓN MEJORADA
+                // Procesar PDF directamente sin texto adicional
                 y = await this.insertPdfAsImages(doc, this.featuredItem.data, MARGIN, y, CONTENT_WIDTH);
             }
         } catch (error) {
             console.error("Error al procesar elemento destacado:", error);
             
-            // Mensaje de error elegante
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(10);
-            doc.setTextColor('#666');
-            doc.text('No se pudo cargar el documento adicional', MARGIN, y);
-            y += 15;
+            // Si no se pudo procesar y estamos en una página adicional vacía, no hacer nada
+            if (this.needsNewPage(doc, y, 15)) {
+                y = this.addNewPageWithHeader(doc, reportTitle);
+            }
         }
-    } else {
-        // Mensaje si no hay documento adicional (por seguridad)
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(10);
-        doc.setTextColor('#666');
-        doc.text('No se seleccionó ningún documento adicional', MARGIN, y);
-        y += 15;
+    }
+
+    // Verificar si se agregó contenido real
+    const contentAdded = (y > initialY + 10) || (this.currentPage > initialPage);
+    
+    if (!contentAdded) {
+        console.log("No se agregó contenido válido al documento adicional, omitiendo...");
+        // En este caso, podrías considerar eliminar la página, pero jsPDF no permite eliminar páginas
+        // Simplemente retornamos la Y inicial para continuar desde allí
+        return initialY;
     }
 
     return y;
 },
+    
 
-// NUEVA FUNCIÓN: Convertir PDF a imágenes y insertarlas
+    // NUEVA FUNCIÓN: Convertir PDF a imágenes con manejo de errores mejorado
 async insertPdfAsImages(doc, pdfDataUrl, MARGIN, y, CONTENT_WIDTH) {
     try {
-        // Configurar PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-        
-        // Cargar el PDF
-        const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
-        const pdf = await loadingTask.promise;
-        const totalPages = pdf.numPages;
-        
-        // Título principal del PDF
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(COLOR_AZUL_MARINO);
-        doc.text(`Documento PDF Adjunto - ${this.featuredItem.fileName || 'Archivo'}`, MARGIN, y);
-        y += 10;
-        
-        // Línea separadora
-        doc.setDrawColor(212, 175, 55); // Línea dorada
-        doc.setLineWidth(0.5);
-        doc.line(MARGIN, y, MARGIN + CONTENT_WIDTH, y);
-        y += 10;
-
-        // Procesar cada página del PDF
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-            // Verificar si necesitamos nueva página
-            if (y > doc.internal.pageSize.getHeight() - 100) {
-                this.addFooter(doc);
-                doc.addPage();
-                this.currentPage++;
-                y = MARGIN;
-                
-                // Agregar encabezado de continuación
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
-                doc.setTextColor(COLOR_AZUL_MARINO);
-                doc.text(`Documento PDF Adjunto (continuación) - Página ${pageNum} de ${totalPages}`, MARGIN, y);
-                y += 8;
-            }
-            
-            // Obtener la página
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.8 }); // Mejor calidad
-            
-            // Crear canvas para renderizar la página
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            
-            // Renderizar la página en el canvas
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-            
-            // Convertir canvas a imagen
-            const pageImage = canvas.toDataURL('image/jpeg', 0.85); // Mejor calidad
-            
-            // Calcular dimensiones para ajustar al ancho del contenido
-            const imgWidth = CONTENT_WIDTH;
-            const imgHeight = (canvas.height * CONTENT_WIDTH) / canvas.width;
-            
-            // Verificar si la imagen cabe en la página actual
-            if (y + imgHeight > doc.internal.pageSize.getHeight() - 30) {
-                this.addFooter(doc);
-                doc.addPage();
-                this.currentPage++;
-                y = MARGIN;
-                
-                // Agregar encabezado de continuación
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
-                doc.setTextColor(COLOR_AZUL_MARINO);
-                doc.text(`Documento PDF Adjunto (continuación) - Página ${pageNum} de ${totalPages}`, MARGIN, y);
-                y += 8;
-            }
-            
-            // Agregar número de página pequeño
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor('#666');
-            doc.text(`Página ${pageNum} de ${totalPages}`, MARGIN, y);
-            y += 4;
-            
-            // Agregar la imagen de la página al PDF
-            doc.addImage(pageImage, 'JPEG', MARGIN, y, imgWidth, imgHeight);
-            y += imgHeight + 15;
-            
-            // Agregar separador entre páginas (excepto para la última)
-            if (pageNum < totalPages) {
-                doc.setDrawColor(212, 175, 55); // Línea dorada
-                doc.setLineWidth(0.3);
-                doc.line(MARGIN, y, MARGIN + CONTENT_WIDTH, y);
-                y += 10;
-            }
-        }
-        
-        return y;
-        
-    } catch (error) {
-        console.error("Error al convertir PDF a imágenes:", error);
-        
-        // Mensaje de fallback elegante
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(10);
-        doc.setTextColor('#666');
-        doc.text('El documento PDF adjunto no pudo ser procesado', MARGIN, y);
-        y += 8;
-        doc.text('pero fue incluido en la selección.', MARGIN, y);
-        y += 15;
-        
-        return y;
-    }
-},
-
-
-// NUEVA FUNCIÓN: Convertir PDF a imágenes y insertarlas
-async insertPdfAsImages(doc, pdfDataUrl, MARGIN, y, CONTENT_WIDTH) {
-    try {
-        // Configurar PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-        
-        // Cargar el PDF
-        const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
-        const pdf = await loadingTask.promise;
-        const totalPages = pdf.numPages;
-        
-        // Procesar cada página del PDF
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-            // Verificar si necesitamos nueva página
-            if (y > doc.internal.pageSize.getHeight() - 100) {
-                this.addFooter(doc);
-                doc.addPage();
-                this.currentPage++;
-                y = MARGIN;
-            }
-            
-            // Obtener la página
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.5 });
-            
-            // Crear canvas para renderizar la página
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            
-            // Renderizar la página en el canvas
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-            
-            // Convertir canvas a imagen
-            const pageImage = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Calcular dimensiones para ajustar al ancho del contenido
-            const imgWidth = CONTENT_WIDTH;
-            const imgHeight = (canvas.height * CONTENT_WIDTH) / canvas.width;
-            
-            // Agregar título de la página si es la primera
-            if (pageNum === 1) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
-                doc.setTextColor(COLOR_AZUL_MARINO);
-                doc.text(`Documento PDF Adjunto - ${this.featuredItem.fileName || 'Archivo'}`, MARGIN, y);
-                y += 6;
-            }
-            
-            // Agregar número de página pequeño
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor('#666');
-            doc.text(`Página ${pageNum}`, MARGIN, y);
-            y += 4;
-            
-            // Agregar la imagen de la página al PDF
-            doc.addImage(pageImage, 'JPEG', MARGIN, y, imgWidth, imgHeight);
-            y += imgHeight + 10;
-            
-            // Agregar separador entre páginas (excepto para la última)
-            if (pageNum < totalPages) {
-                doc.setDrawColor(212, 175, 55); // Línea dorada
-                doc.setLineWidth(0.3);
-                doc.line(MARGIN, y, MARGIN + CONTENT_WIDTH, y);
-                y += 5;
-            }
-        }
-        
-        return y;
-        
-    } catch (error) {
-        console.error("Error al convertir PDF a imágenes:", error);
-        
-        // Mensaje de fallback elegante
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(10);
-        doc.setTextColor('#666');
-        doc.text('El documento PDF adjunto no pudo ser procesado', MARGIN, y);
-        y += 8;
-        doc.text('pero fue incluido en la selección.', MARGIN, y);
-        y += 15;
-        
-        return y;
-    }
-},
-
-// ACTUALIZAR LA FUNCIÓN createAndSavePdf PARA MEJORAR EL MANEJO DE ERRORES
-async createAndSavePdf() {
-    if (!this.ticketData) {
-        Swal.fire('Error', 'No hay datos del ticket para generar el PDF.', 'error');
-        return;
-    }
-
-    Swal.fire({ 
-        title: 'Generando PDF', 
-        html: 'Procesando contenido y aplicando formato...', 
-        allowOutsideClick: false, 
-        didOpen: () => Swal.showLoading() 
-    });
-
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        
         const reportTitle = 'REPORTE FOTOGRÁFICO';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
         
-        // Generar el PDF con el nuevo formato
-        await this.generatePdfContentNewFormat(doc, this.ticketData, reportTitle);
-        
-        // Guardar PDF
-        const fileName = `${reportTitle.replace(/\s+/g, '_')}_${this.ticketData.idTicket || this.ticketData.id || 'ticket'}.pdf`;
-        doc.save(fileName);
-        
-        Swal.close();
-        Swal.fire({ 
-            title: '¡PDF Generado!', 
-            text: `El archivo "${fileName}" se ha descargado exitosamente.`, 
-            icon: 'success', 
-            confirmButtonColor: '#6C43E0',
-            timer: 3000
-        });
-        
-    } catch (error) {
-        console.error('Error generando PDF:', error);
-        Swal.fire('Error', 'Ocurrió un error al generar el PDF. Verifica la consola para más detalles.', 'error');
-    }
-},
+        const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
+        const pdf = await loadingTask.promise;
+        const totalPages = pdf.numPages;
 
-// NUEVA FUNCIÓN: Insertar páginas de PDF en el documento actual
-async insertPdfPages(doc, pdfDataUrl, MARGIN, y, CONTENT_WIDTH) {
-    try {
-        // Convertir DataURL a ArrayBuffer
-        const response = await fetch(pdfDataUrl);
-        const pdfBlob = await response.blob();
-        const arrayBuffer = await pdfBlob.arrayBuffer();
-        
-        // Crear un nuevo documento PDF temporal
-        const { jsPDF } = window.jspdf;
-        const tempDoc = new jsPDF();
-        
-        // Cargar el PDF usando pdf-lib (si está disponible) o alternativa
-        if (window.PDFLib) {
-            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-            const pageCount = pdfDoc.getPageCount();
+        // Si no hay páginas, retornar sin hacer nada
+        if (totalPages === 0) {
+            console.warn("PDF vacío detectado");
+            return y;
+        }
+
+        let pagesProcessed = 0;
+
+        // Procesar cada página del PDF sin agregar texto adicional
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.8 });
             
-            // Agregar cada página del PDF al documento principal
-            for (let i = 0; i < pageCount; i++) {
-                // Verificar si necesitamos nueva página
-                if (y > doc.internal.pageSize.getHeight() - 50) {
-                    this.addFooter(doc);
-                    doc.addPage();
-                    this.currentPage++;
-                    y = MARGIN;
-                }
-                
-                // Agregar título para página del PDF adjunto
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
-                doc.setTextColor(COLOR_AZUL_MARINO);
-                doc.text(`Documento PDF Adjunto - Página ${i + 1}`, MARGIN, y);
-                y += 8;
-                
-                // Aquí deberíamos extraer la página del PDF y agregarla
-                // Esta es una implementación simplificada
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.setTextColor('#000000');
-                doc.text(`[Contenido de la página ${i + 1} del PDF adjunto]`, MARGIN, y);
-                y += 15;
+            // Calcular altura estimada de la página
+            const estimatedHeight = (viewport.height * CONTENT_WIDTH) / viewport.width;
+            
+            // Verificar si necesitamos nueva página
+            if (this.needsNewPage(doc, y, estimatedHeight + 10)) {
+                y = this.addNewPageWithHeader(doc, reportTitle);
             }
-        } else {
-            // Alternativa si pdf-lib no está disponible
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor('#000000');
-            doc.text('PDF adjunto (no se pudo extraer el contenido)', MARGIN, y);
-            y += 15;
+            
+            // Crear canvas para renderizar la página
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            // Renderizar la página en el canvas
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+            
+            // Verificar si el canvas tiene contenido (no está en blanco)
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const hasContent = this.canvasHasContent(imageData);
+            
+            if (hasContent) {
+                // Convertir canvas a imagen
+                const pageImage = canvas.toDataURL('image/jpeg', 0.85);
+                const imgWidth = CONTENT_WIDTH;
+                const imgHeight = (canvas.height * CONTENT_WIDTH) / canvas.width;
+                
+                // Agregar la imagen de la página al PDF SIN texto adicional
+                doc.addImage(pageImage, 'JPEG', MARGIN, y, imgWidth, imgHeight);
+                y += imgHeight + 10;
+                pagesProcessed++;
+            } else {
+                console.warn(`Página ${pageNum} del PDF está en blanco, omitiendo...`);
+            }
+        }
+        
+        // Si no se procesó ninguna página, revertir la página adicional
+        if (pagesProcessed === 0) {
+            console.warn("PDF sin contenido válido, no se agregaron páginas");
+            // Si estamos en una página adicional creada específicamente para el PDF, eliminarla
+            if (this.currentPage > 1) {
+                // No podemos eliminar páginas directamente en jsPDF, pero podemos evitar crear contenido
+                // En este caso, simplemente retornamos la Y anterior
+                return y - 10; // Ajustar para compensar
+            }
         }
         
         return y;
         
     } catch (error) {
-        console.error("Error al insertar PDF:", error);
+        console.error("Error al convertir PDF a imágenes:", error);
         
-        // Mensaje de fallback
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor('#000000');
-        doc.text('Error al cargar el PDF adjunto', MARGIN, y);
-        y += 15;
-        
-        return y;
-    }
-},
-
-// ACTUALIZAR LA FUNCIÓN handleFileUpload PARA MEJORAR EL MANEJO DE PDFs
-handleFileUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            this.featuredItem = { 
-                type: 'image', 
-                data: event.target.result,
-                fileName: file.name
-            };
-        };
-        reader.readAsDataURL(file);
-    } else if (file.type === 'application/pdf') {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            this.featuredItem = { 
-                type: 'pdf', 
-                data: event.target.result,
-                fileName: file.name
-            };
-        };
-        reader.readAsDataURL(file);
-    } else {
-        Swal.fire('Formato no válido', 'Solo se permiten imágenes y archivos PDF.', 'warning');
-        e.target.value = '';
-    }
-},
-
-    // FIRMAS CENTRADAS CON COLOR DORADO
-    addSignaturesCentered(doc, ticketData, MARGIN, y, PAGE_WIDTH) {
-        const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
-        
-        // Verificar si necesitamos nueva página para las firmas
-        if (y > PAGE_HEIGHT - 40) {
-            this.addFooter(doc);
-            doc.addPage();
-            this.currentPage++;
-            y = MARGIN;
+        // Si hubo error y estamos en una página adicional, intentar manejarlo
+        if (this.currentPage > 1) {
+            // En jsPDF no podemos eliminar páginas, pero podemos evitar agregar contenido
+            console.warn("Error procesando PDF, omitiendo documento adicional");
         }
-
-        y += 15;
-
-        // Línea para firma del técnico centrada en color dorado
-        const lineWidth = 80;
-        const lineX = (PAGE_WIDTH - lineWidth) / 2;
         
-        doc.setDrawColor(212, 175, 55); // Color dorado
-        doc.setLineWidth(0.5);
-        doc.line(lineX, y, lineX + lineWidth, y);
-        
-        y += 6;
+        return y; // Retornar Y actual sin cambios
+    }
+},
 
-        // Texto de la firma centrado
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#000000');
-        doc.text('NOMBRE Y FIRMA DEL TÉCNICO', PAGE_WIDTH / 2, y, { align: 'center' });
-        
-        y += 10;
+// NUEVA FUNCIÓN: Verificar si el canvas tiene contenido
+canvasHasContent(imageData) {
+    const data = imageData.data;
+    
+    // Verificar si hay píxeles no blancos (considerando transparencia)
+    for (let i = 0; i < data.length; i += 4) {
+        // Si el píxel no es completamente blanco (255,255,255) o completamente transparente
+        if (data[i] !== 255 || data[i + 1] !== 255 || data[i + 2] !== 255 || data[i + 3] !== 0) {
+            return true;
+        }
+    }
+    
+    return false;
+},
 
-        // Nombre del técnico centrado
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#000000');
-        doc.text(ticketData.nombresColaboradores || 'Samuel Alejandro Aragón Vilchez', PAGE_WIDTH / 2, y, { align: 'center' });
 
-        // Agregar pie de página final
-        this.addFooter(doc);
-    },
+    // FIRMAS CENTRADAS CON SOLO EL PRIMER COLABORADOR
+addSignaturesCentered(doc, ticketData, MARGIN, y, PAGE_WIDTH) {
+    const reportTitle = 'REPORTE FOTOGRÁFICO';
+    
+    // Verificar si necesitamos nueva página para las firmas
+    const signatureHeight = 40;
+    if (this.needsNewPage(doc, y, signatureHeight)) {
+        y = this.addNewPageWithHeader(doc, reportTitle);
+    }
 
-    // NUEVA FUNCIÓN: Pie de página en todas las hojas CON COLOR DORADO
+    y += 15;
+
+    // Línea para firma del técnico centrada en color dorado
+    const lineWidth = 80;
+    const lineX = (PAGE_WIDTH - lineWidth) / 2;
+    
+    doc.setDrawColor(212, 175, 55); // Color dorado
+    doc.setLineWidth(0.5);
+    doc.line(lineX, y, lineX + lineWidth, y);
+    
+    y += 6;
+
+    // Texto de la firma centrado
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor('#000000');
+    doc.text('NOMBRE Y FIRMA DEL TÉCNICO RESPONSABLE', PAGE_WIDTH / 2, y, { align: 'center' });
+    
+    y += 10;
+
+    // SOLO EL PRIMER COLABORADOR como técnico responsable
+    let tecnicoResponsable = 'Samuel Alejandro Aragón Vilchez'; // Valor por defecto
+    
+    if (ticketData.nombresColaboradores && ticketData.nombresColaboradores !== 'Ninguno') {
+        // Tomar solo el primer colaborador de la lista
+        const colaboradoresArray = ticketData.nombresColaboradores.split(',');
+        tecnicoResponsable = colaboradoresArray[0].trim();
+    }
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#000000');
+    doc.text(tecnicoResponsable, PAGE_WIDTH / 2, y, { align: 'center' });
+
+    // Agregar pie de página final
+    this.addFooter(doc);
+},
+
+    // FUNCIÓN MEJORADA: Pie de página en todas las hojas CON COLOR DORADO
     addFooter(doc) {
         const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
         const PAGE_WIDTH = doc.internal.pageSize.getWidth();
         const fechaCreacion = new Date().toLocaleDateString('es-MX');
+        
+        // Posicionar el pie de página en el área reservada
+        const footerY = PAGE_HEIGHT - this.PAGE_MARGINS.bottom + 5;
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor('#000000');
         
         // Línea divisoria en color dorado
-        doc.setDrawColor(212, 175, 55); // Color dorado
+        doc.setDrawColor(212, 175, 55);
         doc.setLineWidth(0.2);
-        doc.line(15, PAGE_HEIGHT - 15, PAGE_WIDTH - 15, PAGE_HEIGHT - 15);
+        doc.line(15, footerY - 5, PAGE_WIDTH - 15, footerY - 5);
         
         // Texto del pie de página
         const footerText = `RAFHA SOLUCION INTEGRALES SAS DE CV - Generado el: ${fechaCreacion} - Página ${this.currentPage}`;
-        doc.text(footerText, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
+        doc.text(footerText, PAGE_WIDTH / 2, footerY, { align: 'center' });
     },
 
     // NUEVA MARCA DE AGUA
@@ -1157,5 +987,5 @@ handleFileUpload(e) {
     }
 };
 
-// Definir COLOR_AZUL_MARINO como variable global
+// Definir COLOR_AZUL_MARINO como variable global para compatibilidad
 const COLOR_AZUL_MARINO = '#002D62';
