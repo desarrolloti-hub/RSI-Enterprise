@@ -615,46 +615,63 @@
         document.getElementById('deleteTicketBtn').addEventListener('click', handleDeleteTicket);
     }
 
+    // =================================================================================
+// FUNCIONES DE ACCIÓN - MODIFICADA
+// =================================================================================
     async function handleDeleteTicket() {
-        const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: "Esta acción eliminará permanentemente el ticket y todas sus evidencias.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        });
-        
-        if (result.isConfirmed) {
-            try {
-                // Eliminar el ticket
-                await db.collection('ticketsmesa').doc(appState.currentTicketId).delete();
-                
-                // Eliminar actividades relacionadas
-                const activitiesSnapshot = await db.collection('evidenciatickets')
-                    .where('ticketId', '==', appState.currentTicketId)
-                    .get();
-                
-                const deletePromises = activitiesSnapshot.docs.map(doc => doc.ref.delete());
-                await Promise.all(deletePromises);
-                
-                await Swal.fire({
-                    title: '¡Eliminado!',
-                    text: 'El ticket ha sido eliminado correctamente.',
-                    icon: 'success',
-                    confirmButtonColor: '#3085d6'
-                });
-                
-                window.location.href = 'gestion-tickets-admin.html';
-                
-            } catch (error) {
-                console.error("Error al eliminar ticket:", error);
-                showError('No se pudo eliminar el ticket. Inténtalo de nuevo.');
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción moverá el ticket a la papelera. Podrás restaurarlo más tarde si es necesario.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, mover a papelera',
+        cancelButtonText: 'Cancelar'
+    });
+    
+    if (result.isConfirmed) {
+        try {
+            // Obtener datos del ticket actual
+            const ticketDoc = await db.collection('ticketsmesa').doc(appState.currentTicketId).get();
+            
+            if (!ticketDoc.exists) {
+                showError('El ticket no existe.');
+                return;
             }
+            
+            const ticketData = ticketDoc.data();
+            
+            // Preparar datos para la papelera
+            const trashData = {
+                ...ticketData,
+                fechaEliminacion: new Date(),
+                eliminadoPor: appState.currentUser ? appState.currentUser.nombre : 'Sistema',
+                originalId: appState.currentTicketId
+            };
+            
+            // Mover el ticket a la papelera
+            await db.collection('ticketsmesaPapelera').doc(appState.currentTicketId).set(trashData);
+            
+            // Eliminar el ticket de la colección original
+            await db.collection('ticketsmesa').doc(appState.currentTicketId).delete();
+            
+            await Swal.fire({
+                title: '¡Movido a papelera!',
+                text: 'El ticket ha sido movido a la papelera correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#3085d6'
+            });
+            
+            // Redirigir a la página de gestión de tickets
+            window.location.href = '../gestion-tickets-admin/gestion-tickets-admin.html';
+            
+        } catch (error) {
+            console.error("Error al mover ticket a papelera:", error);
+            showError('No se pudo mover el ticket a la papelera. Inténtalo de nuevo.');
         }
     }
+}
 
     function showError(message) {
         Swal.fire({

@@ -577,7 +577,7 @@
             
             sidebar.innerHTML =/*html*/ `
                 <div class="menu-nav-user-profile">
-                    <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
+                    <img src="../../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
                     <h2 class="menu-nav-user-name" id="menuNavUserName">Cargando...</h2>
                     <p class="menu-nav-user-area" id="menuNavUserArea">Cargando área...</p>
                 </div>
@@ -665,11 +665,17 @@
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="menu-nav-section-content" id="section-administrativo">
+                            <a href="../notas/notas.html" class="menu-nav-btn">
+                                <i class="fas fa-sticky-note"></i> Notas
+                            </a>
                             <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
                                 <i class="fas fa-calendar-check"></i> Ver asistencias
                             </a>
                             <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
                                 <i class="fas fa-file-invoice-dollar"></i> Cotizar
+                            </a>
+                            <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
+                                <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                             </a>
                             <a href="../manuales/manuales.html" class="menu-nav-btn">
                                 <i class="fas fa-file-alt"></i> Ver manuales
@@ -689,7 +695,9 @@
                                 <i class="fas fa-palette"></i> Personalizar interfaz
                             </a>
                             <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
+                                <a href="../fin-asistencia/fin-asistencia.html">
                                 <i class="fas fa-flag-checkered"></i> Terminar asistencia
+                                </a>
                             </button>
                             <button class="menu-nav-btn menu-nav-btn-logout" id="menuNavLogoutBtn">
                                 <i class="fas fa-sign-out-alt"></i> Cerrar sesión

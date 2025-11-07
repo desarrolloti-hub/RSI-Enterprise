@@ -65,60 +65,7 @@
         
         <div class="pagination-container"></div>
     </div>
-
-    <!-- Modal para ver detalles del ticket -->
-    <div id="viewTicketModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTicketTitle">Detalles del Ticket</h2>
-                <span class="close" onclick="closeModal('viewTicketModal')">&times;</span>
-            </div>
-            
-            <div class="detail-section">
-                <strong>Información del Ticket</strong>
-                <p><span class="detail-label">Estado:</span> <span id="modalTicketStatus"></span></p>
-                <p><span class="detail-label">Prioridad:</span> <span id="modalTicketPriority"></span></p>
-                <p><span class="detail-label">Área:</span> <span id="modalTicketArea"></span></p>
-                <p><span class="detail-label">Responsable:</span> <span id="modalTicketResponsible"></span></p>
-                <p><span class="detail-label">Fecha eliminación:</span> <span id="modalTicketDeletedDate"></span></p>
-                <p><span class="detail-label">Eliminado por:</span> <span id="modalTicketDeletedBy"></span></p>
-            </div>
-            
-            <div class="detail-section">
-                <strong>Información del Cliente</strong>
-                <p><span class="detail-label">Cuenta:</span> <span id="modalTicketAccount"></span></p>
-                <p><span class="detail-label">Dirección Fiscal:</span> <span id="modalTicketAddress"></span></p>
-                <p><span class="detail-label">RFC:</span> <span id="modalTicketRFC"></span></p>
-                <p><span class="detail-label">Atención a:</span> <span id="modalTicketAttention"></span></p>
-                <p><span class="detail-label">Correo:</span> <span id="modalTicketEmail"></span></p>
-            </div>
-            
-            <div class="detail-section">
-                <strong>Información del Servicio</strong>
-                <p><span class="detail-label">Proyecto:</span> <span id="modalTicketProject"></span></p>
-                <p><span class="detail-label">Servicio:</span> <span id="modalTicketService"></span></p>
-                <p><span class="detail-label">Sistemas:</span> <span id="modalTicketSystems"></span></p>
-            </div>
-            
-            <div class="detail-section">
-                <strong>Descripción de Actividades</strong>
-                <div class="description-text" id="modalTicketDescription"></div>
-            </div>
-            
-            <div class="modal-footer">
-                <button class="btn" onclick="restoreSelectedTicket()">
-                    <i class="fas fa-undo"></i> Restaurar
-                </button>
-                <button class="btn btn-danger" onclick="permanentlyDeleteSelectedTicket()">
-                    <i class="fas fa-trash"></i> Eliminar Permanentemente
-                </button>
-                <button class="btn" onclick="closeModal('viewTicketModal')">
-                    <i class="fas fa-times"></i> Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-
+    
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -415,40 +362,94 @@
                 const ticket = doc.data();
                 appState.currentTicketId = ticketId;
                 
-                // Llenar el modal con los datos del ticket
-                document.getElementById('modalTicketTitle').textContent = ticket.titulo;
-                document.getElementById('modalTicketStatus').innerHTML = `
-                    <span class="badge badge-${getBadgeClass(ticket.estado)}">
-                        ${formatStatus(ticket.estado)}
-                    </span>
+                // Obtener colores personalizados del CSS
+                const styles = getComputedStyle(document.documentElement);
+                const primaryColor = styles.getPropertyValue('--primary-color').trim() || '#6C43E0';
+                const secondaryColor = styles.getPropertyValue('--secondary-color').trim() || '#5a35c7';
+                const accentColor = styles.getPropertyValue('--accent-color').trim() || '#8B5FEB';
+                const backgroundColor = styles.getPropertyValue('--background-color').trim() || '#f5f5f5';
+                const textColor = styles.getPropertyValue('--text-color').trim() || '#333';
+                const cardBg = styles.getPropertyValue('--card-bg').trim() || '#ffffff';
+                
+                // Crear el HTML para mostrar en SweetAlert2 con colores personalizados
+                const ticketDetailsHtml = `
+                    <div class="ticket-details-container" style="text-align: left; max-height: 60vh; overflow-y: auto; color: ${textColor};">
+                        <div class="detail-section" style="margin-bottom: 20px; padding: 15px; background: ${cardBg}; border-radius: 8px; border: 1px solid ${primaryColor}20;">
+                            <strong style="color: ${primaryColor}; display: block; margin-bottom: 10px; font-size: 1.1em;">📋 Información del Ticket</strong>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Estado:</span> <span class="badge badge-${getBadgeClass(ticket.estado)}">${formatStatus(ticket.estado)}</span></p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Prioridad:</span> <span class="badge badge-${getPriorityBadgeClass(ticket.prioridad)}">${formatPriority(ticket.prioridad)}</span></p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Área:</span> ${ticket.area || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Responsable:</span> ${ticket.responsableNombre || 'Sin asignar'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Fecha eliminación:</span> ${formatDateTime(ticket.fechaEliminacion)}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Eliminado por:</span> ${ticket.eliminadoPor || 'Sistema'}</p>
+                        </div>
+                        
+                        <div class="detail-section" style="margin-bottom: 20px; padding: 15px; background: ${cardBg}; border-radius: 8px; border: 1px solid ${primaryColor}20;">
+                            <strong style="color: ${primaryColor}; display: block; margin-bottom: 10px; font-size: 1.1em;">👤 Información del Cliente</strong>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Cuenta:</span> ${ticket.cuenta || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Dirección Fiscal:</span> ${ticket.direccionFiscal || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">RFC:</span> ${ticket.rfc || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Atención a:</span> ${ticket.atencionA || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Correo:</span> ${ticket.correo || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="detail-section" style="margin-bottom: 20px; padding: 15px; background: ${cardBg}; border-radius: 8px; border: 1px solid ${primaryColor}20;">
+                            <strong style="color: ${primaryColor}; display: block; margin-bottom: 10px; font-size: 1.1em;">🛠️ Información del Servicio</strong>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Proyecto:</span> ${ticket.proyecto || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Servicio:</span> ${ticket.servicio || 'N/A'}</p>
+                            <p style="margin: 8px 0;"><span style="font-weight: 600; color: ${textColor};">Sistemas:</span> ${ticket.sistemas?.join(', ') || 'Ninguno'}</p>
+                        </div>
+                        
+                        <div class="detail-section" style="margin-bottom: 20px; padding: 15px; background: ${cardBg}; border-radius: 8px; border: 1px solid ${primaryColor}20;">
+                            <strong style="color: ${primaryColor}; display: block; margin-bottom: 10px; font-size: 1.1em;">📝 Descripción de Actividades</strong>
+                            <div class="description-text" style="background: ${backgroundColor}; padding: 12px; border-radius: 6px; border: 1px solid ${primaryColor}30; min-height: 80px; color: ${textColor}; line-height: 1.5;">
+                                ${ticket.descripcionActividades || 'Sin descripción'}
+                            </div>
+                        </div>
+                    </div>
                 `;
-                document.getElementById('modalTicketPriority').innerHTML = `
-                    <span class="badge badge-${getPriorityBadgeClass(ticket.prioridad)}">
-                        ${formatPriority(ticket.prioridad)}
-                    </span>
-                `;
-                document.getElementById('modalTicketArea').textContent = ticket.area || 'N/A';
-                document.getElementById('modalTicketResponsible').textContent = ticket.responsableNombre || 'Sin asignar';
-                document.getElementById('modalTicketDeletedDate').textContent = formatDateTime(ticket.fechaEliminacion);
-                document.getElementById('modalTicketDeletedBy').textContent = ticket.eliminadoPor || 'Sistema';
-                
-                // Información del cliente
-                document.getElementById('modalTicketAccount').textContent = ticket.cuenta || 'N/A';
-                document.getElementById('modalTicketAddress').textContent = ticket.direccionFiscal || 'N/A';
-                document.getElementById('modalTicketRFC').textContent = ticket.rfc || 'N/A';
-                document.getElementById('modalTicketAttention').textContent = ticket.atencionA || 'N/A';
-                document.getElementById('modalTicketEmail').textContent = ticket.correo || 'N/A';
-                
-                // Información del servicio
-                document.getElementById('modalTicketProject').textContent = ticket.proyecto || 'N/A';
-                document.getElementById('modalTicketService').textContent = ticket.servicio || 'N/A';
-                document.getElementById('modalTicketSystems').textContent = ticket.sistemas?.join(', ') || 'Ninguno';
-                
-                // Descripción
-                document.getElementById('modalTicketDescription').textContent = ticket.descripcionActividades || 'Sin descripción';
-                
-                // Mostrar el modal
-                openModal('viewTicketModal');
+
+                // Mostrar SweetAlert2 con los detalles del ticket
+                const result = await Swal.fire({
+                    title: `<strong style="color: ${primaryColor};">${ticket.titulo || 'Sin título'}</strong>`,
+                    html: ticketDetailsHtml,
+                    width: '800px',
+                    padding: '20px',
+                    showCloseButton: true,
+                    showCancelButton: true,
+                    showConfirmButton: true,
+                    confirmButtonText: '<i class="fas fa-undo"></i> Restaurar',
+                    cancelButtonText: '<i class="fas fa-trash"></i> Eliminar Permanentemente',
+                    confirmButtonColor: primaryColor,
+                    cancelButtonColor: '#dc3545',
+                    reverseButtons: true,
+                    background: cardBg,
+                    color: textColor,
+                    customClass: {
+                        popup: 'ticket-details-popup',
+                        title: 'ticket-details-title',
+                        htmlContainer: 'ticket-details-content'
+                    },
+                    didOpen: () => {
+                        // Aplicar estilos adicionales a los botones
+                        const confirmButton = Swal.getConfirmButton();
+                        const cancelButton = Swal.getCancelButton();
+                        if (confirmButton) {
+                            confirmButton.style.border = `2px solid ${secondaryColor}`;
+                            confirmButton.style.fontWeight = '600';
+                        }
+                        if (cancelButton) {
+                            cancelButton.style.fontWeight = '600';
+                        }
+                    }
+                });
+
+                // Manejar la respuesta del usuario
+                if (result.isConfirmed) {
+                    await restoreTicket(ticketId);
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    await permanentlyDeleteTicket(ticketId);
+                }
             }
         } catch (error) {
             console.error('Error al cargar ticket:', error);
@@ -501,12 +502,6 @@
         }
     }
 
-    async function restoreSelectedTicket() {
-        if (!appState.currentTicketId) return;
-        await restoreTicket(appState.currentTicketId);
-        closeModal('viewTicketModal');
-    }
-
     async function permanentlyDeleteTicket(ticketId) {
         try {
             const result = await Swal.fire({
@@ -536,12 +531,6 @@
             console.error('Error al eliminar ticket:', error);
             showError('No se pudo eliminar el ticket.');
         }
-    }
-
-    async function permanentlyDeleteSelectedTicket() {
-        if (!appState.currentTicketId) return;
-        await permanentlyDeleteTicket(appState.currentTicketId);
-        closeModal('viewTicketModal');
     }
 
     async function emptyTrash() {
@@ -586,7 +575,6 @@
     }
 
     // =================================================================================
-    // FUNCIONES AUXILIARES
     // FUNCIONES AUXILIARES
     // =================================================================================
 
@@ -636,14 +624,6 @@
         }
     };
 
-    function openModal(modalId) {
-        document.getElementById(modalId).style.display = 'block';
-    }
-
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
     function showError(message) {
         Swal.fire({
             title: 'Error',
@@ -657,13 +637,7 @@
     // CONFIGURACIÓN DE EVENT LISTENERS
     // =================================================================================
     function setupEventListeners() {
-        // Cerrar modal al hacer clic fuera
-        window.onclick = function(event) {
-            const viewModal = document.getElementById('viewTicketModal');
-            if (event.target === viewModal) {
-                closeModal('viewTicketModal');
-            }
-        }
+        // Ya no necesitamos los event listeners del modal
     }
 
     // =================================================================================
