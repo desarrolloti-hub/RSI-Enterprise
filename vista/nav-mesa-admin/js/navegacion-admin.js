@@ -577,7 +577,7 @@
             
             sidebar.innerHTML =/*html*/ `
                 <div class="menu-nav-user-profile">
-                    <img src="../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
+                    <img src="../../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
                     <h2 class="menu-nav-user-name" id="menuNavUserName">Cargando...</h2>
                     <p class="menu-nav-user-area" id="menuNavUserArea">Cargando área...</p>
                 </div>
