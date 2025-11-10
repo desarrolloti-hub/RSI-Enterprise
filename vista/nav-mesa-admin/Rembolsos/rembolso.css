@@ -4,7 +4,6 @@
 
 /* Contenedor principal - usa variables CSS dinámicas */
 .attendance-container {
-    background-color: var(--card-bg, #fff);
     padding: 30px;
     border-radius: 12px;
     box-shadow: var(--card-shadow, 0 4px 8px rgba(0, 0, 0, 0.1));
