@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Checklist Automóvil</title>
+  <link rel="stylesheet" href="./crear-checklist.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+        <h1>Seleccionar Vehículo</h1>
+        
+        <div class="form-group">
+            <label for="vehicleSelect">Selecciona un vehículo:</label>
+            <select id="vehicleSelect">
+                <option value="">Cargando vehículos...</option>
+            </select>
+        </div>
+        
+        <div id="vehicleDetails" class="vehicle-details">
+            <h3>Detalles del Vehículo Seleccionado</h3>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <strong>Marca:</strong> <span id="detail-brand"></span>
+                </div>
+                <div class="detail-item">
+                    <strong>Modelo:</strong> <span id="detail-model"></span>
+                </div>
+                <div class="detail-item">
+                    <strong>Color:</strong> <span id="detail-color"></span>
+                </div>
+                <div class="detail-item">
+                    <strong>Placas:</strong> <span id="detail-plates"></span>
+                </div>
+                <div class="detail-item">
+                    <strong>Tipo:</strong> <span id="detail-type"></span>
+                </div>
+            </div>
+            
+            <!-- Imagen del vehículo -->
+            <div id="detail-image-container" style="margin-top: 20px; display: none;">
+                <strong>Imagen:</strong><br>
+                <img id="detail-image" src="" alt="Vehículo" style="max-width: 300px; margin-top: 10px; border-radius: 5px;">
+            </div>
+        </div>
+    </div>
+
+
+</body>
+<script src="../js/navegacion-admin.js"></script>
+<script src="../js/personalizacion-colores.js"></script>
+<script src="./crear-checklist.js"></script>
+</html>
