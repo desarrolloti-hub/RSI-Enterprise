@@ -645,9 +645,6 @@
                             <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
                                 <i class="fas fa-list-alt"></i> Gestionar tickets
                             </a>
-                            <a href="../nuevo-ticket/nuevo-ticket.html" class="menu-nav-btn">
-                                <i class="fas fa-plus-circle"></i> Levantar ticket
-                            </a>
                             <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                                 <i class="fas fa-ticket-alt"></i> Ver mis tickets
                             </a>
@@ -671,14 +668,57 @@
                             <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
                                 <i class="fas fa-calendar-check"></i> Ver asistencias
                             </a>
-                            <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
-                                <i class="fas fa-file-invoice-dollar"></i> Cotizar
-                            </a>
                             <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
                                 <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                             </a>
                             <a href="../manuales/manuales.html" class="menu-nav-btn">
                                 <i class="fas fa-file-alt"></i> Ver manuales
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-users-cog"></i> Colaboradores
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN FINANZAS -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="finanzas">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Finanzas</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-finanzas">
+                            <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
+                                <i class="fas fa-file-invoice-dollar"></i> Cotizar
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-file-invoice-dollar"></i> Reportes Financieros
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-calculator"></i> Presupuestos
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-money-check-alt"></i> Control de Gastos
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN ECOMMERCE -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="ecommerce">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Ecommerce</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-ecommerce">
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-store"></i> Gestión de Tienda
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-boxes"></i> Inventario
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-chart-bar"></i> Ventas y Métricas
                             </a>
                         </div>
                     </div>
