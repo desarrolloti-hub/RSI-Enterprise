@@ -8,7 +8,6 @@
     
     <!-- CSS compatibles -->
     <link rel="stylesheet" href="../gestion-tickets-admin/gestion-tickets-admin.css">
-    <link rel="stylesheet" href="graficas.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Chart.js -->
@@ -17,351 +16,11 @@
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <style>
-        /* ESTILOS COMPATIBLES CON EL SISTEMA EXISTENTE */
-        :root {
-            --primary-color: #6C43E0;
-            --secondary-color: #5a35c7;
-            --accent-color: #8B5FEB;
-            --background-color: #f5f5f5;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background-color);
-            margin: 0;
-            padding: 0;
-            color: var(--text-color);
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* MAIN CONTENT - Compatible con la estructura existente */
-        .main-content {
-            flex: 1;
-            margin-left: 0;
-            transition: margin-left 0.3s ease;
-            padding: 20px;
-        }
-
-        .main-content.expanded {
-            margin-left: 0;
-        }
-
-        .crud-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-            color: white;
-            padding: 25px 30px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .page-title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin: 0;
-            text-align: center;
-            color: white;
-        }
-
-        /* Dashboard Container - Compatible */
-        .dashboard-container {
-            padding: 0;
-        }
-
-        .dashboard-section {
-            display: grid;
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .dashboard-section:first-child {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        }
-
-        .dashboard-section:nth-child(2) {
-            grid-template-columns: 1fr;
-        }
-
-        .dashboard-section:nth-child(3) {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .dashboard-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .wide-card {
-            grid-column: 1 / -1;
-        }
-
-        .full-width-card {
-            grid-column: 1 / -1;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            padding: 20px 25px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .card-body {
-            padding: 25px;
-            min-height: 200px;
-        }
-
-        /* Estadísticas rápidas */
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-item {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: var(--card-shadow);
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            color: var(--text-color);
-            font-size: 0.95rem;
-            opacity: 0.8;
-            font-weight: 500;
-        }
-
-        /* Filtros compatibles */
-        .filters-container {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .filters-row {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(var(--primary-color), 0.05);
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(var(--primary-color), 0.1);
-        }
-
-        .filter-group i {
-            color: var(--primary-color);
-        }
-
-        .filter-group select {
-            border: none;
-            background: transparent;
-            color: var(--text-color);
-            outline: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-            margin-left: auto;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: rgba(var(--primary-color), 0.1);
-            color: var(--primary-color);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(var(--primary-color), 0.2);
-        }
-
-        /* Tablas responsive */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg);
-        }
-
-        th {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            padding: 15px 20px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        td {
-            padding: 12px 20px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            color: var(--text-color);
-        }
-
-        tr:hover {
-            background: rgba(var(--primary-color), 0.03);
-        }
-
-        /* Eficiencia bars */
-        .eficiencia-bar-container {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            height: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .eficiencia-bar {
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.5s ease;
-            min-width: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .eficiencia-bar span {
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Estados de carga */
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .dashboard-section:nth-child(3) {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 15px;
-            }
-
-            .crud-header {
-                padding: 20px;
-            }
-
-            .page-title {
-                font-size: 1.8rem;
-            }
-
-            .filters-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .filter-actions {
-                margin-left: 0;
-                justify-content: center;
-            }
-
-            .dashboard-section:first-child {
-                grid-template-columns: 1fr;
-            }
-
-            .card-body {
-                padding: 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .main-content {
-                padding: 10px;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .stat-number {
-                font-size: 2rem;
-            }
-        }
-    </style>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="graficas-tickets.css">
 </head>
 <body>
     <!-- SIDEBAR (se cargará dinámicamente desde navegacion-admin.js) -->
@@ -370,7 +29,7 @@
     <div class="main-content" id="mainContent">
         <div class="crud-header">
             <center>
-                <h1 class="page-title">Estadísticas de Tickets</h1>
+                <h1 class="page-title" style="color:#fff !important;">Estadísticas de Tickets</h1>
             </center>
         </div>
 
@@ -427,9 +86,7 @@
                     <button class="btn btn-secondary" id="resetFiltersBtn">
                         <i class="fas fa-redo"></i> Restablecer
                     </button>
-                    <button class="btn btn-primary" id="exportBtn">
-                        <i class="fas fa-file-export"></i> Exportar
-                    </button>
+                    
                 </div>
             </div>
         </div>
@@ -462,6 +119,44 @@
             </div>
         </div>
 
+        <!-- Colaboradores destacados -->
+        <div class="colaboradores-destacados-section">
+            <h2 class="colaboradores-destacados-title">
+                <i class="fas fa-trophy"></i> Colaboradores Destacados
+            </h2>
+            <div class="colaboradores-destacados-grid">
+                <!-- Sección de eficiencia -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i> Mayor Eficiencia
+                    </div>
+                    <div class="card-body" id="topEfficiencyContainer">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Sección de más tickets -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-tasks"></i> Más Tickets Asignados
+                    </div>
+                    <div class="card-body" id="topTicketsContainer">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Sección de más pendientes -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-clock"></i> Más Tickets Pendientes
+                    </div>
+                    <div class="card-body" id="topPendingContainer">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Contenedores principales -->
         <div class="dashboard-container">
             <!-- Primera fila: Gráficas principales -->
@@ -471,7 +166,9 @@
                         <i class="fas fa-chart-pie"></i> Estado de Tickets
                     </div>
                     <div class="card-body">
-                        <canvas id="statusChart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
                     </div>
                 </div>
                 
@@ -480,7 +177,9 @@
                         <i class="fas fa-exclamation-triangle"></i> Tickets por Prioridad
                     </div>
                     <div class="card-body">
-                        <canvas id="priorityChart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="priorityChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -492,7 +191,9 @@
                         <i class="fas fa-chart-bar"></i> Tickets por Colaborador
                     </div>
                     <div class="card-body">
-                        <canvas id="ticketsByCollaboratorChart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="ticketsByCollaboratorChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -504,7 +205,9 @@
                         <i class="fas fa-chart-line"></i> Evolución Mensual
                     </div>
                     <div class="card-body">
-                        <canvas id="monthlyTrendChart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
                     </div>
                 </div>
                 
@@ -513,7 +216,9 @@
                         <i class="fas fa-tachometer-alt"></i> Eficiencia por Área
                     </div>
                     <div class="card-body">
-                        <canvas id="efficiencyByAreaChart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="efficiencyByAreaChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -557,28 +262,9 @@
     <!-- Scripts compatibles -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- Scripts de personalización y navegación -->
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-
-    <!-- Script principal compatible -->
-    <script type="module">
-        // Importar módulos necesarios de Firebase v9 (compatible con graficasdetickest.html)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            getDocs,
-            query,
-            where,
-            orderBy
-        } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-        import { 
-            getAuth,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-
-        // Configuración de Firebase (misma que graficasdetickest.html)
+    <!-- Script principal -->
+    <script>
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
             authDomain: "rsienterprise.firebaseapp.com",
@@ -591,11 +277,11 @@
         };
 
         // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // Estado de la aplicación (compatible)
+        // Estado de la aplicación
         const AppState = {
             currentUser: null,
             userData: null,
@@ -632,10 +318,15 @@
             efficiencyByAreaChart: document.getElementById('efficiencyByAreaChart'),
             
             // Tabla
-            performanceTableBody: document.getElementById('performanceTableBody')
+            performanceTableBody: document.getElementById('performanceTableBody'),
+            
+            // Colaboradores destacados
+            topEfficiencyContainer: document.getElementById('topEfficiencyContainer'),
+            topTicketsContainer: document.getElementById('topTicketsContainer'),
+            topPendingContainer: document.getElementById('topPendingContainer')
         };
 
-        // Utilidades (compatibles con graficasdetickest.html)
+        // Utilidades
         const Utils = {
             showLoading: (message = 'Cargando...') => {
                 Swal.fire({
@@ -678,6 +369,32 @@
                 if (element && element.textContent !== undefined) {
                     element.textContent = content;
                 }
+            },
+
+            // Determinar tipo de ticket
+            getTicketType: (ticket) => {
+                if (ticket.cuentaNombre && ticket.cuentaNombre === "Ticket Interno RSI") {
+                    return "administrativo";
+                }
+                return "operativo";
+            },
+
+            // Obtener rango de fechas para un mes y año específicos
+            getMonthRange: (month, year) => {
+                const firstDay = new Date(year, month - 1, 1);
+                const lastDay = new Date(year, month, 0);
+                
+                // Ajustar para incluir todo el día
+                firstDay.setHours(0, 0, 0, 0);
+                lastDay.setHours(23, 59, 59, 999);
+                
+                return { firstDay, lastDay };
+            },
+
+            // Redirigir a página de eficiencia del colaborador
+            redirectToEfficiency: (colaboradorId, month, year) => {
+                const url = `../eficiencia-colaborador/eficiencia-colaborador.html?id=${colaboradorId}&month=${month}&year=${year}`;
+                window.location.href = url;
             }
         };
 
@@ -718,8 +435,11 @@
                     // Llenar filtros
                     this.populateFilters(colaboradores);
                     
-                    // Actualizar UI
-                    this.updateDashboard();
+                    // Configurar filtro por defecto al mes actual
+                    this.setDefaultFilters();
+                    
+                    // Aplicar filtros iniciales
+                    this.applyFilters();
                     
                 } catch (error) {
                     console.error("Error cargando datos:", error);
@@ -730,10 +450,10 @@
             },
             
             populateFilters(colaboradores) {
-                // Llenar años (últimos 5 años)
+                // Llenar años (desde 2025 en adelante)
                 const currentYear = new Date().getFullYear();
                 DOM.yearFilter.innerHTML = '<option value="all">Todos los años</option>';
-                for (let year = currentYear; year >= currentYear - 5; year--) {
+                for (let year = currentYear; year >= 2025; year--) {
                     DOM.yearFilter.innerHTML += `<option value="${year}">${year}</option>`;
                 }
                 
@@ -746,6 +466,16 @@
                 });
             },
             
+            setDefaultFilters() {
+                // Establecer mes actual por defecto
+                const currentMonth = new Date().getMonth() + 1;
+                DOM.monthFilter.value = currentMonth;
+                
+                // Establecer año actual por defecto
+                const currentYear = new Date().getFullYear();
+                DOM.yearFilter.value = currentYear;
+            },
+            
             applyFilters() {
                 const selectedMonth = DOM.monthFilter.value;
                 const selectedYear = DOM.yearFilter.value;
@@ -754,21 +484,19 @@
                 
                 let filteredTickets = [...AppState.allTickets];
                 
-                // Filtrar por mes
-                if (selectedMonth !== 'all') {
+                // Filtrar por mes y año
+                if (selectedMonth !== 'all' && selectedYear !== 'all') {
+                    const { firstDay, lastDay } = Utils.getMonthRange(parseInt(selectedMonth), parseInt(selectedYear));
+                    
                     filteredTickets = filteredTickets.filter(ticket => {
                         if (!ticket.fechaCreacion) return false;
-                        const fecha = ticket.fechaCreacion.toDate();
-                        return (fecha.getMonth() + 1) === parseInt(selectedMonth);
-                    });
-                }
-                
-                // Filtrar por año
-                if (selectedYear !== 'all') {
-                    filteredTickets = filteredTickets.filter(ticket => {
-                        if (!ticket.fechaCreacion) return false;
-                        const fecha = ticket.fechaCreacion.toDate();
-                        return fecha.getFullYear() === parseInt(selectedYear);
+                        try {
+                            const fecha = ticket.fechaCreacion.toDate();
+                            return fecha >= firstDay && fecha <= lastDay;
+                        } catch (error) {
+                            console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                            return false;
+                        }
                     });
                 }
                 
@@ -783,13 +511,11 @@
                     });
                 }
                 
-                // Filtrar por tipo (simulado - ajustar según tu estructura de datos)
+                // Filtrar por tipo
                 if (selectedType !== 'all') {
                     filteredTickets = filteredTickets.filter(ticket => {
-                        // Ajustar según tu campo de tipo de ticket
-                        return ticket.tipo === selectedType || 
-                               (selectedType === 'operativo' && !ticket.esAdministrativo) ||
-                               (selectedType === 'administrativo' && ticket.esAdministrativo);
+                        const ticketType = Utils.getTicketType(ticket);
+                        return ticketType === selectedType;
                     });
                 }
                 
@@ -821,11 +547,11 @@
                 Utils.safeUpdate(DOM.inProgressTickets, inProgress);
                 Utils.safeUpdate(DOM.pendingTickets, pending);
                 
-                // Calcular tiempo promedio de resolución (simulado)
+                // Calcular tiempo promedio de resolución
                 const avgTime = this.calculateAverageResolutionTime(tickets);
                 Utils.safeUpdate(DOM.avgResolutionTime, avgTime);
                 
-                // Calcular cumplimiento SLA (simulado)
+                // Calcular cumplimiento SLA
                 const sla = this.calculateSLACompliance(tickets);
                 Utils.safeUpdate(DOM.slaCompliance, sla + '%');
                 
@@ -834,6 +560,9 @@
                 
                 // Actualizar tabla
                 this.updatePerformanceTable(tickets);
+                
+                // Actualizar colaboradores destacados
+                this.updateTopPerformers(tickets);
             },
             
             calculateAverageResolutionTime(tickets) {
@@ -898,9 +627,15 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom'
+                                    position: 'bottom',
+                                    labels: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -927,6 +662,7 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             scales: {
                                 y: {
                                     beginAtZero: true
@@ -960,6 +696,7 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             scales: {
                                 y: {
                                     beginAtZero: true
@@ -968,6 +705,146 @@
                         }
                     });
                 }
+                
+                // Gráfica de evolución mensual
+                if (DOM.monthlyTrendChart) {
+                    this.updateMonthlyTrendChart(tickets);
+                }
+                
+                // Gráfica de eficiencia por área
+                if (DOM.efficiencyByAreaChart) {
+                    this.updateEfficiencyByAreaChart(tickets);
+                }
+            },
+            
+            updateMonthlyTrendChart(tickets) {
+                // Agrupar tickets por mes
+                const monthlyData = {};
+                
+                tickets.forEach(ticket => {
+                    if (!ticket.fechaCreacion) return;
+                    
+                    try {
+                        const fecha = ticket.fechaCreacion.toDate();
+                        const monthYear = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        if (!monthlyData[monthYear]) {
+                            monthlyData[monthYear] = {
+                                total: 0,
+                                completed: 0
+                            };
+                        }
+                        
+                        monthlyData[monthYear].total++;
+                        if (ticket.estado === 'finalizado') {
+                            monthlyData[monthYear].completed++;
+                        }
+                    } catch (error) {
+                        console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                    }
+                });
+                
+                // Ordenar por fecha
+                const sortedMonths = Object.keys(monthlyData).sort();
+                const labels = sortedMonths.map(month => {
+                    const [year, monthNum] = month.split('-');
+                    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+                });
+                
+                const totalData = sortedMonths.map(month => monthlyData[month].total);
+                const completedData = sortedMonths.map(month => monthlyData[month].completed);
+                
+                const ctx = DOM.monthlyTrendChart.getContext('2d');
+                AppState.charts.monthlyTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Tickets',
+                            data: totalData,
+                            borderColor: '#3F51B5',
+                            backgroundColor: 'rgba(63, 81, 181, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Tickets Finalizados',
+                            data: completedData,
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            },
+            
+            updateEfficiencyByAreaChart(tickets) {
+                // Calcular eficiencia por área
+                const areaStats = {};
+                
+                tickets.forEach(ticket => {
+                    // Obtener área del ticket (puede venir de diferentes campos)
+                    let area = 'Sin área';
+                    if (ticket.area) {
+                        area = ticket.area;
+                    } else if (ticket.responsableNombre) {
+                        // Buscar área del responsable
+                        const responsable = AppState.allColaboradores.find(c => c.NOMBRE === ticket.responsableNombre);
+                        if (responsable && responsable.ÁREA) {
+                            area = responsable.ÁREA;
+                        }
+                    }
+                    
+                    if (!areaStats[area]) {
+                        areaStats[area] = {
+                            total: 0,
+                            completed: 0
+                        };
+                    }
+                    
+                    areaStats[area].total++;
+                    if (ticket.estado === 'finalizado') {
+                        areaStats[area].completed++;
+                    }
+                });
+                
+                // Calcular eficiencia
+                const areas = Object.keys(areaStats);
+                const efficiencyData = areas.map(area => {
+                    return Utils.calculateEfficiency(areaStats[area].total, areaStats[area].completed);
+                });
+                
+                const ctx = DOM.efficiencyByAreaChart.getContext('2d');
+                AppState.charts.efficiencyByAreaChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: areas,
+                        datasets: [{
+                            label: 'Eficiencia (%)',
+                            data: efficiencyData,
+                            backgroundColor: areas.map(() => Utils.getRandomColor()),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
             },
             
             calculateColaboradorStats(tickets) {
@@ -980,6 +857,7 @@
                             id: colab.id,
                             nombre: colab.NOMBRE,
                             area: colab.ÁREA || 'Sin área',
+                            imagen: colab.imagen || '../css/img/Logo-RSI-OFICIAL.png',
                             total: 0,
                             finalizados: 0,
                             enProceso: 0,
@@ -1035,11 +913,20 @@
                     return;
                 }
                 
+                // Obtener mes y año actuales para los enlaces
+                const selectedMonth = DOM.monthFilter.value !== 'all' ? DOM.monthFilter.value : new Date().getMonth() + 1;
+                const selectedYear = DOM.yearFilter.value !== 'all' ? DOM.yearFilter.value : new Date().getFullYear();
+                
                 DOM.performanceTableBody.innerHTML = colaboradorStats
                     .sort((a, b) => b.total - a.total)
                     .map(stats => `
                         <tr>
-                            <td>${stats.nombre}</td>
+                            <td>
+                                <span class="colaborador-link" onclick="Utils.redirectToEfficiency('${stats.id}', '${selectedMonth}', '${selectedYear}')">
+                                    <img src="${stats.imagen}" alt="${stats.nombre}" class="colaborador-avatar">
+                                    ${stats.nombre}
+                                </span>
+                            </td>
                             <td>${stats.area}</td>
                             <td>${stats.total}</td>
                             <td>${stats.finalizados}</td>
@@ -1054,6 +941,106 @@
                             </td>
                         </tr>
                     `).join('');
+            },
+            
+            updateTopPerformers(tickets) {
+                const colaboradorStats = this.calculateColaboradorStats(tickets);
+                
+                // Obtener mes y año actuales para los enlaces
+                const selectedMonth = DOM.monthFilter.value !== 'all' ? DOM.monthFilter.value : new Date().getMonth() + 1;
+                const selectedYear = DOM.yearFilter.value !== 'all' ? DOM.yearFilter.value : new Date().getFullYear();
+                
+                // Colaboradores con mayor eficiencia
+                const topEfficiency = colaboradorStats
+                    .filter(stats => stats.finalizados > 0)
+                    .sort((a, b) => {
+                        const efficiencyA = Utils.calculateEfficiency(a.total, a.finalizados);
+                        const efficiencyB = Utils.calculateEfficiency(b.total, b.finalizados);
+                        return efficiencyB - efficiencyA;
+                    })
+                    .slice(0, 3);
+                
+                DOM.topEfficiencyContainer.innerHTML = topEfficiency.length > 0 ? 
+                    topEfficiency.map(stats => `
+                        <div class="top-performer-card">
+                            <img src="${stats.imagen}" alt="${stats.nombre}" class="top-performer-avatar">
+                            <div class="top-performer-info">
+                                <div class="top-performer-name" onclick="Utils.redirectToEfficiency('${stats.id}', '${selectedMonth}', '${selectedYear}')">
+                                    ${stats.nombre}
+                                </div>
+                                <div class="top-performer-area">${stats.area}</div>
+                                <div class="top-performer-stats">
+                                    <div class="top-performer-stat">
+                                        <div class="top-performer-stat-value">${Utils.calculateEfficiency(stats.total, stats.finalizados)}%</div>
+                                        <div class="top-performer-stat-label">Eficiencia</div>
+                                    </div>
+                                    <div class="top-performer-stat">
+                                        <div class="top-performer-stat-value">${stats.finalizados}</div>
+                                        <div class="top-performer-stat-label">Finalizados</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : 
+                    '<p style="text-align: center; padding: 20px;">No hay datos disponibles</p>';
+                
+                // Colaboradores con más tickets
+                const topTickets = colaboradorStats
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 3);
+                
+                DOM.topTicketsContainer.innerHTML = topTickets.length > 0 ? 
+                    topTickets.map(stats => `
+                        <div class="top-performer-card">
+                            <img src="${stats.imagen}" alt="${stats.nombre}" class="top-performer-avatar">
+                            <div class="top-performer-info">
+                                <div class="top-performer-name" onclick="Utils.redirectToEfficiency('${stats.id}', '${selectedMonth}', '${selectedYear}')">
+                                    ${stats.nombre}
+                                </div>
+                                <div class="top-performer-area">${stats.area}</div>
+                                <div class="top-performer-stats">
+                                    <div class="top-performer-stat">
+                                        <div class="top-performer-stat-value">${stats.total}</div>
+                                        <div class="top-performer-stat-label">Total</div>
+                                    </div>
+                                    <div class="top-performer-stat">
+                                        <div class="top-performer-stat-value">${stats.finalizados}</div>
+                                        <div class="top-performer-stat-label">Finalizados</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : 
+                    '<p style="text-align: center; padding: 20px;">No hay datos disponibles</p>';
+                
+                // Colaboradores con más tickets pendientes
+                const topPending = colaboradorStats
+                    .sort((a, b) => b.pendientes - a.pendientes)
+                    .slice(0, 3);
+                
+                DOM.topPendingContainer.innerHTML = topPending.length > 0 ? 
+                    topPending.map(stats => `
+                        <div class="top-performer-card">
+                            <img src="${stats.imagen}" alt="${stats.nombre}" class="top-performer-avatar">
+                            <div class="top-performer-info">
+                                <div class="top-performer-name" onclick="Utils.redirectToEfficiency('${stats.id}', '${selectedMonth}', '${selectedYear}')">
+                                    ${stats.nombre}
+                                </div>
+                                <div class="top-performer-area">${stats.area}</div>
+                                <div class="top-performer-stats">
+                                    <div class="top-performer-stat">
+                                        <div class="top-performer-stat-value">${stats.pendientes}</div>
+                                        <div class="top-performer-stat-label">Pendientes</div>
+                                    </div>
+                                    <div class="top-performer-stat">
+                                        <div class="top-performer-stat-value">${stats.total}</div>
+                                        <div class="top-performer-stat-label">Total</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : 
+                    '<p style="text-align: center; padding: 20px;">No hay datos disponibles</p>';
             },
             
             async exportToPDF() {
@@ -1099,7 +1086,7 @@
         // Inicialización de la aplicación
         document.addEventListener('DOMContentLoaded', async function() {
             // Verificar autenticación
-            onAuthStateChanged(auth, async (user) => {
+            auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     AppState.currentUser = user;
                     
@@ -1124,6 +1111,57 @@
                     window.location.href = '../../index.html';
                 }
             });
+        });
+
+        // Helper functions para compatibilidad con Firebase v9
+        function collection(db, collectionName) {
+            return db.collection(collectionName);
+        }
+
+        function getDocs(query) {
+            return query.get();
+        }
+
+        function query(collectionRef, ...constraints) {
+            let q = collectionRef;
+            constraints.forEach(constraint => {
+                if (constraint.type === 'where') {
+                    q = q.where(constraint.fieldPath, constraint.opStr, constraint.value);
+                } else if (constraint.type === 'orderBy') {
+                    q = q.orderBy(constraint.fieldPath, constraint.directionStr);
+                }
+            });
+            return q;
+        }
+
+        function where(fieldPath, opStr, value) {
+            return { type: 'where', fieldPath, opStr, value };
+        }
+
+        function orderBy(fieldPath, directionStr = 'asc') {
+            return { type: 'orderBy', fieldPath, directionStr };
+        }
+    </script>
+
+    <!-- Scripts de personalización y navegación -->
+    <script>
+        // Cargar scripts de navegación y personalización
+        function loadNavigationScript() {
+            const script = document.createElement('script');
+            script.src = '../js/navegacion-admin.js';
+            document.head.appendChild(script);
+        }
+
+        function loadPersonalizationScript() {
+            const script = document.createElement('script');
+            script.src = '../js/personalizacion-colores.js';
+            document.head.appendChild(script);
+        }
+
+        // Cargar scripts cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNavigationScript();
+            loadPersonalizationScript();
         });
     </script>
 </body>
