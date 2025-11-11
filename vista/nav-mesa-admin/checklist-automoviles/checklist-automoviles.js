@@ -45,7 +45,7 @@ const auth = firebase.auth();
         // Configurar event listeners
         function setupEventListeners() {
             btnCreateChecklist.addEventListener('click', () => {
-                window.location.href = './crear-checklist.html';
+                window.location.href = './crear-checklist/crear-checklist.html';
                 });
             btnViewAll.addEventListener('click', loadChecklists);
             modalClose.addEventListener('click', closeModal);
