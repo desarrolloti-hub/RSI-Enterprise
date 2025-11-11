@@ -4,53 +4,379 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crear Checklist Automóvil</title>
-  <link rel="stylesheet" href="./crear-checklist.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+ <link rel="stylesheet" href="./crear-checklist.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
-        <h1>Seleccionar Vehículo</h1>
-        
-        <div class="form-group">
-            <label for="vehicleSelect">Selecciona un vehículo:</label>
-            <select id="vehicleSelect">
-                <option value="">Cargando vehículos...</option>
-            </select>
-        </div>
-        
-        <div id="vehicleDetails" class="vehicle-details">
-            <h3>Detalles del Vehículo Seleccionado</h3>
-            <div class="details-grid">
-                <div class="detail-item">
-                    <strong>Marca:</strong> <span id="detail-brand"></span>
-                </div>
-                <div class="detail-item">
-                    <strong>Modelo:</strong> <span id="detail-model"></span>
-                </div>
-                <div class="detail-item">
-                    <strong>Color:</strong> <span id="detail-color"></span>
-                </div>
-                <div class="detail-item">
-                    <strong>Placas:</strong> <span id="detail-plates"></span>
-                </div>
-                <div class="detail-item">
-                    <strong>Tipo:</strong> <span id="detail-type"></span>
-                </div>
-            </div>
-            
-            <!-- Imagen del vehículo -->
-            <div id="detail-image-container" style="margin-top: 20px; display: none;">
-                <strong>Imagen:</strong><br>
-                <img id="detail-image" src="" alt="Vehículo" style="max-width: 300px; margin-top: 10px; border-radius: 5px;">
-            </div>
-        </div>
+    <h1>Crear Checklist de Vehículo</h1>
+    
+    <!-- Barra de progreso -->
+    <div class="progress-bar">
+      <div class="step active" id="step-1">
+        <div class="step-circle">1</div>
+        <div class="step-label">Vehículo</div>
+      </div>
+      <div class="step" id="step-2">
+        <div class="step-circle">2</div>
+        <div class="step-label">Colaborador</div>
+      </div>
+      <div class="step" id="step-3">
+    <div class="step-circle">3</div>
+    <div class="step-label">Datos del Día</div>
+  </div>
+  <div class="step" id="step-4">
+    <div class="step-circle">4</div>
+    <div class="step-label">Documentos</div>
+  </div>
+  <div class="step" id="step-5">
+    <div class="step-circle">5</div>
+    <div class="step-label">Accesorios</div>
+  </div>
+  <div class="step" id="step-6">
+    <div class="step-circle">6</div>
+    <div class="step-label">Seguridad</div>
+  </div>
+  <div class="step" id="step-7">
+    <div class="step-circle">7</div>
+    <div class="step-label">Equipamiento</div>
+  </div>
+  <div class="step" id="step-8">
+    <div class="step-circle">8</div>
+    <div class="step-label">Confirmación</div>
+  </div>
     </div>
+     
+    
+    <!-- Paso 1: Selección de vehículo -->
+    <div class="form-step active" id="step-1-form">
+      <h2>Seleccionar Vehículo</h2>
+      
+      <div class="form-group">
+        <label for="vehicleSelect">Selecciona un vehículo:</label>
+        <select id="vehicleSelect">
+          <option value="">Cargando vehículos...</option>
+        </select>
+        </div>
+      
+        <div id="vehicleDetails" class="vehicle-details">
+          <!-- SECCIÓN DE SUBIDA DE IMÁGENES -->
+          <div class="image-upload-section">
+            <h2 class="section-title"><i class="fas fa-camera"></i> Evidencia Fotográfica (Máximo 5 imágenes)</h2>
+            <!-- Selector de método de captura -->
+            <div class="capture-method-selector">
+              <button type="button" class="capture-method-btn active" data-method="camera">
+                <i class="fas fa-camera"></i> Usar Cámara
+              </button>
+              <button type="button" class="capture-method-btn" data-method="upload">
+                <i class="fas fa-upload"></i> Subir Archivo
+              </button>
+            </div>
 
+            <div class="image-grid" id="imageGrid">
+              <!-- Los 5 slots de imágenes se generarán aquí -->
+            </div>
 
+            <!-- Modal para la cámara -->
+            <div id="cameraModal" class="camera-modal">
+              <div class="camera-modal-content">
+                <div class="camera-header">
+                  <h3>Tomar Foto</h3>
+                  <button class="close-camera">&times;</button>
+                </div>
+                <div class="camera-preview">
+                  <video id="cameraVideo" autoplay playsinline></video>
+                  <canvas id="cameraCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="camera-controls">
+                  <button id="captureBtn" class="btn-capture">
+                    <i class="fas fa-camera"></i> Capturar Foto
+                  </button>
+                  <button id="retakeBtn" class="btn-retake" style="display: none;">
+                    <i class="fas fa-redo"></i> Volver a Tomar
+                  </button>
+                  <button id="usePhotoBtn" class="btn-use" style="display: none;">
+                    <i class="fas fa-check"></i> Usar Foto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="navigation-buttons">
+          <button class="btn btn-next" id="next-to-step-2">
+            Siguiente <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+       <!-- Paso 2: Selección de colaborador -->
+    <div class="form-step" id="step-2-form">
+      <h2>Seleccionar Colaborador Responsable</h2>
+      
+      <div class="form-group">
+        <label for="collaboratorSearch">Buscar colaborador:</label>
+        <input type="text" id="collaboratorSearch" placeholder="Escribe para buscar...">
+      </div>
+      
+      <div class="collaborator-list" id="collaboratorList">
+        <!-- Los colaboradores se cargarán aquí dinámicamente -->
+      </div>
+      
+      <div id="collaboratorDetails" class="collaborator-details">
+        <h3>Detalles del Colaborador Seleccionado</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <strong>Nombre:</strong> <span id="collaborator-name"></span>
+          </div>
+          <div class="detail-item">
+            <strong>Email:</strong> <span id="collaborator-email"></span>
+          </div>
+          <div class="detail-item">
+            <strong>Departamento:</strong> <span id="collaborator-department"></span>
+          </div>
+          <div class="detail-item">
+            <strong>Puesto:</strong> <span id="collaborator-position"></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="navigation-buttons">
+        <button class="btn btn-prev" id="prev-to-step-1">
+          <i class="fas fa-arrow-left"></i> Anterior
+        </button>
+        <button class="btn btn-next" id="next-to-step-3" disabled>
+          Siguiente <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Paso 3: Datos del Día -->
+<div class="form-step" id="step-3-form">
+  <h2>Datos del Día</h2>
+  
+  <div class="form-group">
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="horaSalida">Hora de Salida:</label>
+    <input type="time" id="horaSalida" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="origen">Origen:</label>
+    <input type="text" id="origen" placeholder="Lugar de salida" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="destino">Destino:</label>
+    <input type="text" id="destino" placeholder="Lugar de destino" required>
+  </div>
+  
+  <div class="km-grid">
+    <div class="form-group">
+      <label for="kmSalida">KM de Salida:</label>
+      <input type="number" id="kmSalida" placeholder="Ej: 15000" min="0" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="kmRegreso">KM de Regreso:</label>
+      <input type="number" id="kmRegreso" placeholder="Se llenará al regreso" min="0" disabled>
+      <small class="help-text">Se completará al finalizar el viaje</small>
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-prev" id="prev-to-step-2">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-next" id="next-to-step-4">
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Paso 4: Documentos -->
+<div class="form-step" id="step-4-form">
+  <h2>Documentos del Vehículo</h2>
+  <p class="step-description">Verifica que el vehículo cuente con los siguientes documentos:</p>
+  
+  <div class="checklist-section">
+    <div class="checkbox-group" id="documentos-checklist">
+      <!-- Se generará dinámicamente -->
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-prev" id="prev-to-step-3">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-next" id="next-to-step-5">
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Paso 5: Accesorios -->
+<div class="form-step" id="step-5-form">
+  <h2>Accesorios del Vehículo</h2>
+  <p class="step-description">Verifica que el vehículo cuente con los siguientes accesorios:</p>
+  
+  <div class="checklist-section">
+    <div class="checkbox-group" id="accesorios-checklist">
+      <!-- Se generará dinámicamente -->
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-prev" id="prev-to-step-4">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-next" id="next-to-step-6">
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Paso 6: Seguridad -->
+<div class="form-step" id="step-6-form">
+  <h2>Elementos de Seguridad</h2>
+  <p class="step-description">Verifica que el vehículo cuente con los siguientes elementos de seguridad:</p>
+  
+  <div class="checklist-section">
+    <div class="checkbox-group" id="seguridad-checklist">
+      <!-- Se generará dinámicamente -->
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-prev" id="prev-to-step-5">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-next" id="next-to-step-7">
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Paso 7: Equipamiento -->
+<div class="form-step" id="step-7-form">
+  <h2>Equipamiento del Vehículo</h2>
+  <p class="step-description">Verifica que el vehículo cuente con el siguiente equipamiento:</p>
+  
+  <div class="checklist-section">
+    <div class="checkbox-group" id="equipamiento-checklist">
+      <!-- Se generará dinámicamente -->
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-prev" id="prev-to-step-6">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-next" id="next-to-step-8">
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Paso 8: Confirmación (Actualizado) -->
+<div class="form-step" id="step-8-form">
+  <h2>Confirmar Información</h2>
+  
+  <div class="summary">
+    <div class="summary-section">
+      <h3>Información General</h3>
+      <div class="summary-item">
+        <div class="summary-label">Vehículo:</div>
+        <div class="summary-value" id="summary-vehicle"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Colaborador:</div>
+        <div class="summary-value" id="summary-collaborator"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Fecha y Hora:</div>
+        <div class="summary-value" id="summary-fecha-hora"></div>
+      </div>
+    </div>
+    
+    <div class="summary-section">
+      <h3>Ruta</h3>
+      <div class="summary-item">
+        <div class="summary-label">Origen - Destino:</div>
+        <div class="summary-value" id="summary-ruta"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">KM de Salida:</div>
+        <div class="summary-value" id="summary-km-salida"></div>
+      </div>
+    </div>
+    
+    <div class="summary-section">
+      <h3>Checklist</h3>
+      <div class="summary-item">
+        <div class="summary-label">Documentos verificados:</div>
+        <div class="summary-value" id="summary-documentos"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Accesorios verificados:</div>
+        <div class="summary-value" id="summary-accesorios"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Seguridad verificada:</div>
+        <div class="summary-value" id="summary-seguridad"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Equipamiento verificado:</div>
+        <div class="summary-value" id="summary-equipamiento"></div>
+      </div>
+    </div>
+    
+    <div class="summary-section">
+      <h3>Evidencia Fotográfica</h3>
+      <div class="summary-item">
+        <div class="summary-label">Imágenes capturadas:</div>
+        <div class="summary-value" id="summary-imagenes"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-prev" id="prev-to-step-7">
+      <i class="fas fa-arrow-left"></i> Anterior
+    </button>
+    <button class="btn btn-submit" id="submit-checklist">
+      <i class="fas fa-check"></i> Crear Checklist
+    </button>
+  </div>
+</div>
+      
+      
+    
+   
+
+</div> 
+
+  <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+  <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+  <script src="./crear-checklist.js"></script>
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.updateMenuStyles) {
+      // Llama a la función global para aplicar los estilos personalizados del menú
+      window.updateMenuStyles();
+    } else {
+      console.warn('La función updateMenuStyles no está disponible.');
+    }
+  });
+</script>
+  
 </body>
-<script src="../js/navegacion-admin.js"></script>
-<script src="../js/personalizacion-colores.js"></script>
-<script src="./crear-checklist.js"></script>
 </html>
