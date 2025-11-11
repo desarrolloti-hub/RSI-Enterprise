@@ -645,9 +645,6 @@
                             <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
                                 <i class="fas fa-list-alt"></i> Gestionar tickets
                             </a>
-                            <a href="../nuevo-ticket/nuevo-ticket.html" class="menu-nav-btn">
-                                <i class="fas fa-plus-circle"></i> Levantar ticket
-                            </a>
                             <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                                 <i class="fas fa-ticket-alt"></i> Ver mis tickets
                             </a>
@@ -671,14 +668,14 @@
                             <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
                                 <i class="fas fa-calendar-check"></i> Ver asistencias
                             </a>
-                            <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
-                                <i class="fas fa-file-invoice-dollar"></i> Cotizar
-                            </a>
                             <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
                                 <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                             </a>
                             <a href="../manuales/manuales.html" class="menu-nav-btn">
                                 <i class="fas fa-file-alt"></i> Ver manuales
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-users-cog"></i> Colaboradores
                             </a>
                         </div>
                     </div>
@@ -691,6 +688,9 @@
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="menu-nav-section-content" id="section-finanzas">
+                            <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
+                                <i class="fas fa-file-invoice-dollar"></i> Cotizar
+                            </a>
                             <a href="/404.html" class="menu-nav-btn">
                                 <i class="fas fa-file-invoice-dollar"></i> Reportes Financieros
                             </a>
