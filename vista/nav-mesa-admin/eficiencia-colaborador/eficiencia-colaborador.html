@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="../../manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eficiencia del Colaborador | RSI Enterprise</title>
+    
+    <!-- CSS compatibles -->
+    <link rel="stylesheet" href="../gestion-tickets-admin/gestion-tickets-admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="eficiencia-colaborador.css">
+</head>
+<body>
+    <!-- SIDEBAR (se cargará dinámicamente desde navegacion-admin.js) -->
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+        <div class="crud-header">
+            <center>
+                <h1 class="page-title" style="color:#fff !important;">Eficiencia del Colaborador</h1>
+                <button class="btn btn-secondary" id="backToChartsBtn" style="margin-top: 15px;">
+                    <i class="fas fa-arrow-left"></i> Volver a Gráficas
+                </button>
+            </center>
+        </div>
+
+        <!-- Perfil del colaborador -->
+        <div class="colaborador-profile" id="colaboradorProfile">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-container">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <i class="fas fa-calendar-alt"></i>
+                    <select id="monthFilter">
+                        <option value="all">Todos los meses</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <i class="fas fa-calendar"></i>
+                    <select id="yearFilter">
+                        <!-- Se llenará dinámicamente -->
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn btn-primary" id="applyFiltersBtn">
+                        <i class="fas fa-filter"></i> Aplicar
+                    </button>
+                    <button class="btn btn-secondary" id="resetFiltersBtn">
+                        <i class="fas fa-redo"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Indicadores de rendimiento -->
+        <div class="performance-indicators" id="performanceIndicators">
+            <!-- Se llenará dinámicamente -->
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="quick-stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalTickets">0</div>
+                <div class="stat-label">Total Tickets</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedTickets">0</div>
+                <div class="stat-label">Finalizados</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="inProgressTickets">0</div>
+                <div class="stat-label">En Proceso</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="pendingTickets">0</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="avgResolutionTime">0d</div>
+                <div class="stat-label">Tiempo Promedio</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="efficiencyRate">0%</div>
+                <div class="stat-label">Tasa de Eficiencia</div>
+            </div>
+        </div>
+
+        <!-- Contenedores principales -->
+        <div class="dashboard-container">
+            <!-- Primera fila: Gráficas principales -->
+            <div class="dashboard-section">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie"></i> Estado de Tickets
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-triangle"></i> Tickets por Prioridad
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Segunda fila: Gráfica de evolución -->
+            <div class="dashboard-section">
+                <div class="dashboard-card wide-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i> Evolución Mensual
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tercera fila: Gráficas adicionales -->
+            <div class="dashboard-section">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-tachometer-alt"></i> Métricas de Rendimiento
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="performanceMetricsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-clock"></i> Tiempos de Resolución
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="resolutionTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cuarta fila: Tabla de tickets recientes -->
+            <div class="dashboard-section">
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-table"></i> Tickets Recientes
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="recentTicketsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Ticket</th>
+                                        <th>Asunto</th>
+                                        <th>Estado</th>
+                                        <th>Prioridad</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Fecha Finalización</th>
+                                        <th>Tiempo Resolución</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTicketsTableBody">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 40px;">
+                                            <div class="loading-spinner"></div>
+                                            <p>Cargando tickets...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts compatibles -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Script principal -->
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+            measurementId: "G-38F2DBG9HE"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Estado de la aplicación
+        const AppState = {
+            currentUser: null,
+            colaboradorData: null,
+            allTickets: [],
+            filteredTickets: [],
+            charts: {},
+            currentFilters: {
+                month: 'all',
+                year: 'all'
+            }
+        };
+
+        // Elementos del DOM
+        const DOM = {
+            // Filtros
+            monthFilter: document.getElementById('monthFilter'),
+            yearFilter: document.getElementById('yearFilter'),
+            applyFiltersBtn: document.getElementById('applyFiltersBtn'),
+            resetFiltersBtn: document.getElementById('resetFiltersBtn'),
+            backToChartsBtn: document.getElementById('backToChartsBtn'),
+            
+            // Perfil
+            colaboradorProfile: document.getElementById('colaboradorProfile'),
+            
+            // Indicadores
+            performanceIndicators: document.getElementById('performanceIndicators'),
+            
+            // Estadísticas
+            totalTickets: document.getElementById('totalTickets'),
+            completedTickets: document.getElementById('completedTickets'),
+            inProgressTickets: document.getElementById('inProgressTickets'),
+            pendingTickets: document.getElementById('pendingTickets'),
+            avgResolutionTime: document.getElementById('avgResolutionTime'),
+            efficiencyRate: document.getElementById('efficiencyRate'),
+            
+            // Gráficas
+            statusChart: document.getElementById('statusChart'),
+            priorityChart: document.getElementById('priorityChart'),
+            monthlyTrendChart: document.getElementById('monthlyTrendChart'),
+            performanceMetricsChart: document.getElementById('performanceMetricsChart'),
+            resolutionTimeChart: document.getElementById('resolutionTimeChart'),
+            
+            // Tabla
+            recentTicketsTableBody: document.getElementById('recentTicketsTableBody')
+        };
+
+        // Utilidades
+        const Utils = {
+            showLoading: (message = 'Cargando...') => {
+                Swal.fire({
+                    title: message,
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            },
+            
+            hideLoading: () => Swal.close(),
+            
+            showError: (message, title = 'Error') => {
+                Swal.fire({
+                    icon: 'error',
+                    title: title,
+                    text: message,
+                    confirmButtonColor: '#3085d6'
+                });
+            },
+            
+            formatNumber: (num) => {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            },
+            
+            calculateEfficiency: (total, completados) => {
+                if (total === 0) return 0;
+                return Math.round((completados / total) * 100);
+            },
+
+            // Obtener rango de fechas para un mes y año específicos
+            getMonthRange: (month, year) => {
+                const firstDay = new Date(year, month - 1, 1);
+                const lastDay = new Date(year, month, 0);
+                
+                firstDay.setHours(0, 0, 0, 0);
+                lastDay.setHours(23, 59, 59, 999);
+                
+                return { firstDay, lastDay };
+            },
+
+            // Formatear fecha
+            formatDate: (date) => {
+                return new Date(date).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            },
+
+            // Calcular días entre fechas
+            getDaysBetween: (startDate, endDate) => {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const diffTime = Math.abs(end - start);
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            },
+
+            // Función segura para convertir timestamp de Firebase
+            safeToDate: (timestamp) => {
+                if (!timestamp) return null;
+                if (typeof timestamp.toDate === 'function') {
+                    return timestamp.toDate();
+                }
+                // Si ya es una fecha o string, convertir directamente
+                return new Date(timestamp);
+            },
+
+            // Redirigir a gráficas si no hay parámetros
+            redirectToCharts: () => {
+                window.location.href = "../graficas-tickets/graficas-tickets.html";
+            }
+        };
+
+        // Controlador de Eficiencia del Colaborador
+        const ColaboradorEfficiencyController = {
+            async init() {
+                try {
+                    // Obtener parámetros de la URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const colaboradorId = urlParams.get('id');
+                    
+                    // Verificar si hay parámetros
+                    if (!colaboradorId) {
+                        Utils.showError('No se especificó el colaborador');
+                        setTimeout(() => {
+                            Utils.redirectToCharts();
+                        }, 2000);
+                        return;
+                    }
+
+                    const month = urlParams.get('month');
+                    const year = urlParams.get('year');
+                    
+                    Utils.showLoading('Cargando datos del colaborador...');
+                    
+                    // Cargar datos del colaborador
+                    await this.loadColaboradorData(colaboradorId);
+                    
+                    // Configurar filtros iniciales
+                    this.setupFilters(month, year);
+                    
+                    // Cargar tickets del colaborador
+                    await this.loadColaboradorTickets(colaboradorId);
+                    
+                    // Aplicar filtros iniciales
+                    this.applyFilters();
+                    
+                } catch (error) {
+                    console.error("Error inicializando:", error);
+                    Utils.showError("No se pudieron cargar los datos del colaborador");
+                } finally {
+                    Utils.hideLoading();
+                }
+            },
+            
+            async loadColaboradorData(colaboradorId) {
+                try {
+                    const doc = await db.collection('colaboradores').doc(colaboradorId).get();
+                    
+                    if (!doc.exists) {
+                        Utils.showError('Colaborador no encontrado');
+                        setTimeout(() => {
+                            Utils.redirectToCharts();
+                        }, 2000);
+                        return;
+                    }
+                    
+                    const colaboradorData = doc.data();
+                    AppState.colaboradorData = {
+                        id: doc.id,
+                        ...colaboradorData
+                    };
+                    
+                    this.renderColaboradorProfile();
+                    
+                } catch (error) {
+                    console.error("Error cargando datos del colaborador:", error);
+                    throw error;
+                }
+            },
+            
+            renderColaboradorProfile() {
+                const colaborador = AppState.colaboradorData;
+                DOM.colaboradorProfile.innerHTML = `
+                    <img src="${colaborador.imagen || '../css/img/Logo-RSI-OFICIAL.png'}" 
+                         alt="${colaborador.NOMBRE}" 
+                         class="colaborador-avatar-large">
+                    <div class="colaborador-info">
+                        <h2 class="colaborador-name">${colaborador.NOMBRE}</h2>
+                        <p style="color: var(--accent-color); font-size: 1.1rem; margin-bottom: 10px;">
+                            ${colaborador.ÁREA || 'Sin área asignada'}
+                        </p>
+                        <div class="colaborador-details">
+                            <div class="colaborador-detail">
+                                <i class="fas fa-envelope"></i>
+                                <span>${colaborador["CORREO ELECTRÓNICO EMPRESARIAL"] || 'No especificado'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            setupFilters(month, year) {
+                // Llenar años (desde 2025 en adelante)
+                const currentYear = new Date().getFullYear();
+                DOM.yearFilter.innerHTML = '<option value="all">Todos los años</option>';
+                for (let y = currentYear; y >= 2025; y--) {
+                    DOM.yearFilter.innerHTML += `<option value="${y}">${y}</option>`;
+                }
+                
+                // Establecer filtros iniciales si se proporcionaron
+                if (month && month !== 'all') {
+                    DOM.monthFilter.value = month;
+                    AppState.currentFilters.month = month;
+                }
+                
+                if (year && year !== 'all') {
+                    DOM.yearFilter.value = year;
+                    AppState.currentFilters.year = year;
+                }
+            },
+            
+            async loadColaboradorTickets(colaboradorId) {
+                try {
+                    const colaborador = AppState.colaboradorData;
+                    const nombreResponsable = colaborador.NOMBRE;
+                    
+                    // Consultar tickets donde es responsable
+                    const qResponsable = db.collection('ticketsmesa')
+                        .where('responsableNombre', '==', nombreResponsable);
+                    
+                    // Consultar tickets donde está en colaboradores
+                    const qColaborador = db.collection('ticketsmesa')
+                        .where('colaboradores', 'array-contains', colaboradorId);
+                    
+                    const [snapshotResponsable, snapshotColaborador] = await Promise.all([
+                        qResponsable.get(),
+                        qColaborador.get()
+                    ]);
+                    
+                    // Combinar resultados evitando duplicados
+                    const allTickets = new Map();
+                    
+                    snapshotResponsable.forEach(doc => {
+                        allTickets.set(doc.id, { id: doc.id, ...doc.data() });
+                    });
+                    
+                    snapshotColaborador.forEach(doc => {
+                        allTickets.set(doc.id, { id: doc.id, ...doc.data() });
+                    });
+                    
+                    AppState.allTickets = Array.from(allTickets.values());
+                    console.log(`🎫 Tickets del colaborador cargados: ${AppState.allTickets.length}`);
+                    
+                } catch (error) {
+                    console.error("Error cargando tickets del colaborador:", error);
+                    throw error;
+                }
+            },
+            
+            applyFilters() {
+                const selectedMonth = DOM.monthFilter.value;
+                const selectedYear = DOM.yearFilter.value;
+                
+                AppState.currentFilters.month = selectedMonth;
+                AppState.currentFilters.year = selectedYear;
+                
+                let filteredTickets = [...AppState.allTickets];
+                
+                // Filtrar por mes y año
+                if (selectedMonth !== 'all' && selectedYear !== 'all') {
+                    const { firstDay, lastDay } = Utils.getMonthRange(
+                        parseInt(selectedMonth), 
+                        parseInt(selectedYear)
+                    );
+                    
+                    filteredTickets = filteredTickets.filter(ticket => {
+                        if (!ticket.fechaCreacion) return false;
+                        try {
+                            const fecha = Utils.safeToDate(ticket.fechaCreacion);
+                            return fecha >= firstDay && fecha <= lastDay;
+                        } catch (error) {
+                            console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                            return false;
+                        }
+                    });
+                }
+                
+                AppState.filteredTickets = filteredTickets;
+                this.updateDashboard();
+            },
+            
+            updateDashboard() {
+                const tickets = AppState.filteredTickets;
+                const colaborador = AppState.colaboradorData;
+                
+                // Actualizar estadísticas rápidas
+                DOM.totalTickets.textContent = tickets.length;
+                
+                const completed = tickets.filter(t => t.estado === 'finalizado').length;
+                const inProgress = tickets.filter(t => t.estado === 'en_proceso').length;
+                const pending = tickets.filter(t => t.estado === 'pendiente').length;
+                
+                DOM.completedTickets.textContent = completed;
+                DOM.inProgressTickets.textContent = inProgress;
+                DOM.pendingTickets.textContent = pending;
+                
+                // Calcular tiempo promedio de resolución
+                const avgTime = this.calculateAverageResolutionTime(tickets);
+                DOM.avgResolutionTime.textContent = avgTime;
+                
+                // Calcular tasa de eficiencia
+                const efficiency = Utils.calculateEfficiency(tickets.length, completed);
+                DOM.efficiencyRate.textContent = efficiency + '%';
+                
+                // Actualizar indicadores de rendimiento
+                this.updatePerformanceIndicators(tickets, efficiency);
+                
+                // Actualizar gráficas
+                this.updateCharts(tickets);
+                
+                // Actualizar tabla de tickets recientes
+                this.updateRecentTicketsTable(tickets);
+            },
+            
+            calculateAverageResolutionTime(tickets) {
+                const completedTickets = tickets.filter(t => 
+                    t.estado === 'finalizado' && 
+                    t.fechaCreacion && 
+                    t.fechaFinalizacion
+                );
+                
+                if (completedTickets.length === 0) return '0d';
+                
+                let totalDays = 0;
+                completedTickets.forEach(ticket => {
+                    const start = Utils.safeToDate(ticket.fechaCreacion);
+                    const end = Utils.safeToDate(ticket.fechaFinalizacion);
+                    const diffDays = Utils.getDaysBetween(start, end);
+                    totalDays += diffDays;
+                });
+                
+                const avgDays = Math.round(totalDays / completedTickets.length);
+                return avgDays + 'd';
+            },
+            
+            updatePerformanceIndicators(tickets, efficiency) {
+                const completedTickets = tickets.filter(t => t.estado === 'finalizado');
+                const pendingTickets = tickets.filter(t => t.estado === 'pendiente');
+                const highPriorityTickets = tickets.filter(t => t.prioridad === 'alta');
+                
+                DOM.performanceIndicators.innerHTML = `
+                    <div class="indicator-card">
+                        <div class="indicator-value ${efficiency >= 80 ? 'indicator-good' : efficiency >= 60 ? 'indicator-warning' : 'indicator-danger'}">
+                            ${efficiency}%
+                        </div>
+                        <div class="indicator-label">Tasa de Eficiencia</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-value ${completedTickets.length > 0 ? 'indicator-good' : 'indicator-warning'}">
+                            ${completedTickets.length}
+                        </div>
+                        <div class="indicator-label">Tickets Completados</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-value ${pendingTickets.length < 5 ? 'indicator-good' : pendingTickets.length < 10 ? 'indicator-warning' : 'indicator-danger'}">
+                            ${pendingTickets.length}
+                        </div>
+                        <div class="indicator-label">Tickets Pendientes</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-value ${highPriorityTickets.length === 0 ? 'indicator-good' : highPriorityTickets.length < 3 ? 'indicator-warning' : 'indicator-danger'}">
+                            ${highPriorityTickets.length}
+                        </div>
+                        <div class="indicator-label">Tickets Alta Prioridad</div>
+                    </div>
+                `;
+            },
+            
+            updateCharts(tickets) {
+                // Destruir gráficas existentes
+                Object.values(AppState.charts).forEach(chart => {
+                    if (chart && typeof chart.destroy === 'function') {
+                        chart.destroy();
+                    }
+                });
+                AppState.charts = {};
+                
+                // Gráfica de estado de tickets
+                if (DOM.statusChart) {
+                    const completed = tickets.filter(t => t.estado === 'finalizado').length;
+                    const inProgress = tickets.filter(t => t.estado === 'en_proceso').length;
+                    const pending = tickets.filter(t => t.estado === 'pendiente').length;
+                    
+                    const ctx = DOM.statusChart.getContext('2d');
+                    AppState.charts.statusChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Finalizados', 'En Proceso', 'Pendientes'],
+                            datasets: [{
+                                data: [completed, inProgress, pending],
+                                backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Gráfica de tickets por prioridad
+                if (DOM.priorityChart) {
+                    const alta = tickets.filter(t => t.prioridad === 'alta').length;
+                    const media = tickets.filter(t => t.prioridad === 'media').length;
+                    const baja = tickets.filter(t => t.prioridad === 'baja').length;
+                    
+                    const ctx = DOM.priorityChart.getContext('2d');
+                    AppState.charts.priorityChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Alta', 'Media', 'Baja'],
+                            datasets: [{
+                                label: 'Tickets por Prioridad',
+                                data: [alta, media, baja],
+                                backgroundColor: ['#F44336', '#FFC107', '#4CAF50'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Gráfica de evolución mensual
+                if (DOM.monthlyTrendChart) {
+                    this.updateMonthlyTrendChart(tickets);
+                }
+                
+                // Otras gráficas...
+                this.updateAdditionalCharts(tickets);
+            },
+            
+            updateMonthlyTrendChart(tickets) {
+                // Agrupar tickets por mes
+                const monthlyData = {};
+                
+                tickets.forEach(ticket => {
+                    if (!ticket.fechaCreacion) return;
+                    
+                    try {
+                        const fecha = Utils.safeToDate(ticket.fechaCreacion);
+                        const monthYear = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        if (!monthlyData[monthYear]) {
+                            monthlyData[monthYear] = {
+                                total: 0,
+                                completed: 0,
+                                inProgress: 0,
+                                pending: 0
+                            };
+                        }
+                        
+                        monthlyData[monthYear].total++;
+                        if (ticket.estado === 'finalizado') monthlyData[monthYear].completed++;
+                        if (ticket.estado === 'en_proceso') monthlyData[monthYear].inProgress++;
+                        if (ticket.estado === 'pendiente') monthlyData[monthYear].pending++;
+                    } catch (error) {
+                        console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                    }
+                });
+                
+                // Ordenar por fecha
+                const sortedMonths = Object.keys(monthlyData).sort();
+                const labels = sortedMonths.map(month => {
+                    const [year, monthNum] = month.split('-');
+                    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+                });
+                
+                const totalData = sortedMonths.map(month => monthlyData[month].total);
+                const completedData = sortedMonths.map(month => monthlyData[month].completed);
+                
+                const ctx = DOM.monthlyTrendChart.getContext('2d');
+                AppState.charts.monthlyTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Tickets',
+                            data: totalData,
+                            borderColor: '#3F51B5',
+                            backgroundColor: 'rgba(63, 81, 181, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'Tickets Finalizados',
+                            data: completedData,
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            },
+            
+            updateAdditionalCharts(tickets) {
+                // Gráfica de métricas de rendimiento
+                if (DOM.performanceMetricsChart) {
+                    const completed = tickets.filter(t => t.estado === 'finalizado').length;
+                    const inProgress = tickets.filter(t => t.estado === 'en_proceso').length;
+                    const pending = tickets.filter(t => t.estado === 'pendiente').length;
+                    const efficiency = Utils.calculateEfficiency(tickets.length, completed);
+                    
+                    const ctx = DOM.performanceMetricsChart.getContext('2d');
+                    AppState.charts.performanceMetricsChart = new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Eficiencia', 'Completados', 'En Proceso', 'Pendientes', 'Productividad'],
+                            datasets: [{
+                                label: 'Métricas de Rendimiento',
+                                data: [
+                                    efficiency,
+                                    (completed / tickets.length) * 100 || 0,
+                                    (inProgress / tickets.length) * 100 || 0,
+                                    (pending / tickets.length) * 100 || 0,
+                                    efficiency * 0.8 // Simulación de productividad
+                                ],
+                                backgroundColor: 'rgba(108, 67, 224, 0.2)',
+                                borderColor: '#6C43E0',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#6C43E0'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    max: 100
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Gráfica de tiempos de resolución
+                if (DOM.resolutionTimeChart) {
+                    const completedTickets = tickets.filter(t => 
+                        t.estado === 'finalizado' && 
+                        t.fechaCreacion && 
+                        t.fechaFinalizacion
+                    );
+                    
+                    const resolutionTimes = completedTickets.map(ticket => {
+                        const start = Utils.safeToDate(ticket.fechaCreacion);
+                        const end = Utils.safeToDate(ticket.fechaFinalizacion);
+                        return Utils.getDaysBetween(start, end);
+                    });
+                    
+                    // Agrupar por rangos de tiempo
+                    const timeRanges = {
+                        '0-1 días': resolutionTimes.filter(time => time <= 1).length,
+                        '2-3 días': resolutionTimes.filter(time => time > 1 && time <= 3).length,
+                        '4-7 días': resolutionTimes.filter(time => time > 3 && time <= 7).length,
+                        '8+ días': resolutionTimes.filter(time => time > 7).length
+                    };
+                    
+                    const ctx = DOM.resolutionTimeChart.getContext('2d');
+                    AppState.charts.resolutionTimeChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(timeRanges),
+                            datasets: [{
+                                label: 'Tickets por Tiempo de Resolución',
+                                data: Object.values(timeRanges),
+                                backgroundColor: ['#4CAF50', '#FFC107', '#FF9800', '#F44336'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            },
+            
+            updateRecentTicketsTable(tickets) {
+                if (!DOM.recentTicketsTableBody) return;
+                
+                // Ordenar tickets por fecha de creación (más recientes primero)
+                const recentTickets = tickets
+                    .sort((a, b) => {
+                        const dateA = Utils.safeToDate(a.fechaCreacion) || new Date(0);
+                        const dateB = Utils.safeToDate(b.fechaCreacion) || new Date(0);
+                        return dateB - dateA;
+                    })
+                    .slice(0, 10); // Mostrar solo los 10 más recientes
+                
+                if (recentTickets.length === 0) {
+                    DOM.recentTicketsTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px;">
+                                No hay tickets para mostrar con los filtros actuales
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                DOM.recentTicketsTableBody.innerHTML = recentTickets
+                    .map(ticket => {
+                        const fechaCreacion = ticket.fechaCreacion ? 
+                            Utils.formatDate(Utils.safeToDate(ticket.fechaCreacion)) : 'No especificada';
+                        
+                        const fechaFinalizacion = ticket.fechaFinalizacion ? 
+                            Utils.formatDate(Utils.safeToDate(ticket.fechaFinalizacion)) : 'En proceso';
+                        
+                        let tiempoResolucion = 'N/A';
+                        if (ticket.fechaCreacion && ticket.fechaFinalizacion) {
+                            const start = Utils.safeToDate(ticket.fechaCreacion);
+                            const end = Utils.safeToDate(ticket.fechaFinalizacion);
+                            tiempoResolucion = Utils.getDaysBetween(start, end) + ' días';
+                        }
+                        
+                        // Colores para estados
+                        const estadoColors = {
+                            'finalizado': '#4CAF50',
+                            'en_proceso': '#FFC107',
+                            'pendiente': '#F44336'
+                        };
+                        
+                        // Colores para prioridades
+                        const prioridadColors = {
+                            'alta': '#F44336',
+                            'media': '#FFC107',
+                            'baja': '#4CAF50'
+                        };
+
+                        // Enlace al ticket
+                        const ticketLink = ticket.id ? 
+                            `<a href="../verTicket/verTicket.html?id=${ticket.id}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                                ${ticket.id}
+                            </a>` : 
+                            'N/A';
+                        
+                        return `
+                            <tr>
+                                <td>
+                                    ${ticketLink}
+                                </td>
+                                <td>${ticket.titulo || 'Sin asunto'}</td>
+                                <td>
+                                    <span style="color: ${estadoColors[ticket.estado] || '#666'}; font-weight: 600;">
+                                        ${ticket.estado || 'No especificado'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="color: ${prioridadColors[ticket.prioridad] || '#666'}; font-weight: 600;">
+                                        ${ticket.prioridad || 'No especificado'}
+                                    </span>
+                                </td>
+                                <td>${fechaCreacion}</td>
+                                <td>${fechaFinalizacion}</td>
+                                <td>${tiempoResolucion}</td>
+                            </tr>
+                        `;
+                    }).join('');
+            },
+            
+            resetFilters() {
+                DOM.monthFilter.value = 'all';
+                DOM.yearFilter.value = 'all';
+                AppState.currentFilters.month = 'all';
+                AppState.currentFilters.year = 'all';
+                this.applyFilters();
+            }
+        };
+
+        // Inicialización de la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // Configurar event listeners
+                    DOM.applyFiltersBtn.addEventListener('click', () => {
+                        ColaboradorEfficiencyController.applyFilters();
+                    });
+                    
+                    DOM.resetFiltersBtn.addEventListener('click', () => {
+                        ColaboradorEfficiencyController.resetFilters();
+                    });
+
+                    // Botón para regresar a gráficas
+                    DOM.backToChartsBtn.addEventListener('click', () => {
+                        Utils.redirectToCharts();
+                    });
+                    
+                    // Inicializar el controlador
+                    await ColaboradorEfficiencyController.init();
+                    
+                } else {
+                    // Redirigir al login si no está autenticado
+                    window.location.href = "../../index.html";
+                }
+            });
+        });
+    </script>
+
+    <!-- Scripts de personalización y navegación -->
+    <script>
+        // Cargar scripts de navegación y personalización
+        function loadNavigationScript() {
+            const script = document.createElement('script');
+            script.src = '../js/navegacion-admin.js';
+            document.head.appendChild(script);
+        }
+
+        function loadPersonalizationScript() {
+            const script = document.createElement('script');
+            script.src = '../js/personalizacion-colores.js';
+            document.head.appendChild(script);
+        }
+
+        // Cargar scripts cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNavigationScript();
+            loadPersonalizationScript();
+        });
+    </script>
+</body>
+</html>
