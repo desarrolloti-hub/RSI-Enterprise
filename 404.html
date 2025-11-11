@@ -1,92 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda de Electrónica</title>
-    <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/responsiv.css">
-    <link rel="stylesheet" href="../css/estilos-nav.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    </head>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Menú de hamburguesa
-            const nanHamburger = document.querySelector('.nan_hamburger');
-            const nanMenu = document.querySelector('.nan_menu');
-
-            // Abrir menú
-            nanHamburger.addEventListener('click', (event) => {
-                event.stopPropagation();
-                nanMenu.classList.add('nan_active');
-            });
-
-            // Cerrar menú al hacer clic fuera de él
-            document.addEventListener('click', (event) => {
-                if (!nanMenu.contains(event.target) && !nanHamburger.contains(event.target)) {
-                    nanMenu.classList.remove('nan_active');
-                }
-            });
-
-            // Conversión de moneda (Ejemplo)
-            document.getElementById("currencySelect").addEventListener("change", function () {
-                alert(this.value === "usd" ? "1 USD = 20 MXN" : "1 MXN = 0.05 USD");
-            });
-
-            // Cambio de idioma (Ejemplo)
-            document.getElementById("languageSelect").addEventListener("change", function () {
-                alert(this.value === "es" ? "Idioma seleccionado: Español" : "Idioma seleccionado: Inglés");
-            });
-        });
-    </script>
-  <body>
-    <div class="maintenance-card">
-        <img src="../../../vista/css/img/Logo-RSI-OFICIAL.png" alt="Logo RSI" class="logo">
-        <p>
-            La sección a la que requieres ingresar se encuentra en mantenimiento, lamentamos los inconvenientes. <br>
-            Ya nos encontramos trabajando para mejorar tu experiencia.  
-        </p>
-        <p><strong>Equipo RSI Enterprise Developers</strong></p>
-        <button onclick="location.href='../../../index.html'">Volver al inicio</button>
-    </div>
-
+    <title>Mantenimiento | RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a237e 0%, #0d1452 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
         .maintenance-card {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
         }
-        .maintenance-card .logo {
-            width: 120px;
+
+        .logo {
+            width: 180px;
+            margin-bottom: 30px;
+        }
+
+        .maintenance-icon {
+            font-size: 4rem;
+            color: #1a237e;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: #1a237e;
             margin-bottom: 20px;
+            font-size: 2rem;
         }
-        .maintenance-card p {
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 15px;
+
+        .message {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
         }
-        .maintenance-card button {
-            background-color: #007BFF;
+
+        .back-btn {
+            background: #1a237e;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
             cursor: pointer;
-            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
-        .maintenance-card button:hover {
-            background-color: #0056b3;
+
+        .back-btn:hover {
+            background: #0d1452;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .maintenance-card {
+                padding: 40px 25px;
+            }
+            
+            .logo {
+                width: 140px;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            .message {
+                font-size: 1rem;
+            }
         }
     </style>
+</head>
+<body>
+    <div class="maintenance-card">
+        <img src="../../../vista/css/img/Logo-RSI-OFICIAL.png" alt="RSI Enterprise" class="logo">
+        
+        <div class="maintenance-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        
+        <h1>En Mantenimiento</h1>
+        
+        <p class="message">
+            Esta sección se encuentra temporalmente en mantenimiento. 
+            Estamos trabajando para mejorar tu experiencia.
+        </p>
+        
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+            Volver Atrás
+        </button>
+    </div>
+
+    <script>
+        function goBack() {
+            if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+                window.history.back();
+            } else {
+                window.location.href = '../../../index.html';
+            }
+        }
+    </script>
 </body>
-</body>
-</html> 
+</html>

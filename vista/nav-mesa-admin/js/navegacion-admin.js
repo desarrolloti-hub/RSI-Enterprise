@@ -682,6 +682,46 @@
                             </a>
                         </div>
                     </div>
+
+                    <!-- SECCIÓN FINANZAS -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="finanzas">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Finanzas</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-finanzas">
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-file-invoice-dollar"></i> Reportes Financieros
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-calculator"></i> Presupuestos
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-money-check-alt"></i> Control de Gastos
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN ECOMMERCE -->
+                    <div class="menu-nav-section">
+                        <button class="menu-nav-section-header" data-section="ecommerce">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Ecommerce</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="menu-nav-section-content" id="section-ecommerce">
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-store"></i> Gestión de Tienda
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-boxes"></i> Inventario
+                            </a>
+                            <a href="/404.html" class="menu-nav-btn">
+                                <i class="fas fa-chart-bar"></i> Ventas y Métricas
+                            </a>
+                        </div>
+                    </div>
                     
                     <!-- SECCIÓN CONFIGURACIÓN -->
                     <div class="menu-nav-section">
