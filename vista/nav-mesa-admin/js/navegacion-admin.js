@@ -1502,7 +1502,7 @@
         async function logout() {
             try {
                 await auth.signOut();
-                window.location.href = "../../index.html";
+                window.location.href = "/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
             } catch (error) {
                 console.error('Error al cerrar sesión:', error);
                 alert('Error al cerrar sesión');
