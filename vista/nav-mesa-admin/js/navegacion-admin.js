@@ -59,7 +59,7 @@
                     width: 100%;
                     height: 100vh;
                     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                    color: white;
+                    color: white; /* Color blanco por defecto */
                     transition: left 0.3s ease;
                     z-index: 1000;
                     overflow-y: auto;
@@ -140,6 +140,7 @@
                     margin-bottom: 5px;
                     word-wrap: break-word;
                     padding: 0 10px;
+                    color: white; /* Color blanco por defecto */
                 }
                 
                 .menu-nav-user-area {
@@ -190,7 +191,7 @@
                 .menu-nav-stat-value {
                     font-size: 1.5rem;
                     font-weight: 700;
-                    color: white;
+                    color: white; /* Color blanco por defecto */
                     word-wrap: break-word;
                 }
                 
@@ -264,7 +265,7 @@
                 
                 .menu-nav-chart-value {
                     font-size: 0.8rem;
-                    color: white;
+                    color: white; /* Color blanco por defecto */
                     width: 30px;
                     text-align: right;
                     flex-shrink: 0;
@@ -290,7 +291,7 @@
                     justify-content: space-between;
                     padding: 12px 15px;
                     background: rgba(108, 67, 224, 0.2);
-                    color: white;
+                    color: white; /* Color blanco por defecto */
                     border: none;
                     width: 100%;
                     cursor: pointer;
@@ -337,7 +338,7 @@
                     width: 100%;
                     padding: 10px 15px 10px 45px;
                     background: transparent;
-                    color: white;
+                    color: white; /* Color blanco por defecto */
                     text-decoration: none;
                     border: none;
                     border-radius: 0;
@@ -838,6 +839,10 @@
                     const preferences = JSON.parse(savedPrefs);
                     applyCustomMenuStyles(preferences);
                     console.log('✅ Preferencias cargadas desde localStorage');
+                } else {
+                    // Si no hay preferencias guardadas, aplicar estilos por defecto (blancos)
+                    console.log('🎨 Aplicando estilos blancos por defecto');
+                    applyDefaultWhiteStyles();
                 }
                 
                 // Cargar desde Firebase si hay usuario
@@ -856,12 +861,66 @@
                 }
             } catch (error) {
                 console.error('❌ Error al cargar preferencias de personalización:', error);
+                // En caso de error, aplicar estilos blancos por defecto
+                applyDefaultWhiteStyles();
             }
+        }
+        
+        // Aplicar estilos blancos por defecto
+        function applyDefaultWhiteStyles() {
+            console.log('🎨 Aplicando estilos blancos por defecto');
+            
+            const styleId = 'menu-nav-default-styles';
+            let styleElement = document.getElementById(styleId);
+            
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                document.head.appendChild(styleElement);
+            }
+            
+            // Estilos blancos por defecto
+            styleElement.textContent = `
+                /* ESTILOS BLANCOS POR DEFECTO */
+                .menu-nav-sidebar {
+                    color: white !important;
+                }
+                
+                .menu-nav-user-name {
+                    color: white !important;
+                }
+                
+                .menu-nav-stat-value {
+                    color: white !important;
+                }
+                
+                .menu-nav-chart-value {
+                    color: white !important;
+                }
+                
+                .menu-nav-section-header {
+                    color: white !important;
+                }
+                
+                .menu-nav-btn {
+                    color: white !important;
+                }
+                
+                .menu-nav-btn:hover {
+                    color: white !important;
+                }
+            `;
         }
         
         // Aplicar estilos personalizados al menú
         function applyCustomMenuStyles(preferences) {
             console.log('🎨 Aplicando estilos personalizados al menú:', preferences);
+            
+            // Remover estilos por defecto si existen
+            const defaultStyles = document.getElementById('menu-nav-default-styles');
+            if (defaultStyles) {
+                defaultStyles.remove();
+            }
             
             // Definir opciones de personalización
             const backgroundOptions = [
