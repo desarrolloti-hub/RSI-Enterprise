@@ -1,6 +1,6 @@
 // sw.js - Versión para notificaciones en segundo plano
 const CACHE_NAME = 'rsi-notifications-v3';
-const APP_ICON = 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png';
+const APP_ICON = '';
 
 // Instalación
 self.addEventListener('install', (event) => {
