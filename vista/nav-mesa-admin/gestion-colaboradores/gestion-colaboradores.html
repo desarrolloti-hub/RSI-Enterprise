@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Usuarios</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="gestion-colaboradores.css">
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Gestión de Colaboradores</h2>
+            </div>
+            <div class="header-controls">
+                <div class="buttons-row">
+                    <a href="../nuevo-colaborador/nuevo-colaborador.html" class="btn">
+                        <i class="fas fa-plus"></i>
+                        Nuevo Colaborador
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <!-- TABLA PARA ESCRITORIO -->
+            <table class="desktop-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Fecha Registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usuariosTableBody">
+                    <tr>
+                        <td colspan="6" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando usuarios...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- TARJETAS PARA MÓVIL -->
+            <div class="mobile-cards" id="mobileCardsContainer">
+                <!-- Las tarjetas se generarán dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SDKs de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+
+    <!-- Scripts propios -->
+    <script src="gestion-usuarios-admin.js"></script>
+
+    <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Formateador de fecha
+        function formatearFecha(timestamp) {
+            if (!timestamp) return 'Sin fecha';
+            const fecha = timestamp.toDate();
+            return fecha.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Cargar usuarios (excluyendo rol "user")
+        async function cargarUsuarios() {
+            const tbody = document.getElementById('usuariosTableBody');
+            const mobileContainer = document.getElementById('mobileCardsContainer');
+            
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Cargando usuarios...</p>
+                    </td>
+                </tr>
+            `;
+            mobileContainer.innerHTML = '';
+
+            try {
+                const snapshot = await db.collection('usuarios').get();
+                
+                // Filtrar usuarios con rol diferente a "user"
+                const usuariosFiltrados = [];
+                snapshot.forEach(doc => {
+                    const usuario = doc.data();
+                    const rolActual = usuario.rol || 'user';
+                    
+                    // Solo incluir usuarios que no tengan rol "user"
+                    if (rolActual !== 'user') {
+                        usuariosFiltrados.push({
+                            id: doc.id,
+                            ...usuario
+                        });
+                    }
+                });
+                
+                // Si no hay usuarios después del filtro
+                if (usuariosFiltrados.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-users"></i>
+                                <h3>No hay usuarios</h3>
+                                <p>No se encontraron usuarios con roles del sistema.</p>
+                            </td>
+                        </tr>
+                    `;
+                    mobileContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h3>No hay usuarios</h3>
+                            <p>No se encontraron usuarios con roles del sistema.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Generar tabla para escritorio
+                tbody.innerHTML = '';
+                usuariosFiltrados.forEach(usuario => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${usuario.id}</td>
+                            <td>${usuario.nombreCompleto || 'Sin nombre'}</td>
+                            <td>${usuario.email || 'Sin correo'}</td>
+                            <td>
+                                <select class="select-rol" data-id="${usuario.id}">
+                                    <option value="admin" ${usuario.rol === 'admin' ? 'selected' : ''}>Admin</option>
+                                    <option value="puntoVenta" ${usuario.rol === 'puntoVenta' ? 'selected' : ''}>Punto de Venta</option>
+                                    <option value="facturas" ${usuario.rol === 'facturas' ? 'selected' : ''}>Facturas</option>
+                                    <option value="colaborador" ${usuario.rol === 'colaborador' ? 'selected' : ''}>Colaborador</option>
+                                    <option value="admincolaborador" ${usuario.rol === 'admincolaborador' ? 'selected' : ''}>Admin Colaborador</option>
+                                </select>
+                            </td>
+                            <td>${formatearFecha(usuario.fechaRegistro)}</td>
+                            <td>
+                                <div class="card-actions">
+                                    <a href="../detalle-colaborador/detalle-colaborador.html?id=${usuario.id}" class="action-btn" title="Ver colaborador">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="action-btn delete" data-id="${usuario.id}" title="Deshabilitar acceso">
+                                        <i class="fas fa-user-slash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                // Generar tarjetas para móvil
+                mobileContainer.innerHTML = '';
+                usuariosFiltrados.forEach(usuario => {
+                    mobileContainer.innerHTML += `
+                        <div class="ticket-card">
+                            <div class="card-row">
+                                <span class="card-label">ID:</span>
+                                <span class="card-value">${usuario.id}</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">Nombre:</span>
+                                <span class="card-value">${usuario.nombreCompleto || 'Sin nombre'}</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">Correo:</span>
+                                <span class="card-value">${usuario.email || 'Sin correo'}</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">Rol:</span>
+                                <span class="card-value">
+                                    <select class="select-rol" data-id="${usuario.id}">
+                                        <option value="admin" ${usuario.rol === 'admin' ? 'selected' : ''}>Admin</option>
+                                        <option value="puntoVenta" ${usuario.rol === 'puntoVenta' ? 'selected' : ''}>Punto de Venta</option>
+                                        <option value="facturas" ${usuario.rol === 'facturas' ? 'selected' : ''}>Facturas</option>
+                                        <option value="colaborador" ${usuario.rol === 'colaborador' ? 'selected' : ''}>Colaborador</option>
+                                        <option value="admincolaborador" ${usuario.rol === 'admincolaborador' ? 'selected' : ''}>Admin Colaborador</option>
+                                    </select>
+                                </span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">Fecha Registro:</span>
+                                <span class="card-value">${formatearFecha(usuario.fechaRegistro)}</span>
+                            </div>
+                            <div class="card-actions">
+                                <a href="../detalle-colaborador/detalle-colaborador.html?id=${usuario.id}" class="action-btn" title="Ver colaborador">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="action-btn delete" data-id="${usuario.id}" title="Deshabilitar acceso">
+                                    <i class="fas fa-user-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                agregarEventListeners();
+
+            } catch (error) {
+                console.error('Error cargando usuarios:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error al cargar usuarios</h3>
+                            <p>No se pudieron cargar los usuarios. Intente nuevamente.</p>
+                        </td>
+                    </tr>
+                `;
+                mobileContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error al cargar usuarios</h3>
+                        <p>No se pudieron cargar los usuarios. Intente nuevamente.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Actualizar rol de usuario
+        async function actualizarRol(id, nuevoRol) {
+            try {
+                await db.collection('usuarios').doc(id).update({
+                    rol: nuevoRol
+                });
+                
+                // Mostrar SweetAlert personalizado
+                if (typeof showCustomSuccess !== 'undefined') {
+                    showCustomSuccess('¡Rol actualizado!', `El rol ha sido cambiado a ${nuevoRol}`);
+                } else {
+                    Swal.fire({
+                        title: '¡Rol actualizado!',
+                        text: `El rol ha sido cambiado a ${nuevoRol}`,
+                        icon: 'success',
+                        confirmButtonColor: '#FFD700',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (error) {
+                console.error('Error actualizando rol:', error);
+                if (typeof showCustomError !== 'undefined') {
+                    showCustomError('Error', 'No se pudo actualizar el rol');
+                } else {
+                    Swal.fire('Error', 'No se pudo actualizar el rol', 'error');
+                }
+            }
+        }
+
+        // Deshabilitar acceso de usuario
+        async function deshabilitarAcceso(id) {
+            try {
+                // Obtener el email del usuario para deshabilitarlo en Authentication
+                const userDoc = await db.collection('usuarios').doc(id).get();
+                if (!userDoc.exists) {
+                    throw new Error('Usuario no encontrado');
+                }
+                
+                const userData = userDoc.data();
+                const userEmail = userData.email;
+                
+                if (!userEmail) {
+                    throw new Error('No se pudo obtener el email del usuario');
+                }
+                
+                // Buscar usuario por email en Authentication
+                const userRecord = await auth.getUserByEmail(userEmail);
+                
+                if (userRecord) {
+                    // Deshabilitar usuario en Authentication
+                    await auth.updateUser(userRecord.uid, {
+                        disabled: true
+                    });
+                    
+                    // Actualizar estado en Firestore
+                    await db.collection('usuarios').doc(id).update({
+                        deshabilitado: true,
+                        fechaDeshabilitado: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Mostrar SweetAlert personalizado
+                    if (typeof showCustomSuccess !== 'undefined') {
+                        showCustomSuccess('¡Acceso deshabilitado!', 'El usuario ya no podrá acceder al sistema');
+                    } else {
+                        Swal.fire({
+                            title: '¡Acceso deshabilitado!',
+                            text: 'El usuario ya no podrá acceder al sistema',
+                            icon: 'success',
+                            confirmButtonColor: '#FFD700',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                    
+                    // Recargar la lista de usuarios
+                    cargarUsuarios();
+                } else {
+                    throw new Error('Usuario no encontrado en Authentication');
+                }
+                
+            } catch (error) {
+                console.error('Error deshabilitando acceso:', error);
+                if (typeof showCustomError !== 'undefined') {
+                    showCustomError('Error', 'No se pudo deshabilitar el acceso del usuario');
+                } else {
+                    Swal.fire('Error', 'No se pudo deshabilitar el acceso del usuario', 'error');
+                }
+            }
+        }
+
+        // Event listeners
+        function agregarEventListeners() {
+            // Deshabilitar acceso
+            document.querySelectorAll('.action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    
+                    // Mostrar SweetAlert de confirmación personalizado
+                    if (typeof showCustomConfirm !== 'undefined') {
+                        showCustomConfirm(
+                            '¿Deshabilitar acceso?',
+                            'El usuario no podrá acceder al sistema. Esta acción se puede revertir.',
+                            'Sí, deshabilitar',
+                            'Cancelar'
+                        ).then((result) => {
+                            if (result.isConfirmed) {
+                                deshabilitarAcceso(id);
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: '¿Deshabilitar acceso?',
+                            text: 'El usuario no podrá acceder al sistema. Esta acción se puede revertir.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Sí, deshabilitar',
+                            cancelButtonText: 'Cancelar',
+                            background: '#1d1d1d',
+                            color: '#FFD700'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                deshabilitarAcceso(id);
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Cambio de rol
+            document.querySelectorAll('.select-rol').forEach(select => {
+                select.addEventListener('change', () => {
+                    const id = select.dataset.id;
+                    const nuevoRol = select.value;
+                    actualizarRol(id, nuevoRol);
+                });
+            });
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarUsuarios();
+            
+            // Escuchar cambios en tiempo real
+            db.collection('usuarios').onSnapshot(() => {
+                cargarUsuarios();
+            });
+        });
+    </script>
+</body>
+</html>
