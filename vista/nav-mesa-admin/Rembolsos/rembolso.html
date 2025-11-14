@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial Global de Reembolso | RSI Enterprise</title>
@@ -9,13 +11,16 @@
 
 </head>
 <body>
+
+   <button class="reembolso-btn">Pedir Reembolso</button>
+
     <div class="attendance-container" id="reimbursementContainer">
         
         <div class="attendance-header">
             <h1>Historial Global de Reembolsos</h1>
             <p>Consulta todas las solicitudes de reembolso.</p>
         </div>
-
+               
         <!-- Resumen financiero -->
         <div class="financial-summary">
             <div class="summary-card">
@@ -46,7 +51,6 @@
                 </div>
             </div>
         </div>
-
         <div class="employee-info">
             <img src="https://ui-avatars.com/api/?name=RS&background=c84e4e&color=fff&size=128" alt="Empleado" class="employee-avatar" id="employeeAvatar">
             <div class="employee-details" id="employeeDetails">
@@ -693,6 +697,23 @@
             });
         }
     });
+
+    // Función para configurar el manejador de clics del botón de reembolso
+function setupReembolsoButtonRedirection() {
+    const reembolsoBtn = document.querySelector('.reembolso-btn');
+    
+    if (reembolsoBtn) {
+        reembolsoBtn.addEventListener('click', function() {
+            // REDIRECCIÓN USANDO JAVASCRIPT
+            window.location.href = 'pedir-rembolsos.html'; 
+            console.log('Redirigiendo a: pedir-rembolsos.html');
+        });
+    }
+}
+
+// Llama a esta función después de que el DOM esté completamente cargado.
+document.addEventListener('DOMContentLoaded', setupReembolsoButtonRedirection);
+
     </script>
 
     <!-- Scripts compatibles con el menú de navegación -->

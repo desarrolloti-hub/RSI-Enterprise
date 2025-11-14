@@ -882,3 +882,49 @@
     width: 100px;
     height: 100px;
 }
+
+
+.contenedor-principal-del-pedido {
+    position: relative;
+    padding-top: 60px; /* Ajusta este valor si el botón queda muy pegado */
+}
+/* 2. ESTILOS DE POSICIONAMIENTO DEL BOTÓN "Pedir Reembolso" */
+.reembolso-btn {
+    /* POSICIONAMIENTO ABSOLUTO AJUSTADO */
+    position: absolute;
+    top: 15px;      /* Más cerca del borde superior del contenedor */
+    right: 15px;    /* Margen desde el borde derecho */
+    z-index: 5;     /* Asegura que esté por encima del contenido */
+
+    /* APARIENCIA (usando tus variables de color) */
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    padding: 10px 15px;        /* Un poco más de padding para que destaque */
+    border: none;
+    border-radius: 8px;        /* Bordes más redondeados */
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Una sombra ligera para "levantarlo" */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; 
+}
+
+/* Estilo del Icono dentro del Botón */
+.reembolso-btn .icon {
+    margin-right: 8px; 
+    font-size: 18px; 
+}
+
+/* Efecto Hover */
+.reembolso-btn:hover {
+    background-color: var(--secondary-color) !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+    transform: translateY(-1px);
+}
+
+/* Efecto Active */
+.reembolso-btn:active {
+    transform: translateY(0); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
