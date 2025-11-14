@@ -53,66 +53,84 @@
      
     
     <!-- Paso 1: Selección de vehículo -->
-    <div class="form-step active" id="step-1-form">
-      <h2>Seleccionar Vehículo</h2>
-      
-      <div class="form-group">
-        <label for="vehicleSelect">Selecciona un vehículo:</label>
-        <select id="vehicleSelect">
-          <option value="">Cargando vehículos...</option>
-        </select>
-        </div>
-      
-        <div id="vehicleDetails" class="vehicle-details">
-          <!-- SECCIÓN DE SUBIDA DE IMÁGENES -->
-          <div class="image-upload-section">
-            <h2 class="section-title"><i class="fas fa-camera"></i> Evidencia Fotográfica (Máximo 5 imágenes)</h2>
-            <!-- Selector de método de captura -->
-            <div class="capture-method-selector">
-              <button type="button" class="capture-method-btn active" data-method="camera">
-                <i class="fas fa-camera"></i> Usar Cámara
-              </button>
-              <button type="button" class="capture-method-btn" data-method="upload">
-                <i class="fas fa-upload"></i> Subir Archivo
-              </button>
-            </div>
+<div class="form-step active" id="step-1-form">
+  <h2>Seleccionar Vehículo y Evidencia Fotográfica</h2>
+  
+  <div class="form-group">
+    <label for="vehicleSelect">Selecciona un vehículo:</label>
+    <select id="vehicleSelect">
+      <option value="">Cargando vehículos...</option>
+    </select>
+  </div>
+  
+  <!-- SECCIÓN DE EVIDENCIA FOTOGRÁFICA ESPECÍFICA -->
+  <div id="photoEvidenceSection" class="photo-evidence-section" style="display: none;">
+    <div class="detail-section">
+      <h3><i class="fas fa-search"></i> Detalles y Daños Observados</h3>
+      <p class="step-description">
+        Añade aquí cualquier daño existente (rayones, golpes, etc.) que veas en el vehículo.
+      </p>
+      <div class="detail-add-group">
+        <input type="text" id="detailInput" placeholder="Ej: Rayón en puerta derecha...">
+        <button type="button" class="btn-add-detail" id="addDetailBtn">
+          <i class="fas fa-plus"></i> Añadir
+        </button>
+      </div>
+      <ul id="detailList" class="detail-list">
+        </ul>
+    </div>
+    <h3><i class="fas fa-camera"></i> Evidencia Fotográfica del Estado Actual</h3>
+    <p class="step-description">Captura fotos de las siguientes partes del vehículo:</p>
+    
+    <!-- Selector de método de captura -->
+    <div class="capture-method-selector">
+      <button type="button" class="capture-method-btn active" data-method="camera">
+        <i class="fas fa-camera"></i> Usar Cámara
+      </button>
+      <button type="button" class="capture-method-btn" data-method="upload">
+        <i class="fas fa-upload"></i> Subir Archivo
+      </button>
+    </div>
 
-            <div class="image-grid" id="imageGrid">
-              <!-- Los 5 slots de imágenes se generarán aquí -->
-            </div>
+    
 
-            <!-- Modal para la cámara -->
-            <div id="cameraModal" class="camera-modal">
-              <div class="camera-modal-content">
-                <div class="camera-header">
-                  <h3>Tomar Foto</h3>
-                  <button class="close-camera">&times;</button>
-                </div>
-                <div class="camera-preview">
-                  <video id="cameraVideo" autoplay playsinline></video>
-                  <canvas id="cameraCanvas" style="display: none;"></canvas>
-                </div>
-                <div class="camera-controls">
-                  <button id="captureBtn" class="btn-capture">
-                    <i class="fas fa-camera"></i> Capturar Foto
-                  </button>
-                  <button id="retakeBtn" class="btn-retake" style="display: none;">
-                    <i class="fas fa-redo"></i> Volver a Tomar
-                  </button>
-                  <button id="usePhotoBtn" class="btn-use" style="display: none;">
-                    <i class="fas fa-check"></i> Usar Foto
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+    <!-- Grid de fotos específicas del vehículo -->
+    <div class="specific-photo-grid" id="specificPhotoGrid">
+      <!-- Las 5 fotos específicas se generarán aquí dinámicamente -->
+    </div>
+
+    <!-- Modal para la cámara -->
+    <div id="cameraModal" class="camera-modal">
+      <div class="camera-modal-content">
+        <div class="camera-header">
+          <h3 id="cameraModalTitle">Tomar Foto</h3>
+          <button class="close-camera">&times;</button>
         </div>
-        <div class="navigation-buttons">
-          <button class="btn btn-next" id="next-to-step-2">
-            Siguiente <i class="fas fa-arrow-right"></i>
+        <div class="camera-preview">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <canvas id="cameraCanvas" style="display: none;"></canvas>
+        </div>
+        <div class="camera-controls">
+          <button id="captureBtn" class="btn-capture">
+            <i class="fas fa-camera"></i> Capturar Foto
+          </button>
+          <button id="retakeBtn" class="btn-retake" style="display: none;">
+            <i class="fas fa-redo"></i> Volver a Tomar
+          </button>
+          <button id="usePhotoBtn" class="btn-use" style="display: none;">
+            <i class="fas fa-check"></i> Usar Foto
           </button>
         </div>
       </div>
+    </div>
+  </div>
+  
+  <div class="navigation-buttons">
+    <button class="btn btn-next" id="next-to-step-2" disabled>
+      Siguiente <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
        <!-- Paso 2: Selección de colaborador -->
     <div class="form-step" id="step-2-form">
       <h2>Seleccionar Colaborador Responsable</h2>
@@ -133,14 +151,9 @@
             <strong>Nombre:</strong> <span id="collaborator-name"></span>
           </div>
           <div class="detail-item">
-            <strong>Email:</strong> <span id="collaborator-email"></span>
-          </div>
-          <div class="detail-item">
             <strong>Departamento:</strong> <span id="collaborator-department"></span>
           </div>
-          <div class="detail-item">
-            <strong>Puesto:</strong> <span id="collaborator-position"></span>
-          </div>
+          
         </div>
       </div>
       
@@ -184,11 +197,6 @@
       <input type="number" id="kmSalida" placeholder="Ej: 15000" min="0" required>
     </div>
     
-    <div class="form-group">
-      <label for="kmRegreso">KM de Regreso:</label>
-      <input type="number" id="kmRegreso" placeholder="Se llenará al regreso" min="0" disabled>
-      <small class="help-text">Se completará al finalizar el viaje</small>
-    </div>
   </div>
   
   <div class="navigation-buttons">
@@ -211,6 +219,12 @@
       <!-- Se generará dinámicamente -->
     </div>
   </div>
+
+  <div class="form-group" >
+    <label for="documentos-observaciones">Observaciones / Situaciones (Documentos)</label>
+    <textarea id="documentos-observaciones" class="checklist-observaciones" 
+              placeholder="Escribe aquí tus observaciones..."></textarea>
+  </div>
   
   <div class="navigation-buttons">
     <button class="btn btn-prev" id="prev-to-step-3">
@@ -231,6 +245,12 @@
     <div class="checkbox-group" id="accesorios-checklist">
       <!-- Se generará dinámicamente -->
     </div>
+  </div>
+
+  <div class="form-group" >
+    <label for="accesorios-observaciones">Observaciones / Situaciones (Accesorios)</label>
+    <textarea id="accesorios-observaciones" class="checklist-observaciones" 
+              placeholder="Escribe aquí tus observaciones..."></textarea>
   </div>
   
   <div class="navigation-buttons">
@@ -253,6 +273,12 @@
       <!-- Se generará dinámicamente -->
     </div>
   </div>
+
+  <div class="form-group" >
+    <label for="seguridad-observaciones">Observaciones / Situaciones (Seguridad)</label>
+    <textarea id="seguridad-observaciones" class="checklist-observaciones" 
+              placeholder="Escribe aquí tus observaciones..."></textarea>
+  </div>
   
   <div class="navigation-buttons">
     <button class="btn btn-prev" id="prev-to-step-5">
@@ -273,6 +299,11 @@
     <div class="checkbox-group" id="equipamiento-checklist">
       <!-- Se generará dinámicamente -->
     </div>
+  </div>
+  <div class="form-group" >
+    <label for="equipamiento-observaciones">Observaciones / Situaciones (Equipamiento)</label>
+    <textarea id="equipamiento-observaciones" class="checklist-observaciones" 
+              placeholder="Escribe aquí tus observaciones..."></textarea>
   </div>
   
   <div class="navigation-buttons">
@@ -303,6 +334,10 @@
       <div class="summary-item">
         <div class="summary-label">Fecha y Hora:</div>
         <div class="summary-value" id="summary-fecha-hora"></div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Detalles y Daños Reportados:</div>
+        <div class="summary-value" id="summary-vehicle-details"></div>
       </div>
     </div>
     
@@ -342,10 +377,16 @@
       <h3>Evidencia Fotográfica</h3>
       <div class="summary-item">
         <div class="summary-label">Imágenes capturadas:</div>
-        <div class="summary-value" id="summary-imagenes"></div>
+        <div class="summary-photo-grid" id="summary-photo-grid"></div>
       </div>
     </div>
   </div>
+
+  <div class="summary-item">
+        <div class="summary-label">Detalles y Daños Reportados:</div>
+        <div class="summary-value" id="summary-details">
+          </div>
+    </div>
   
   <div class="navigation-buttons">
     <button class="btn btn-prev" id="prev-to-step-7">
@@ -363,20 +404,11 @@
 
 </div> 
 
-  <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
-  <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+  <script src="../js/navegacion-admin.js"></script>
+  <script src="../js/personalizacion-colores.js"></script>
   <script src="./crear-checklist.js"></script>
   
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.updateMenuStyles) {
-      // Llama a la función global para aplicar los estilos personalizados del menú
-      window.updateMenuStyles();
-    } else {
-      console.warn('La función updateMenuStyles no está disponible.');
-    }
-  });
-</script>
+ 
   
 </body>
 </html>

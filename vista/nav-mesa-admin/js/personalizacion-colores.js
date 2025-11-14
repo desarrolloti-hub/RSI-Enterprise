@@ -226,10 +226,10 @@ if (backgroundImage && backgroundImage.startsWith('data:image/')) {
             }
             
             /* Barras de progreso */
-            .progress-bar,
+            /* en caso de nesesitar quitar comentario .progress-bar,
             .bar-fill {
-                background-color: var(--primary-color) !important;
-            }
+                background-color: var(--primary-color) ;
+            }*/
             
             /* Bordes y separadores */
             .border-primary,
@@ -237,10 +237,11 @@ if (backgroundImage && backgroundImage.startsWith('data:image/')) {
                 border-color: var(--primary-color) !important;
             }
             
+              
             /* Estados de elementos */
             .active,
             .selected {
-                background-color: var(--primary-color) !important;
+            /* en caso de necesitar quitar el comentario  background-color: var(--secondary-color) !important; */
                 color: white !important;
             }
             
