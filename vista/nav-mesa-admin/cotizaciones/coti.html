@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise Quotation System - Listado</title>
+    
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="coti.css">
+    
+    <style>
+        /* Estilos específicos para elementos dinámicos/JS que no están en el CSS principal */
+        .loading-spinner { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: var(--card-bg, #fefefe); color: var(--text-color, #333); margin: 5% auto; padding: 20px; border-radius: 8px; width: 80%; max-width: 900px; }
+        .modal.show { display: block; }
+        .pdf-container { width: 100%; height: 600px; border: 1px solid var(--accent-color, #ddd); }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="container">
+                <h1>📋 Cotizaciones - RSI Enterprise</h1>
+                <div class="header-actions">
+                    <a href="cotizacion_formulario.html" target="_blank" class="btn btn-primary">
+                        <span>➕</span> Nueva Cotización
+                    </a>
+                    
+                    <a href="GraficasCoti.html" id="descargarTodasBtn" class="btn btn-secondary" style="display: none;">
+                        <span>📈</span> Graficas de Cotizaciones
+                    </a>
+
+                    <button id="resumenCuentasBtn" class="btn btn-info" style="display: none;">
+                        <span>📊</span> Resumen de Cuentas
+                    </button>
+
+                    <a href="../nav-operadores/gestion_Tickets.html">
+                        <button class="btn btn-primary">
+                            <span>🎫</span> Ver mis tickets
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="container">
+                <div class="search-section">
+                    <input type="text" id="buscarInput" placeholder="🔍 Buscar cotizaciones por número o cliente..." class="search-input">
+                </div>
+
+                <div class="table-section">
+                    <div class="table-header">
+                        <h2>📊 Cotizaciones Generadas</h2>
+                    </div>
+                    <div class="table-container">
+                        <table class="cotizaciones-table">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Descripción</th>
+                                    <th>Generado por:</th>
+                                    <th>Estatus</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cotizacionesTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div> 
+                <div id="pagination-controls" class="pagination-container"></div>
+            </div>
+        </main>
+        
+        <div id="modalPDF" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Vista Previa del PDF - Cotización</h2>
+                    <button id="cerrarPdfBtn" class="close-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="pdf-container" id="pdfViewer"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="confirmModal" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h2>⚠️ Confirmar Acción</h2>
+                    <button id="confirmCloseBtn" class="close-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage"></p>
+                    <div class="form-actions">
+                        <button id="confirmNo" class="btn btn-secondary">❌ No</button>
+                        <button id="confirmYes" class="btn btn-danger">✅ Sí</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="modalResumenCuentas" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>📊 Resumen de Cuentas</h2>
+                    <button id="cerrarResumenBtn" class="close-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="resumenFiltros" class="resumen-filtros">
+                        <button class="btn-filtro active" data-filtro="todos">Todos</button>
+                        <button class="btn-filtro" data-filtro="en proceso">En Proceso</button>
+                        <button class="btn-filtro" data-filtro="vendida">Vendidas</button>
+                        <button class="btn-filtro" data-filtro="rechazada">Rechazadas</button>
+                    </div>
+                    <div id="resumenTotales" class="resumen-totales">
+                        <h3 id="resumenTitulo">Total de Todas las Cotizaciones</h3>
+                        <p id="resumenSumaTotal" class="total-amount">$0.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>⏳ Procesando...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { 
+            initializeApp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, collection, getDocs, doc, updateDoc, 
+            deleteDoc, query, orderBy, setDoc, getDoc, where 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { 
+            getAuth, onAuthStateChanged 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // === CONFIGURACIÓN Y ESTADO ===
+        
+        // ** RUTA DE IMAGEN SOLICITADA **
+        const LOGO_URL = '../../css/img/Logo-RSI-OFICIAL.png';
+        let logoBase64Cache = null; 
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Variables de estado
+        let cotizaciones = [];
+        let filteredCotizaciones = [];
+        let currentPage = 1;
+        const rowsPerPage = 30;
+        let clientes = [];
+        let contadores = {};
+        let currentUser = null;
+        
+        // Elementos del DOM
+        const cotizacionesTableBody = document.getElementById('cotizacionesTableBody');
+        const buscarInput = document.getElementById('buscarInput');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resumenCuentasBtn = document.getElementById('resumenCuentasBtn');
+        const modalResumenCuentas = document.getElementById('modalResumenCuentas');
+        const cerrarResumenBtn = document.getElementById('cerrarResumenBtn');
+        const resumenFiltrosContainer = document.getElementById('resumenFiltros');
+        const modalPDF = document.getElementById('modalPDF');
+        const cerrarPdfBtn = document.getElementById('cerrarPdfBtn');
+        const pdfViewer = document.getElementById('pdfViewer');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmCloseBtn = document.getElementById('confirmCloseBtn');
+        const confirmNo = document.getElementById('confirmNo');
+        const confirmYes = document.getElementById('confirmYes');
+
+        // Constantes para el PDF 
+        const empresasDirecciones = { 
+            'RSI IXT': { nombre: 'RSI ENTERPRISE IXTAPALUCA', direccion: 'Av. Morelos 10, Pueblo San Francisco Acuautla, 56587 Ixtapaluca, Méx.', telefono: '+52 1 55 7690 8248', rfc: 'RSI1810319G0' },
+            'RSI NEZA': { nombre: 'RSI ENTERPRISE NEZAHUALCÓYOTL', direccion: '31 MZ102 LT20 EL SOL 57200', telefono: '+52 1 55 7690 8248', rfc: 'RSI1810319G0' }
+        };
+
+        // === UTILIDADES ===
+        
+        // ** FUNCIÓN CLAVE: Convierte la imagen de la URL a Base64 (para jsPDF) **
+        async function getBase64ImageFromURL(url) {
+            if (logoBase64Cache) return logoBase64Cache;
+            
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; 
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL('image/png');
+                    logoBase64Cache = dataURL; 
+                    resolve(dataURL);
+                };
+                img.onerror = (e) => {
+                    console.error("Error al cargar la imagen desde la ruta:", url, e);
+                    reject(new Error('No se pudo cargar la imagen del logo.'));
+                };
+                img.src = url;
+            });
+        }
+
+        function mostrarLoading(mostrar) { loadingSpinner.style.display = mostrar ? 'flex' : 'none'; }
+        function mostrarAlerta(mensaje, tipo = 'info') { 
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+            .fire({ icon: tipo, title: mensaje });
+        }
+        function formatearMoneda(cantidad) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad);
+        }
+        function descargarPDFLocal(pdfBlob, nombreArchivo) {
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        function agruparTecnologias(items) {
+            if (!items) return {}; 
+            
+            const grupos = {};
+            items.forEach(item => {
+                const categoria = item.categoria || 'OTRO';
+                if (!grupos[categoria]) grupos[categoria] = [];
+                grupos[categoria].push(item);
+            });
+            return grupos;
+        }
+
+        // === FUNCIONES DE FIREBASE Y LÓGICA DE TABLA ===
+
+        async function cargarInformacionUsuario(email) {
+            try {
+                const q = query(collection(db, 'colaboradores'), where("CORREO ELECTRÓNICO EMPRESARIAL", "==", email));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    currentUser.nombreCompleto = doc.data().NOMBRE || email;
+                } else {
+                    currentUser.nombreCompleto = email; 
+                }
+            } catch (error) {
+                console.error('Error al cargar información del usuario:', error);
+                currentUser.nombreCompleto = email; 
+            }
+        }
+        async function cargarContadores() { 
+            try {
+                const contadoresSnapshot = await getDocs(collection(db, 'contadoresCotizaciones'));
+                contadoresSnapshot.forEach((doc) => { contadores[doc.id] = doc.data().count || 0; });
+            } catch (error) { console.error('Error al cargar contadores:', error); }
+        }
+        
+        async function cargarClientes() { 
+            try {
+                const querySnapshot = await getDocs(collection(db, 'clientes'));
+                clientes = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const limpiarValor = (valor) => (!valor || ['N/A', 'undefined', 'null'].includes(valor)) ? '' : String(valor).trim();
+                    const direccionPartes = [limpiarValor(data.Calle), limpiarValor(data.Colonia), limpiarValor(data['Codigo Postal'])].filter(Boolean);
+                    const telefonoPartes = [limpiarValor(data.Telefono), limpiarValor(data.Movil)].filter(Boolean);
+                    return {
+                        id: doc.id,
+                        nombre: limpiarValor(data.Nombre) || 'Cliente sin nombre',
+                        nombreComercial: limpiarValor(data['Nombre Comercial']),
+                        rfc: limpiarValor(data.RFC),
+                        contacto1: direccionPartes.length > 0 ? direccionPartes.join(', ') : 'Dirección no disponible',
+                        telefono1: telefonoPartes.length > 0 ? telefonoPartes.join(' / ') : 'Teléfono no disponible'
+                    };
+                });
+            } catch (error) {
+                console.error('Error al cargar clientes:', error);
+            }
+        }
+
+        async function cargarCotizaciones() {
+            try {
+                const q = query(collection(db, 'cotizacionPdf'), orderBy('fechaCreacion', 'desc'));
+                const querySnapshot = await getDocs(q);
+                cotizaciones = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                filteredCotizaciones = [...cotizaciones];
+                currentPage = 1;
+                renderizarTablaCotizaciones();
+            } catch (error) {
+                console.error('Error al cargar cotizaciones:', error);
+                mostrarAlerta('❌ Error al cargar cotizaciones', 'error');
+            }
+        }
+
+        async function inicializarApp() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    mostrarLoading(true);
+                    await cargarInformacionUsuario(user.email);
+                    
+                    const nombresAutorizados = ["Sergio Rodriguez Murillo", "Tomás Ismael Rodriguez Murillo", "Emanuel Jesus Campa Ramirez"];
+                    if (currentUser && nombresAutorizados.includes(currentUser.nombreCompleto)) {
+                        document.getElementById('descargarTodasBtn').style.display = 'inline-block';
+                        document.getElementById('resumenCuentasBtn').style.display = 'inline-block';
+                    }
+
+                    await Promise.all([
+                        cargarClientes(),
+                        cargarContadores()
+                    ]);
+                    await cargarCotizaciones(); 
+
+                    mostrarLoading(false);
+                } else {
+                     Swal.fire({
+                        title: 'Acceso no autorizado',
+                        text: 'Debes iniciar sesión para acceder a esta función',
+                        icon: 'warning',
+                        confirmButtonText: 'Iniciar sesión'
+                    }).then(() => {
+                        window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                    });
+                }
+            });
+        }
+        
+        // PDF Generator (Implementa carga de imagen por ruta)
+        async function generarPDF(data) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            const pageWidth = pdf.internal.pageSize.getWidth(), pageHeight = pdf.internal.pageSize.getHeight(), margin = 15;
+            const textColor = '#000000', gray = '#6b7280', navy = '#0d2c54', lightGray = '#f5f5f5';
+            const formatearNumero = (num) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num).replace('MX', '').trim();
+            const colX = { desc: margin, unidad: margin + 90, cant: margin + 110, precio: margin + 130, total: margin + 160 };
+            let page = 1, y = 20;
+            const nuevaPagina = () => { pdf.addPage(); page++; y = 20; };
+            const piePagina = () => pdf.setFontSize(8).setTextColor(gray).text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            const categoriaDisplayMap = {
+                'CCTV': '📹 CCTV', 'DH': '🏠 DETECTOR DE HUMO', 'CA': '🔐 CONTROL DE ACCESOS',
+                'ALARMA INTRUSION': '🚨 ALARMA INTRUSIÓN', 'MULTIMEDIA': '📺 MULTIMEDIA', 
+                'REDES': '🛜 REDES TRANSPORTE DE DATOS', 'OTRO': '📦 OTRO',
+                'AI': '🚨 ALARMA INTRUSIÓN', 'ALARMA': '🚨 ALARMA INTRUSIÓN'
+            };
+            
+            // ** SOLUCIÓN DEL LOGO: Carga asíncrona de la ruta y conversión a Base64 **
+            try {
+                const logoData = await getBase64ImageFromURL(LOGO_URL);
+                pdf.addImage(logoData, 'PNG', pageWidth - margin - 40, margin, 40, 40);
+            } catch (e) { 
+                console.warn('No se pudo cargar el logo desde la ruta:', e); 
+            }
+            // -------------------------------------------------------------------------
+            
+            pdf.setFontSize(10).setTextColor(navy).text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
+            pdf.setFontSize(8).setTextColor(gray).text(data.empresaDireccion || "", margin, y + 10).text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, y + 15);
+            y += 25;
+            pdf.setFontSize(14).setTextColor(navy).text("COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
+            pdf.setFontSize(9).setTextColor(gray).text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, pageWidth / 2, y + 7, { align: 'center' });
+            y += 20;
+            if (data.cotizacionDescripcion && data.cotizacionDescripcion.trim().length > 0) {
+                pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'bold').text("DESCRIPCIÓN:", margin, y); y += 5;
+                pdf.setFontSize(9).setTextColor(textColor).setFont('helvetica', 'normal');
+                const descLines = pdf.splitTextToSize(data.cotizacionDescripcion.trim(), pageWidth - 2 * margin);
+                descLines.forEach(line => { pdf.text(line, margin, y); y += 5; });
+                y += 5;
+            }
+            pdf.setFontSize(9).setTextColor(textColor).text(`Cliente: ${data.clienteNombre}`, margin, y); y += 5;
+            pdf.text(`RFC: ${data.clienteRFC || 'N/E'}`, margin, y); y += 5; pdf.text(`Dirección: ${data.clienteDireccion}`, margin, y); y += 10;
+            const tipoCotizacionMap = { 'implementacion': 'Implementación', 'proyecto': 'Proyecto', 'servicio': 'Servicio' };
+            let infoPago = `Pago: ${data.tipoCredito || 'N/E'}`;
+            if (data.tipoCredito === 'credito' && data.diasCredito) infoPago += ` (${data.diasCredito} días)`;
+            const info = [`Tipo: ${tipoCotizacionMap[data.tipoCotizacion] || 'N/E'}`, `Vigencia: ${data.cotizacionVigencia} días`, `Moneda: ${data.cotizacionMoneda}`, infoPago].join(" | ");
+            pdf.text(info, margin, y); y += 10;
+            
+            const grupos = agruparTecnologias(data.items); 
+            Object.entries(grupos).forEach(([categoria, items]) => {
+                const textoCompleto = categoriaDisplayMap[categoria] || categoria;
+                const displayCategoria = textoCompleto.replace(/^(.*?)\s/, '').trim();
+                if (y > pageHeight - 70) { piePagina(); nuevaPagina(); }
+                pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+                pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold').text(displayCategoria, pageWidth / 2, y + 8, { align: 'center' });
+                y += 14;
+                pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 8, 'F');
+                pdf.setFontSize(8).setFont('helvetica', 'normal').text("DESCRIPCIÓN", colX.desc, y + 5).text("UNIDAD", colX.unidad, y + 5, { align: 'center' }).text("CANT.", colX.cant, y + 5, { align: 'right' }).text("P. UNIT.", colX.precio, y + 5, { align: 'right' }).text("TOTAL", colX.total, y + 5, { align: 'right' });
+                y += 10;
+                items.forEach((item, index) => {
+                    const descLines = pdf.splitTextToSize(item.descripcion, colX.unidad - colX.desc - 5);
+                    const itemHeight = Math.max(descLines.length * 5, 10) + 2;
+                    if (y + itemHeight > pageHeight - 20) { piePagina(); nuevaPagina(); }
+                    if (index % 2 === 0) pdf.setFillColor(lightGray).rect(margin, y, pageWidth - 2 * margin, itemHeight, 'F');
+                    pdf.setTextColor(textColor);
+                    descLines.forEach((line, i) => pdf.text(line, colX.desc, y + 5 + (i * 5)));
+                    pdf.text(item.tipoTecnologia.slice(0, 4), colX.unidad, y + 5, { align: 'center' });
+                    pdf.text(item.cantidad.toString(), colX.cant, y + 5, { align: 'right' });
+                    pdf.text(formatearNumero(item.precio), colX.precio, y + 5, { align: 'right' });
+                    pdf.text(formatearNumero(item.total), colX.total, y + 5, { align: 'right' });
+                    pdf.setDrawColor(200, 200, 200).line(margin, y + itemHeight, pageWidth - margin, y + itemHeight);
+                    y += itemHeight;
+                });
+                y += 2;
+            });
+            const tableStartX = colX.total - 82, valueColX = tableStartX + 70;
+            pdf.setFontSize(9).setTextColor(textColor).text("Subtotal:", tableStartX, y + 5, { align: 'left' }).text(formatearNumero(data.subtotal), valueColX, y + 5, { align: 'left' }); y += 5;
+            if (data.descuentoMonto > 0) { pdf.text(`Descuento (${data.descuento}%):`, tableStartX, y + 5, { align: 'left' }).text(`-${formatearNumero(data.descuentoMonto)}`, valueColX, y + 5, { align: 'left' }); y += 5; }
+            pdf.text(`IVA (${data.impuesto}%):`, tableStartX, y + 5, { align: 'left' }).text(formatearNumero(data.impuestoMonto), valueColX, y + 5, { align: 'left' }); y += 7;
+            pdf.setFont('helvetica', 'bold').setTextColor(navy).text("TOTAL:", tableStartX, y + 5, { align: 'left' }).text(`${formatearNumero(data.totalFinal)} ${data.cotizacionMoneda}`, valueColX, y + 5, { align: 'left' });
+            if (data.terminos) {
+                y += 20;
+                if (y > pageHeight - 50) { piePagina(); nuevaPagina(); }
+                pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'normal').text("TÉRMINOS Y CONDICIONES", margin, y); y += 5;
+                pdf.setTextColor(textColor);
+                data.terminos.split('\n').forEach(term => {
+                    if (term.trim()) pdf.splitTextToSize(term, pageWidth - 2 * margin).forEach(line => {
+                        if (y > pageHeight - 20) { piePagina(); nuevaPagina(); }
+                        pdf.text(line, margin, y); y += 5;
+                    });
+                });
+            }
+            piePagina();
+            return pdf.output('blob');
+        }
+
+        // === FUNCIÓN CORREGIDA PARA VISTA PREVIA DEL PDF ===
+        async function verPDF(id) {
+            try {
+                mostrarLoading(true);
+                
+                // Buscar la cotización
+                const cotizacion = cotizaciones.find(c => c.id === id);
+                if (!cotizacion) {
+                    mostrarAlerta('❌ No se encontró la cotización', 'error');
+                    return;
+                }
+
+                // Generar el PDF
+                const pdfBlob = await generarPDF(cotizacion);
+                
+                // Crear URL para el PDF
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                // Mostrar el PDF en el modal
+                pdfViewer.innerHTML = `<iframe src="${pdfUrl}" width="100%" height="100%" frameborder="0"></iframe>`;
+                
+                // Mostrar el modal
+                modalPDF.classList.add('show');
+                
+            } catch (error) {
+                console.error('Error al generar vista previa del PDF:', error);
+                mostrarAlerta('❌ Error al generar vista previa del PDF', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // --- Lógica de la tabla (Paginación, Filtros, Renderizado) ---
+
+        function filtrarCotizaciones() {
+            const searchTerm = buscarInput.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                filteredCotizaciones = [...cotizaciones];
+            } else {
+                filteredCotizaciones = cotizaciones.filter(coti => 
+                    coti.cotizacionNumero.toLowerCase().includes(searchTerm) ||
+                    coti.clienteNombre.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            currentPage = 1;
+            renderizarTablaCotizaciones();
+        }
+
+        function setupPagination() {
+            const paginationContainer = document.getElementById('pagination-controls');
+            paginationContainer.innerHTML = '';
+            const pageCount = Math.ceil(filteredCotizaciones.length / rowsPerPage);
+            if (pageCount <= 1) return;
+            
+            const createButton = (text, onClick, disabled = false) => {
+                const button = document.createElement('button');
+                button.className = 'pagination-button';
+                button.innerText = text;
+                button.disabled = disabled;
+                button.addEventListener('click', onClick);
+                return button;
+            };
+            
+            paginationContainer.appendChild(createButton('Anterior', () => { 
+                if (currentPage > 1) { 
+                    currentPage--; 
+                    renderizarTablaCotizaciones(); 
+                } 
+            }, currentPage === 1));
+            
+            for (let i = 1; i <= pageCount; i++) {
+                const pageButton = createButton(i, () => { 
+                    currentPage = i; 
+                    renderizarTablaCotizaciones(); 
+                });
+                if (i === currentPage) pageButton.classList.add('active');
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            paginationContainer.appendChild(createButton('Siguiente', () => { 
+                if (currentPage < pageCount) { 
+                    currentPage++; 
+                    renderizarTablaCotizaciones(); 
+                } 
+            }, currentPage === pageCount));
+        }
+
+        function renderizarTablaCotizaciones() {
+            cotizacionesTableBody.innerHTML = '';
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const paginatedItems = filteredCotizaciones.slice(startIndex, startIndex + rowsPerPage);
+
+            if (paginatedItems.length === 0) {
+                cotizacionesTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">${buscarInput.value ? 'No se encontraron cotizaciones.' : 'Cargando cotizaciones...'}</td></tr>`;
+                setupPagination();
+                return;
+            }
+
+            paginatedItems.forEach(coti => {
+                const estatusInfo = { 
+                    'vendida': { color: '#22c55e', textoBase: '✅ Vendida' }, 
+                    'en proceso': { color: '#f59e0b', textoBase: '⏳ En Proceso' }, 
+                    'rechazada': { color: '#ef4444', textoBase: '❌ Rechazada' } 
+                };
+                const estatusActual = coti.estatus || 'en proceso';
+                const info = estatusInfo[estatusActual];
+                let textoCompleto = info.textoBase;
+                if (estatusActual === 'vendida') textoCompleto += ` - ${coti.pagoEstatus === 'pagada' ? 'Pagada' : 'Pendiente'}`;
+                else if (estatusActual === 'rechazada' && coti.motivoRechazo) textoCompleto += `: ${coti.motivoRechazo}`;
+                
+                const row = document.createElement('tr');
+                row.style.borderLeft = `5px solid ${info.color}`;
+                row.innerHTML = `
+                    <td><strong>${coti.cotizacionNumero}</strong></td>
+                    <td>${coti.clienteNombre}</td>
+                    <td>${new Date(coti.cotizacionFecha).toLocaleDateString('es-MX')}</td>
+                    <td><strong>${formatearMoneda(coti.totalFinal)}</strong></td>
+                    <td>${coti.cotizacionDescripcion || 'N/A'}</td>
+                    <td><small>${coti.generadoPor?.nombre || 'N/A'}</small></td>
+                    <td>
+                        <div class="estatus-container" style="background-color: ${info.color}1A; border: 1px solid ${info.color}; padding: 8px; border-radius: 8px;">
+                            <span style="color: ${info.color}; font-weight: bold; font-size: 0.8rem;">${textoCompleto}</span>
+                            <select class="estatus-select" data-id="${coti.id}" style="width:100%;">
+                                <option value="en proceso" ${estatusActual === 'en proceso' ? 'selected' : ''}>En Proceso</option>
+                                <option value="vendida" ${estatusActual === 'vendida' ? 'selected' : ''}>Vendida</option>
+                                <option value="rechazada" ${estatusActual === 'rechazada' ? 'selected' : ''}>Rechazada</option>
+                            </select>
+                            <div class="additional-status-fields ${estatusActual === 'vendida' ? 'show' : ''}">
+                                <select class="pago-estatus-select" data-id="${coti.id}" style="width:100%;">
+                                    <option value="pendiente" ${coti.pagoEstatus === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                                    <option value="pagada" ${coti.pagoEstatus === 'pagada' ? 'selected' : ''}>Pagada</option>
+                                </select>
+                            </div>
+                            <div class="additional-status-fields ${estatusActual === 'rechazada' ? 'show' : ''}">
+                                <textarea class="motivo-rechazo-input" data-id="${coti.id}" placeholder="Motivo..." style="width:100%;">${coti.motivoRechazo || ''}</textarea>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="acciones">
+                        <button class="btn btn-small btn-primary ver-pdf" data-id="${coti.id}"><span>👁️</span></button>
+                        <button class="btn btn-small btn-success descargar-pdf" data-id="${coti.id}"><span>⬇️</span></button>
+                        <a href="cotizacion_formulario.html?id=${coti.id}" target="_blank" class="btn btn-small btn-secondary">
+                            <span>✏️</span>
+                        </a>
+                        <button class="btn btn-small btn-danger eliminar-cotizacion" data-id="${coti.id}"><span>🗑️</span></button>
+                    </td>
+                `;
+                cotizacionesTableBody.appendChild(row);
+            });
+            
+            // Event listeners para los botones
+            cotizacionesTableBody.querySelectorAll('.ver-pdf').forEach(btn => 
+                btn.addEventListener('click', (e) => verPDF(e.currentTarget.dataset.id))
+            );
+            
+            cotizacionesTableBody.querySelectorAll('.descargar-pdf').forEach(btn => 
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const cotizacion = cotizaciones.find(c => c.id === id);
+                    if (cotizacion) { 
+                        mostrarLoading(true); 
+                        try { 
+                            const pdfBlob = await generarPDF(cotizacion); 
+                            descargarPDFLocal(pdfBlob, `cotizacion-${cotizacion.cotizacionNumero}.pdf`); 
+                        } catch (error) { 
+                            mostrarAlerta('Error al descargar PDF', 'error'); 
+                        } finally { 
+                            mostrarLoading(false); 
+                        } 
+                    }
+                })
+            );
+            
+            cotizacionesTableBody.querySelectorAll('.eliminar-cotizacion').forEach(btn => 
+                btn.addEventListener('click', (e) => confirmarEliminacion(e.currentTarget.dataset.id))
+            );
+            
+            cotizacionesTableBody.querySelectorAll('.estatus-select').forEach(select => 
+                select.addEventListener('change', (e) => {
+                    const id = e.target.dataset.id;
+                    const nuevoEstatus = e.target.value;
+                    const vendidaDiv = e.target.nextElementSibling;
+                    const rechazadaDiv = e.target.nextElementSibling.nextElementSibling;
+                    if (vendidaDiv) vendidaDiv.classList.toggle('show', nuevoEstatus === 'vendida');
+                    if (rechazadaDiv) rechazadaDiv.classList.toggle('show', nuevoEstatus === 'rechazada');
+
+                    actualizarEstatusCotizacion(id, { estatus: nuevoEstatus });
+                })
+            );
+            
+            cotizacionesTableBody.querySelectorAll('.pago-estatus-select').forEach(select => 
+                select.addEventListener('change', (e) => 
+                    actualizarEstatusCotizacion(e.target.dataset.id, { pagoEstatus: e.target.value })
+                )
+            );
+            
+            cotizacionesTableBody.querySelectorAll('.motivo-rechazo-input').forEach(textarea => 
+                textarea.addEventListener('blur', (e) => 
+                    actualizarEstatusCotizacion(e.target.dataset.id, { motivoRechazo: e.target.value })
+                )
+            );
+
+            setupPagination();
+        }
+
+        function confirmarEliminacion(id) {
+            const cotizacion = cotizaciones.find(c => c.id === id);
+            if (!cotizacion) return;
+            
+            document.getElementById('confirmMessage').textContent = 
+                `¿Estás seguro de que deseas eliminar la cotización ${cotizacion.cotizacionNumero}?`;
+            
+            confirmModal.classList.add('show');
+            
+            const handleConfirm = async () => {
+                confirmYes.removeEventListener('click', handleConfirm);
+                await eliminarCotizacion(id);
+                confirmModal.classList.remove('show');
+            };
+            
+            confirmYes.addEventListener('click', handleConfirm, { once: true });
+        }
+
+        async function eliminarCotizacion(id) {
+            try {
+                mostrarLoading(true);
+                await deleteDoc(doc(db, 'cotizacionPdf', id));
+                mostrarAlerta('✅ Cotización eliminada correctamente', 'success');
+                await cargarCotizaciones();
+            } catch (error) {
+                console.error('Error al eliminar cotización:', error);
+                mostrarAlerta('❌ Error al eliminar cotización', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        async function actualizarEstatusCotizacion(id, dataToUpdate) {
+            try {
+                await updateDoc(doc(db, 'cotizacionPdf', id), dataToUpdate);
+                mostrarAlerta('✅ Estatus actualizado correctamente', 'success');
+                
+                // Actualizar localmente
+                const index = cotizaciones.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    cotizaciones[index] = { ...cotizaciones[index], ...dataToUpdate };
+                    filteredCotizaciones = [...cotizaciones];
+                    renderizarTablaCotizaciones();
+                }
+            } catch (error) {
+                console.error('Error al actualizar estatus:', error);
+                mostrarAlerta('❌ Error al actualizar estatus', 'error');
+            }
+        }
+
+        function mostrarModalResumen() {
+            modalResumenCuentas.classList.add('show');
+            calcularYMostrarResumen('todos');
+        }
+
+        function handleFiltroClick(e) {
+            if (e.target.classList.contains('btn-filtro')) {
+                setActiveFilter(e.target);
+                const filtro = e.target.dataset.filtro;
+                calcularYMostrarResumen(filtro);
+            }
+        }
+
+        function setActiveFilter(activeButton) {
+            document.querySelectorAll('.btn-filtro').forEach(btn => 
+                btn.classList.remove('active')
+            );
+            activeButton.classList.add('active');
+        }
+
+        function calcularYMostrarResumen(filtro = 'todos') {
+            let cotizacionesFiltradas = cotizaciones;
+            
+            if (filtro !== 'todos') {
+                cotizacionesFiltradas = cotizaciones.filter(coti => 
+                    coti.estatus === filtro
+                );
+            }
+            
+            const sumaTotal = cotizacionesFiltradas.reduce((total, coti) => 
+                total + (parseFloat(coti.totalFinal) || 0), 0
+            );
+            
+            const titulos = {
+                'todos': 'Total de Todas las Cotizaciones',
+                'en proceso': 'Total de Cotizaciones en Proceso',
+                'vendida': 'Total de Cotizaciones Vendidas',
+                'rechazada': 'Total de Cotizaciones Rechazadas'
+            };
+            
+            document.getElementById('resumenTitulo').textContent = titulos[filtro] || titulos.todos;
+            document.getElementById('resumenSumaTotal').textContent = formatearMoneda(sumaTotal);
+        }
+
+        // === EVENT LISTENERS PRINCIPALES ===
+        document.addEventListener('DOMContentLoaded', inicializarApp);
+        buscarInput.addEventListener('input', filtrarCotizaciones);
+        resumenCuentasBtn.addEventListener('click', mostrarModalResumen);
+        cerrarResumenBtn.addEventListener('click', () => modalResumenCuentas.classList.remove('show'));
+        resumenFiltrosContainer.addEventListener('click', handleFiltroClick);
+        cerrarPdfBtn.addEventListener('click', () => modalPDF.classList.remove('show'));
+        confirmCloseBtn.addEventListener('click', () => confirmModal.classList.remove('show'));
+        confirmNo.addEventListener('click', () => confirmModal.classList.remove('show'));
+    </script>
+
+    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+</body>
+</html>
