@@ -5,124 +5,48 @@
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check-List Vehiculos</title>
+    <title>Historial de Vehiculos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./checklist-automoviles.css">    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-car"></i> Checklist Automóviles</h1>
+            <h1><i class="fas fa-history"></i> Historial de checklists</h1>
             <div class="header-actions">
-                <button class="btn btn-primary" id="btnCreateChecklist">
+                <button class="btn-primary" id="btnCreateChecklist">
                 <i class="fas fa-plus-circle"></i> Crear Checklist
                 </button>
-                <button class="btn btn-secondary" id="btnViewAll">
+                <button class="btn-secondary" id="btnViewAll">
                     <i class="fas fa-list"></i> Consultar Todo
                 </button>
             </div>
-            <div class="filters">
-                    <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Buscar vehículos...">
-                    </div>
-                    <div>
-                        <select id="sortBy" class="sort-select">
-                            <option value="name">Ordenar por nombre</option>
-                            <option value="brand">Ordenar por marca</option>
-                            <option value="model">Ordenar por modelo</option>
-                        </select>
-                    </div>
-                </div>
+                
+        </div>
+        <div class="sort-box">
+            <select id="limitSelect">
+                <option value="5"> Ver ultimos 5 </option>
+                <option value="10"> Ver ultimos 10 </option>
+                <option value="15"> Ver ultimos 15 </option>
+            </select>
         </div>
         
-        <div id="checklistsContainer" class="checklists-container">
+        <div id="checklistsContainer" class="checklists-grid">
             <!-- Los checklists se cargarán aquí dinámicamente -->
             <div class="loading">
                 <div class="spinner"></div>
+                <p>Cargando checklists...</p>
             </div>
         </div>
     </div>
     <div id="createChecklistFlow" class="create-flow" style="display:none;"></div>
 
-    
-    <!-- Modal para crear/editar checklist -->
-    <div class="modal-overlay" id="modalOverlay" style="display: none;">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Crear Checklist</h2>
-                <button class="modal-close" id="modalClose">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="checklistForm">
-                    <div class="form-group">
-                        <label class="form-label" for="vehicleModel">Modelo del Vehículo</label>
-                        <input type="text" class="form-control" id="vehicleModel" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="vehiclePlate">Placa</label>
-                        <input type="text" class="form-control" id="vehiclePlate" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="checklistDate">Fecha de Revisión</label>
-                        <input type="date" class="form-control" id="checklistDate" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="checklistStatus">Estado</label>
-                        <select class="form-select" id="checklistStatus">
-                            <option value="pending">Pendiente</option>
-                            <option value="in-progress">En Progreso</option>
-                            <option value="completed">Completado</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Items del Checklist</label>
-                        <div class="checklist-items" id="checklistItems">
-                            <!-- Los items se agregarán dinámicamente -->
-                            <div class="checklist-item">
-                                <input type="checkbox" class="item-checkbox" id="item1">
-                                <label class="item-label" for="item1">Revisión de luces</label>
-                            </div>
-                            <div class="checklist-item">
-                                <input type="checkbox" class="item-checkbox" id="item2">
-                                <label class="item-label" for="item2">Nivel de aceite</label>
-                            </div>
-                            <div class="checklist-item">
-                                <input type="checkbox" class="item-checkbox" id="item3">
-                                <label class="item-label" for="item3">Presión de neumáticos</label>
-                            </div>
-                            <div class="checklist-item">
-                                <input type="checkbox" class="item-checkbox" id="item4">
-                                <label class="item-label" for="item4">Estado de frenos</label>
-                            </div>
-                            <div class="checklist-item">
-                                <input type="checkbox" class="item-checkbox" id="item5">
-                                <label class="item-label" for="item5">Líquido de frenos</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="checklistNotes">Observaciones</label>
-                        <textarea class="form-control" id="checklistNotes" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="btnCancel">Cancelar</button>
-                <button class="btn btn-primary" id="btnSave">Guardar</button>
-            </div>
-        </div>
-    </div>
+
     
         
 
