@@ -1,4 +1,6 @@
-// fcm-manager.js - VERSIÓN CORREGIDA (sin imports)
+// fcm-manager.js - VERSIÓN COMPATIBLE (Firebase v8)
+// Usamos Firebase v8 que es compatible con scripts tradicionales
+
 class FCMManager {
     constructor() {
         this.messaging = null;
@@ -31,7 +33,7 @@ class FCMManager {
                 
                 const token = await this.getFCMToken();
                 
-                if (token && token !== 'no-token-available') {
+                if (token) {
                     this.setupMessageHandler();
                     this.isInitialized = true;
                     console.log('🎉 FCM inicializado correctamente');
@@ -41,7 +43,6 @@ class FCMManager {
                 console.warn('❌ Permiso de notificación denegado:', permission);
                 return false;
             }
-            return false;
         } catch (error) {
             console.error('💥 Error inicializando FCM:', error);
             return false;
@@ -63,10 +64,23 @@ class FCMManager {
         try {
             // Registrar el Service Worker
             const registration = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/'
+                scope: '/',
+                updateViaCache: 'none'
             });
             
             console.log('✅ Service Worker registrado:', registration.scope);
+            
+            // Esperar a que esté activo
+            if (registration.installing) {
+                await new Promise(resolve => {
+                    registration.installing.addEventListener('statechange', (e) => {
+                        if (e.target.state === 'activated') {
+                            console.log('✅ Service Worker activado');
+                            resolve();
+                        }
+                    });
+                });
+            }
             
             return registration;
         } catch (error) {
@@ -79,8 +93,8 @@ class FCMManager {
         try {
             console.log('🔑 Obteniendo token FCM...');
             
-            // VAPID KEY PÚBLICA - LA QUE YA TIENES
-            const vapidKey = 'BBAJbrpPYPfdMPToBY-FF_Y_yQP6h8TdAyiLOsQW02-ujvLRE5ppsGHieYkkF22uKj4muKSbDkj_FaPyP15VG_rE';
+            // VAPID KEY - REEMPLAZA CON TU KEY PÚBLICA
+            const vapidKey = 'BBAJbrpPYPfdMPToBY-FF_Y_yQP6h8TdAyiLOsQW02-ujvLRE5ppsGHieYkkF22uKj4muKSbDkj_FaPyP15VG_rE'; // ← REEMPLAZA ESTO
             
             this.currentToken = await this.messaging.getToken({ 
                 vapidKey: vapidKey
@@ -185,5 +199,5 @@ class FCMManager {
     }
 }
 
-// Crear instancia global
+// Crear instancia global para acceso fácil
 const fcmManager = new FCMManager();
