@@ -3,7 +3,6 @@
 <head>
      <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
-    <link rel="manifest" href="../../manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tickets | RSI Enterprise</title>
@@ -2238,7 +2237,7 @@
             // Registrar Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('../../sw.js')
+                    navigator.serviceWorker.register('/sw.js')
                         .then(registration => {
                             console.log('ServiceWorker registrado:', registration.scope);
                             navigator.serviceWorker.addEventListener('message', event => {

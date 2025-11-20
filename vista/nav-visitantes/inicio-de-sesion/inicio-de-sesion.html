@@ -366,21 +366,17 @@
                 }
             });
         });
+        // Después de iniciar sesión exitosamente, agregar:
+setTimeout(async () => {
+    try {
+        const fcmModule = await import('/fcm-manager.js');
+        await fcmModule.default.initialize();
+    } catch (error) {
+        console.log('FCM no disponible:', error);
+    }
+}, 1000);
     </script>
     <!-- Scripts para la funcionalidad del login Firebase -->
      <script src="../recursosDinamicos/footer.js"></script>
-     <script>
-        // Registrar Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async () => {
-                try {
-                    const registration = await navigator.serviceWorker.register('/sw.js');
-                    console.log('SW registrado:', registration);
-                } catch (error) {
-                    console.error('Error registrando SW:', error);
-                }
-            });
-        }
-        </script>
 </body>
 </html>
