@@ -675,7 +675,7 @@
                             <a href="../manuales/manuales.html" class="menu-nav-btn">
                                 <i class="fas fa-file-alt"></i> Ver manuales
                             </a>
-                            <a href="/404.html" class="menu-nav-btn">
+                            <a href="../gestion-colaboradores/gestion-colaboradores.html" class="menu-nav-btn">
                                 <i class="fas fa-users-cog"></i> Colaboradores
                             </a>
                         </div>
