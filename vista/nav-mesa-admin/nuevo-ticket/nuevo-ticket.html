@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSI Enterprise - Nuevo Ticket</title>
-    <script type="module" src="/vista/js/fcm-manager.js"></script>
+    <script type="module" src="/fcm-manager.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -240,7 +240,6 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Estado de la aplicación
     const appState = {
         currentUser: null,
         colaboradores: [],
@@ -250,6 +249,34 @@
 
     // Variables de control para el estado del guardado
     let isSaving = false;
+
+   async function initializeFCM() {
+    try {
+        console.log('🔧 Inicializando FCM...');
+        
+        // fcmManager ya está disponible globalmente
+        if (typeof fcmManager !== 'undefined') {
+            const success = await fcmManager.initialize();
+            
+            if (success) {
+                console.log('✅ FCM inicializado correctamente');
+                // Probar notificación después de 3 segundos
+                setTimeout(() => {
+                    fcmManager.testNotification();
+                }, 3000);
+            }
+            
+            return success;
+        } else {
+            console.warn('❌ fcmManager no está disponible');
+            return false;
+        }
+        
+    } catch (error) {
+        console.warn('⚠️ FCM no pudo inicializarse:', error);
+        return false;
+    }
+}
 
     // =================================================================================
     // FUNCIONES PRINCIPALES
@@ -542,59 +569,41 @@
     return idTicket;
 }
 
-// En nuevo-ticket.html - Reemplaza la función sendPushNotification
-
-    async function sendPushNotification(colaboradorIds, ticketData) {
+// Reemplaza la función sendPushNotification completa:
+async function sendPushNotification(colaboradorIds, ticketData) {
     try {
-        console.log('📤 Enviando notificaciones push...');
-        
-        // Obtener tokens FCM de los colaboradores
-        const tokens = [];
-        
-        for (const colaboradorId of colaboradorIds) {
-            const userDoc = await db.collection('usuarios').doc(colaboradorId).get();
-            if (userDoc.exists && userDoc.data().fcmToken) {
-                tokens.push(userDoc.data().fcmToken);
-                console.log(`✅ Token encontrado para: ${userDoc.data().NOMBRE || colaboradorId}`);
-            } else {
-                console.log(`❌ Sin token para: ${colaboradorId}`);
-            }
-        }
+        console.log('📤 Enviando notificaciones...');
 
-        if (tokens.length === 0) {
-            console.log('⚠️ No hay tokens disponibles para notificar');
-            return;
-        }
-
-        console.log(`🎯 Enviando a ${tokens.length} dispositivos`);
-
-        // ENCOLAR NOTIFICACIÓN PARA ENVÍO EN SEGUNDO PLANO
-        const notificationPayload = {
-            tokens: tokens,
-            title: '🎫 Nuevo Ticket Asignado - RSI',
-            body: `Tienes un nuevo ticket: ${ticketData.titulo}`,
-            data: {
-                ticketId: ticketData.idTicket,
-                type: 'new_ticket',
-                url: `https://rsienterprise.web.app/vista/nav-operadores/gestion_Tickets.html?ticketId=${ticketData.idTicket}`,
-                click_action: 'FLUTTER_NOTIFICATION_CLICK'
-            },
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'pending'
-        };
-
-        await db.collection('notificationsQueue').add(notificationPayload);
-        console.log('✅ Notificación encolada para envío en segundo plano');
-
-        // MOSTRAR NOTIFICACIÓN LOCAL COMO BACKUP
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Ticket Creado', {
-                body: `Ticket ${ticketData.idTicket} asignado a ${tokens.length} colaboradores`,
-                icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png',
-                tag: ticketData.idTicket
+        // Para testing, enviar notificación local
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'SHOW_NOTIFICATION',
+                notification: {
+                    title: '🎫 Nuevo Ticket - RSI',
+                    body: `Ticket: ${ticketData.titulo}`,
+                    icon: '/vista/css/img/logoApp-192.png',
+                    badge: '/vista/css/img/logoApp-192.png',
+                    data: { 
+                        ticketId: ticketData.idTicket,
+                        type: 'new_ticket'
+                    },
+                    actions: [
+                        {
+                            action: 'open',
+                            title: 'Abrir Ticket'
+                        }
+                    ]
+                }
+            });
+            console.log('✅ Notificación enviada al Service Worker');
+        } else {
+            // Fallback
+            new Notification('🎫 Nuevo Ticket', {
+                body: `Ticket ${ticketData.idTicket} creado: ${ticketData.titulo}`,
+                icon: '/vista/css/img/logoApp-192.png'
             });
         }
-        
+
     } catch (error) {
         console.error('❌ Error enviando notificación:', error);
     }

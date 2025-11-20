@@ -7,160 +7,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+           <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="GraficasCoti.css">
 
-        :root {
-            --primary-bg: #f4f7fa;
-            --card-bg: #ffffff;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --brand-color: #0d2c54;
-            --brand-accent: #3b82f6;
-            --border-color: #e5e7eb;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--primary-bg);
-            color: var(--text-primary);
-            margin: 0;
-        }
-
-        .header {
-            background-color: var(--card-bg);
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .header h1 {
-            color: var(--brand-color);
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 1.75rem;
-            padding: 2rem;
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-
-        .chart-card {
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            box-shadow: var(--shadow-md);
-            padding: 1.5rem;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .chart-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 350px;
-            width: 100%;
-        }
-        
-        .chart-container canvas {
-            cursor: pointer;
-        }
-
-        .chart-card h2 {
-            margin-top: 0;
-            color: var(--text-primary);
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            flex-shrink: 0;
-        }
-        
-        /* Estilos del Modal */
-        .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.5); animation: fadeIn 0.3s ease-out;
-        }
-        .modal.show { display: flex; justify-content: center; align-items: center; }
-        .modal-content {
-            background-color: var(--primary-bg); margin: auto; padding: 2rem; border: 1px solid var(--border-color);
-            width: 90%; max-width: 900px; border-radius: 0.75rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            position: relative; animation: slideIn 0.3s ease-out; display: flex; flex-direction: column;
-        }
-        #modalPDF .modal-content { max-width: 1200px; height: 90vh; }
-        .modal-header {
-            border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .modal-header h2 { margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--brand-color); }
-        
-        .modal-header .btn-close-modal {
-            background-color: var(--brand-color); color: white; border: none; padding: 0.5rem 1rem;
-            border-radius: 0.375rem; cursor: pointer; font-size: 0.9rem; font-weight: 500;
-            transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem;
-        }
-        .modal-header .btn-close-modal:hover { background-color: #1f3d64; }
-
-        .modal-body { overflow-y: auto; flex-grow: 1; }
-        .coti-list { list-style: none; padding: 0; }
-        .coti-item {
-            display: flex; justify-content: space-between; align-items: center; padding: 1rem;
-            background-color: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 0.5rem; margin-bottom: 0.75rem; transition: background-color 0.2s;
-        }
-        .coti-item:hover { background-color: #f9fafb; }
-        .coti-info { display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 1rem; width: 85%; align-items: center; }
-        .coti-info span { color: var(--text-secondary); font-size: 0.9rem; }
-        .coti-info strong { color: var(--text-primary); font-weight: 500; }
-        .coti-actions .btn-view {
-            background-color: var(--brand-accent); color: white; border: none; padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem; cursor: pointer; font-size: 1.25rem; transition: background-color 0.2s;
-        }
-        .coti-actions .btn-view:hover { background-color: #2563eb; }
-        .pdf-container { width: 100%; height: 100%; }
-        .loading-spinner {
-            display: none; justify-content: center; align-items: center; position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); z-index: 9999;
-        }
-        .spinner {
-            border: 6px solid #f3f3f3; border-top: 6px solid var(--brand-color);
-            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-       
-        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    
-    .btn-regresar {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-    text-decoration: none;
-    border-radius: 5px;
-    font-family: sans-serif;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
-
-.btn-regresar:hover {
-    background-color: #0056b3;
-}
-    </style>
 </head>
 <body>
 
@@ -186,7 +42,7 @@
             <div class="chart-container"><canvas id="cotizacionesPorMesChart"></canvas></div>
         </div>
         <div class="chart-card">
-            <h2>💰 Valor Total Vendido por Colaborador</h2>
+            <h2>💰 Valor Total por Colaborador</h2>
             <div class="chart-container"><canvas id="valorPorUsuarioChart"></canvas></div>
         </div>
         <div class="chart-card">
@@ -241,7 +97,7 @@
         const monthMap = { 'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11 };
 
         // --- Configuración de Logo y Términos para el PDF ---
-        const LOGO_PATH = '../css/img/Logo-RSI-OFICIAL.png'; // ¡REEMPLAZA ESTO CON LA RUTA A TU LOGO!
+        const LOGO_PATH = '../../css/img/Logo-RSI-OFICIAL.png'; // ¡REEMPLAZA ESTO CON LA RUTA A TU LOGO!
         const LOGO_WIDTH = 40; // Ancho del logo en mm
         const LOGO_HEIGHT = 40; // Alto del logo en mm
 
@@ -523,5 +379,7 @@
             }
         }
     </script>
+    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
 </body>
 </html>

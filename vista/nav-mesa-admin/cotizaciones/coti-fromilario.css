@@ -1,0 +1,533 @@
+/* ===========================================================
+   coti.css - ESTILOS COMPLETOS PARA FORMULARIO DE COTIZACIÓN
+   =========================================================== */
+
+/* --- 1. RESET Y VARIABLES BASE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background-color, #f3f4f6) !important;
+    color: var(--text-color, #333);
+    transition: all 0.3s ease;
+    min-height: 100vh;
+    overflow-x: hidden; /* Prevenir scroll horizontal global */
+}
+
+/* --- 2. ESTRUCTURA DE PÁGINA (EL ANTES LLAMADO MODAL) --- */
+
+/* El contenedor principal fluye con la página */
+.modal {
+    position: relative !important;
+    display: block !important;
+    width: 100%;
+    height: auto !important;
+    background: transparent !important;
+    padding: 20px 0;
+    z-index: 1;
+}
+
+/* La tarjeta principal del formulario */
+.modal-content {
+    color: var(--text-color, #333);
+    border-radius: 12px;
+    width: 95%;
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    box-shadow: var(--card-shadow, 0 4px 20px rgba(0, 0, 0, 0.08));
+    border: 1px solid var(--accent-color, #e5e7eb);
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Encabezado con gradiente */
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color, #1e3a8a), var(--secondary-color, #3b82f6));
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: white !important;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 40px; /* Espacio amplio en escritorio */
+}
+
+/* --- 3. FORMULARIOS Y SECCIONES --- */
+
+.form-section {
+    display: grid;
+    gap: 25px;
+}
+
+.section-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--accent-color, #e5e7eb);
+    border-radius: 10px;
+    padding: 25px;
+    position: relative;
+}
+
+/* Bordes de colores para identificar secciones */
+.section-card.empresa { border-left: 5px solid #3b82f6; }
+.section-card.cliente { border-left: 5px solid #10b981; }
+.section-card.cotizacion { border-left: 5px solid #f59e0b; }
+.section-card.productos { border-left: 5px solid #8b5cf6; }
+.section-card.totales { border-left: 5px solid #ef4444; }
+
+.section-card h3 {
+    margin-bottom: 20px;
+    color: var(--primary-color, #1e3a8a);
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--accent-color, #eee);
+    padding-bottom: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-color, #4b5563);
+}
+
+input, select, textarea {
+    padding: 12px;
+    border: 1px solid var(--accent-color, #d1d5db);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background-color: var(--card-bg, #fff);
+    color: var(--text-color, #333);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.1);
+}
+
+input[readonly] {
+    background-color: rgba(0,0,0,0.05);
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+/* --- 4. BUSCADOR DE CLIENTES --- */
+.cliente-search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.cliente-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--card-bg, white);
+    border: 1px solid var(--primary-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.cliente-option {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--accent-color, #eee);
+}
+
+.cliente-option:hover {
+    background-color: var(--accent-color, #f3f4f6);
+}
+
+.cliente-option.manual {
+    background-color: rgba(var(--primary-color), 0.1);
+    border-top: 2px solid var(--primary-color);
+    font-weight: bold;
+}
+
+/* --- 5. TABLA DE ITEMS (ESCRITORIO) --- */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--accent-color, #e5e7eb);
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px; /* Asegura que no se rompa en vista de tabla */
+}
+
+.items-table th {
+    background-color: rgba(0,0,0,0.05);
+    color: var(--text-color);
+    font-weight: 700;
+    padding: 12px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.items-table td {
+    padding: 8px;
+    border-top: 1px solid var(--accent-color, #e5e7eb);
+}
+
+.items-table input, .items-table select {
+    padding: 8px;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    background: transparent;
+}
+
+.items-table input:focus, .items-table select:focus,
+.items-table input:hover, .items-table select:hover {
+    background-color: var(--card-bg);
+    border-color: var(--accent-color);
+}
+
+.drag-handle { cursor: move; text-align: center; font-size: 1.2rem; color: #aaa; }
+.dragging { opacity: 0.5; background-color: #e0f2fe !important; }
+
+/* --- 6. TOTALES Y ACCIONES --- */
+.totales-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.totales-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 1rem;
+}
+
+.totales-row input {
+    width: 100px;
+    text-align: right;
+}
+
+.total-final {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    border-top: 2px solid var(--accent-color);
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--accent-color);
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color, #2563eb), var(--secondary-color, #1d4ed8));
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background-color: var(--accent-color, #6b7280);
+    color: white;
+}
+
+.btn-danger { background-color: #ef4444; color: white; }
+
+.credit-options {
+    display: none;
+    background-color: rgba(255, 193, 7, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+    margin-top: 10px;
+    grid-column: 1 / -1;
+}
+
+/* --- 7. LOADING SPINNER --- */
+.loading-spinner {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center; align-items: center;
+    z-index: 2000;
+    flex-direction: column;
+}
+
+.spinner {
+    width: 50px; height: 50px;
+    border: 5px solid rgba(255,255,255,0.3);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.loading-spinner p { color: white; margin-top: 15px; font-weight: bold; }
+
+/* ===========================================================
+   📱 MEDIA QUERIES (MÓVIL - ARREGLOS DEFINITIVOS)
+   =========================================================== */
+@media (max-width: 768px) {
+    
+    /* 1. ESTRUCTURA GENERAL COMPACTA */
+    .modal { padding: 10px 0 !important; }
+    .modal-content {
+        width: 98% !important;
+        margin: 0 auto 20px auto !important;
+        border-radius: 8px !important;
+    }
+    .modal-header { padding: 15px !important; }
+    .modal-header h2 { font-size: 1.2rem !important; max-width: 80%; }
+    .modal-body { padding: 15px !important; /* Arregla el desborde */ }
+    
+    .section-card { padding: 15px !important; }
+    .form-grid { grid-template-columns: 1fr !important; } /* Todo en 1 columna */
+    
+    /* Inputs seguros */
+    input, select, textarea {
+        font-size: 16px !important; /* Evita zoom en iOS */
+        width: 100% !important;
+    }
+
+    /* 2. TABLA DE PRODUCTOS -> TARJETAS (CARDS) */
+    .items-table, .items-table thead, .items-table tbody, .items-table th, .items-table td, .items-table tr {
+        display: block;
+        min-width: 0 !important;
+    }
+    
+    .items-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    .items-table tr {
+        margin-bottom: 15px;
+        border: 1px solid var(--accent-color);
+        border-radius: 8px;
+        background: var(--card-bg);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        padding: 10px;
+    }
+    
+    .items-table td {
+        border: none;
+        position: relative;
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 5px;
+        padding-bottom: 15px; /* Espacio para el input */
+    }
+    
+    /* Etiquetas simuladas para las tarjetas */
+    .items-table td:before {
+        content: attr(data-label); /* Necesitaría data-label en HTML, pero usaremos nth-of-type */
+        display: block;
+        font-weight: 700;
+        margin-bottom: 5px;
+        font-size: 0.8rem;
+        color: var(--primary-color);
+        text-transform: uppercase;
+    }
+
+    /* Mapeo manual de etiquetas para los items */
+    .items-table td:nth-of-type(1) { display: none; } /* Ocultar Drag handle en móvil */
+    .items-table td:nth-of-type(2):before { content: "Categoría"; }
+    .items-table td:nth-of-type(3):before { content: "Unidad"; }
+    .items-table td:nth-of-type(4):before { content: "Descripción"; }
+    .items-table td:nth-of-type(5):before { content: "Cantidad"; }
+    .items-table td:nth-of-type(6):before { content: "Precio Unit."; }
+    .items-table td:nth-of-type(7):before { content: "Total"; }
+    .items-table td:nth-of-type(8) { text-align: center; padding-bottom: 0; } /* Botón eliminar */
+
+    .items-table input, .items-table select {
+        background-color: rgba(0,0,0,0.03); /* Fondo sutil para inputs en cards */
+        border: 1px solid var(--accent-color);
+    }
+    
+    .item-total {
+        font-size: 1.2rem;
+        text-align: right;
+        display: block;
+        color: #15803d;
+    }
+
+    /* 3. BOTONES EN MÓVIL */
+    .form-actions {
+        flex-direction: column-reverse; /* Guardar arriba, Cancelar abajo */
+        gap: 10px;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 15px;
+    }
+}
+
+/* ===========================================================
+   VISTA PREVIA PDF: MODO "APP NATIVA" (FULL SCREEN)
+   =========================================================== */
+@media (max-width: 768px) {
+    /* Contenedor a pantalla completa real, tapando todo */
+    #modalPDF {
+        padding: 0 !important;
+        background: #000 !important;
+        z-index: 99999 !important; /* Encima del menú flotante */
+        display: block !important;
+        position: fixed !important;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+    }
+
+    #modalPDF .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Header oscuro compacto */
+    #modalPDF .modal-header {
+        height: 50px !important;
+        min-height: 50px !important;
+        padding: 0 15px !important;
+        background: #2d2d2d !important;
+        border-bottom: 1px solid #444 !important;
+        flex-shrink: 0;
+    }
+
+    #modalPDF .modal-header h2 {
+        font-size: 0.95rem !important;
+        font-weight: 500;
+        color: #e0e0e0 !important;
+        margin: 0;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 85%;
+    }
+
+    /* Cuerpo full screen sin scroll */
+    #modalPDF .modal-body {
+        padding: 0 !important;
+        margin: 0 !important;
+        flex: 1;
+        height: calc(100vh - 50px) !important;
+        background-color: #525659;
+        overflow: hidden;
+        display: flex;
+    }
+
+    #modalPDF .pdf-container {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        margin: 0 !important;
+        display: flex;
+    }
+    
+    #modalPDF iframe {
+        width: 100vw !important;
+        height: 100% !important;
+        border: none !important;
+        display: block;
+    }
+
+    /* Botón cerrar sutil */
+    #modalPDF .close-btn {
+        width: 30px; height: 30px;
+        font-size: 20px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+    }
+}

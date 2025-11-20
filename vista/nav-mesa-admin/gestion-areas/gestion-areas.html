@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Áreas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ESTILOS BASE - SERÁN SOBREESCRITOS POR personalizacion-colores.js */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6C43E0;
+            --secondary-color: #5a35c7;
+            --accent-color: #8B5FEB;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .main-c {
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-title-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .header .title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            color: white;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .filters-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .buttons-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-container {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-width: 200px;
+            position: relative;
+        }
+
+        .filter-container i {
+            color: white;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .filter-container input,
+        .filter-container select {
+            border: none;
+            background: transparent;
+            color: white;
+            outline: none;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .filter-container input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .search-legend {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.75rem;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .filter-container:focus-within .search-legend {
+            opacity: 1;
+        }
+
+        .btn {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            border-color: #c0392b;
+        }
+
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+            border-color: #2ecc71;
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+            border-color: #f39c12;
+        }
+
+        .btn-warning:hover {
+            background: #d35400;
+            border-color: #d35400;
+        }
+
+        /* ESTILOS PARA TABLA Y TARJETAS */
+        .table-container {
+            padding: 25px;
+            overflow-x: auto;
+        }
+
+        .desktop-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-cards {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .area-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .card-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .card-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 100px;
+        }
+
+        .card-value {
+            flex: 1;
+            text-align: right;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .area-info {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .area-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .area-info-label {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .area-info-value {
+            color: var(--text-color);
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background: rgba(var(--primary-color), 0.05);
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background: #e8f5e8;
+            color: #2ecc71;
+        }
+
+        .badge-warning {
+            background: #fff8e1;
+            color: #f39c12;
+        }
+
+        .badge-danger {
+            background: #ffeaea;
+            color: #e74c3c;
+        }
+
+        .badge-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .badge-info {
+            background: #e3f2fd;
+            color: #2196f3;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin: 0 3px;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .action-btn.delete {
+            color: #e74c3c;
+        }
+
+        .action-btn.delete:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .action-btn.edit {
+            color: #f39c12;
+        }
+
+        .action-btn.edit:hover {
+            background: #f39c12;
+            color: white;
+        }
+
+        .action-btn.view {
+            color: #3498db;
+        }
+
+        .action-btn.view:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        /* Botones discretos para móvil */
+        .mobile-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            color: var(--primary-color);
+            font-size: 1rem;
+            margin: 0 2px;
+            opacity: 0.8;
+        }
+
+        .mobile-action-btn:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .mobile-action-btn.delete {
+            color: #e74c3c;
+        }
+
+        .mobile-action-btn.edit {
+            color: #f39c12;
+        }
+
+        .mobile-action-btn.view {
+            color: #3498db;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-color);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .loading p {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* ESTILOS PARA FORMULARIO SWEETALERT */
+        .swal2-form-container {
+            text-align: left;
+            max-width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(108, 67, 224, 0.2);
+        }
+
+        /* Subareas styles */
+        .subareas-container {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(0,0,0,0.02);
+        }
+
+        .subarea-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .subarea-item input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 6px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .subarea-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .subarea-remove:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .subarea-add {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .no-subareas {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* RESPONSIVE - CORREGIDO */
+        /* ESCRITORIO: Mostrar tabla, ocultar tarjetas */
+        @media (min-width: 769px) {
+            .desktop-table {
+                display: table;
+            }
+            .mobile-cards {
+                display: none !important;
+            }
+        }
+
+        /* MÓVIL: Ocultar tabla, mostrar tarjetas */
+        @media (max-width: 768px) {
+            .desktop-table {
+                display: none !important;
+            }
+            .mobile-cards {
+                display: flex !important;
+            }
+
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header .title {
+                font-size: 1.5rem;
+            }
+
+            .filters-row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .filter-container {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .buttons-row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 250px;
+                justify-content: center;
+            }
+
+            .table-container {
+                padding: 15px;
+            }
+
+            .area-card {
+                padding: 15px;
+            }
+
+            .card-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .card-value {
+                text-align: left;
+                width: 100%;
+            }
+
+            .action-btn {
+                padding: 6px;
+                font-size: 1rem;
+            }
+
+            /* Botones discretos en móvil */
+            .card-actions .btn {
+                width: auto;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+
+            .card-actions .btn span {
+                display: none;
+            }
+
+            .card-actions .btn i {
+                margin-right: 0;
+            }
+
+            /* Información de área en móvil */
+            .area-info {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header .title {
+                font-size: 1.3rem;
+            }
+
+            .filter-container {
+                min-width: auto;
+            }
+
+            .filter-container input,
+            .filter-container select {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .table-container {
+                padding: 10px;
+            }
+
+            .loading, .empty-state {
+                padding: 40px 15px;
+            }
+
+            .loading i, .empty-state i {
+                font-size: 2.5rem;
+            }
+
+            /* Botones aún más discretos en móvil pequeño */
+            .card-actions .btn {
+                padding: 6px 8px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Gestión de Áreas</h2>
+            </div>
+            <div class="header-controls">
+                <div class="buttons-row">
+                    <button class="btn btn-primary" id="btnNuevaArea">
+                        <i class="fas fa-plus"></i>
+                        Nueva Área
+                    </button>
+                </div>
+                <div class="filters-row">
+                    <div class="filter-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar área...">
+                        <div class="search-legend">
+                            Busca por nombre, descripción o subáreas
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="loadingState" class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Cargando áreas...</p>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-folder-open"></i>
+                <h3>No hay áreas registradas</h3>
+                <p>Comienza creando tu primera área para organizar a los colaboradores.</p>
+                <button class="btn btn-primary" id="btnEmptyNuevaArea" style="margin-top: 20px;">
+                    <i class="fas fa-plus"></i>
+                    Crear Primera Área
+                </button>
+            </div>
+
+            <!-- Vista de escritorio - TABLA -->
+            <table class="desktop-table" id="areasTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Subáreas</th>
+                        <th>Creado Por</th>
+                        <th>Última Modificación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="areasTableBody">
+                    <!-- Las áreas se cargarán aquí dinámicamente -->
+                </tbody>
+            </table>
+
+            <!-- Vista móvil - TARJETAS -->
+            <div class="mobile-cards" id="areasCards">
+                <!-- Las tarjetas de áreas se cargarán aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SDKs de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+
+    <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Variables globales
+        let areas = [];
+        let editingAreaId = null;
+        let currentUser = null;
+
+        // Elementos del DOM
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        const areasTable = document.getElementById('areasTable');
+        const areasTableBody = document.getElementById('areasTableBody');
+        const areasCards = document.getElementById('areasCards');
+        const searchInput = document.getElementById('searchInput');
+        const btnNuevaArea = document.getElementById('btnNuevaArea');
+        const btnEmptyNuevaArea = document.getElementById('btnEmptyNuevaArea');
+
+        // Funciones principales
+        function init() {
+            // Esperar a que se cargue la información del usuario desde navegacion-admin.js
+            esperarUsuarioYIniciar();
+        }
+
+        function esperarUsuarioYIniciar() {
+            // Intentar obtener el usuario cada 500ms hasta que esté disponible
+            const intervalo = setInterval(() => {
+                const usuario = obtenerUsuarioActual();
+                if (usuario && usuario.nombre !== 'Usuario Desconocido') {
+                    clearInterval(intervalo);
+                    currentUser = usuario;
+                    cargarAreas();
+                    configurarEventListeners();
+                    actualizarVistaResponsive();
+                }
+            }, 500);
+
+            // Timeout de seguridad después de 5 segundos
+            setTimeout(() => {
+                clearInterval(intervalo);
+                if (!currentUser) {
+                    console.warn('No se pudo obtener información del usuario después de 5 segundos');
+                    currentUser = { nombre: 'Sistema', email: 'sistema@rsi.com', id: 'system' };
+                    cargarAreas();
+                    configurarEventListeners();
+                    actualizarVistaResponsive();
+                }
+            }, 5000);
+        }
+
+        function configurarEventListeners() {
+            // Botones para abrir modal
+            btnNuevaArea.addEventListener('click', () => abrirModalCrear());
+            btnEmptyNuevaArea.addEventListener('click', () => abrirModalCrear());
+            
+            // Búsqueda
+            searchInput.addEventListener('input', filtrarAreas);
+            
+            // Escuchar cambios de tamaño de ventana
+            window.addEventListener('resize', actualizarVistaResponsive);
+        }
+
+        // Obtener información del usuario actual desde navegacion-admin.js
+        function obtenerUsuarioActual() {
+            // PRIMERO: Intentar obtener del estado del menú (navegacion-admin.js)
+            if (typeof menuState !== 'undefined' && menuState.userData) {
+                const userData = menuState.userData;
+                if (userData.nombre && userData.nombre !== 'Cargando...') {
+                    return {
+                        nombre: userData.nombre,
+                        email: userData.correoEmpresarial || userData.email,
+                        id: userData.id
+                    };
+                }
+            }
+
+            // SEGUNDO: Buscar en la colección de colaboradores usando el email del usuario autenticado
+            const user = auth.currentUser;
+            if (user && user.email) {
+                // Buscar en colaboradores por correo electrónico
+                buscarColaboradorPorEmail(user.email)
+                    .then(colaborador => {
+                        if (colaborador) {
+                            currentUser = {
+                                nombre: colaborador.NOMBRE || colaborador.nombre,
+                                email: user.email,
+                                id: user.uid
+                            };
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('Error al buscar colaborador:', error);
+                    });
+            }
+
+            // TERCERO: Intentar obtener del auth de Firebase
+            if (user) {
+                return {
+                    nombre: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    id: user.uid
+                };
+            }
+            
+            // ÚLTIMO: Usuario por defecto si no se puede obtener
+            return {
+                nombre: 'Usuario Desconocido',
+                email: 'desconocido@rsi.com',
+                id: 'unknown'
+            };
+        }
+
+        // Buscar colaborador por email en la colección de colaboradores
+        async function buscarColaboradorPorEmail(email) {
+            try {
+                const snapshot = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    return doc.data();
+                }
+                
+                // Si no encuentra con correo empresarial, buscar con correo personal
+                const snapshotPersonal = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO PERSONAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (!snapshotPersonal.empty) {
+                    const doc = snapshotPersonal.docs[0];
+                    return doc.data();
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error al buscar colaborador:', error);
+                return null;
+            }
+        }
+
+        // Formatear fecha
+        function formatearFecha(fecha) {
+            if (!fecha) return 'N/A';
+            
+            try {
+                const date = fecha.toDate();
+                return date.toLocaleDateString('es-MX', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return 'Fecha inválida';
+            }
+        }
+
+        // Actualizar vista responsive
+        function actualizarVistaResponsive() {
+            const anchoVentana = window.innerWidth;
+            const esMovil = anchoVentana <= 768;
+            
+            if (esMovil) {
+                // En móvil: ocultar tabla, mostrar tarjetas
+                areasTable.style.display = 'none';
+                areasCards.style.display = 'flex';
+            } else {
+                // En escritorio: mostrar tabla, ocultar tarjetas
+                areasTable.style.display = 'table';
+                areasCards.style.display = 'none';
+            }
+        }
+
+        // Cargar áreas desde Firestore
+        async function cargarAreas() {
+            try {
+                mostrarLoading(true);
+                
+                const snapshot = await db.collection('areasRSI').orderBy('fechaCreacion', 'desc').get();
+                areas = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    areas.push({
+                        id: doc.id,
+                        ...data,
+                        // Asegurar que las fechas estén presentes
+                        fechaCreacion: data.fechaCreacion || null,
+                        fechaActualizacion: data.fechaActualizacion || data.fechaCreacion || null,
+                        creadoPor: data.creadoPor || 'Sistema',
+                        actualizadoPor: data.actualizadoPor || data.creadoPor || 'Sistema'
+                    });
+                });
+                
+                mostrarAreas(areas);
+                
+            } catch (error) {
+                console.error('Error al cargar áreas:', error);
+                mostrarError('Error al cargar las áreas');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // Mostrar áreas en la interfaz
+        function mostrarAreas(areasMostrar) {
+            // Limpiar tablas y tarjetas
+            areasTableBody.innerHTML = '';
+            areasCards.innerHTML = '';
+            
+            if (areasMostrar.length === 0) {
+                areasTable.style.display = 'none';
+                areasCards.style.display = 'none';
+                emptyState.style.display = 'flex';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            actualizarVistaResponsive(); // Asegurar que se muestre la vista correcta
+            
+            // Generar filas de tabla para escritorio
+            areasMostrar.forEach(area => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${area.nombre}</td>
+                    <td>${area.descripcion || 'Sin descripción'}</td>
+                    <td>
+                        ${area.subareas && area.subareas.length > 0 
+                            ? `<span class="badge badge-secondary">${area.subareas.length} subárea(s)</span>` 
+                            : '<span class="badge badge-warning">Sin subáreas</span>'}
+                    </td>
+                    <td>
+                        <div><strong>${area.creadoPor}</strong></div>
+                        <small class="text-muted">${formatearFecha(area.fechaCreacion)}</small>
+                    </td>
+                    <td>
+                        <div><strong>${area.actualizadoPor}</strong></div>
+                        <small class="text-muted">${formatearFecha(area.fechaActualizacion)}</small>
+                    </td>
+                    <td>
+                        <button class="action-btn view" title="Ver detalles" onclick="verArea('${area.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit" title="Editar área" onclick="editarArea('${area.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete" title="Eliminar área" onclick="eliminarArea('${area.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                areasTableBody.appendChild(row);
+            });
+            
+            // Generar tarjetas para móvil
+            areasMostrar.forEach(area => {
+                const card = document.createElement('div');
+                card.className = 'area-card';
+                
+                card.innerHTML = `
+                    <div class="card-row">
+                        <span class="card-label">Nombre:</span>
+                        <span class="card-value">${area.nombre}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Descripción:</span>
+                        <span class="card-value">${area.descripcion || 'Sin descripción'}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Subáreas:</span>
+                        <span class="card-value">
+                            ${area.subareas && area.subareas.length > 0 
+                                ? `<span class="badge badge-secondary">${area.subareas.length} subárea(s)</span>` 
+                                : '<span class="badge badge-warning">Sin subáreas</span>'}
+                        </span>
+                    </div>
+                    <div class="area-info">
+                        <div class="area-info-item">
+                            <span class="area-info-label">Creado por:</span>
+                            <span class="area-info-value">${area.creadoPor}</span>
+                        </div>
+                        <div class="area-info-item">
+                            <span class="area-info-label">Fecha creación:</span>
+                            <span class="area-info-value">${formatearFecha(area.fechaCreacion)}</span>
+                        </div>
+                        <div class="area-info-item">
+                            <span class="area-info-label">Última modificación:</span>
+                            <span class="area-info-value">${formatearFecha(area.fechaActualizacion)}</span>
+                        </div>
+                        <div class="area-info-item">
+                            <span class="area-info-label">Modificado por:</span>
+                            <span class="area-info-value">${area.actualizadoPor}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" onclick="verArea('${area.id}')" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                            <span>Ver</span>
+                        </button>
+                        <button class="btn btn-warning" onclick="editarArea('${area.id}')" title="Editar área">
+                            <i class="fas fa-edit"></i>
+                            <span>Editar</span>
+                        </button>
+                        <button class="btn btn-danger" onclick="eliminarArea('${area.id}')" title="Eliminar área">
+                            <i class="fas fa-trash"></i>
+                            <span>Eliminar</span>
+                        </button>
+                    </div>
+                `;
+                
+                areasCards.appendChild(card);
+            });
+        }
+
+        // Filtrar áreas por búsqueda
+        function filtrarAreas() {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            if (searchTerm === '') {
+                mostrarAreas(areas);
+                return;
+            }
+            
+            const areasFiltradas = areas.filter(area => 
+                area.nombre.toLowerCase().includes(searchTerm) ||
+                (area.descripcion && area.descripcion.toLowerCase().includes(searchTerm)) ||
+                (area.subareas && area.subareas.some(subarea => 
+                    subarea.toLowerCase().includes(searchTerm)
+                )) ||
+                area.creadoPor.toLowerCase().includes(searchTerm) ||
+                area.actualizadoPor.toLowerCase().includes(searchTerm)
+            );
+            
+            mostrarAreas(areasFiltradas);
+        }
+
+        // Funciones del modal con SweetAlert
+        function abrirModalCrear() {
+            editingAreaId = null;
+            mostrarFormularioArea();
+        }
+
+        function abrirModalEditar(area) {
+            editingAreaId = area.id;
+            mostrarFormularioArea(area);
+        }
+
+        function mostrarFormularioArea(area = null) {
+            const titulo = area ? 'Editar Área' : 'Nueva Área';
+            const subareas = area && area.subareas ? area.subareas : [];
+            
+            // Crear HTML del formulario
+            const formHTML = `
+                <div class="swal2-form-container">
+                    <div class="form-group">
+                        <label for="swal-area-nombre">Nombre del Área *</label>
+                        <input type="text" id="swal-area-nombre" class="form-control" value="${area ? area.nombre : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="swal-area-descripcion">Descripción</label>
+                        <textarea id="swal-area-descripcion" class="form-control" rows="3">${area ? area.descripcion || '' : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Subáreas</label>
+                        <div class="subareas-container" id="swal-subareas-container">
+                            ${generarSubareasHTML(subareas)}
+                        </div>
+                        <div class="subarea-add">
+                            <button type="button" class="btn btn-success" id="swal-btn-add-subarea" style="padding: 8px 12px; font-size: 0.9rem;">
+                                <i class="fas fa-plus"></i>
+                                Agregar Subárea
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar SweetAlert con el formulario
+            Swal.fire({
+                title: titulo,
+                html: formHTML,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                width: '600px',
+                didOpen: () => {
+                    // Configurar evento para agregar subáreas
+                    document.getElementById('swal-btn-add-subarea').addEventListener('click', agregarSubareaEnSwal);
+                    
+                    // Configurar eventos para eliminar subáreas existentes
+                    document.querySelectorAll('.swal-subarea-remove').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            this.closest('.subarea-item').remove();
+                            actualizarEstadoSubareas();
+                        });
+                    });
+
+                    // Enfocar el primer campo
+                    document.getElementById('swal-area-nombre').focus();
+                },
+                preConfirm: async () => {
+                    return await validarYGuardarFormulario();
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar mensaje de éxito y recargar áreas
+                    const mensaje = editingAreaId ? 'Área actualizada correctamente' : 'Área creada correctamente';
+                    mostrarExito(mensaje);
+                }
+            });
+        }
+
+        function generarSubareasHTML(subareas) {
+            if (subareas.length === 0) {
+                return '<div class="no-subareas">No hay subáreas agregadas</div>';
+            }
+            
+            return subareas.map(subarea => `
+                <div class="subarea-item">
+                    <input type="text" class="form-control swal-subarea-input" value="${subarea}" placeholder="Nombre de la subárea">
+                    <button type="button" class="subarea-remove swal-subarea-remove">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function agregarSubareaEnSwal() {
+            const container = document.getElementById('swal-subareas-container');
+            
+            // Si está vacío, limpiar el mensaje de "no hay subáreas"
+            if (container.querySelector('.no-subareas')) {
+                container.innerHTML = '';
+            }
+            
+            const subareaItem = document.createElement('div');
+            subareaItem.className = 'subarea-item';
+            subareaItem.innerHTML = `
+                <input type="text" class="form-control swal-subarea-input" placeholder="Nombre de la subárea">
+                <button type="button" class="subarea-remove swal-subarea-remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(subareaItem);
+            
+            // Configurar evento para eliminar
+            const removeBtn = subareaItem.querySelector('.swal-subarea-remove');
+            removeBtn.addEventListener('click', function() {
+                subareaItem.remove();
+                actualizarEstadoSubareas();
+            });
+
+            // Enfocar el nuevo campo
+            subareaItem.querySelector('.swal-subarea-input').focus();
+        }
+
+        function actualizarEstadoSubareas() {
+            const container = document.getElementById('swal-subareas-container');
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="no-subareas">No hay subáreas agregadas</div>';
+            }
+        }
+
+        async function validarYGuardarFormulario() {
+            // Validar formulario
+            const nombre = document.getElementById('swal-area-nombre').value.trim();
+            const descripcion = document.getElementById('swal-area-descripcion').value.trim();
+            
+            if (!nombre) {
+                Swal.showValidationMessage('El nombre del área es obligatorio');
+                return false;
+            }
+            
+            // Recopilar subáreas
+            const subareasInputs = document.querySelectorAll('.swal-subarea-input');
+            const subareas = Array.from(subareasInputs)
+                .map(input => input.value.trim())
+                .filter(subarea => subarea !== '');
+            
+            try {
+                // Obtener información del usuario actual
+                const usuario = currentUser || obtenerUsuarioActual();
+                
+                // Verificar si el nombre ya existe
+                const nombreExistente = await verificarNombreExistente(nombre, editingAreaId);
+                if (nombreExistente) {
+                    Swal.showValidationMessage('Ya existe un área con ese nombre');
+                    return false;
+                }
+                
+                const areaData = {
+                    nombre: nombre,
+                    descripcion: descripcion,
+                    subareas: subareas,
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    actualizadoPor: usuario.nombre
+                };
+                
+                if (editingAreaId) {
+                    await db.collection('areasRSI').doc(editingAreaId).update(areaData);
+                } else {
+                    areaData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
+                    areaData.creadoPor = usuario.nombre;
+                    areaData.actualizadoPor = usuario.nombre;
+                    await db.collection('areasRSI').add(areaData);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Error al guardar área:', error);
+                Swal.showValidationMessage('Error al guardar el área: ' + error.message);
+                return false;
+            }
+        }
+
+        // Verificar si ya existe un área con el mismo nombre
+        async function verificarNombreExistente(nombre, excludeId = null) {
+            const query = db.collection('areasRSI').where('nombre', '==', nombre);
+            const snapshot = await query.get();
+            
+            if (snapshot.empty) return false;
+            
+            // Si estamos excluyendo un ID (edición), verificar que no sea el mismo documento
+            if (excludeId) {
+                return snapshot.docs.some(doc => doc.id !== excludeId);
+            }
+            
+            return true;
+        }
+
+        // Ver detalles de un área
+        async function verArea(areaId) {
+            const area = areas.find(a => a.id === areaId);
+            if (!area) return;
+            
+            let mensaje = `<strong>${area.nombre}</strong><br>`;
+            mensaje += area.descripcion ? `<p>${area.descripcion}</p>` : '<p>Sin descripción</p>';
+            
+            if (area.subareas && area.subareas.length > 0) {
+                mensaje += '<p><strong>Subáreas:</strong></p><ul>';
+                area.subareas.forEach(subarea => {
+                    mensaje += `<li>${subarea}</li>`;
+                });
+                mensaje += '</ul>';
+            } else {
+                mensaje += '<p>No tiene subáreas registradas.</p>';
+            }
+            
+            mensaje += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                <p><strong>Información de Auditoría:</strong></p>
+                <p><strong>Creado por:</strong> ${area.creadoPor}</p>
+                <p><strong>Fecha de creación:</strong> ${formatearFecha(area.fechaCreacion)}</p>
+                <p><strong>Última modificación por:</strong> ${area.actualizadoPor}</p>
+                <p><strong>Fecha de última modificación:</strong> ${formatearFecha(area.fechaActualizacion)}</p>
+            </div>`;
+            
+            if (typeof showCustomAlert !== 'undefined') {
+                showCustomAlert({
+                    title: 'Detalles del Área',
+                    html: mensaje,
+                    icon: 'info'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Detalles del Área',
+                    html: mensaje,
+                    icon: 'info',
+                    confirmButtonText: 'Cerrar'
+                });
+            }
+        }
+
+        // Editar área
+        async function editarArea(areaId) {
+            const area = areas.find(a => a.id === areaId);
+            if (!area) return;
+            
+            // Verificar si hay colaboradores en esta área
+            const tieneColaboradores = await verificarColaboradoresEnArea(area.nombre);
+            
+            if (tieneColaboradores) {
+                if (typeof showCustomWarning !== 'undefined') {
+                    showCustomWarning(
+                        'No se puede editar', 
+                        'Esta área tiene colaboradores asignados. No se puede modificar.'
+                    );
+                } else {
+                    Swal.fire({
+                        title: 'No se puede editar',
+                        text: 'Esta área tiene colaboradores asignados. No se puede modificar.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                }
+                return;
+            }
+            
+            abrirModalEditar(area);
+        }
+
+        // Eliminar área
+        async function eliminarArea(areaId) {
+            const area = areas.find(a => a.id === areaId);
+            if (!area) return;
+            
+            // Verificar si hay colaboradores en esta área
+            const tieneColaboradores = await verificarColaboradoresEnArea(area.nombre);
+            
+            if (tieneColaboradores) {
+                if (typeof showCustomWarning !== 'undefined') {
+                    showCustomWarning(
+                        'No se puede eliminar', 
+                        'Esta área tiene colaboradores asignados. No se puede eliminar.'
+                    );
+                } else {
+                    Swal.fire({
+                        title: 'No se puede eliminar',
+                        text: 'Esta área tiene colaboradores asignados. No se puede eliminar.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                }
+                return;
+            }
+            
+            // Confirmar eliminación
+            const result = await mostrarConfirmacion(
+                '¿Estás seguro?',
+                `Esta acción eliminará el área "${area.nombre}" y todas sus subáreas. Esta acción no se puede deshacer.`,
+                'warning',
+                'Sí, eliminar',
+                'Cancelar'
+            );
+            
+            if (result.isConfirmed) {
+                try {
+                    await db.collection('areasRSI').doc(areaId).delete();
+                    mostrarExito('Área eliminada correctamente');
+                    cargarAreas();
+                } catch (error) {
+                    console.error('Error al eliminar área:', error);
+                    mostrarError('Error al eliminar el área');
+                }
+            }
+        }
+
+        // Verificar si hay colaboradores en un área
+        async function verificarColaboradoresEnArea(nombreArea) {
+            try {
+                const snapshot = await db.collection('colaboradores')
+                    .where('AREA', '==', nombreArea)
+                    .limit(1)
+                    .get();
+                
+                return !snapshot.empty;
+            } catch (error) {
+                console.error('Error al verificar colaboradores:', error);
+                // En caso de error, asumimos que sí hay colaboradores para prevenir eliminaciones accidentales
+                return true;
+            }
+        }
+
+        // Utilidades de UI
+        function mostrarLoading(mostrar) {
+            loadingState.style.display = mostrar ? 'flex' : 'none';
+        }
+
+        function mostrarExito(mensaje) {
+            // Recargar las áreas después de mostrar el mensaje de éxito
+            cargarAreas();
+            
+            if (typeof showCustomSuccess !== 'undefined') {
+                showCustomSuccess('Éxito', mensaje);
+            } else {
+                Swal.fire({
+                    title: 'Éxito',
+                    text: mensaje,
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    timer: 2000,
+                    showConfirmButton: true
+                });
+            }
+        }
+
+        function mostrarError(mensaje) {
+            if (typeof showCustomError !== 'undefined') {
+                showCustomError('Error', mensaje);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: mensaje,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+
+        function mostrarConfirmacion(titulo, texto, icono, confirmarTexto, cancelarTexto) {
+            if (typeof showCustomConfirm !== 'undefined') {
+                return showCustomConfirm(titulo, texto, confirmarTexto, cancelarTexto);
+            } else {
+                return Swal.fire({
+                    title: titulo,
+                    text: texto,
+                    icon: icono,
+                    showCancelButton: true,
+                    confirmButtonText: confirmarTexto,
+                    cancelButtonText: cancelarTexto
+                });
+            }
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
