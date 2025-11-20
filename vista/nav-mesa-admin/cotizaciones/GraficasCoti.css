@@ -1,0 +1,410 @@
+/* ===========================================================
+   ESTILOS GENERALES Y COMPATIBILIDAD DE TEMAS
+   =========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-color, #f3f4f6) !important;
+    color: var(--text-color, #333);
+    margin: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background-color: var(--card-bg, #fff);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--accent-color, #e5e7eb);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    color: var(--primary-color, #1e3a8a);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    max-width: 80%;
+}
+
+/* Botón Regresar */
+.btn-regresar {
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-regresar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    filter: brightness(1.1);
+}
+
+/* ===========================================================
+   DASHBOARD DE GRÁFICAS
+   =========================================================== */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 1.75rem;
+    padding: 2rem;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+.chart-card {
+    background-color: var(--card-bg, #fff);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--accent-color, #e5e7eb);
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color, #1e3a8a);
+}
+
+.chart-card h2 {
+    margin-top: 0;
+    color: var(--primary-color, #1e3a8a);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    flex-shrink: 0;
+    border-bottom: 2px solid var(--accent-color, #f3f4f6);
+    padding-bottom: 10px;
+}
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chart-container canvas {
+    cursor: pointer;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* ===========================================================
+   MODALES (LISTA Y PDF) - Estilos Base (Escritorio)
+   =========================================================== */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background-color: rgba(0,0,0,0.6); 
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-out;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-content {
+    background-color: var(--card-bg, #fff); 
+    color: var(--text-color, #333);
+    padding: 2rem; 
+    border: 1px solid var(--accent-color, #e5e7eb);
+    width: 90%; max-width: 900px; 
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    position: relative; 
+    animation: slideIn 0.3s ease-out; 
+    display: flex; 
+    flex-direction: column;
+    max-height: 85vh;
+}
+
+/* Estilo específico para el modal PDF en escritorio */
+#modalPDF .modal-content { 
+    max-width: 1200px; 
+    height: 90vh; 
+    padding: 0;
+    overflow: hidden;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--accent-color, #e5e7eb); 
+    padding-bottom: 1rem; 
+    margin-bottom: 1rem;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    flex-shrink: 0;
+}
+
+#modalPDF .modal-header {
+    padding: 1rem 1.5rem;
+    margin-bottom: 0;
+    background-color: var(--card-bg);
+}
+
+.modal-header h2 { 
+    margin: 0; 
+    font-size: 1.5rem; 
+    font-weight: 700; 
+    color: var(--primary-color, #1e3a8a); 
+}
+
+.modal-header .btn-close-modal {
+    background-color: var(--accent-color, #e5e7eb); 
+    color: var(--text-color, #333); 
+    border: none; 
+    padding: 0.5rem 1rem;
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 0.9rem; 
+    font-weight: 600;
+    transition: all 0.2s; 
+}
+
+.modal-body { 
+    overflow-y: auto; 
+    flex-grow: 1; 
+    padding-right: 5px; 
+}
+
+#modalPDF .modal-body {
+    padding: 0;
+    background-color: #525659;
+    display: flex;
+    justify-content: center;
+}
+
+/* Lista de Cotizaciones */
+.coti-list { list-style: none; padding: 0; margin: 0; }
+
+.coti-item {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 1rem;
+    background-color: var(--background-color, #f9fafb); 
+    border: 1px solid var(--accent-color, #e5e7eb);
+    border-radius: 8px; 
+    margin-bottom: 0.75rem; 
+    transition: all 0.2s;
+}
+
+.coti-item:hover { 
+    border-color: var(--primary-color, #1e3a8a);
+    transform: translateX(3px);
+}
+
+.coti-info { 
+    display: grid; 
+    grid-template-columns: 1fr 1.5fr 1fr 1fr; 
+    gap: 1rem; 
+    width: 85%; 
+    align-items: center; 
+}
+
+.coti-actions .btn-view {
+    background: linear-gradient(135deg, var(--primary-color, #3b82f6), var(--secondary-color, #2563eb));
+    color: white; 
+    border: none; 
+    padding: 0.5rem 1rem;
+    border-radius: 6px; 
+    cursor: pointer; 
+}
+
+/* Visor PDF Container */
+.pdf-container { width: 100%; height: 100%; }
+
+/* Spinner */
+.loading-spinner {
+    display: none; 
+    justify-content: center; 
+    align-items: center; 
+    position: fixed;
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background-color: rgba(0, 0, 0, 0.7); 
+    backdrop-filter: blur(2px);
+    z-index: 9999;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.spinner {
+    border: 5px solid rgba(255,255,255,0.2); 
+    border-top: 5px solid var(--primary-color, #3b82f6);
+    border-radius: 50%; width: 50px; height: 50px; 
+    animation: spin 1s linear infinite;
+}
+.loading-spinner p { color: white; font-weight: 600; margin: 0; }
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ===========================================================
+   📱 MEDIA QUERIES (SOLUCIÓN DEFINITIVA PARA MÓVIL)
+   =========================================================== */
+@media (max-width: 768px) {
+    
+    /* --- 1. UI GENERAL MÓVIL --- */
+    .header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.4rem;
+        max-width: 100%;
+        text-align: center;
+    }
+
+    .btn-regresar {
+        position: relative;
+        top: auto; right: auto;
+        width: 90%;
+        text-align: center;
+        padding: 12px;
+        border-radius: 20px;
+    }
+
+    .dashboard-container {
+        grid-template-columns: 1fr; 
+        padding: 1rem;
+        gap: 1.5rem;
+    }
+
+    .chart-card { padding: 1rem; height: auto; }
+    .chart-container { height: 250px; width: 100%; }
+
+    /* --- 2. MODAL LISTA (Tarjetas) --- */
+    .modal-content {
+        width: 95%;
+        padding: 1rem;
+        max-height: 90vh;
+    }
+
+    .coti-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .coti-info {
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    /* Etiquetas para la lista */
+    .coti-info span:nth-child(1)::before { content: "📅 Fecha: "; font-weight: 700; color: var(--primary-color); }
+    .coti-info span:nth-child(2)::before { content: "👤 Cliente: "; font-weight: 700; color: var(--primary-color); }
+    .coti-info span:nth-child(3)::before { content: "💰 Total: "; font-weight: 700; color: var(--primary-color); }
+    .coti-info span:nth-child(4)::before { content: "🏷️ Estatus: "; font-weight: 700; color: var(--primary-color); }
+
+    .coti-actions {
+        width: 100%;
+        border-top: 1px solid var(--accent-color);
+        padding-top: 10px;
+        text-align: center;
+    }
+    
+    .coti-actions .btn-view { width: 100%; justify-content: center; }
+
+    /* --- 3. MODAL PDF (EL FIX PARA LA PANTALLA GRIS) --- */
+    #modalPDF {
+        display: none;
+        position: fixed !important;
+        top: 0 !important; left: 0 !important;
+        width: 100vw !important; height: 100vh !important;
+        background: #000 !important;
+        z-index: 999999 !important;
+        padding: 0 !important;
+    }
+
+    #modalPDF.show {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #modalPDF .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important; max-height: none !important;
+        margin: 0 !important; padding: 0 !important;
+        border: none !important; border-radius: 0 !important;
+        background: #2d2d2d !important;
+        display: flex !important; flex-direction: column !important;
+    }
+
+    /* Header Fijo de 55px */
+    #modalPDF .modal-header {
+        height: 55px !important;
+        min-height: 55px !important;
+        padding: 0 15px !important;
+        background: #2d2d2d !important;
+        border-bottom: 1px solid #444 !important;
+        flex-shrink: 0; margin: 0 !important;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    #modalPDF .modal-header h2 {
+        color: #fff !important; font-size: 0.95rem !important; margin: 0;
+    }
+
+    #modalPDF .btn-close-modal {
+        background: rgba(255,255,255,0.15) !important;
+        color: white !important; border: none !important;
+        border-radius: 20px !important;
+        padding: 5px 12px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* CUERPO DEL PDF (CÁLCULO MATEMÁTICO PARA EVITAR ALTURA 0) */
+    #modalPDF .modal-body {
+        padding: 0 !important; margin: 0 !important;
+        width: 100% !important;
+        /* Altura total - altura del header = espacio restante exacto */
+        height: calc(100vh - 55px) !important;
+        background-color: #525659 !important;
+        position: relative !important;
+        overflow: hidden !important;
+        display: block !important; /* Importante: block en vez de flex para el iframe */
+    }
+
+    /* FORZAR AL IFRAME A LLENAR EL ESPACIO ABSOLUTAMENTE */
+    #modalPDF .pdf-container, 
+    #modalPDF iframe {
+        position: absolute !important;
+        top: 0 !important; left: 0 !important;
+        width: 100% !important; height: 100% !important;
+        border: none !important;
+        display: block !important;
+    }
+}
