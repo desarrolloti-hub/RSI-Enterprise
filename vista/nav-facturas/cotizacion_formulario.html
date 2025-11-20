@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">✨ Nueva Cotización</title>
+    <link rel="stylesheet" href="coti.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Estilo para simular la vista de formulario completo */
+        .modal.show { display: flex; }
+        .modal-content { max-width: 900px; margin: 20px auto; width: 90%; animation: none; }
+    </style>
+</head>
+<body style="background-color: #f3f4f6;">
+    <div class="modal show" style="position: static; display: flex; align-items: flex-start; min-height: 100vh;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">✨ Nueva Cotización</h2>
+                <button id="cerrarModalBtn" class="close-btn" onclick="window.close();">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="cotizacionForm" class="form-section">
+                    <div class="section-card empresa">
+                        <h3>🏢 Datos de la Empresa</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="empresaSelector">Sucursal</label>
+                                <select id="empresaSelector" name="empresaSelector" required>
+                                    <option value="RSI NEZA">RSI NEZA</option>
+                                    <option value="RSI IXT">RSI IXT</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="empresaRFC">RFC</label>
+                                <input type="text" id="empresaRFC" name="empresaRFC" value="XAXX010101000" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="empresaDireccion">Dirección Fiscal</label>
+                                <input type="text" id="empresaDireccion" name="empresaDireccion" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="empresaTelefono">Teléfono</label>
+                                <input type="tel" id="empresaTelefono" name="empresaTelefono" value="(55) 1234-5678" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card cliente">
+                        <h3>👤 Datos del Cliente</h3>
+                        <div class="cliente-search-container">
+                            <input type="text" id="clienteSearch" class="search-input" placeholder="🔍 Buscar cliente por nombre o RFC..." autocomplete="off">
+                            <div id="clienteDropdown" class="cliente-dropdown"></div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="clienteNombre">Nombre del Cliente</label>
+                                <input type="text" id="clienteNombre" name="clienteNombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clienteRFC">RFC</label>
+                                <input type="text" id="clienteRFC" name="clienteRFC">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="clienteDireccion">Dirección (Contacto 1)</label>
+                                <input type="text" id="clienteDireccion" name="clienteDireccion" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clienteTelefono">Teléfono</label>
+                                <input type="tel" id="clienteTelefono" name="clienteTelefono" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card cotizacion">
+                        <h3>📄 Información de la Cotización</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="cotizacionNumero">Número de Cotización</label>
+                                <input type="text" id="cotizacionNumero" name="cotizacionNumero" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="tipoCotizacion">Tipo de Cotización</label>
+                                <select id="tipoCotizacion" name="tipoCotizacion" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="implementacion">Implementación</option>
+                                    <option value="proyecto">Proyecto</option>
+                                    <option value="servicio">Servicio</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cotizacionFecha">Fecha</label>
+                                <input type="date" id="cotizacionFecha" name="cotizacionFecha" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cotizacionVigencia">Vigencia (días)</label>
+                                <input type="number" id="cotizacionVigencia" name="cotizacionVigencia" value="30" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cotizacionMoneda">Moneda</label>
+                                <select id="cotizacionMoneda" name="cotizacionMoneda" required>
+                                    <option value="MXN">Peso Mexicano (MXN)</option>
+                                    <option value="USD">Dólar Americano (USD)</option>
+                                    <option value="EUR">Euro (EUR)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tipoCredito">Tipo de Pago</label>
+                                <select id="tipoCredito" name="tipoCredito">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="contado">Contado</option>
+                                    <option value="credito">Crédito</option>
+                                    <option value="debido">Debido</option>
+                                    <option value="transferencia">Transferencia</option>
+                                </select>
+                            </div>
+                            <div id="creditOptions" class="credit-options">
+                                <h4>💳 Opciones de Crédito</h4>
+                                <div class="credit-grid">
+                                    <div class="form-group">
+                                        <label for="diasCredito">Días de Crédito</label>
+                                        <select id="diasCredito" name="diasCredito">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="8">8 días</option>
+                                            <option value="15">15 días</option>
+                                            <option value="30">30 días</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="cotizacionDescripcion">Descripción (para búsquedas)</label>
+                                <textarea id="cotizacionDescripcion" name="cotizacionDescripcion" rows="3" 
+                                    maxlength="500" 
+                                    placeholder="Descripción breve de la cotización para búsquedas internas (máximo 500 caracteres)..."></textarea>
+                                <small id="contadorCaracteres" style="color: #6b7280; display: block; text-align: right;">0/500 caracteres</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card productos">
+                        <div class="section-header">
+                            <h3>🛍️ Productos / Servicios</h3>
+                            <button type="button" id="agregarItemBtn" class="btn btn-primary">
+                                <span>➕</span> Agregar Item
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table id="itemsTable" class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mover</th>
+                                        <th>Categoría</th>
+                                        <th>Unidad</th>
+                                        <th>Descripción</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unitario</th>
+                                        <th>Total</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="section-card totales">
+                        <h3>💰 Totales</h3>
+                        <div class="totales-grid">
+                            <div class="totales-row">
+                                <label>Subtotal:</label>
+                                <span id="subtotal">$0.00</span>
+                            </div>
+                            <div class="totales-row">
+                                <label for="descuento">Descuento (%):</label>
+                                <input type="number" id="descuento" name="descuento" value="0" min="0" max="100" step="0.01">
+                            </div>
+                            <div class="totales-row">
+                                <label for="impuesto">IVA (%):</label>
+                                <input type="number" id="impuesto" name="impuesto" value="16" min="0" max="100" step="0.01">
+                            </div>
+                            <div class="totales-row total-final">
+                                <label>Total:</label>
+                                <span id="total">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3>📋 Términos y Condiciones</h3>
+                        <div class="form-group">
+                            <textarea id="terminos" name="terminos" rows="5" placeholder="Ingrese los términos y condiciones...">
+1. La presente cotización se realiza en base a los requerimientos necesarios para la solución tecnológica.
+2. Condiciones de pago, 70% de anticipo y 30% al término de la instalación y funcionamiento.
+3. En caso de cancelación tendrá una penalización del 20% en el total de la cotización.
+4. Trabajo adicional que no esté dentro de la cotización tendrá un costo extra.
+5. Los equipos tienen un año de garantía por defecto de fábrica.
+6. La instalación tendrá la garantía de 2 meses siempre y cuando no cuente con daños o manipulación.
+                            </textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="cancelarBtn" class="btn btn-secondary" onclick="window.close();">❌ Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span>💾</span> Generar Cotización PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>⏳ Procesando...</p>
+    </div>
+
+    <script type="module">
+        import { 
+            initializeApp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, collection, addDoc, doc, updateDoc, 
+            getDocs, query, orderBy, setDoc, getDoc, where 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { 
+            getAuth, onAuthStateChanged 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // === CONFIGURACIÓN Y ESTADO COMPARTIDO (Módulo "Shared") ===
+
+        const firebaseConfig = { /* ... tu configuración ... */ };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Variables de estado
+        let isEditing = false;
+        let editingId = null;
+        let clientes = [];
+        let contadores = {};
+        let currentUser = null;
+        let isManualEntry = false;
+        
+        const empresasDirecciones = { /* ... tu objeto empresasDirecciones ... */ };
+        const MAX_PDF_SIZE = 1024 * 1024;
+
+        // Elementos del DOM (Formulario)
+        const modalTitle = document.getElementById('modalTitle');
+        const cotizacionForm = document.getElementById('cotizacionForm');
+        const itemsTableBody = document.getElementById('itemsTableBody');
+        const clienteSearch = document.getElementById('clienteSearch');
+        const clienteDropdown = document.getElementById('clienteDropdown');
+        const clienteNombre = document.getElementById('clienteNombre');
+        const clienteRFC = document.getElementById('clienteRFC');
+        const clienteDireccion = document.getElementById('clienteDireccion');
+        const clienteTelefono = document.getElementById('clienteTelefono');
+        const empresaSelector = document.getElementById('empresaSelector');
+        const empresaDireccion = document.getElementById('empresaDireccion');
+        const empresaRFC = document.getElementById('empresaRFC');
+        const empresaTelefono = document.getElementById('empresaTelefono');
+        const tipoCredito = document.getElementById('tipoCredito');
+        const creditOptions = document.getElementById('creditOptions');
+        const diasCredito = document.getElementById('diasCredito');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // === UTILIDADES ===
+
+        function mostrarLoading(mostrar) { loadingSpinner.style.display = mostrar ? 'flex' : 'none'; }
+        function mostrarAlerta(mensaje, tipo = 'info') { 
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+            .fire({ icon: tipo, title: mensaje });
+        }
+        function formatearMoneda(cantidad) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad);
+        }
+
+        // === LÓGICA DE DATOS Y AYUDAS (REPETIDA EN AMBOS ARCHIVOS) ===
+
+        async function cargarInformacionUsuario(email) { /* ... tu lógica ... */ }
+        async function cargarContadores() { /* ... tu lógica ... */ }
+        async function cargarClientes() { /* ... tu lógica ... */ }
+
+        // Función PDF (La lógica compleja se mantiene unida al HTML/JS principal)
+        async function generarPDF(data) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            // ... (Toda la lógica de generación de PDF de tu código original, incluyendo agruparTecnologias) ...
+            
+            // Lógica de agruparTecnologias (la copiamos aquí)
+            function agruparTecnologias(items) {
+                const grupos = {};
+                items.forEach(item => {
+                    const categoria = item.categoria || 'OTRO';
+                    if (!grupos[categoria]) grupos[categoria] = [];
+                    grupos[categoria].push(item);
+                });
+                return grupos;
+            }
+            
+            // ... (Resto de tu lógica de PDF) ...
+            const categoriaDisplayMap = { /* ... tu map de categorías ... */ };
+            // ...
+            try {
+                // ... (Tu código de PDF) ...
+                return pdf.output('blob');
+            } catch (error) { 
+                console.error('Error en generarPDF:', error); 
+                throw new Error('Error al generar PDF'); 
+            }
+        }
+        function descargarPDFLocal(pdfBlob, nombreArchivo) { /* ... tu lógica ... */ }
+
+
+        // === LÓGICA DEL FORMULARIO ===
+
+        function handleEmpresaChange() { /* ... tu lógica ... */ }
+        function handleTipoCreditoChange() { /* ... tu lógica ... */ }
+        function establecerFechaActual() { /* ... tu lógica ... */ }
+        async function generarNumeroCotizacion() { /* ... tu lógica ... */ }
+        function agregarItem() { /* ... tu lógica ... */ }
+        function calcularTotalItem(row) { /* ... tu lógica ... */ }
+        function calcularTotales() { /* ... tu lógica ... */ }
+        function manejarTecladoItems(e) { /* ... tu lógica ... */ }
+        function guardarFormularioLocalmente() { /* ... tu lógica ... */ }
+        function cargarFormularioLocal() { /* ... tu lógica ... */ }
+        function limpiarFormularioLocal() { /* ... tu lógica ... */ }
+        function eliminarItem(row) { /* ... tu lógica ... */ }
+        function buscarClientes() { /* ... tu lógica ... */ }
+        function mostrarDropdown() { /* ... tu lógica ... */ }
+        function ocultarDropdown() { /* ... tu lógica ... */ }
+        function mostrarOpcionesClientes(clientesFiltrados, termino = '') { /* ... tu lógica ... */ }
+        function seleccionarCliente(cliente) { /* ... tu lógica ... */ }
+        function activarEntradaManual() { /* ... tu lógica ... */ }
+        function resetearFormulario() { /* ... tu lógica, asegurando que solo se usa al crear nueva coti ... */ }
+
+
+        // MODIFICADA: Función principal de carga para Nueva/Edición
+        async function inicializarFormulario() {
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    Swal.fire({ title: 'Acceso no autorizado', text: 'Debes iniciar sesión para acceder a esta función', icon: 'warning', confirmButtonText: 'Iniciar sesión' }).then(() => {
+                        window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                    });
+                    return;
+                }
+                currentUser = user;
+                await cargarInformacionUsuario(user.email);
+                await cargarClientes(); 
+                await cargarContadores();
+                handleEmpresaChange();
+                handleTipoCreditoChange();
+                
+                const params = new URLSearchParams(window.location.search);
+                const idCoti = params.get('id');
+
+                if (idCoti) {
+                    // MODO EDICIÓN
+                    await cargarCotizacionParaEdicion(idCoti);
+                } else {
+                    // MODO NUEVA COTIZACIÓN
+                    resetearFormulario();
+                    cargarFormularioLocal(); 
+                    cotizacionForm.querySelector('button[type="submit"]').innerHTML = '<span>💾</span> Generar Cotización PDF'; 
+                    document.getElementById('tipoCotizacion').addEventListener('change', generarNumeroCotizacion);
+                }
+            });
+        }
+
+        // NUEVA: Carga los datos de la cotización para edición
+        async function cargarCotizacionParaEdicion(id) {
+            mostrarLoading(true);
+            try {
+                const docSnap = await getDoc(doc(db, 'cotizacionPdf', id));
+                if (docSnap.exists()) {
+                    const cotizacion = docSnap.data();
+                    isEditing = true;
+                    editingId = id;
+                    
+                    modalTitle.textContent = '✏️ Editar Cotización';
+                    document.getElementById('pageTitle').textContent = '✏️ Editar Cotización';
+                    cotizacionForm.querySelector('button[type="submit"]').innerHTML = '<span>💾</span> Actualizar Cotización PDF';
+
+                    // Llenar formulario
+                    // ... (Toda la lógica de llenado del formulario de tu función editarCotizacion original) ...
+                    
+                } else {
+                    mostrarAlerta('Cotización no encontrada. Cerrando pestaña.', 'error');
+                    setTimeout(() => window.close(), 2000);
+                }
+            } catch (error) {
+                console.error("Error al cargar cotización para edición:", error);
+                mostrarAlerta('Error al cargar cotización: ' + error.message, 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+        
+        // MODIFICADA: Función de manejo de envío
+        async function manejarSubmitFormulario(e) {
+            e.preventDefault();
+            // ... (Tu lógica original de recolección y validación de datos) ...
+
+            if (isEditing && editingId) { // Modo Edición
+                // ... (Lógica de actualización de Firebase) ...
+                window.opener.location.reload(); // Recarga la tabla principal
+                mostrarAlerta('✅ Cotización actualizada', 'success');
+            } else { // Modo Creación
+                // ... (Lógica de creación en Firebase) ...
+                window.opener.location.reload(); // Recarga la tabla principal
+                mostrarAlerta('✅ Cotización creada', 'success');
+            }
+            
+            // Generar PDF, descargar y cerrar pestaña
+            // ... (Lógica de PDF) ...
+            window.close();
+        }
+
+        // === EVENT LISTENERS PRINCIPALES DEL FORMULARIO ===
+        document.addEventListener('DOMContentLoaded', inicializarFormulario);
+        cotizacionForm.addEventListener('submit', manejarSubmitFormulario);
+        document.getElementById('agregarItemBtn').addEventListener('click', agregarItem);
+        // ... (Otros listeners del formulario: input, blur, drag, etc.) ...
+
+    </script>
+</body>
+</html>

@@ -31,7 +31,7 @@ body {
   max-width: 900px;
   margin: 30px auto;
   padding: 20px;
-  background-color: var(--card-bg);
+  
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   transition: all 0.3s ease;
@@ -50,6 +50,7 @@ h1 {
   justify-content: space-between;
   margin-bottom: 30px;
   position: relative;
+  
 }
 
 .progress-bar::before {
@@ -70,7 +71,7 @@ h1 {
   left: 0;
   width: var(--progress-width, 0%);
   height: 4px;
-  background-color: var(--primary-color);
+  background-color: var(--card-bg);
   z-index: 2;
   transition: width 0.3s ease;
 }
@@ -118,6 +119,7 @@ h1 {
 .step.active .step-label {
   color: var(--primary-color);
   font-weight: bold;
+  
 }
 
 .form-step {
@@ -142,7 +144,7 @@ label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: var(--dark-color);
+  
 }
 
 select, input, textarea {
@@ -163,7 +165,7 @@ select:focus, input:focus, textarea:focus {
 }
 
 .vehicle-details, .collaborator-details {
-  background-color: var(--light-color);
+  
   padding: 20px;
   border-radius: var(--border-radius);
   margin-top: 20px;
@@ -547,16 +549,16 @@ select:focus, input:focus, textarea:focus {
 }
 
 .step-description {
-  color: #666;
+  
   margin-bottom: 20px;
   font-style: italic;
 }
 
 .checklist-section {
-  background: var(--light-color);
+  
   padding: 20px;
   border-radius: 10px;
-  border: 1px solid var(--light-color);
+  
 }
 
 .checkbox-group {
@@ -606,7 +608,7 @@ select:focus, input:focus, textarea:focus {
 .summary-section {
   margin-bottom: 25px;
   padding: 20px;
-  background: var(--light-color);
+  
   border-radius: 10px;
   border-left: 4px solid var(--primary-color);
 }
@@ -616,7 +618,226 @@ select:focus, input:focus, textarea:focus {
   color: var(--dark-color);
   border-bottom: 1px solid #dee2e6;
   padding-bottom: 8px;
+
 }
+/* Estilos para la sección de evidencia fotográfica específica */
+
+
+.specific-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.photo-evidence-item {
+  background: var(--card-bg);
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-evidence-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.photo-evidence-item.has-image {
+  border-style: solid;
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, var(--success-color)10, var(--card-bg));
+}
+
+.photo-evidence-icon {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 15px;
+}
+
+.photo-evidence-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.photo-evidence-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  min-height: 40px;
+}
+
+.photo-preview {
+  width: 100%;
+  max-width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: none;
+  margin-bottom: 10px;
+  border: 2px solid var(--primary-color);
+}
+
+.photo-evidence-item.has-image .photo-preview {
+  display: block;
+}
+
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+}
+
+.photo-evidence-item.has-image .photo-placeholder {
+  display: none;
+}
+
+.photo-camera-btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.photo-camera-btn:hover {
+  background: var(--secondary-color);
+  transform: scale(1.1);
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.photo-evidence-item.has-image .remove-photo-btn {
+  display: flex;
+}
+
+.file-input {
+  display: none;
+}
+/* Estilos para la cuadrícula de fotos en el resumen */
+.summary-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.summary-photo-grid img {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--light-color);
+  transition: transform 0.2s ease;
+}
+
+.summary-photo-grid img:hover {
+  transform: scale(1.05);
+  border-color: var(--primary-color);
+}
+/* Estilos para la nueva sección de Detalles (Paso 1) */
+.detail-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--light-color);
+}
+
+.detail-add-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.detail-add-group input {
+  flex: 1; /* El input toma el espacio sobrante */
+}
+
+.btn-add-detail {
+  padding: 10px 15px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.btn-add-detail:hover {
+  background-color: var(--secondary-color);
+}
+
+.detail-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.remove-detail-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+
+
+
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -626,9 +847,10 @@ select:focus, input:focus, textarea:focus {
   }
   
   .progress-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
+    flex: unset;
+    align-items: unset;
+    gap: unset;
+    padding: 0 5px;
   }
   
   .progress-bar::before, .progress-bar::after {
@@ -636,12 +858,33 @@ select:focus, input:focus, textarea:focus {
   }
   
   .step {
-    flex-direction: row;
-    gap: 10px;
+    flex-direction: column;
+    gap: unset;
   }
   
   .step-circle {
-    margin-bottom: 0;
+    margin-bottom: 8px;
+  }
+  /* PASO 1: Ocultamos TODAS las etiquetas de texto por defecto.
+  */
+  .step-label{
+    display: none;
+  }
+
+  /* PASO 2: Mostramos SOLAMENTE la etiqueta del paso ACTIVO.
+    La posicionamos de forma absoluta para que no afecte la alineación
+    de los círculos.
+  */
+  .step.active .step-label {
+    display: block;
+    position: absolute;
+    top: 45px; /* Ajusta esto para mover el texto más abajo si es necesario */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px; /* Ancho para que el texto no se corte */
+    text-align: center;
+    font-size: 20px;
+    /* El color y 'font-weight' ya los hereda de la regla .step.active .step-label */
   }
   
   .km-grid {
@@ -664,5 +907,17 @@ select:focus, input:focus, textarea:focus {
   .btn {
     width: 100%;
     justify-content: center;
+  }
+  .specific-photo-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .photo-evidence-item {
+    min-height: 180px;
+    padding: 15px;
+  }
+  
+  .photo-evidence-icon {
+    font-size: 2rem;
   }
 }

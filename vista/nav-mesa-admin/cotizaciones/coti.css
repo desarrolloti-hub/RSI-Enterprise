@@ -1,0 +1,1118 @@
+/* coti.css - Compatible con personalizacion-colores.js */
+
+/* Reset y base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Usamos las variables globales del script de personalización */
+    background: var(--background-color, #f5f5f5);
+    min-height: 100vh;
+    color: var(--text-color, #333);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.container {
+    max-width: 95%;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.header {
+    background: var(--card-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(10px);
+    padding: 20px 0;
+    box-shadow: var(--card-shadow, 0 4px 20px rgba(0, 0, 0, 0.1));
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--accent-color);
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    color: var(--primary-color, #1e3a8a);
+    font-size: 1.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Botones */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.btn-secondary {
+    background: var(--accent-color, #6b7280);
+    color: white;
+}
+
+.btn-secondary:hover {
+    filter: brightness(0.9);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.btn-info {
+    background-color: #06b6d4;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #0891b2;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* Main content */
+.main {
+    padding: 40px 0;
+}
+
+/* Buscador */
+.search-section {
+    background: var(--card-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: var(--card-shadow, 0 8px 32px rgba(0, 0, 0, 0.1));
+    border: 1px solid var(--accent-color);
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Tabla de cotizaciones */
+.table-section {
+    background: var(--card-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow, 0 8px 32px rgba(0, 0, 0, 0.1));
+}
+
+.table-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white !important; /* Forzar blanco sobre el fondo de color */
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.cotizaciones-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-color);
+}
+
+.cotizaciones-table th,
+.cotizaciones-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--accent-color);
+}
+
+.cotizaciones-table th {
+    background: rgba(0,0,0,0.05); /* Sutil para modo claro y oscuro */
+    font-weight: 600;
+    color: var(--text-color);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.cotizaciones-table tr:hover {
+    background: rgba(128, 128, 128, 0.1); /* Hover universal */
+}
+
+/* Selects dentro de la tabla (Estatus) */
+.estatus-select,
+.pago-estatus-select {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--accent-color);
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.motivo-rechazo-input {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--accent-color);
+    padding: 4px;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+/* Los colores de estado se mantienen fijos por semántica */
+.status-success { background: #dcfce7; color: #166534; }
+.status-warning { background: #fef3c7; color: #92400e; }
+.status-error { background: #fee2e2; color: #991b1b; }
+.status-borrador { background: #dbeafe; color: #1e40af; }
+.status-local { background: #fef3c7; color: #92400e; }
+
+/* Modales */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    animation: modalSlideIn 0.3s ease-out;
+    border: 1px solid var(--primary-color);
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-50px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white !important;
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+/* Resumen de filtros en Modal */
+.resumen-filtros {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-filtro {
+    padding: 10px 20px;
+    border: 1px solid var(--accent-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-filtro:hover {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-filtro.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.resumen-totales {
+    text-align: center;
+    background-color: rgba(var(--primary-color), 0.1); /* Transparencia basada en variable si fuera RGB, pero fallback seguro */
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+}
+
+#resumenTitulo {
+    color: var(--primary-color);
+    margin-top: 0;
+    font-size: 1.2em;
+}
+
+.total-amount {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #15803d; /* Mantener verde para dinero o usar var(--text-color) */
+    margin: 10px 0 0 0;
+}
+
+/* Formulario */
+.form-section {
+    display: grid;
+    gap: 30px;
+}
+
+.section-card {
+    background: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    /* Eliminamos los colores fijos de fondo para respetar el tema oscuro/claro */
+}
+
+/* Mantenemos el borde de color para identificar secciones pero quitamos el fondo fijo */
+.section-card.empresa { border-color: #3b82f6; }
+.section-card.cliente { border-color: #10b981; }
+.section-card.cotizacion { border-color: #f59e0b; }
+.section-card.productos { border-color: #8b5cf6; }
+.section-card.totales { border-color: #ef4444; }
+
+.section-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px;
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.1);
+}
+
+.form-group input:read-only {
+    background: rgba(0,0,0,0.05);
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+/* Búsqueda de clientes */
+.cliente-search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.cliente-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 2px solid var(--accent-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+}
+
+.cliente-dropdown.show {
+    display: block;
+}
+
+.cliente-option {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--accent-color);
+    transition: background 0.2s ease;
+}
+
+.cliente-option:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.cliente-option:last-child {
+    border-bottom: none;
+}
+
+.cliente-option.manual {
+    background: rgba(59, 130, 246, 0.1);
+    border-top: 2px solid var(--primary-color);
+}
+
+.cliente-info {
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+/* Tabla de items */
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.items-table th,
+.items-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--accent-color);
+    color: var(--text-color);
+}
+
+.items-table th {
+    background: rgba(0,0,0,0.05);
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.items-table input,
+.items-table select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+
+.items-table input:focus,
+.items-table select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Totales */
+.totales-grid {
+    display: grid;
+    gap: 12px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.totales-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.totales-row.total-final {
+    border-top: 2px solid var(--accent-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.totales-row input {
+    width: 80px;
+    padding: 6px;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    text-align: right;
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+
+/* Términos y condiciones */
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Acciones del formulario */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 20px;
+    border-top: 2px solid var(--accent-color);
+}
+
+/* Loading spinner */
+.loading-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255,255,255,0.3);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Alertas */
+.alerta {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
+    max-width: 400px;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.alerta-success { background: #dcfce7; border: 2px solid #16a34a; color: #166534; }
+.alerta-error { background: #fee2e2; border: 2px solid #dc2626; color: #991b1b; }
+.alerta-warning { background: #fef3c7; border: 2px solid #d97706; color: #92400e; }
+.alerta-info { background: #dbeafe; border: 2px solid #2563eb; color: #1e40af; }
+
+.alerta-contenido {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alerta-cerrar {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 12px;
+    opacity: 0.7;
+}
+
+.alerta-cerrar:hover { opacity: 1; }
+
+/* PDF Viewer */
+.pdf-container {
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--accent-color);
+}
+
+.pdf-preview {
+    background: white; /* El papel sigue siendo blanco */
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    color: black;
+}
+
+.pdf-preview h4 {
+    color: #1f2937;
+    margin-bottom: 16px;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    gap: 8px;
+}
+
+.pagination-button {
+    background-color: var(--card-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* Funcionalidades Adicionales */
+.additional-status-fields {
+    display: none;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--accent-color);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.additional-status-fields.show { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.drag-handle {
+    cursor: move;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    padding: 5px;
+    text-align: center;
+}
+
+.items-table tr.dragging {
+    opacity: 0.5;
+    background: var(--secondary-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header .container { flex-direction: column; gap: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .modal-content { margin: 10px; max-height: 95vh; }
+    .modal-body { padding: 20px; }
+    .acciones { flex-direction: column; }
+    .table-container { font-size: 14px; }
+    .cotizaciones-table th, .cotizaciones-table td { padding: 8px 4px; }
+    
+    /* Ocultar columnas menos importantes en móvil */
+    .cotizaciones-table td:nth-child(5), 
+    .cotizaciones-table th:nth-child(5) { display: none; } /* Descripción */
+    
+    .cotizaciones-table td:nth-child(3), 
+    .cotizaciones-table th:nth-child(3) { display: none; } /* Fecha */
+    
+    .acciones button { width: 100%; padding: 4px; font-size: 11px; }
+    
+    /* Tabla de Items Responsive */
+    .items-table { display: block; overflow-x: auto; white-space: nowrap; }
+    .items-table th, .items-table td { display: table-cell; min-width: 80px; }
+}
+
+@media (max-width: 480px) {
+    .cotizaciones-table td:nth-child(4), /* Total */
+    .cotizaciones-table th:nth-child(4) { display: none; }
+    .section-card { padding: 12px; }
+    .form-actions { flex-direction: column; }
+    .form-actions button { width: 100%; }
+}
+
+/* Truncate para descripción en tabla */
+.cotizaciones-table td:nth-child(5) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+/* ==========================================================================
+   TRANSFORMACIÓN DE TABLA A TARJETAS (RESPONSIVE MÓVIL)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    
+    /* 1. Ocultar los encabezados de la tabla original */
+    .cotizaciones-table thead {
+        display: none;
+    }
+
+    /* 2. Convertir la tabla y sus elementos en bloques */
+    .cotizaciones-table, 
+    .cotizaciones-table tbody, 
+    .cotizaciones-table tr, 
+    .cotizaciones-table td {
+        display: block;
+        width: 100%;
+    }
+
+    /* 3. Estilo de la "Tarjeta" (Cada fila es ahora una tarjeta) */
+    .cotizaciones-table tr {
+        margin-bottom: 20px;
+        background-color: var(--card-bg, #ffffff);
+        border: 1px solid var(--accent-color, #e5e7eb);
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        padding: 0; /* El padding va en los td */
+        overflow: hidden; /* Para respetar el border-radius */
+        position: relative;
+    }
+
+    /* Mantener el borde de color del estatus a la izquierda, pero más grueso */
+    .cotizaciones-table tr[style*="border-left"] {
+        border-left-width: 6px !important;
+    }
+
+    /* 4. Estilo de las Celdas (Filas dentro de la tarjeta) */
+    .cotizaciones-table td {
+        padding: 12px 15px;
+        text-align: right; /* Contenido a la derecha */
+        position: relative;
+        border-bottom: 1px solid var(--accent-color, #f3f4f6);
+        display: flex;
+        justify-content: space-between; /* Separa etiqueta y contenido */
+        align-items: center;
+        min-height: 45px;
+    }
+
+    .cotizaciones-table td:last-child {
+        border-bottom: none;
+    }
+
+    /* 5. Crear las Etiquetas (Labels) usando CSS content */
+    /* Esto reemplaza los TH que ocultamos. IMPORTANTE: El orden debe coincidir con tu HTML */
+    .cotizaciones-table td::before {
+        content: attr(data-label); /* Fallback */
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: var(--primary-color, #1e3a8a);
+        text-align: left;
+        margin-right: 15px;
+        /* Si no usas data-label en HTML, usamos nth-of-type abajo */
+    }
+
+    /* Mapeo manual de columnas (Ya que el HTML se genera dinámicamente) */
+    .cotizaciones-table td:nth-of-type(1)::before { content: "Número"; }
+    .cotizaciones-table td:nth-of-type(2)::before { content: "Cliente"; }
+    .cotizaciones-table td:nth-of-type(3)::before { content: "Fecha"; }
+    .cotizaciones-table td:nth-of-type(4)::before { content: "Total"; }
+    .cotizaciones-table td:nth-of-type(5)::before { content: "Descripción"; }
+    .cotizaciones-table td:nth-of-type(6)::before { content: "Generado por"; }
+    
+    /* 6. Ajustes específicos para celdas complejas */
+
+    /* Celda de Descripción: Permitir texto largo */
+    .cotizaciones-table td:nth-of-type(5) {
+        display: block;
+        text-align: left;
+    }
+    .cotizaciones-table td:nth-of-type(5)::before {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    /* Celda de Estatus (Contiene selects y textareas) */
+    .cotizaciones-table td:nth-of-type(7) {
+        display: block;
+        text-align: left;
+        background-color: rgba(0,0,0,0.02);
+    }
+    .cotizaciones-table td:nth-of-type(7)::before {
+        content: "Gestión de Estatus";
+        display: block;
+        margin-bottom: 10px;
+        border-bottom: 1px dashed var(--accent-color);
+        padding-bottom: 5px;
+    }
+    
+    /* Asegurar que el contenedor de estatus se vea bien */
+    .estatus-container {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .estatus-select, .pago-estatus-select, .motivo-rechazo-input {
+        width: 100% !important;
+        margin-top: 5px;
+        padding: 10px;
+        height: auto;
+    }
+
+    /* Celda de Acciones (Botones) */
+    .cotizaciones-table td:nth-of-type(8) {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        padding: 15px;
+        background-color: var(--card-bg);
+    }
+    .cotizaciones-table td:nth-of-type(8)::before {
+        display: none; /* No necesitamos etiqueta para los botones */
+    }
+
+    .acciones {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr; /* 4 botones en fila */
+        gap: 8px;
+    }
+
+    .acciones button, .acciones a {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 0;
+    }
+
+    /* Ajuste de textos */
+    .cotizaciones-table td strong {
+        font-size: 1.1rem;
+    }
+}
+
+/* Ajuste para pantallas MUY pequeñas (menos de 400px) */
+@media (max-width: 400px) {
+    .acciones {
+        grid-template-columns: 1fr 1fr; /* 2 botones arriba, 2 abajo */
+    }
+}
+
+/* ===========================================================
+   CORRECCIÓN DE BOTONES "HORRIBLES" EN MÓVIL 📱
+   =========================================================== */
+
+@media (max-width: 768px) {
+
+    /* --- 1. ARREGLO DEL HEADER (BOTONES DE ARRIBA) --- */
+    
+    /* El contenedor principal del header */
+    .header .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* El título centrado */
+    .header h1 {
+        justify-content: center;
+        text-align: center;
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+
+    /* El contenedor de los botones (header-actions) */
+    .header-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr; /* Dos columnas del mismo tamaño */
+        gap: 10px;
+        width: 100%;
+    }
+
+    /* Estilo de los botones del header en móvil */
+    .header-actions .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 5px; /* Menos padding lateral */
+        font-size: 0.85rem; /* Texto un poco más pequeño para que quepa */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+    }
+
+
+    /* --- 2. ARREGLO DE LAS TARJETAS (BOTONES DE ABAJO) --- */
+
+    /* Contenedor de acciones dentro de la tarjeta */
+    .acciones {
+        display: grid !important;
+        /* Hacemos 4 columnas para que queden todos en una sola fila */
+        grid-template-columns: repeat(4, 1fr) !important; 
+        gap: 8px;
+        padding: 12px 15px !important;
+        background-color: transparent !important;
+        border-top: 1px solid var(--accent-color);
+    }
+
+    /* Botones individuales de acción */
+    .acciones button, 
+    .acciones a {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 8px 0 !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 6px;
+        height: 38px; /* Altura fija y cómoda */
+    }
+
+    /* Ajustamos el tamaño de los iconos/emojis dentro de los botones */
+    .acciones span {
+        font-size: 1.1rem;
+        margin: 0 !important; /* Quitamos márgenes extra */
+    }
+
+    /* OPCIONAL: Si la pantalla es MUY pequeña (celulares antiguos),
+       cambiamos a 2 filas de 2 botones para que no se aplasten.
+    */
+    @media (max-width: 360px) {
+        .acciones {
+            grid-template-columns: 1fr 1fr !important; /* 2x2 en pantallas mini */
+        }
+    }
+}
+/* ===========================================================
+   CORRECCIÓN MODAL VISTA PREVIA PDF (VERSIÓN FINAL FULL SCREEN) 📱
+   =========================================================== */
+
+@media (max-width: 768px) {
+
+    /* 1. El modal ocupa TODA la pantalla, sin bordes ni márgenes */
+    #modalPDF {
+        padding: 0 !important;
+        align-items: flex-start !important; /* Alinear arriba */
+    }
+
+    #modalPDF .modal-content {
+        width: 100% !important;
+        height: 100vh !important; /* 100% de la altura de la ventana */
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important; /* Quitamos bordes redondos */
+        display: flex;
+        flex-direction: column;
+        border: none !important;
+    }
+
+    /* 2. Header compacto en la parte superior */
+    #modalPDF .modal-header {
+        padding: 10px 15px !important;
+        flex-shrink: 0; /* No se encoge */
+        min-height: 50px;
+        background: linear-gradient(135deg, #d32f2f, #b71c1c) !important; /* Rojo más oscuro pro */
+    }
+
+    #modalPDF .modal-header h2 {
+        font-size: 0.95rem !important;
+        margin: 0;
+    }
+
+    /* 3. El cuerpo del modal crece para llenar TODO el espacio restante */
+    #modalPDF .modal-body {
+        padding: 0 !important;
+        margin: 0 !important;
+        flex-grow: 1; /* Ocupa todo el espacio sobrante */
+        height: calc(100vh - 50px) !important; /* Altura total menos header */
+        background-color: #333; /* Fondo oscuro para el visor */
+        overflow: hidden; /* Evita doble scroll */
+        display: flex;
+    }
+
+    /* 4. El contenedor y el iframe obligados a ser gigantes */
+    #modalPDF .pdf-container {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        margin: 0 !important;
+        display: flex;
+    }
+
+    #modalPDF iframe {
+        width: 100vw !important; /* Ancho de la ventana */
+        height: 100% !important;
+        border: none !important;
+        display: block;
+    }
+    
+    /* Botón cerrar más limpio */
+    #modalPDF .close-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 22px;
+        line-height: 30px;
+        background: rgba(0,0,0,0.2);
+        border: none;
+    }
+}
