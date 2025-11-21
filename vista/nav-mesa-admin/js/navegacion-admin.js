@@ -678,6 +678,9 @@
                             <a href="../gestion-colaboradores/gestion-colaboradores.html" class="menu-nav-btn">
                                 <i class="fas fa-users-cog"></i> Colaboradores
                             </a>
+                            <a href="../checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
+                                <i class="fas fa-car"></i> Chekclist automoviles
+                            </a>
                         </div>
                     </div>
 
@@ -689,7 +692,7 @@
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="menu-nav-section-content" id="section-finanzas">
-                            <a href="../../nav-facturas/coti.html" class="menu-nav-btn">
+                            <a href="../cotizaciones/coti.html" class="menu-nav-btn">
                                 <i class="fas fa-file-invoice-dollar"></i> Cotizar
                             </a>
                             <a href="/404.html" class="menu-nav-btn">
