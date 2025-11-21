@@ -1,0 +1,245 @@
+/* -- Contenido de checklist-automoviles.css (Asegúrate de reemplazar TODO el contenido) -- */
+
+/* Variables de Color (Necesarias para el CSS) */
+:root {
+    --primary-color: #6C43E0; 
+    --secondary-color: #5a35c7;
+    --accent-color: #8B5FEB;
+    --danger-color: #e74c3c;
+    --card-bg: #ffffff;
+    --text-color: #333;
+    --bg-color: #f4f6f9;
+    --light-gray: #f0f0f0;
+    --border-radius: 8px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* --- ESTILOS GENERALES --- */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.header h1 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 67, 224, 0.3);
+}
+
+.btn-secondary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-action {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+}
+
+/* --- FILTROS AVANZADOS --- */
+.filters-advanced {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+.filters-advanced h2 {
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 10px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.filter-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.filter-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: var(--bg-color);
+}
+
+/* --- GRID DE TARJETAS/RESULTADOS (Usado en ambas páginas) --- */
+.checklists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px; 
+    margin-top: 30px;
+}
+
+/* --- ESTILO DE LA TARJETA (CARD) --- */
+.checklist-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    border-left: 5px solid var(--primary-color); 
+    display: flex;
+    flex-direction: column;
+}
+
+.checklist-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.card-vehicle {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin-bottom: 5px;
+}
+
+.card-plate {
+    background: #333;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.card-date {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 15px;
+    flex: 1;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.info-row i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+.card-footer {
+    padding: 15px;
+    border-top: 1px solid var(--light-gray);
+    display: flex;
+    justify-content: space-between; /* Para separar los botones */
+    gap: 10px;
+}
+
+.btn-delete { 
+    background-color: var(--danger-color);
+    color: white;
+}
+.btn-delete:hover {
+    background-color: #c0392b;
+}
+
+.loading {
+    text-align: center;
+    grid-column: 1 / -1; 
+    padding: 40px;
+}
+.spinner { padding: 0%;/* (Tu spinner, si lo tienes, va aquí) */ }
+
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .checklists-grid {
+        grid-template-columns: 1fr; 
+    }
+    .filters-advanced {
+        padding: 15px;
+    }
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    .card-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+

@@ -36,6 +36,41 @@ body {
   box-shadow: var(--box-shadow);
   transition: all 0.3s ease;
 }
+/* Estilos para el encabezado con botón cancelar */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--light-color);
+  padding-bottom: 10px;
+}
+
+.header-top h1 {
+  border-bottom: none; /* Quitamos el borde que tenía el h1 antes */
+  margin-bottom: 0;
+  padding-bottom: 0;
+  font-size: 1.5rem; /* Ajuste para que quepa mejor en móvil */
+}
+
+.btn-cancelar {
+  background-color: #e74c3c; /* Rojo suave */
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-cancelar:hover {
+  background-color: #c0392b; /* Rojo más oscuro al pasar el mouse */
+}
 
 h1 {
   color: var(--secondary-color);
@@ -919,5 +954,16 @@ select:focus, input:focus, textarea:focus {
   
   .photo-evidence-icon {
     font-size: 2rem;
+  }
+
+  .header-top {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .btn-cancelar {
+    width: 100%;
+    justify-content: center;
   }
 }
