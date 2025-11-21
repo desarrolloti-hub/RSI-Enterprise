@@ -204,7 +204,32 @@
       <label for="kmSalida">KM de Salida:</label>
       <input type="number" id="kmSalida" placeholder="Ej: 15000" min="0" required>
     </div>
-    
+  </div>
+
+  <div class="form-group">
+    <label>Nivel de Gasolina (Salida):</label>
+      <div class="gas-selector">
+            <label class="gas-option">
+              <input type="radio" name="gasolina" value="Reserva">
+              <span>E (Reserva)</span>
+            </label>
+          <label class="gas-option">
+              <input type="radio" name="gasolina" value="1/4">
+              <span>1/4</span>
+          </label>
+          <label class="gas-option">
+              <input type="radio" name="gasolina" value="1/2">
+              <span>1/2</span>
+          </label>
+          <label class="gas-option">
+              <input type="radio" name="gasolina" value="3/4">
+              <span>3/4</span>
+          </label>
+          <label class="gas-option">
+              <input type="radio" name="gasolina" value="Lleno">
+              <span>F (Lleno)</span>
+          </label>
+      </div>
   </div>
   
   <div class="navigation-buttons">
@@ -359,6 +384,10 @@
         <div class="summary-label">KM de Salida:</div>
         <div class="summary-value" id="summary-km-salida"></div>
       </div>
+      <div class="summary-item">
+        <div class="summary-label">Gasolina Salida:</div>
+        <div class="summary-value" id="summary-gasolina"></div>
+      </div>
     </div>
     
     <div class="summary-section">
@@ -402,7 +431,7 @@
   </div>
 </div>
       
-      
+        
     
    
 

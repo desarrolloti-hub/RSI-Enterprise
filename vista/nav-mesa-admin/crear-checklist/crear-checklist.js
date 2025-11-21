@@ -137,6 +137,11 @@ async function loadDataForEdit(id) {
             document.getElementById('origen').value = data.tripInfo.origen || '';
             document.getElementById('destino').value = data.tripInfo.destino || '';
             document.getElementById('kmSalida').value = data.tripInfo.kmSalida || '';
+            
+            if (data.tripInfo.gasolina) {
+                const radio = document.querySelector(`input[name="gasolina"][value="${data.tripInfo.gasolina}"]`);
+                if(radio) radio.checked = true;
+            }
         }
 
         // E. RESTAURAR OBSERVACIONES (PASOS 4-7)
@@ -567,7 +572,8 @@ async function saveChecklist() {
                 horaSalida: document.getElementById('horaSalida').value,
                 origen: document.getElementById('origen').value,
                 destino: document.getElementById('destino').value,
-                kmSalida: document.getElementById('kmSalida').value
+                kmSalida: document.getElementById('kmSalida').value,
+                gasolina: document.querySelector('input[name="gasolina"]:checked')?.value || 'No registrado'
             },
             checklists: {
                 documentos: { items: getCheckedItems('documentos-checklist'), obs: document.getElementById('documentos-observaciones').value },
@@ -612,9 +618,19 @@ function updateStep1ButtonState() {
 }
 function validateStep1() { return !!selectedVehicle && Object.keys(window.vehiclePhotos).length >= 5; }
 function validateStep2() { return !!selectedCollaborator; }
-function validateStep3() { 
-    return ['fecha', 'horaSalida', 'origen', 'destino', 'kmSalida']
-        .every(id => document.getElementById(id).value.trim() !== '');
+function validateStep3() {
+    // Validar campos de texto
+    const fecha = document.getElementById('fecha').value.trim();
+    const hora = document.getElementById('horaSalida').value.trim();
+    const origen = document.getElementById('origen').value.trim();
+    const destino = document.getElementById('destino').value.trim();
+    const kmSalida = document.getElementById('kmSalida').value.trim();
+
+    // Validar Radio Button de Gasolina
+    const gasolina = document.querySelector('input[name="gasolina"]:checked');
+
+    // Retorna true solo si todo tiene valor
+    return fecha && hora && origen && destino && kmSalida && gasolina;
 }
 
 // Event Listeners Globales
@@ -683,7 +699,8 @@ function updateSummary() {
     document.getElementById('summary-fecha-hora').textContent = `${f} ${h}`;
     document.getElementById('summary-ruta').textContent = `${document.getElementById('origen').value} -> ${document.getElementById('destino').value}`;
     document.getElementById('summary-km-salida').textContent = document.getElementById('kmSalida').value;
-    
+    const gasValue = document.querySelector('input[name="gasolina"]:checked')?.value || 'N/A';
+document.getElementById('summary-gasolina').textContent = gasValue;
     // Detalles
     const detDiv = document.getElementById('summary-vehicle-details');
     detDiv.innerHTML = window.vehicleDetails.length ? `<ul>${window.vehicleDetails.map(d=>`<li>${d}</li>`).join('')}</ul>` : 'Ninguno';

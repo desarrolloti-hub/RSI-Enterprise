@@ -870,6 +870,30 @@ select:focus, input:focus, textarea:focus {
   font-weight: bold;
 }
 
+/* Estilos para el selector de Gasolina */
+.gas-selector {
+    display: flex;
+    justify-content: space-between;
+    
+    padding: 10px;
+    border-radius: 8px;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.gas-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.gas-option input[type="radio"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
 
 
 
