@@ -39,11 +39,8 @@
     ]
   },
   "firestore": {
-    "rules": "y",
-    "indexes": "y"
-  },
-  "storage": {
-    "rules": "storage.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "functions": [
     {

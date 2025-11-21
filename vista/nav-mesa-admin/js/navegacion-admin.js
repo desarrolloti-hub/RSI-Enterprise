@@ -678,6 +678,9 @@
                             <a href="../gestion-colaboradores/gestion-colaboradores.html" class="menu-nav-btn">
                                 <i class="fas fa-users-cog"></i> Colaboradores
                             </a>
+                            <a href="../checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
+                                <i class="fas fa-car"></i> Chekclist automoviles
+                            </a>
                         </div>
                     </div>
 

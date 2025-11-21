@@ -27,6 +27,16 @@
     </script>
     <!-- carga dinamica del del navegador del sistema -->
      <script src="../recursosDinamicos/nav.js"></script>
+    
+    <!-- Overlay de carga para sesión detectada -->
+    <div id="sessionLoadingOverlay" class="session-loading-overlay" style="display: none;">
+        <div class="session-loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Verificando sesión...</h3>
+            <p>Espera un momento por favor</p>
+        </div>
+    </div>
+
     <!-- Contenedor principal -->
     <div class="auth-container-wrapper">
         <div class="auth-container">
@@ -136,6 +146,158 @@
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
 
+        // Función para mostrar el overlay de sesión detectada
+        function showSessionLoading() {
+            const overlay = document.getElementById('sessionLoadingOverlay');
+            overlay.style.display = 'flex';
+        }
+
+        // Función para ocultar el overlay de sesión detectada
+        function hideSessionLoading() {
+            const overlay = document.getElementById('sessionLoadingOverlay');
+            overlay.style.display = 'none';
+        }
+
+        // Función para mostrar SweetAlert de sesión detectada
+        function showSessionDetectedAlert(rol, nombreCompleto, email) {
+            const rolNames = {
+                'admin': 'Administrador',
+                'puntoVenta': 'Punto de Venta',
+                'facturas': 'Operador de Facturas',
+                'colaborador': 'Colaborador',
+                'user': 'Usuario',
+                'admincolaborador': 'Administrador de Colaboradores'
+            };
+            
+            const rolDisplay = rolNames[rol] || rol;
+            
+            let timerInterval;
+            Swal.fire({
+                title: 'Sesión activa detectada',
+                html: `
+                    <div style="text-align: left; margin-bottom: 1rem;">
+                        <p><strong>Nombre:</strong> ${nombreCompleto}</p>
+                        <p><strong>Correo:</strong> ${email}</p>
+                        <p><strong>Rol:</strong> ${rolDisplay}</p>
+                        <p><strong>Estado:</strong> <span style="color: #28a745;">Sesión activa</span></p>
+                    </div>
+                    <p>Serás redirigido automáticamente en <strong id="countdown">3</strong> segundos...</p>
+                `,
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                timer: 3000,
+                didOpen: () => {
+                    const timer = Swal.getPopup().querySelector("strong#countdown");
+                    let timeLeft = 3;
+                    timerInterval = setInterval(() => {
+                        timeLeft--;
+                        timer.textContent = timeLeft;
+                        if (timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                        }
+                    }, 1000);
+                },
+                willClose: () => {
+                    clearInterval(timerInterval);
+                }
+            }).then((result) => {
+                // Esta función se ejecuta cuando el SweetAlert se cierra
+                if (result.dismiss === Swal.DismissReason.timer) {
+                    // Redirigir cuando el timer termine
+                    redirectByRole(rol);
+                }
+            });
+        }
+
+        // Función para redirigir según el rol
+        function redirectByRole(rol) {
+            switch(rol) {
+                case 'admin':
+                    window.location.href = '/vista/nav-admin/dashAdmin.html';
+                    break;
+                case 'puntoVenta':
+                    window.location.href = '/vista/nav-puntoVenta/inicio.html';
+                    break;
+                case 'facturas':
+                    window.location.href = '/vista/nav-operadores/prueba_asistencia.html';
+                    break;
+                case 'colaborador':
+                    window.location.href = '/vista/nav-mesa-operadores/asistencia/asistencia.html';
+                    break;
+                case 'user':
+                    window.location.href = '/vista/nav-usuarios/dashUser.html';
+                    break;
+                case 'admincolaborador':
+                    window.location.href = '/vista/nav-mesa-admin/asistencia/asistencia.html';
+                    break;
+                default:
+                    window.location.href = '/vista/nav-usuarios/dashUser.html';
+            }
+        }
+
+        // Función para verificar si hay sesión activa y redirigir
+        function checkActiveSession() {
+            showSessionLoading(); // Mostrar loading mientras se verifica
+            
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user && user.emailVerified) {
+                    try {
+                        const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+                        
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            const rol = userData.rol;
+                            const nombreCompleto = userData.nombreCompleto || 'Usuario';
+                            const email = user.email;
+                            
+                            // Verificar estado del colaborador si aplica
+                            if (rol === 'colaborador' || rol === 'admincolaborador') {
+                                const colaboradorDoc = await firebase.firestore().collection('colaboradores').doc(user.uid).get();
+                                
+                                if (colaboradorDoc.exists) {
+                                    const colaboradorData = colaboradorDoc.data();
+                                    
+                                    if (colaboradorData.trabajo === 'Activo') {
+                                        // Ocultar loading y mostrar SweetAlert
+                                        hideSessionLoading();
+                                        showSessionDetectedAlert(rol, nombreCompleto, email);
+                                    } else {
+                                        // Si está inactivo, cerrar sesión y mostrar mensaje
+                                        await firebase.auth().signOut();
+                                        hideSessionLoading();
+                                        Swal.fire({
+                                            title: 'Cuenta deshabilitada',
+                                            text: 'Su cuenta ha sido deshabilitada. Por favor, póngase en contacto con el administrador.',
+                                            icon: 'warning',
+                                            confirmButtonText: 'Aceptar'
+                                        });
+                                    }
+                                } else {
+                                    // Si no existe en colaboradores, mostrar SweetAlert normalmente
+                                    hideSessionLoading();
+                                    showSessionDetectedAlert(rol, nombreCompleto, email);
+                                }
+                            } else {
+                                // Para otros roles, mostrar SweetAlert normalmente
+                                hideSessionLoading();
+                                showSessionDetectedAlert(rol, nombreCompleto, email);
+                            }
+                        } else {
+                            hideSessionLoading();
+                        }
+                    } catch (error) {
+                        console.error('Error al verificar sesión activa:', error);
+                        hideSessionLoading();
+                    }
+                } else {
+                    hideSessionLoading(); // Ocultar loading si no hay sesión
+                }
+            });
+        }
+
+        // Resto del código se mantiene igual...
         // Función para navegar entre formularios
         function setupFormNavigation() {
             // De registro a login
@@ -238,7 +400,23 @@
                 }
 
                 const userData = userDoc.data();
-                return userData.rol;
+                const rol = userData.rol;
+
+                // Verificar estado del colaborador si aplica
+                if (rol === 'colaborador' || rol === 'admincolaborador') {
+                    const colaboradorDoc = await firebase.firestore().collection('colaboradores').doc(user.uid).get();
+                    
+                    if (colaboradorDoc.exists) {
+                        const colaboradorData = colaboradorDoc.data();
+                        
+                        if (colaboradorData.trabajo !== 'Activo') {
+                            await firebase.auth().signOut();
+                            throw new Error('Su cuenta ha sido deshabilitada. Por favor, póngase en contacto con el administrador.');
+                        }
+                    }
+                }
+
+                return rol;
             } catch (error) {
                 throw error;
             }
@@ -246,6 +424,9 @@
 
         // Configuración inicial cuando el DOM está listo
         document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si hay sesión activa
+            checkActiveSession();
+
             // Configurar navegación entre formularios
             setupFormNavigation();
 
@@ -322,28 +503,7 @@
 
                     // Redirección basada en el rol
                     setTimeout(() => {
-                        switch(rol) {
-                            case 'admin':
-                                window.location.href = '/vista/nav-admin/dashAdmin.html';
-                                break;
-                            case 'puntoVenta':
-                                window.location.href = '/vista/nav-puntoVenta/inicio.html';
-                                break;
-                            case 'facturas':
-                                window.location.href = '/vista/nav-operadores/prueba_asistencia.html';
-                                break;
-                            case 'colaborador':
-                                window.location.href = '/vista/nav-mesa-operadores/asistencia/asistencia.html';
-                                break;
-                            case 'user':
-                                window.location.href = '/vista/nav-usuarios/dashUser.html';
-                                break;
-                            case 'admincolaborador':
-                                window.location.href = '/vista/nav-mesa-admin/asistencia/asistencia.html';
-                                break;
-                            default:
-                                window.location.href = '/vista/nav-usuarios/dashUser.html';
-                        }
+                        redirectByRole(rol);
                     }, 1500);
 
                 } catch (error) {
@@ -366,16 +526,20 @@
                 }
             });
         });
+
         // Después de iniciar sesión exitosamente, agregar:
-setTimeout(async () => {
-    try {
-        const fcmModule = await import('/fcm-manager.js');
-        await fcmModule.default.initialize();
-    } catch (error) {
-        console.log('FCM no disponible:', error);
-    }
-}, 1000);
+        setTimeout(async () => {
+            try {
+                const fcmModule = await import('/fcm-manager.js');
+                await fcmModule.default.initialize();
+            } catch (error) {
+                console.log('FCM no disponible:', error);
+            }
+        }, 1000);
     </script>
+
+    
+
     <!-- Scripts para la funcionalidad del login Firebase -->
      <script src="../recursosDinamicos/footer.js"></script>
 </body>
