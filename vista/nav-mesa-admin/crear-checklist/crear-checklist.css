@@ -31,7 +31,7 @@ body {
   max-width: 900px;
   margin: 30px auto;
   padding: 20px;
-  
+  background-color: var(--background-color);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   transition: all 0.3s ease;

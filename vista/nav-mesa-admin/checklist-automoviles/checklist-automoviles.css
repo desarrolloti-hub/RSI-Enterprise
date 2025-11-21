@@ -37,6 +37,7 @@
         .header-actions {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .sort-box{
@@ -199,11 +200,24 @@
     }
     .header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        text-align: center;
+    }
+    .header h1{
+        font-size: 1.5rem;
     }
     .header-actions {
         width: 100%;
         justify-content: space-between;
+        gap: 10px;
+    }
+    .header-actions .btn-primary,
+    .header-actions .btn-secondary {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding: 12px;
+        font-size: 0.95rem;
     }
     .checklists-grid {
         grid-template-columns: 1fr; /* Una sola columna en móvil */
