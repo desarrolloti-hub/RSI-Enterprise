@@ -87,6 +87,14 @@ async function loadChecklistsFromFirebase() {
         
         isDataFetched = true;
 
+        populateCollaboratorSelect();
+
+        const params = new URLSearchParams(window.location.search);
+        if(!params.get('view'))
+        {
+            renderResults(allChecklists);
+        }
+
     } catch (error) {
         console.error("Error CRÍTICO al cargar checklists:", error);
         container.innerHTML = `
@@ -381,4 +389,36 @@ function formatDate(dateString) {
     const [year, month, day] = dateString.split('-');
     if (year && month && day) return `${day}/${month}/${year}`;
     return dateString; 
+}
+
+// ==========================================
+// 8. FUNCIÓN PARA LLENAR EL SELECT DE COLABORADORES
+// ==========================================
+function populateCollaboratorSelect() {
+    const select = document.getElementById('filterCollaborator');
+    if (!select) return;
+
+    // 1. Usamos un Set para guardar nombres únicos (evita duplicados)
+    const uniqueNames = new Set();
+
+    allChecklists.forEach(item => {
+        const name = item.collaboratorInfo?.name;
+        if (name) {
+            uniqueNames.add(name.trim()); // Guardamos el nombre limpio
+        }
+    });
+
+    // 2. Convertimos a array y ordenamos alfabéticamente
+    const sortedNames = Array.from(uniqueNames).sort();
+
+    // 3. Limpiamos el select y dejamos la opción por defecto
+    select.innerHTML = '<option value="">Todos los colaboradores</option>';
+
+    // 4. Creamos las opciones
+    sortedNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name.toLowerCase(); // El valor en minúsculas para comparar fácil
+        option.textContent = name; // El texto visible tal cual es
+        select.appendChild(option);
+    });
 }

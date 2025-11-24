@@ -47,23 +47,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Función para llenar el select de Años
+// Función para llenar el select de Años dinámicamente
 function initYearSelect() {
     const yearSelect = document.getElementById('selectYear');
+    
+    // Validación de seguridad por si no existe el elemento en el HTML
     if (!yearSelect) return;
 
-    const currentYear = new Date().getFullYear();
-    yearSelect.innerHTML = ''; 
+    const currentYear = new Date().getFullYear(); // Toma el año del sistema (ej: 2025, 2026...)
+    const startYear = 2025; // 🔒 AÑO DE INICIO FIJO (El sistema nace aquí)
+
+    yearSelect.innerHTML = ''; // Limpiar opciones anteriores
     
-    // Año actual y anterior
-    const years = [currentYear, currentYear - 1]; 
-    
-    years.forEach(y => {
+    // Ciclo: Empieza en el año actual y baja hasta el 2025
+    // Ejemplo en 2025: Solo muestra [2025]
+    // Ejemplo en 2027: Mostrará [2027, 2026, 2025]
+    for (let year = currentYear; year >= startYear; year--) {
         const option = document.createElement('option');
-        option.value = y;
-        option.textContent = y;
+        option.value = year;
+        option.textContent = year;
         yearSelect.appendChild(option);
-    });
+    }
     
+    // Seleccionar año actual por defecto
     yearSelect.value = currentYear;
 }
 
