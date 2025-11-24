@@ -310,6 +310,17 @@ window.viewChecklistDetails = (id) => {
     photoButtonsHtml += '</div>';
 
     // Detalles
+     const docsList = checklist.checklists?.documentos?.items || [];
+    const accsList = checklist.checklists?.accesorios?.items || [];
+    const segList = checklist.checklists?.seguridad?.items || [];
+    const equipList = checklist.checklists?.equipamiento?.items || [];
+
+    const checklistItemsHtml = `
+        <p><strong>Documentos:</strong> ${docsList.join(', ') || 'Ninguno'}</p>
+        <p><strong>Accesorios:</strong> ${accsList.join(', ') || 'Ninguno'}</p>
+        <p><strong>Seguridad:</strong> ${segList.join(', ') || 'Ninguno'}</p>
+        <p><strong>Equipamiento:</strong> ${equipList.join(', ') || 'Ninguno'}</p>
+    `;
     const detallesHtml = (checklist.vehicleDetails?.length > 0)
         ? `<ul>${checklist.vehicleDetails.map(d => `<li>${d}</li>`).join('')}</ul>`
         : '— Ningún daño reportado.';
@@ -339,8 +350,11 @@ window.viewChecklistDetails = (id) => {
                 <h4><i class="fas fa-exclamation-triangle"></i> Daños</h4>
                 <div style="max-height: 100px; overflow-y: auto;">${detallesHtml}</div>
                 
-                <h4><i class="fas fa-list-check"></i> Observaciones</h4>
-                <div style="font-size: 0.9rem;">${obsHtml}</div>
+                <h4><i class="fas fa-list-check"></i> Verficacion y Observaciones</h4>
+                <div style="font-size: 0.9rem;">
+                ${checklistItemsHtml}
+                ${obsHtml}
+                </div>
             </div>
         `,
         width: 650,
