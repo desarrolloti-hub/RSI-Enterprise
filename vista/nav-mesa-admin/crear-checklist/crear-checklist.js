@@ -36,6 +36,7 @@ let loadedChecklistData = null; // Almacena la data original traída de FB para 
 
 window.vehiclePhotos = {};
 window.vehicleDetails = [];
+window.collaboratorSignature=null;
 
 // ==========================================
 // 1. INICIALIZACIÓN Y CARGA
@@ -477,7 +478,14 @@ function setupCameraEvents() {
 function goToStep(step) {
     const prevStep = step - 1;
     if (prevStep === 1 && !validateStep1()) return showAlert('Faltan datos en Vehículo/Fotos');
-    if (prevStep === 2 && !validateStep2()) return showAlert('Selecciona un Colaborador');
+
+    if(prevStep ===2){
+        if(!selectCollaborator || !window.collaboratorSignature)
+        {
+            return showAlert('Debes seleccionar un colaborador y FIRMAR');
+        }
+    }
+
     if (prevStep === 3 && !validateStep3()) return showAlert('Completa los datos del día');
 
     // Gestión visual de pasos
@@ -496,8 +504,16 @@ function goToStep(step) {
     if (step === 5) populateChecklistSection('accesorios', 'accesorios-checklist');
     if (step === 6) populateChecklistSection('seguridad', 'seguridad-checklist');
     if (step === 7) populateChecklistSection('equipamiento', 'equipamiento-checklist');
-    if (step === 8) updateSummary();
-
+    if (step === 8) {
+        updateSummary();
+        Swal.fire({
+            title: '¡Atencion!',
+            html: '<p>Por favor <strong>revisa muy bien</strong> la información.</p><p style="color:red;">Una vez creado, este registro NO se podrá editar ni borrar después.</p>',
+            icon: 'warning',
+            confirmButtonText:'Entendido',
+            confirmButtonColor: '#d33',
+        });   
+    }
     currentStep = step;
 }
 
@@ -588,6 +604,7 @@ async function saveChecklist() {
                 name: selectedCollaborator.name,
                 department: selectedCollaborator.department
             },
+            signature: window.collaboratorSignature,
             tripInfo: {
                 fecha: document.getElementById('fecha').value,
                 horaSalida: document.getElementById('horaSalida').value,
@@ -676,6 +693,16 @@ function setupEventListeners() {
     document.getElementById('prev-to-step-7').addEventListener('click', () => goToStep(7));
     
     document.getElementById('submit-checklist').addEventListener('click', saveChecklist);
+    //Codigo de firma
+    const btnSign = document.getElementById('btnSign');
+    if(btnSign) btnSign.addEventListener('click', openSignatureModal);
+    
+    const btnClearSign = document.getElementById('btnClearSignature');
+    if(btnClearSign) btnClearSign.addEventListener('click', () => {
+        window.collaboratorSignature = null;
+        updateSignatureUI();
+    });
+
 
     // Detalles Vehículo
     document.getElementById('addDetailBtn').addEventListener('click', () => {
@@ -740,6 +767,131 @@ document.getElementById('summary-gasolina').textContent = gasValue;
         img.src = v;
         img.style.width = '60px'; img.style.height = '60px'; img.style.objectFit = 'cover'; img.style.margin = '2px';
         photoGrid.appendChild(img);
+    }
+    //RESUMEN DE LA FIRMA
+    let signatureSummaryContainer = document.getElementById('summary-signature-container');
+    
+    if (!signatureSummaryContainer) {
+        // Si no existe, lo agregamos al final del contenedor "summary"
+        const summaryContainer = document.querySelector('.summary');
+        signatureSummaryContainer = document.createElement('div');
+        signatureSummaryContainer.id = 'summary-signature-container';
+        signatureSummaryContainer.className = 'summary-section'; // Usamos el mismo estilo de sección
+        summaryContainer.appendChild(signatureSummaryContainer);
+    }
+
+    if (window.collaboratorSignature) {
+        signatureSummaryContainer.innerHTML = `
+            <h3>Conformidad</h3>
+            <div class="summary-item" style="display: block; text-align: center;">
+                <div class="summary-label" style="margin-bottom: 10px;">Firma del Colaborador:</div>
+                <img src="${window.collaboratorSignature}" alt="Firma" style="max-width: 200px; border: 1px solid #ddd; background-color: #fff; padding: 5px; border-radius: 4px;">
+                <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Acepto las condiciones del vehículo.</p>
+            </div>
+        `;
+    } else {
+        signatureSummaryContainer.innerHTML = ''; // Limpiar si no hay firma (aunque la validación lo impide)
+    }
+}
+// ==========================================
+// LÓGICA DE FIRMA DIGITAL 
+// ==========================================
+
+function openSignatureModal() {
+    Swal.fire({
+        title: 'Firma del Colaborador',
+        html: `
+            <p style="font-size: 0.9rem; margin-bottom: 10px;">Por favor, firma en el recuadro grande a continuación:</p>
+            <div style="border: 2px dashed #ccc; border-radius: 8px; overflow: hidden;">
+                <canvas id="signatureCanvas" class="signature-canvas" style="width: 100%; height: 250px; display: block; touch-action: none;"></canvas>
+            </div>
+            <button id="clearCanvas" class="btn-secondary" style="margin-top:15px; padding: 8px 20px; width: 100%;">
+                <i class="fas fa-eraser"></i> Borrar y firmar de nuevo
+            </button>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar Firma',
+        cancelButtonText: 'Cancelar',
+        allowOutsideClick: false, 
+        width: '600px', // Hacemos el modal más ancho
+        padding: '20px',
+        didOpen: () => {
+            const canvas = document.getElementById('signatureCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // AJUSTE DE RESOLUCIÓN: Hace que el dibujo sea nítido al tamaño nuevo
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            let drawing = false;
+            ctx.lineWidth = 3; // Trazo un poco más grueso
+            ctx.lineCap = 'round'; 
+            ctx.strokeStyle = '#000';
+
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: cx - rect.left, y: cy - rect.top };
+            };
+
+            const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+            const move = (e) => { e.preventDefault(); if(!drawing)return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+            const end = () => drawing = false;
+
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move);
+            canvas.addEventListener('mouseup', end); canvas.addEventListener('mouseleave', end);
+            canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', move);
+            canvas.addEventListener('touchend', end);
+
+            document.getElementById('clearCanvas').addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        },
+        preConfirm: () => {
+            const canvas = document.getElementById('signatureCanvas');
+            return canvas.toDataURL('image/png');
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.collaboratorSignature = result.value;
+            updateSignatureUI();
+            Swal.fire({
+                icon: 'success', 
+                title: 'Firma Guardada', 
+                toast: true, 
+                position: 'top-end', 
+                showConfirmButton: false, 
+                timer: 2000 
+            });
+        }
+    });
+}
+
+function updateSignatureUI() {
+    const previewDiv = document.getElementById('signature-preview');
+    const img = document.getElementById('signature-image');
+    const signBtn = document.getElementById('btnSign');
+
+    if (window.collaboratorSignature) {
+        previewDiv.style.display = 'block';
+        img.src = window.collaboratorSignature;
+        signBtn.style.display = 'none';
+    } else {
+        previewDiv.style.display = 'none';
+        img.src = '';
+        signBtn.style.display = 'inline-block';
+    }
+    updateStep2ButtonState();
+}
+
+function updateStep2ButtonState() {
+    // Validar que haya colaborador Y firma para avanzar
+    const btnNext = document.getElementById('next-to-step-3');
+    if (selectedCollaborator && window.collaboratorSignature) {
+        btnNext.disabled = false;
+    } else {
+        btnNext.disabled = true;
     }
 }
 
