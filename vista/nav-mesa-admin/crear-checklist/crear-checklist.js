@@ -137,6 +137,11 @@ async function loadDataForEdit(id) {
             document.getElementById('origen').value = data.tripInfo.origen || '';
             document.getElementById('destino').value = data.tripInfo.destino || '';
             document.getElementById('kmSalida').value = data.tripInfo.kmSalida || '';
+            
+            if (data.tripInfo.gasolina) {
+                const radio = document.querySelector(`input[name="gasolina"][value="${data.tripInfo.gasolina}"]`);
+                if(radio) radio.checked = true;
+            }
         }
 
         // E. RESTAURAR OBSERVACIONES (PASOS 4-7)
@@ -338,8 +343,29 @@ function setupPhotoItemEvents(item, pt) {
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (!file.type.startsWith('image/'))
+            {
+                return Swal.fire('Error', ' Solo se permiten imagenes','error');
+            }
+
+            Swal.fire({
+                title:'Procesando Imagen...',
+                text:'Compriendo para optimizar espacio',
+                allowOutsideClick: false,
+                didOpen:() => Swal.showLoading()
+            });
             const reader = new FileReader();
-            reader.onload = () => updatePhotoPreview(pt.id, reader.result);
+            reader.onload = async () => {
+                try{
+                    const compressedImage = await comprimirImagen(reader.result);
+                    updatePhotoPreview(pt.id, compressedImage);
+                    Swal.close();
+                }catch (error) {
+                    console.error(error);
+                    Swal.fire('Error', ' No se pudo procesar la imagen', 'error');
+                }
+
+            };
             reader.readAsDataURL(file);
         }
     });
@@ -567,7 +593,8 @@ async function saveChecklist() {
                 horaSalida: document.getElementById('horaSalida').value,
                 origen: document.getElementById('origen').value,
                 destino: document.getElementById('destino').value,
-                kmSalida: document.getElementById('kmSalida').value
+                kmSalida: document.getElementById('kmSalida').value,
+                gasolina: document.querySelector('input[name="gasolina"]:checked')?.value || 'No registrado'
             },
             checklists: {
                 documentos: { items: getCheckedItems('documentos-checklist'), obs: document.getElementById('documentos-observaciones').value },
@@ -612,9 +639,19 @@ function updateStep1ButtonState() {
 }
 function validateStep1() { return !!selectedVehicle && Object.keys(window.vehiclePhotos).length >= 5; }
 function validateStep2() { return !!selectedCollaborator; }
-function validateStep3() { 
-    return ['fecha', 'horaSalida', 'origen', 'destino', 'kmSalida']
-        .every(id => document.getElementById(id).value.trim() !== '');
+function validateStep3() {
+    // Validar campos de texto
+    const fecha = document.getElementById('fecha').value.trim();
+    const hora = document.getElementById('horaSalida').value.trim();
+    const origen = document.getElementById('origen').value.trim();
+    const destino = document.getElementById('destino').value.trim();
+    const kmSalida = document.getElementById('kmSalida').value.trim();
+
+    // Validar Radio Button de Gasolina
+    const gasolina = document.querySelector('input[name="gasolina"]:checked');
+
+    // Retorna true solo si todo tiene valor
+    return fecha && hora && origen && destino && kmSalida && gasolina;
 }
 
 // Event Listeners Globales
@@ -683,7 +720,8 @@ function updateSummary() {
     document.getElementById('summary-fecha-hora').textContent = `${f} ${h}`;
     document.getElementById('summary-ruta').textContent = `${document.getElementById('origen').value} -> ${document.getElementById('destino').value}`;
     document.getElementById('summary-km-salida').textContent = document.getElementById('kmSalida').value;
-    
+    const gasValue = document.querySelector('input[name="gasolina"]:checked')?.value || 'N/A';
+document.getElementById('summary-gasolina').textContent = gasValue;
     // Detalles
     const detDiv = document.getElementById('summary-vehicle-details');
     detDiv.innerHTML = window.vehicleDetails.length ? `<ul>${window.vehicleDetails.map(d=>`<li>${d}</li>`).join('')}</ul>` : 'Ninguno';
@@ -703,4 +741,62 @@ function updateSummary() {
         img.style.width = '60px'; img.style.height = '60px'; img.style.objectFit = 'cover'; img.style.margin = '2px';
         photoGrid.appendChild(img);
     }
+}
+
+// ==========================================
+// 8. FUNCIÓN DE COMPRESIÓN DE IMÁGENES
+// ==========================================
+
+async function comprimirImagen(base64Str) {
+    const MAX_BYTES = 1000000; // 1 MB = 1,000,000 bytes
+    
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64Str;
+        
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // 1. Redimensionar si la imagen es gigante (esto ayuda mucho al peso)
+            // Limitamos el lado más largo a 1280px (suficiente para evidencia)
+            const MAX_SIDE = 1280; 
+            if (width > height) {
+                if (width > MAX_SIDE) {
+                    height *= MAX_SIDE / width;
+                    width = MAX_SIDE;
+                }
+            } else {
+                if (height > MAX_SIDE) {
+                    width *= MAX_SIDE / height;
+                    height = MAX_SIDE;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 2. Reducir calidad iterativamente hasta que pese menos de 1MB
+            let quality = 0.9;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+            // Cálculo aproximado: (longitud del string base64 * 0.75) ~= peso en bytes
+            while (dataUrl.length * 0.75 > MAX_BYTES && quality > 0.2) {
+                quality -= 0.1;
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+                // console.log(`Comprimiendo... Calidad: ${quality.toFixed(1)}`);
+            }
+
+            resolve(dataUrl);
+        };
+        
+        img.onerror = () => {
+            // Si falla, devolvemos la original aunque sea pesada
+            console.error("Error al comprimir imagen");
+            resolve(base64Str);
+        };
+    });
 }

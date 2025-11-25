@@ -33,8 +33,9 @@ header h1 {
 }
 
 
-      .vehicles {
+.vehicles {
     padding: 25px;
+    position: relative;
     
 }
 
@@ -465,5 +466,45 @@ header h1 {
     margin-right: 5px;
 }
 
+.btn-back {
+    position: absolute;
+    top: 25px;   /* Misma distancia que el padding superior de .vehicles */
+    right: 25px; /* Pegado a la derecha */
+    
+    background-color: transparent;
+    border: 2px solid var(--primary-color, #3498db);
+    color: var(--primary-color, #3498db);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    z-index: 10; /* Asegura que esté por encima de todo */
+    
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-back:hover {
+    background-color: var(--primary-color, #3498db);
+    color: white;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+/* 3. Ajuste para celulares (Responsive) */
+@media (max-width: 768px) {
+    .btn-back {
+        position: static; /* Deja de flotar */
+        display: block;   /* Se comporta como bloque normal */
+        margin: 0 auto 15px auto; /* Se centra y empuja el título hacia abajo */
+        width: fit-content; /* El ancho se ajusta al texto */
+    }
+    
+    .vehicles h2 {
+        margin-top: 0; /* Reseteamos margen si es necesario */
+    }
+}
 
 

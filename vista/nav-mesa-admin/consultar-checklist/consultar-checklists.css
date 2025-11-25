@@ -1,6 +1,4 @@
-/* -- Contenido de checklist-automoviles.css (Asegúrate de reemplazar TODO el contenido) -- */
 
-/* Variables de Color (Necesarias para el CSS) */
 :root {
     --primary-color: #6C43E0; 
     --secondary-color: #5a35c7;
@@ -113,12 +111,26 @@ body {
     font-size: 0.9rem;
 }
 
-.filter-group input {
+.filter-group input, 
+.filter-group select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    background: var(--bg-color);
+   
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 45px; /* Altura fija para alineación perfecta */
+    appearance: none; /* (Opcional) Quita el estilo nativo feo */
+    cursor: pointer;
+}
+
+/* Estilo al hacer clic (Focus) */
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.1);
 }
 
 /* --- GRID DE TARJETAS/RESULTADOS (Usado en ambas páginas) --- */

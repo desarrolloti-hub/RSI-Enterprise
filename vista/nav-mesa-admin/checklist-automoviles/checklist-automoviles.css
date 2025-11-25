@@ -37,6 +37,7 @@
         .header-actions {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .sort-box{
@@ -191,6 +192,53 @@
     text-decoration: none;
     transition: all 0.2s ease;
 }
+/* CSS ADICIONAL PARA LA BARRA DE HERRAMIENTAS */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-group label {
+    font-weight: 600;
+    
+}
+
+.custom-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    font-size: 0.95rem;
+    outline: none;
+    color: #333;
+}
+
+.custom-select:focus {
+    border-color: var(--primary-color, #3498db);
+}
+
+.btn-icon {
+    background: #eee;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.btn-icon:hover { background: #ddd; }
 
 /* 4. RESPONSIVE */
 @media (max-width: 768px) {
@@ -199,16 +247,37 @@
     }
     .header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        text-align: center;
+    }
+    .header h1{
+        font-size: 1.5rem;
     }
     .header-actions {
         width: 100%;
         justify-content: space-between;
+        gap: 10px;
+    }
+    .header-actions .btn-primary,
+    .header-actions .btn-secondary {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding: 12px;
+        font-size: 0.95rem;
     }
     .checklists-grid {
         grid-template-columns: 1fr; /* Una sola columna en móvil */
     }
     .checklist-card {
         margin: 0;
+    }
+
+    .filter-group {
+        flex-wrap: wrap;
+    }
+    .custom-select {
+        flex: 1; /* Que ocupen espacio equitativo */
+        min-width: 100px;
     }
 }
