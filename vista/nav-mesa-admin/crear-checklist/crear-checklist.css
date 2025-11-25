@@ -895,6 +895,15 @@ select:focus, input:focus, textarea:focus {
     height: 18px;
 }
 
+/* Estilos para el Canvas de Firma */
+.signature-canvas {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    cursor: crosshair;
+    background-color: #fff;
+    touch-action: none; /* Importante para móviles: evita que se mueva la pantalla al firmar */
+    
+}
 
 
 
