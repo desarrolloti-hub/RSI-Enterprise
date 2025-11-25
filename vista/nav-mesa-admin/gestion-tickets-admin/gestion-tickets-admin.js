@@ -250,7 +250,7 @@ function displayTickets(tickets) {
                     <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="action-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF">
+                    <button class="action-btn" onclick="generatePdfPage('${ticket.id}')" title="Generar PDF">
                         <i class="fas fa-file-pdf"></i>
                     </button>
                     <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera">
@@ -306,7 +306,7 @@ function displayTickets(tickets) {
                     <button class="action-btn" onclick="editTicket('${ticket.id}')" title="Editar Ticket">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="action-btn" onclick="preparePdfGeneration('${ticket.id}')" title="Generar PDF">
+                    <button class="action-btn" onclick="generatePdfPage('${ticket.id}')" title="Generar PDF">
                         <i class="fas fa-file-pdf"></i>
                     </button>
                     <button class="action-btn delete" onclick="deleteTicket('${ticket.id}')" title="Mover a Papelera">
@@ -428,6 +428,16 @@ async function editTicket(ticketId) {
     }
 }
 
+// NUEVA FUNCIÓN: Redirigir a generar-pdf.html
+async function generatePdfPage(ticketId) {
+    try {
+        window.location.href = `../generar-pdf/generar-pdf.html?id=${ticketId}`;
+    } catch (error) {
+        console.error('Error al redirigir a generar PDF:', error);
+        showError('No se pudo cargar la página de generación de PDF.');
+    }
+}
+
 async function deleteTicket(ticketId) {
     try {
         const result = await Swal.fire({
@@ -478,56 +488,6 @@ async function deleteTicket(ticketId) {
 }
 
 // =================================================================================
-// FUNCIONES PDF - DELEGADAS AL PDF MANAGER
-// =================================================================================
-
-async function preparePdfGeneration(ticketId) {
-    try {
-        const ticketData = await getTicketDetails(ticketId);
-        if (!ticketData) throw new Error('Ticket no encontrado');
-        
-        // Inicializar el PDF Manager con los datos necesarios
-        pdfManager.initialize(appState.colaboradores, db);
-        
-        // Preparar la generación del PDF usando SweetAlert2
-        await pdfManager.preparePdfGenerationWithSweetAlert(ticketData);
-    } catch (error) {
-        console.error("Error preparando PDF:", error);
-        Swal.fire('Error', 'No se pudo obtener la información para el PDF.', 'error');
-    }
-}
-
-async function getTicketDetails(id) {
-    const ticketDoc = await db.collection('ticketsmesa').doc(id).get();
-    if (!ticketDoc.exists) return null;
-
-    const ticketData = ticketDoc.data();
-    ticketData.id = id;
-
-    // Obtener evidencias del ticket
-    const evidenciasSnapshot = await db.collection('evidenciatickets').where('ticketId', '==', id).get();
-    ticketData.imagenes = [];
-    ticketData.descripcionesEvidencia = [];
-    evidenciasSnapshot.forEach(doc => {
-        const evidencia = doc.data();
-        if (evidencia.imagenes) ticketData.imagenes.push(...evidencia.imagenes);
-        if (evidencia.descripcion) ticketData.descripcionesEvidencia.push(evidencia.descripcion);
-    });
-
-    // Procesar nombres de colaboradores
-    if (ticketData.colaboradores && ticketData.colaboradores.length > 0) {
-        ticketData.nombresColaboradores = ticketData.colaboradores.map(colabId => {
-            const colaborador = appState.colaboradores.find(c => c.id === colabId);
-            return colaborador ? colaborador.nombre : 'ID Desconocido';
-        }).join(', ');
-    } else {
-        ticketData.nombresColaboradores = 'Ninguno';
-    }
-
-    return ticketData;
-}
-
-// =================================================================================
 // CONFIGURACIÓN DE EVENTOS
 // =================================================================================
 
@@ -556,17 +516,6 @@ function setupEventListeners() {
         console.log('Event listener de filtro por colaborador configurado');
     } else {
         console.warn('collaboratorFilter no encontrado');
-    }
-
-    // Evento para generar PDF - con verificación de existencia
-    const generatePdfBtn = document.getElementById('generatePdfBtn');
-    if (generatePdfBtn) {
-        generatePdfBtn.addEventListener('click', () => {
-            pdfManager.createAndSavePdf();
-        });
-        console.log('Event listener de PDF configurado');
-    } else {
-        console.log('generatePdfBtn no encontrado (probablemente porque ahora usamos SweetAlert2)');
     }
 
     console.log('Todos los event listeners configurados correctamente');
