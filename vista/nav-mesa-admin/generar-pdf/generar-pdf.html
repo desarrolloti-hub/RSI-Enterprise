@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Generar PDF</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* MANTENER LAS VARIABLES CSS PERO SIN VALORES FIJOS - EL JS LAS SOBRESCRIBIRÁ */
+        :root {
+            --primary-color: #6C43E0;
+            --secondary-color: #5a35c7;
+            --accent-color: #8B5FEB;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .main-c {
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header-title-container h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white !important;
+            text-align: center;
+            margin: 0;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .content-container {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .section h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .image-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+        }
+
+        .image-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px var(--primary-color)30;
+        }
+
+        .image-card-header {
+            padding: 10px;
+            background: var(--card-bg);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        .image-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-description {
+            padding: 12px;
+        }
+
+        .image-description textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            resize: vertical;
+            font-family: 'Inter', sans-serif;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            opacity: 0.5;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-color);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background: #e8f5e8;
+            color: #2ecc71;
+        }
+
+        .badge-warning {
+            background: #fff8e1;
+            color: #f39c12;
+        }
+
+        .badge-danger {
+            background: #ffeaea;
+            color: #e74c3c;
+        }
+
+        .ticket-info {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            color: var(--text-color);
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .info-value {
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header-title-container {
+                order: -1;
+                margin-bottom: 15px;
+            }
+
+            .header-controls {
+                justify-content: center;
+            }
+
+            .content-container {
+                padding: 15px;
+                gap: 15px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .images-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header-title-container h2 {
+                font-size: 1.4rem;
+            }
+
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .content-container {
+                padding: 10px;
+            }
+
+            .section {
+                padding: 15px;
+            }
+
+            .images-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ESTILOS ESPECÍFICOS PARA ASEGURAR COMPATIBILIDAD CON PERSONALIZACIÓN */
+        .ticket-info,
+        .image-card,
+        .image-card-header,
+        .form-control,
+        .image-description textarea {
+            background-color: var(--card-bg) !important;
+            color: var(--text-color) !important;
+        }
+
+        .info-label {
+            color: var(--primary-color) !important;
+        }
+
+        .info-value {
+            color: var(--text-color) !important;
+        }
+
+        /* GARANTIZAR QUE EL TÍTULO SIEMPRE SEA BLANCO */
+        .header-title-container h2 {
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-c">
+        <div class="header">
+            <div class="header-title-container">
+                <h2>Generar Reporte PDF</h2>
+            </div>
+            <div class="header-controls">
+                <button class="btn" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver
+                </button>
+                <button class="btn btn-primary" id="generatePdfBtn">
+                    <i class="fas fa-file-pdf"></i>
+                    Generar PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="content-container">
+            <!-- Columna izquierda: Información del ticket y contenido editable -->
+            <div class="left-column">
+                <!-- Información básica del ticket -->
+                <div class="section">
+                    <h3>Información del Ticket</h3>
+                    <div class="ticket-info">
+                        <div class="info-row">
+                            <span class="info-label">ID del Ticket:</span>
+                            <span class="info-value" id="ticketId">Cargando...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Título:</span>
+                            <span class="info-value" id="ticketTitle">Cargando...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Estado:</span>
+                            <span class="info-value" id="ticketStatus">Cargando...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Prioridad:</span>
+                            <span class="info-value" id="ticketPriority">Cargando...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Colaboradores:</span>
+                            <span class="info-value" id="ticketCollaborators">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Descripción de actividades editable -->
+                <div class="section">
+                    <h3>Descripción de Actividades (PDF)</h3>
+                    <div class="form-group">
+                        <label for="pdfDescription">Descripción para el PDF:</label>
+                        <textarea 
+                            id="pdfDescription" 
+                            class="form-control" 
+                            placeholder="Modifica la descripción de actividades que aparecerá en el PDF..."
+                        ></textarea>
+                        <small style="color: #666; margin-top: 5px; display: block;">
+                            Esta descripción reemplazará la original en el PDF generado.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Conclusión editable -->
+                <div class="section">
+                    <h3>Conclusión (PDF)</h3>
+                    <div class="form-group">
+                        <label for="pdfConclusion">Conclusión para el PDF:</label>
+                        <textarea 
+                            id="pdfConclusion" 
+                            class="form-control" 
+                            placeholder="Modifica la conclusión que aparecerá en el PDF..."
+                        ></textarea>
+                        <small style="color: #666; margin-top: 5px; display: block;">
+                            Esta conclusión reemplazará la original en el PDF generado.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Selección de imágenes -->
+            <div class="right-column">
+                <!-- Selección de imágenes -->
+                <div class="section">
+                    <h3>Selección de Imágenes para el PDF</h3>
+                    <div class="form-group">
+                        <label>Selecciona las imágenes que deseas incluir en el PDF:</label>
+                        <div id="imagesContainer" class="images-grid">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando imágenes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Descripción general de evidencias -->
+                <div class="section">
+                    <h3>Descripción General de Evidencias (PDF)</h3>
+                    <div class="form-group">
+                        <label for="pdfEvidencesDescription">Descripción general para las evidencias:</label>
+                        <textarea 
+                            id="pdfEvidencesDescription" 
+                            class="form-control" 
+                            placeholder="Agrega una descripción general para todas las evidencias del PDF..."
+                        ></textarea>
+                        <small style="color: #666; margin-top: 5px; display: block;">
+                            Esta descripción aparecerá en la sección de evidencias del PDF.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Estado de la aplicación
+        const appState = {
+            currentUser: null,
+            currentTicketId: null,
+            colaboradores: [],
+            ticketData: null,
+            activities: [],
+            pdfData: {
+                description: '',
+                conclusion: '',
+                evidencesDescription: '',
+                selectedImages: [] // Array de objetos {url, description, selected}
+            }
+        };
+
+        // =================================================================================
+        // FUNCIONES PRINCIPALES
+        // =================================================================================
+
+        async function initialLoad() {
+            try {
+                await loadUserProfile();
+                await loadCollaborators();
+                await loadTicketData();
+                await loadActivities();
+                setupEventListeners();
+            } catch (error) {
+                console.error("Error en la carga inicial:", error);
+                showError('No se pudieron cargar los datos iniciales.');
+            }
+        }
+
+        async function loadUserProfile() {
+            const user = auth.currentUser;
+            if (!user) {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                return;
+            }
+            
+            try {
+                const querySnapshot = await db.collection("colaboradores")
+                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const userData = doc.data();
+                    appState.currentUser = {
+                        id: doc.id,
+                        nombre: userData.NOMBRE,
+                        area: userData.ÁREA,
+                        imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
+                    };
+                }
+            } catch (error) {
+                console.error("Error al cargar perfil:", error);
+            }
+        }
+
+        async function loadCollaborators() {
+            try {
+                const snapshot = await db.collection('colaboradores').get();
+                appState.colaboradores = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    nombre: doc.data().NOMBRE,
+                    area: doc.data().ÁREA
+                }));
+            } catch (error) {
+                console.error("Error al cargar colaboradores:", error);
+            }
+        }
+
+        async function loadTicketData() {
+            try {
+                // Obtener el ID del ticket de la URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const ticketId = urlParams.get('id');
+                
+                if (!ticketId) {
+                    showError('No se proporcionó un ID de ticket válido.');
+                    return;
+                }
+                
+                appState.currentTicketId = ticketId;
+                
+                // Cargar datos del ticket
+                const ticketDoc = await db.collection('ticketsmesa').doc(ticketId).get();
+                
+                if (!ticketDoc.exists) {
+                    showError('El ticket solicitado no existe.');
+                    return;
+                }
+                
+                appState.ticketData = {
+                    id: ticketDoc.id,
+                    ...ticketDoc.data()
+                };
+                
+                // Procesar nombres de colaboradores
+                if (appState.ticketData.colaboradores && appState.ticketData.colaboradores.length > 0) {
+                    appState.ticketData.nombresColaboradores = appState.ticketData.colaboradores.map(colabId => {
+                        const colaborador = appState.colaboradores.find(c => c.id === colabId);
+                        return colaborador ? colaborador.nombre : 'Desconocido';
+                    }).filter(Boolean).join(', ');
+                } else {
+                    appState.ticketData.nombresColaboradores = 'Sin asignar';
+                }
+                
+                // Actualizar la interfaz con los datos del ticket
+                updateTicketUI();
+                
+                // Cargar datos iniciales para el PDF
+                loadInitialPdfData();
+                
+            } catch (error) {
+                console.error("Error al cargar datos del ticket:", error);
+                showError('No se pudieron cargar los datos del ticket.');
+            }
+        }
+
+        async function loadActivities() {
+            try {
+                if (!appState.currentTicketId) {
+                    appState.activities = [];
+                    updateImagesUI();
+                    return;
+                }
+                
+                // Cargar actividades desde evidenciatickets
+                const activitiesSnapshot = await db.collection('evidenciatickets')
+                    .where('ticketId', '==', appState.currentTicketId)
+                    .get();
+                
+                appState.activities = [];
+                
+                activitiesSnapshot.forEach(doc => {
+                    const activityData = doc.data();
+                    appState.activities.push({
+                        id: doc.id,
+                        ...activityData
+                    });
+                });
+                
+                updateImagesUI();
+                
+            } catch (error) {
+                console.error("Error al cargar actividades:", error);
+                showError('No se pudieron cargar las actividades.');
+            }
+        }
+
+        function loadInitialPdfData() {
+            // Cargar datos originales en los campos editables
+            document.getElementById('pdfDescription').value = 
+                appState.ticketData.descripcionActividades || 
+                appState.ticketData.descripcion || 
+                '';
+                
+            document.getElementById('pdfConclusion').value = 
+                appState.ticketData.conclusion || 
+                '';
+            
+            // Cargar descripción general de evidencias desde las actividades (igual que en verTicket.html)
+            let evidencesDescription = '';
+            if (appState.activities && appState.activities.length > 0) {
+                // Crear una descripción estructurada similar a verTicket.html
+                const activityDescriptions = [];
+                
+                appState.activities.forEach((activity, index) => {
+                    const collaboratorName = getCollaboratorName(activity.colaboradorId);
+                    const activityDate = activity.fechaCreacion ? 
+                        (activity.fechaCreacion.toDate ? 
+                            activity.fechaCreacion.toDate().toLocaleDateString('es-MX') : 
+                            new Date(activity.fechaCreacion).toLocaleDateString('es-MX')
+                        ) : 'Fecha no disponible';
+                    
+                    let activityText = `Actividad ${index + 1} - ${collaboratorName} (${activityDate}):\n`;
+                    
+                    if (activity.descripcion && activity.descripcion.trim() !== '') {
+                        activityText += `${activity.descripcion.trim()}`;
+                    } else {
+                        activityText += 'Sin descripción detallada.';
+                    }
+                    
+                    activityDescriptions.push(activityText);
+                });
+                
+                if (activityDescriptions.length > 0) {
+                    evidencesDescription = activityDescriptions.join('\n\n');
+                }
+            }
+                
+            document.getElementById('pdfEvidencesDescription').value = evidencesDescription;
+            
+            // Guardar en el estado
+            appState.pdfData.description = document.getElementById('pdfDescription').value;
+            appState.pdfData.conclusion = document.getElementById('pdfConclusion').value;
+            appState.pdfData.evidencesDescription = evidencesDescription;
+        }
+
+        function getCollaboratorName(collaboratorId) {
+            if (!collaboratorId) return 'Colaborador desconocido';
+            const colaborador = appState.colaboradores.find(c => c.id === collaboratorId);
+            return colaborador ? colaborador.nombre : 'Colaborador desconocido';
+        }
+
+        function updateTicketUI() {
+            const ticket = appState.ticketData;
+            
+            document.getElementById('ticketId').textContent = ticket.idTicket || ticket.id || 'N/A';
+            document.getElementById('ticketTitle').textContent = ticket.titulo || 'Sin título';
+            document.getElementById('ticketStatus').innerHTML = getStatusBadge(ticket.estado);
+            document.getElementById('ticketPriority').innerHTML = getPriorityBadge(ticket.prioridad);
+            document.getElementById('ticketCollaborators').textContent = ticket.nombresColaboradores || 'Sin asignar';
+        }
+
+        function updateImagesUI() {
+            const container = document.getElementById('imagesContainer');
+            
+            // Obtener todas las imágenes únicas de todas las actividades
+            const allImages = [];
+            appState.activities.forEach(activity => {
+                if (activity.imagenes && activity.imagenes.length > 0) {
+                    activity.imagenes.forEach(imgUrl => {
+                        if (!allImages.some(img => img.url === imgUrl)) {
+                            allImages.push({
+                                url: imgUrl,
+                                description: '', // Descripción vacía para que el usuario la complete si quiere
+                                selected: true // Por defecto seleccionar todas
+                            });
+                        }
+                    });
+                }
+            });
+            
+            if (allImages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-images"></i>
+                        <p>No hay imágenes disponibles</p>
+                        <small>No se encontraron imágenes en las actividades de este ticket</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Inicializar el estado de las imágenes si es la primera vez
+            if (appState.pdfData.selectedImages.length === 0) {
+                appState.pdfData.selectedImages = allImages;
+            }
+            
+            let html = '';
+            
+            appState.pdfData.selectedImages.forEach((image, index) => {
+                html += `
+                    <div class="image-card ${image.selected ? 'selected' : ''}" data-index="${index}">
+                        <div class="image-card-header">
+                            <span>Imagen ${index + 1}</span>
+                            <input 
+                                type="checkbox" 
+                                class="image-checkbox" 
+                                ${image.selected ? 'checked' : ''}
+                                onchange="toggleImageSelection(${index}, this.checked)"
+                            >
+                        </div>
+                        <img src="${image.url}" alt="Evidencia ${index + 1}" class="image-preview"
+                             onerror="this.src='../css/img/image-placeholder.png'">
+                        <div class="image-description">
+                            <textarea 
+                                placeholder="Descripción opcional para esta imagen..."
+                                onchange="updateImageDescription(${index}, this.value)"
+                            >${image.description || ''}</textarea>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // =================================================================================
+        // FUNCIONES DE INTERACCIÓN
+        // =================================================================================
+
+        function toggleImageSelection(index, selected) {
+            appState.pdfData.selectedImages[index].selected = selected;
+            
+            // Actualizar la apariencia de la tarjeta
+            const card = document.querySelector(`.image-card[data-index="${index}"]`);
+            if (card) {
+                if (selected) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+        }
+
+        function updateImageDescription(index, description) {
+            appState.pdfData.selectedImages[index].description = description;
+        }
+
+        // =================================================================================
+        // FUNCIONES DE GENERACIÓN DE PDF
+        // =================================================================================
+
+        async function generatePDF() {
+            try {
+                // Actualizar datos del PDF desde los campos
+                appState.pdfData.description = document.getElementById('pdfDescription').value;
+                appState.pdfData.conclusion = document.getElementById('pdfConclusion').value;
+                appState.pdfData.evidencesDescription = document.getElementById('pdfEvidencesDescription').value;
+
+                // Validar que haya al menos una imagen seleccionada si hay imágenes disponibles
+                const selectedImages = appState.pdfData.selectedImages.filter(img => img.selected);
+                if (selectedImages.length === 0 && appState.pdfData.selectedImages.length > 0) {
+                    const result = await Swal.fire({
+                        title: '¿Continuar sin imágenes?',
+                        text: 'No has seleccionado ninguna imagen para incluir en el PDF. ¿Deseas continuar?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, generar sin imágenes',
+                        cancelButtonText: 'Seleccionar imágenes',
+                        confirmButtonColor: '#6C43E0'
+                    });
+                    
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+                }
+
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Generando PDF',
+                    html: 'Preparando documento...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                // Crear el PDF usando el pdfManager existente
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                // Preparar datos para el PDF
+                const pdfTicketData = {
+                    ...appState.ticketData,
+                    descripcionActividades: appState.pdfData.description,
+                    conclusion: appState.pdfData.conclusion,
+                    descripcionEvidencias: appState.pdfData.evidencesDescription,
+                    imagenes: selectedImages.map(img => img.url),
+                    // Agregar descripciones individuales de imágenes si es necesario
+                    imageDescriptions: selectedImages.reduce((acc, img, index) => {
+                        acc[img.url] = img.description;
+                        return acc;
+                    }, {})
+                };
+
+                // Inicializar y usar el pdfManager
+                pdfManager.initialize(appState.colaboradores, db);
+                pdfManager.ticketData = pdfTicketData;
+                pdfManager.currentPage = 1;
+                pdfManager.totalPages = 1;
+
+                // Generar el PDF
+                await pdfManager.generatePdfContentNewFormat(doc, pdfTicketData, 'REPORTE FOTOGRÁFICO');
+                
+                // Guardar PDF
+                const fileName = `REPORTE_FOTOGRÁFICO_${appState.ticketData.idTicket || appState.ticketData.id || 'ticket'}.pdf`;
+                doc.save(fileName);
+                
+                Swal.close();
+                Swal.fire({
+                    title: '¡PDF Generado!',
+                    text: `El archivo "${fileName}" se ha descargado exitosamente.`,
+                    icon: 'success',
+                    confirmButtonColor: '#6C43E0',
+                    timer: 3000
+                });
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error);
+                Swal.fire('Error', 'Ocurrió un error al generar el PDF.', 'error');
+            }
+        }
+
+        // =================================================================================
+        // FUNCIONES AUXILIARES
+        // =================================================================================
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                'finalizado': { class: 'badge-success', text: 'Finalizado' },
+                'en_proceso': { class: 'badge-warning', text: 'En Proceso' },
+                'pendiente': { class: 'badge-danger', text: 'Pendiente' },
+                'cancelado': { class: 'badge-secondary', text: 'Cancelado' }
+            };
+            
+            const statusInfo = statusMap[status] || { class: 'badge-secondary', text: status || 'N/A' };
+            return `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
+        }
+
+        function getPriorityBadge(priority) {
+            const priorityMap = {
+                'alta': { class: 'badge-danger', text: 'Alta' },
+                'media': { class: 'badge-warning', text: 'Media' },
+                'baja': { class: 'badge-success', text: 'Baja' }
+            };
+            
+            const priorityInfo = priorityMap[priority] || { class: 'badge-secondary', text: priority || 'N/A' };
+            return `<span class="badge ${priorityInfo.class}">${priorityInfo.text}</span>`;
+        }
+
+        function showError(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#6C43E0'
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
+            
+            // Guardar cambios en tiempo real
+            document.getElementById('pdfDescription').addEventListener('input', (e) => {
+                appState.pdfData.description = e.target.value;
+            });
+            
+            document.getElementById('pdfConclusion').addEventListener('input', (e) => {
+                appState.pdfData.conclusion = e.target.value;
+            });
+            
+            document.getElementById('pdfEvidencesDescription').addEventListener('input', (e) => {
+                appState.pdfData.evidencesDescription = e.target.value;
+            });
+        }
+
+        // =================================================================================
+        // INICIALIZACIÓN
+        // =================================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    initialLoad();
+                } else {
+                    window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+                }
+            });
+        });
+    </script>
+
+    <!-- Incluir el pdf-generator.js existente -->
+    <script src="pdf-generator.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+</body>
+</html>

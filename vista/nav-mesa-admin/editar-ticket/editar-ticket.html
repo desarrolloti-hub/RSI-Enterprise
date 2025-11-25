@@ -68,16 +68,7 @@
                                 <option value="baja">Baja</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="ticketArea">Área:</label>
-                            <select id="ticketArea" class="form-control" required>
-                                <option value="">Seleccionar área</option>
-                                <option value="administracion">Administración</option>
-                                <option value="soporte">Soporte</option>
-                                <option value="desarrollo">Desarrollo</option>
-                                <option value="infraestructura">Infraestructura</option>
-                            </select>
-                        </div>
+                        <!-- Se ha eliminado el campo Área de esta sección -->
                         <div class="form-group">
                             <label for="ticketType">Tipo:</label>
                             <select id="ticketType" class="form-control" required>
@@ -608,7 +599,7 @@
         document.getElementById('ticketTitle').value = ticket.titulo || '';
         document.getElementById('ticketStatus').value = ticket.estado || '';
         document.getElementById('ticketPriority').value = ticket.prioridad || '';
-        document.getElementById('ticketArea').value = ticket.area || '';
+        // Se ha eliminado el campo Área de esta sección
         document.getElementById('ticketType').value = ticket.tipo || 'operativo';
         
         // Asignación - Cargar colaboradores (USANDO LA NUEVA GESTIÓN)
@@ -688,7 +679,7 @@
                 titulo: document.getElementById('ticketTitle').value,
                 estado: document.getElementById('ticketStatus').value,
                 prioridad: document.getElementById('ticketPriority').value,
-                area: document.getElementById('ticketArea').value,
+                // Se ha eliminado el campo Área de esta sección
                 tipo: document.getElementById('ticketType').value,
                 levantadoPor: document.getElementById('ticketRaisedBy').value,
                 colaboradores: appState.selectedCollaborators.map(c => c.id), // USAR LOS COLABORADORES SELECCIONADOS
@@ -742,7 +733,7 @@
     function validateForm() {
         const requiredFields = [
             'ticketTitle', 'ticketStatus', 'ticketPriority', 
-            'ticketArea', 'ticketType', 'ticketRaisedBy'
+            'ticketType', 'ticketRaisedBy'
         ];
         
         for (const fieldId of requiredFields) {

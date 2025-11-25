@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-     <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
 <body>
     <div class="main-container">
         <div class="header">
-            <h2 class="title" style="color:#fff !important;">Nuevo Ticket</h2>
+            <h2 class="title">Nuevo Ticket</h2>
             
             <div class="ticket-type-selector">
                 <button class="ticket-type-btn active" data-type="operativo">
@@ -33,7 +33,7 @@
         <!-- Formulario para Ticket Operativo -->
         <div class="form-container">
             <div class="form-header">
-                <h3 id="formTitle" style="color:#fff !important;">Nuevo Ticket Operativo</h3>
+                <h3 id="formTitle">Nuevo Ticket Operativo</h3>
             </div>
 
             <form id="ticketOperativoForm" class="form-content" onsubmit="saveTicket(event, 'operativo')">
@@ -82,6 +82,60 @@
                             <input type="text" id="ordenServicio" class="form-control">
                         </div>
                     </div>
+                    
+                    <!-- Nueva sección para selección de cotización -->
+                    <div class="form-group">
+                        <label for="asociarCotizacion">ASOCIAR COTIZACIÓN</label>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="asociarCotizacion" value="si" onchange="toggleCotizacionSelect(this.value)">
+                                Sí
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="asociarCotizacion" value="no" checked onchange="toggleCotizacionSelect(this.value)">
+                                No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="cotizacionContainer" style="display: none;">
+                        <label for="cotizacion">SELECCIONAR COTIZACIÓN</label>
+                        <select id="cotizacion" class="form-control" onchange="loadCotizacionData(this.value)">
+                            <option value="">Seleccione una cotización</option>
+                        </select>
+                        <small class="text-muted" id="cotizacionInfoText">Cargando todas las cotizaciones...</small>
+                        
+                        <!-- Campos para mostrar información de la cotización -->
+                        <div class="cotizacion-info" style="margin-top: 15px; padding: 10px; background: var(--card-bg); border-radius: 5px; display: none;" id="cotizacionInfo">
+                            <div class="form-group">
+                                <label for="cotizacionNumero">NÚMERO DE COTIZACIÓN</label>
+                                <input type="text" id="cotizacionNumero" class="form-control" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="cotizacionDescripcion">DESCRIPCIÓN</label>
+                                <textarea id="cotizacionDescripcion" class="form-control" rows="2" readonly></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label for="cotizacionFecha">FECHA COTIZACIÓN</label>
+                                    <input type="text" id="cotizacionFecha" class="form-control" readonly>
+                                </div>
+                                <div class="form-col">
+                                    <label for="cotizacionTotal">TOTAL</label>
+                                    <input type="text" id="cotizacionTotal" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="cotizacionEstado">ESTADO</label>
+                                <input type="text" id="cotizacionEstado" class="form-control" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="cotizacionCliente">CLIENTE</label>
+                                <input type="text" id="cotizacionCliente" class="form-control" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="proyecto">PROYECTO</label>
                         <input type="text" id="proyecto" class="form-control">
@@ -157,7 +211,7 @@
         <!-- Formulario para Ticket Administración (oculto inicialmente) -->
         <div class="form-container" id="adminFormContainer" style="display: none;">
             <div class="form-header">
-                <h3 style="color:#fff !important;">Nuevo Ticket para Administración</h3>
+                <h3>Nuevo Ticket para Administración</h3>
             </div>
 
             <form id="ticketAdminForm" class="form-content" onsubmit="saveTicket(event, 'administracion')">
@@ -217,6 +271,7 @@
         </div>
     </div>
 
+<!-- Firebase y otras librerías -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -224,8 +279,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-    // Configuración de Firebase
+    // Configuración de Firebase - SOLO UNA VEZ
     const firebaseConfig = {
         apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
         authDomain: "rsienterprise.firebaseapp.com",
@@ -235,8 +291,10 @@
         appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
     };
 
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
+    // Inicializar Firebase solo si no está inicializado
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
     const db = firebase.firestore();
 
@@ -244,39 +302,38 @@
         currentUser: null,
         colaboradores: [],
         clientes: [],
-        currentTicketType: 'operativo'
+        currentTicketType: 'operativo',
+        cotizacionesVendidas: []
     };
 
     // Variables de control para el estado del guardado
     let isSaving = false;
 
-   async function initializeFCM() {
-    try {
-        console.log('🔧 Inicializando FCM...');
-        
-        // fcmManager ya está disponible globalmente
-        if (typeof fcmManager !== 'undefined') {
-            const success = await fcmManager.initialize();
+    async function initializeFCM() {
+        try {
+            console.log('🔧 Inicializando FCM...');
             
-            if (success) {
-                console.log('✅ FCM inicializado correctamente');
-                // Probar notificación después de 3 segundos
-                setTimeout(() => {
-                    fcmManager.testNotification();
-                }, 3000);
+            if (typeof fcmManager !== 'undefined') {
+                const success = await fcmManager.initialize();
+                
+                if (success) {
+                    console.log('✅ FCM inicializado correctamente');
+                    setTimeout(() => {
+                        fcmManager.testNotification();
+                    }, 3000);
+                }
+                
+                return success;
+            } else {
+                console.warn('❌ fcmManager no está disponible');
+                return false;
             }
             
-            return success;
-        } else {
-            console.warn('❌ fcmManager no está disponible');
+        } catch (error) {
+            console.warn('⚠️ FCM no pudo inicializarse:', error);
             return false;
         }
-        
-    } catch (error) {
-        console.warn('⚠️ FCM no pudo inicializarse:', error);
-        return false;
     }
-}
 
     // =================================================================================
     // FUNCIONES PRINCIPALES
@@ -303,13 +360,11 @@
         }
         
         try {
-            // Obtener datos del usuario desde localStorage (que se llena con navegacion-admin.js)
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
                 appState.currentUser = JSON.parse(savedUser);
                 console.log('Usuario cargado desde localStorage:', appState.currentUser);
             } else {
-                // Si no está en localStorage, buscar en Firestore
                 const querySnapshot = await db.collection("colaboradores")
                     .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
                     .get();
@@ -325,7 +380,6 @@
                     };
                     localStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
                 } else {
-                    // Usuario no encontrado en colaboradores
                     appState.currentUser = {
                         id: user.uid,
                         nombre: user.email,
@@ -366,6 +420,68 @@
         }
     }
 
+    async function loadTodasLasCotizaciones() {
+        try {
+            console.log('🔍 Cargando TODAS las cotizaciones de cotizacionPdf...');
+            
+            const snapshot = await db.collection('cotizacionPdf').get();
+            
+            console.log('📊 Total de cotizaciones encontradas:', snapshot.docs.length);
+            
+            const cotizacionesSelect = document.getElementById('cotizacion');
+            const infoText = document.getElementById('cotizacionInfoText');
+            
+            cotizacionesSelect.innerHTML = '<option value="">Seleccione una cotización</option>';
+            
+            if (snapshot.empty) {
+                console.log('❌ No se encontraron cotizaciones en la colección cotizacionPdf');
+                infoText.textContent = 'No se encontraron cotizaciones en la base de datos';
+                infoText.style.color = 'red';
+                
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No hay cotizaciones en la base de datos';
+                option.disabled = true;
+                cotizacionesSelect.appendChild(option);
+            } else {
+                infoText.textContent = `Se encontraron ${snapshot.docs.length} cotizaciones. Mostrando todas.`;
+                infoText.style.color = 'var(--primary-color)';
+                
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    console.log('📄 Cotización:', {
+                        id: doc.id,
+                        numero: data.cotizacionNumero,
+                        estado: data.estado,
+                        cliente: data.clienteNombre,
+                        descripcion: data.cotizacionDescripcion
+                    });
+                    
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    
+                    const numeroCotizacion = data.cotizacionNumero || 'Sin número';
+                    const estado = data.estado || 'Sin estado';
+                    const cliente = data.clienteNombre || 'Sin cliente';
+                    const descripcion = data.cotizacionDescripcion || 'Sin descripción';
+                    
+                    option.textContent = `${numeroCotizacion} - ${estado} - ${cliente}`;
+                    option.title = `Descripción: ${descripcion}`;
+                    
+                    cotizacionesSelect.appendChild(option);
+                });
+            }
+            
+            $('#cotizacion').trigger('change');
+            
+        } catch (error) {
+            console.error("❌ Error al cargar cotizaciones:", error);
+            const infoText = document.getElementById('cotizacionInfoText');
+            infoText.textContent = 'Error al cargar cotizaciones: ' + error.message;
+            infoText.style.color = 'red';
+        }
+    }
+
     async function loadCollaborators() {
         try {
             const snapshot = await db.collection('colaboradores').get();
@@ -375,7 +491,6 @@
                 area: doc.data().ÁREA
             }));
 
-            // Configurar Select2 para colaboradores
             $('#colaboradores').select2({
                 data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
                 placeholder: 'Seleccione colaboradores',
@@ -393,15 +508,18 @@
     }
 
     function setupSelect2() {
-        // Configurar Select2 para el select de clientes
         $('#cuenta').select2({
             placeholder: 'Seleccione un cliente',
+            width: '100%'
+        });
+
+        $('#cotizacion').select2({
+            placeholder: 'Seleccione una cotización',
             width: '100%'
         });
     }
 
     function setupEventListeners() {
-        // Cambiar tipo de ticket
         document.querySelectorAll('.ticket-type-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const type = this.getAttribute('data-type');
@@ -409,7 +527,6 @@
             });
         });
 
-        // Actualizar área cuando cambian los colaboradores
         $('#colaboradores').on('change', function() {
             actualizarAreas('#colaboradores', 'area');
         });
@@ -418,7 +535,6 @@
             actualizarAreas('#rsiColaboradores', 'rsiArea');
         });
 
-        // Cargar datos del cliente cuando se selecciona
         document.getElementById('cuenta').addEventListener('change', function(e) {
             loadClientData(e.target.value);
         });
@@ -431,24 +547,77 @@
             document.getElementById('rfc').value = cliente.rfc || '';
             document.getElementById('atencionA').value = cliente.contacto || '';
             document.getElementById('correo').value = cliente.correo || '';
+            
+            loadTodasLasCotizaciones();
         } else {
             document.getElementById('direccionFiscal').value = '';
             document.getElementById('rfc').value = '';
             document.getElementById('atencionA').value = '';
             document.getElementById('correo').value = '';
+            
+            clearCotizacionesSelect();
+        }
+    }
+
+    async function loadCotizacionData(cotizacionId) {
+        const cotizacionInfo = document.getElementById('cotizacionInfo');
+        
+        if (!cotizacionId) {
+            cotizacionInfo.style.display = 'none';
+            return;
+        }
+        
+        try {
+            const doc = await db.collection('cotizacionPdf').doc(cotizacionId).get();
+            if (doc.exists) {
+                const data = doc.data();
+                console.log('📋 Datos completos de cotización cargados:', data);
+                
+                document.getElementById('cotizacionNumero').value = data.cotizacionNumero || '';
+                document.getElementById('cotizacionDescripcion').value = data.cotizacionDescripcion || '';
+                document.getElementById('cotizacionFecha').value = data.cotizacionFecha || '';
+                document.getElementById('cotizacionTotal').value = `$${data.totalFinal || '0'}`;
+                document.getElementById('cotizacionEstado').value = data.estado || '';
+                document.getElementById('cotizacionCliente').value = data.clienteNombre || '';
+                
+                cotizacionInfo.style.display = 'block';
+            } else {
+                cotizacionInfo.style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Error al cargar datos de cotización:", error);
+            cotizacionInfo.style.display = 'none';
+        }
+    }
+
+    function clearCotizacionesSelect() {
+        const cotizacionesSelect = document.getElementById('cotizacion');
+        cotizacionesSelect.innerHTML = '<option value="">Seleccione una cotización</option>';
+        document.getElementById('cotizacionInfo').style.display = 'none';
+        document.getElementById('cotizacionInfoText').textContent = 'Seleccione "Sí" para cargar cotizaciones';
+        document.getElementById('cotizacionInfoText').style.color = '';
+        $('#cotizacion').trigger('change');
+    }
+
+    function toggleCotizacionSelect(value) {
+        const cotizacionContainer = document.getElementById('cotizacionContainer');
+        if (value === 'si') {
+            cotizacionContainer.style.display = 'block';
+            loadTodasLasCotizaciones();
+        } else {
+            cotizacionContainer.style.display = 'none';
+            clearCotizacionesSelect();
         }
     }
 
     function changeTicketType(type) {
         appState.currentTicketType = type;
         
-        // Actualizar botones
         document.querySelectorAll('.ticket-type-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         document.querySelector(`.ticket-type-btn[data-type="${type}"]`).classList.add('active');
         
-        // Mostrar formulario correspondiente
         if (type === 'operativo') {
             document.getElementById('adminFormContainer').style.display = 'none';
             document.querySelector('.form-container').style.display = 'block';
@@ -480,220 +649,213 @@
     // =================================================================================
 
     async function saveTicket(event, type) {
-    event.preventDefault();
-    
-    if (isSaving) return;
-    isSaving = true;
-    
-    const submitButton = event.target.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-    
-    try {
-        let ticketId;
-        if (type === 'operativo') {
-            ticketId = await saveOperativoTicket();
-        } else {
-            ticketId = await saveAdminTicket();
-        }
+        event.preventDefault();
         
-        // Éxito - mostrar el ID del ticket generado
-        await showSuccess('¡Ticket creado exitosamente!', `El ticket ${ticketId} ha sido registrado en el sistema.`);
+        if (isSaving) return;
+        isSaving = true;
         
-        // Redirigir después de un breve tiempo
-        setTimeout(() => {
-            window.location.href = '/vista/nav-mesa-admin/gestion-tickets-admin/gestion-tickets-admin.html';
-        }, 3000);
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         
-    } catch (error) {
-        console.error('Error al guardar ticket:', error);
-        showError('No se pudo guardar el ticket. Por favor, intente nuevamente.');
-    } finally {
-        isSaving = false;
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-    }
-}
-
-    async function saveOperativoTicket() {
-    // Validar formulario
-    if (!validateOperativoForm()) {
-        throw new Error('Formulario incompleto');
-    }
-    
-    // Obtener y actualizar contador
-    const { nuevoContador, idTicket } = await obtenerYActualizarContador();
-    
-    const selectedCollaboratorsIds = $('#colaboradores').val() || [];
-    const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
-    
-    // Obtener usuario que levanta el ticket desde appState
-    const levantadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
-    
-    const ticketData = {
-        idTicket: idTicket, // Nuevo campo para el ID legible
-        titulo: document.getElementById('titulo').value,
-        estado: document.getElementById('estado').value,
-        prioridad: document.getElementById('prioridad').value,
-        area: document.getElementById('area').value,
-        colaboradores: selectedCollaboratorsIds,
-        responsableNombre: responsable ? responsable.nombre : '',
-        cuentaId: document.getElementById('cuenta').value,
-        cuentaNombre: $("#cuenta option:selected").text(),
-        direccionFiscal: document.getElementById('direccionFiscal').value,
-        rfc: document.getElementById('rfc').value,
-        atencionA: document.getElementById('atencionA').value,
-        correo: document.getElementById('correo').value,
-        fecha: document.getElementById('fecha').value,
-        ordenServicio: document.getElementById('ordenServicio').value,
-        proyecto: document.getElementById('proyecto').value,
-        servicio: document.getElementById('servicio').value,
-        sistemas: Array.from(document.querySelectorAll('input[name="sistemas"]:checked')).map(cb => cb.value),
-        descripcionActividades: document.getElementById('descripcionActividades').value,
-        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-        fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
-        notificacion: false,
-        conclusion: "El equipo queda instalado, configurado y operando correctamente.",
-        levantadoPor: levantadoPor,
-        tipo: 'operativo'
-    };
-    
-    // Guardar usando el ID del ticket como nombre del documento
-    await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
-    
-    if (selectedCollaboratorsIds.length > 0) {
-        await sendPushNotification(selectedCollaboratorsIds, ticketData);
-    }
-
-    return idTicket;
-}
-
-// Reemplaza la función sendPushNotification completa:
-async function sendPushNotification(colaboradorIds, ticketData) {
-    try {
-        console.log('📤 Enviando notificaciones...');
-
-        // Para testing, enviar notificación local
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: 'SHOW_NOTIFICATION',
-                notification: {
-                    title: '🎫 Nuevo Ticket - RSI',
-                    body: `Ticket: ${ticketData.titulo}`,
-                    icon: '/vista/css/img/logoApp-192.png',
-                    badge: '/vista/css/img/logoApp-192.png',
-                    data: { 
-                        ticketId: ticketData.idTicket,
-                        type: 'new_ticket'
-                    },
-                    actions: [
-                        {
-                            action: 'open',
-                            title: 'Abrir Ticket'
-                        }
-                    ]
-                }
-            });
-            console.log('✅ Notificación enviada al Service Worker');
-        } else {
-            // Fallback
-            new Notification('🎫 Nuevo Ticket', {
-                body: `Ticket ${ticketData.idTicket} creado: ${ticketData.titulo}`,
-                icon: '/vista/css/img/logoApp-192.png'
-            });
-        }
-
-    } catch (error) {
-        console.error('❌ Error enviando notificación:', error);
-    }
-}
-
-
-    async function saveAdminTicket() {
-    // Validar formulario
-    if (!validateAdminForm()) {
-        throw new Error('Formulario incompleto');
-    }
-    
-    // Obtener y actualizar contador
-    const { nuevoContador, idTicket } = await obtenerYActualizarContador();
-    
-    const selectedCollaboratorsIds = $('#rsiColaboradores').val() || [];
-    const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
-    
-    // Obtener usuario que levanta el ticket desde appState
-    const levantadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
-    
-    const ticketData = {
-        idTicket: idTicket, // Nuevo campo para el ID legible
-        titulo: document.getElementById('rsiTitulo').value,
-        descripcionActividades: document.getElementById('rsiDescripcionActividades').value,
-        fecha: document.getElementById('rsiFecha').value,
-        fechaFinalizacion: document.getElementById('rsiFechaFinalizacion').value,
-        prioridad: document.getElementById('rsiPrioridad').value,
-        colaboradores: selectedCollaboratorsIds,
-        responsableNombre: responsable ? responsable.nombre : 'Sin asignar',
-        area: document.getElementById('rsiArea').value,
-        cuentaNombre: "Ticket Interno RSI",
-        estado: "pendiente",
-        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-        fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
-        notificacion: false,
-        conclusion: "Pendiente de conclusión.",
-        cuentaId: null,
-        direccionFiscal: '',
-        rfc: '',
-        atencionA: '',
-        correo: '',
-        ordenServicio: '',
-        proyecto: 'Interno',
-        servicio: 'Actividad Interna',
-        sistemas: ['OTRO'],
-        levantadoPor: levantadoPor,
-        tipo: 'administracion'
-    };
-    
-    // Guardar usando el ID del ticket como nombre del documento
-    await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
-    
-    return idTicket;
-}
-
-async function obtenerYActualizarContador() {
-    const contadorRef = db.collection('contadorTickets').doc('contadorTicketsMesa');
-    
-    // Usar transacción para asegurar la atomicidad
-    let nuevoContador;
-    let idTicket;
-    
-    try {
-        await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(contadorRef);
-            
-            if (!doc.exists) {
-                // Si no existe el documento, crearlo
-                nuevoContador = 1;
-                transaction.set(contadorRef, { contador: nuevoContador });
+        try {
+            let ticketId;
+            if (type === 'operativo') {
+                ticketId = await saveOperativoTicket();
             } else {
-                // Si existe, incrementar el contador
-                nuevoContador = doc.data().contador + 1;
-                transaction.update(contadorRef, { contador: nuevoContador });
+                ticketId = await saveAdminTicket();
             }
             
-            idTicket = `Ticket-RSI-${nuevoContador}`;
-        });
-        
-        return { nuevoContador, idTicket };
-    } catch (error) {
-        console.error("Error en transacción de contador:", error);
-        throw new Error("No se pudo generar el ID del ticket");
+            await showSuccess('¡Ticket creado exitosamente!', `El ticket ${ticketId} ha sido registrado en el sistema.`);
+            
+            setTimeout(() => {
+                window.location.href = '/vista/nav-mesa-admin/gestion-tickets-admin/gestion-tickets-admin.html';
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Error al guardar ticket:', error);
+            showError('No se pudo guardar el ticket. Por favor, intente nuevamente.');
+        } finally {
+            isSaving = false;
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
     }
-}
+
+    async function saveOperativoTicket() {
+        if (!validateOperativoForm()) {
+            throw new Error('Formulario incompleto');
+        }
+        
+        const { nuevoContador, idTicket } = await obtenerYActualizarContador();
+        
+        const selectedCollaboratorsIds = $('#colaboradores').val() || [];
+        const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
+        
+        const levantadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
+        
+        const asociarCotizacion = document.querySelector('input[name="asociarCotizacion"]:checked').value;
+        const cotizacionId = asociarCotizacion === 'si' ? document.getElementById('cotizacion').value : null;
+        const cotizacionNombre = asociarCotizacion === 'si' ? $("#cotizacion option:selected").text() : null;
+        const cotizacionNumero = asociarCotizacion === 'si' ? document.getElementById('cotizacionNumero').value : null;
+        
+        const ticketData = {
+            idTicket: idTicket,
+            titulo: document.getElementById('titulo').value,
+            estado: document.getElementById('estado').value,
+            prioridad: document.getElementById('prioridad').value,
+            area: document.getElementById('area').value,
+            colaboradores: selectedCollaboratorsIds,
+            responsableNombre: responsable ? responsable.nombre : '',
+            cuentaId: document.getElementById('cuenta').value,
+            cuentaNombre: $("#cuenta option:selected").text(),
+            direccionFiscal: document.getElementById('direccionFiscal').value,
+            rfc: document.getElementById('rfc').value,
+            atencionA: document.getElementById('atencionA').value,
+            correo: document.getElementById('correo').value,
+            fecha: document.getElementById('fecha').value,
+            ordenServicio: document.getElementById('ordenServicio').value,
+            proyecto: document.getElementById('proyecto').value,
+            servicio: document.getElementById('servicio').value,
+            sistemas: Array.from(document.querySelectorAll('input[name="sistemas"]:checked')).map(cb => cb.value),
+            descripcionActividades: document.getElementById('descripcionActividades').value,
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+            notificacion: false,
+            conclusion: "El equipo queda instalado, configurado y operando correctamente.",
+            levantadoPor: levantadoPor,
+            tipo: 'operativo',
+            asociarCotizacion: asociarCotizacion,
+            cotizacionId: cotizacionId,
+            cotizacionNombre: cotizacionNombre,
+            cotizacionNumero: cotizacionNumero
+        };
+        
+        await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
+        
+        if (selectedCollaboratorsIds.length > 0) {
+            await sendPushNotification(selectedCollaboratorsIds, ticketData);
+        }
+
+        return idTicket;
+    }
+
+    async function sendPushNotification(colaboradorIds, ticketData) {
+        try {
+            console.log('📤 Enviando notificaciones...');
+
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'SHOW_NOTIFICATION',
+                    notification: {
+                        title: '🎫 Nuevo Ticket - RSI',
+                        body: `Ticket: ${ticketData.titulo}`,
+                        icon: '/vista/css/img/logoApp-192.png',
+                        badge: '/vista/css/img/logoApp-192.png',
+                        data: { 
+                            ticketId: ticketData.idTicket,
+                            type: 'new_ticket'
+                        },
+                        actions: [
+                            {
+                                action: 'open',
+                                title: 'Abrir Ticket'
+                            }
+                        ]
+                    }
+                });
+                console.log('✅ Notificación enviada al Service Worker');
+            } else {
+                new Notification('🎫 Nuevo Ticket', {
+                    body: `Ticket ${ticketData.idTicket} creado: ${ticketData.titulo}`,
+                    icon: '/vista/css/img/logoApp-192.png'
+                });
+            }
+
+        } catch (error) {
+            console.error('❌ Error enviando notificación:', error);
+        }
+    }
+
+    async function saveAdminTicket() {
+        if (!validateAdminForm()) {
+            throw new Error('Formulario incompleto');
+        }
+        
+        const { nuevoContador, idTicket } = await obtenerYActualizarContador();
+        
+        const selectedCollaboratorsIds = $('#rsiColaboradores').val() || [];
+        const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
+        
+        const levantadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
+        
+        const ticketData = {
+            idTicket: idTicket,
+            titulo: document.getElementById('rsiTitulo').value,
+            descripcionActividades: document.getElementById('rsiDescripcionActividades').value,
+            fecha: document.getElementById('rsiFecha').value,
+            fechaFinalizacion: document.getElementById('rsiFechaFinalizacion').value,
+            prioridad: document.getElementById('rsiPrioridad').value,
+            colaboradores: selectedCollaboratorsIds,
+            responsableNombre: responsable ? responsable.nombre : 'Sin asignar',
+            area: document.getElementById('rsiArea').value,
+            cuentaNombre: "Ticket Interno RSI",
+            estado: "pendiente",
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+            notificacion: false,
+            conclusion: "Pendiente de conclusión.",
+            cuentaId: null,
+            direccionFiscal: '',
+            rfc: '',
+            atencionA: '',
+            correo: '',
+            ordenServicio: '',
+            proyecto: 'Interno',
+            servicio: 'Actividad Interna',
+            sistemas: ['OTRO'],
+            levantadoPor: levantadoPor,
+            tipo: 'administracion'
+        };
+        
+        await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
+        
+        return idTicket;
+    }
+
+    async function obtenerYActualizarContador() {
+        const contadorRef = db.collection('contadorTickets').doc('contadorTicketsMesa');
+        
+        let nuevoContador;
+        let idTicket;
+        
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(contadorRef);
+                
+                if (!doc.exists) {
+                    nuevoContador = 1;
+                    transaction.set(contadorRef, { contador: nuevoContador });
+                } else {
+                    nuevoContador = doc.data().contador + 1;
+                    transaction.update(contadorRef, { contador: nuevoContador });
+                }
+                
+                idTicket = `Ticket-RSI-${nuevoContador}`;
+            });
+            
+            return { nuevoContador, idTicket };
+        } catch (error) {
+            console.error("Error en transacción de contador:", error);
+            throw new Error("No se pudo generar el ID del ticket");
+        }
+    }
 
     function validateOperativoForm() {
         const titulo = document.getElementById('titulo').value;
         const cuenta = document.getElementById('cuenta').value;
+        const asociarCotizacion = document.querySelector('input[name="asociarCotizacion"]:checked').value;
         
         if (!titulo.trim()) {
             showError('El título del ticket es obligatorio');
@@ -703,6 +865,14 @@ async function obtenerYActualizarContador() {
         if (!cuenta) {
             showError('Debe seleccionar un cliente');
             return false;
+        }
+        
+        if (asociarCotizacion === 'si') {
+            const cotizacion = document.getElementById('cotizacion').value;
+            if (!cotizacion) {
+                showError('Debe seleccionar una cotización cuando marca la opción "Sí"');
+                return false;
+            }
         }
         
         return true;
@@ -768,8 +938,6 @@ async function obtenerYActualizarContador() {
         }
     }
 
-    
-
     // =================================================================================
     // INICIALIZACIÓN
     // =================================================================================
@@ -785,6 +953,8 @@ async function obtenerYActualizarContador() {
         });
     });
 </script>
+
+<!-- Scripts de personalización y navegación -->
 <script src="../js/personalizacion-colores.js"></script>
 <script src="../js/navegacion-admin.js"></script>
 </body>
