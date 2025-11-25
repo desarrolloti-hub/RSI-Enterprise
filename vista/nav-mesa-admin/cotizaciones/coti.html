@@ -30,7 +30,8 @@
             <div class="container">
                 <h1>📋 Cotizaciones - RSI Enterprise</h1>
                 <div class="header-actions">
-                    <a href="cotizacion_formulario.html" target="_blank" class="btn btn-primary">
+                    <!-- MODIFICADO: Eliminado target="_blank" -->
+                    <a href="cotizacion_formulario.html" class="btn btn-primary">
                         <span>➕</span> Nueva Cotización
                     </a>
                     
@@ -590,7 +591,8 @@
                     <td class="acciones">
                         <button class="btn btn-small btn-primary ver-pdf" data-id="${coti.id}"><span>👁️</span></button>
                         <button class="btn btn-small btn-success descargar-pdf" data-id="${coti.id}"><span>⬇️</span></button>
-                        <a href="cotizacion_formulario.html?id=${coti.id}" target="_blank" class="btn btn-small btn-secondary">
+                        <!-- MODIFICADO: Eliminado target="_blank" -->
+                        <a href="cotizacion_formulario.html?id=${coti.id}" class="btn btn-small btn-secondary">
                             <span>✏️</span>
                         </a>
                         <button class="btn btn-small btn-danger eliminar-cotizacion" data-id="${coti.id}"><span>🗑️</span></button>
