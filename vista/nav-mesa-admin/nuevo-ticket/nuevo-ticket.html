@@ -734,6 +734,20 @@
         
         await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
         
+        // NUEVO: Actualizar la cotización con el ID del ticket asociado
+        if (asociarCotizacion === 'si' && cotizacionId) {
+            try {
+                await db.collection('cotizacionPdf').doc(cotizacionId).update({
+                    ticketAsociado: idTicket,
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log(`✅ Ticket ${idTicket} asociado a cotización ${cotizacionId}`);
+            } catch (error) {
+                console.error("❌ Error al asociar ticket a cotización:", error);
+                // No lanzamos error aquí para no interrumpir el flujo principal
+            }
+        }
+        
         if (selectedCollaboratorsIds.length > 0) {
             await sendPushNotification(selectedCollaboratorsIds, ticketData);
         }
