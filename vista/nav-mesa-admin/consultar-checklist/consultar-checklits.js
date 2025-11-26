@@ -18,10 +18,9 @@ if (!firebase.apps.length) {
 
 const db = firebase.firestore();
 const auth = firebase.auth();
-let allChecklists = []; // Almacena todos los resultados de Firebase
-let isDataFetched = false; // Bandera de control
+let allChecklists = []; 
+let isDataFetched = false; 
 
-// Definición de las fotos para el modal
 const photoTypes = {
     'frontal': 'Vista Frontal',
     'lateral-izquierdo': 'Lateral Izquierdo',
@@ -30,21 +29,20 @@ const photoTypes = {
     'luces': 'Sistema de Luces'
 };
 
-
 // ==========================================
 // 1. INICIALIZACIÓN
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Precarga de datos
     await loadChecklistsFromFirebase(); 
     setupEventListeners();
     
-    // 2. Comprobar si venimos de la página de resumen con un ID
+    // Cargar lista de colaboradores para el filtro
+    populateCollaboratorSelect();
+
     const params = new URLSearchParams(window.location.search);
     const viewId = params.get('view');
     
-    // Si no hay ID específico, mostramos todo lo descargado
     if (!viewId) {
         renderResults(allChecklists);
     } else {
@@ -54,10 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setupEventListeners() {
-    // 🟢 Botón Aplicar Filtros: Usamos la función orquestadora que filtra Y renderiza
     document.getElementById('btnApplyFilters').addEventListener('click', applyFiltersFromUI);
-    
-    // 🟢 Botón Limpiar
     document.getElementById('btnClearFilters').addEventListener('click', clearFiltersAndReload);
 }
 
@@ -72,13 +67,10 @@ async function loadChecklistsFromFirebase() {
     container.innerHTML = `<div class="loading" style="grid-column: 1/-1;"><div class="spinner"></div><p>Descargando historial completo...</p></div>`;
 
     try {
-        // Ordenamos por fecha de creación descendente
         let query = db.collection('checkList').orderBy('createdAt', 'desc'); 
-        
         const snapshot = await query.get();
         
-        console.log(`✅ Registros descargados de Firebase: ${snapshot.size}`);
-
+        console.log(`✅ Registros descargados: ${snapshot.size}`);
         allChecklists.length = 0; 
         
         snapshot.forEach(doc => {
@@ -86,27 +78,22 @@ async function loadChecklistsFromFirebase() {
         });
         
         isDataFetched = true;
+        populateCollaboratorSelect(); 
 
-        populateCollaboratorSelect();
-
+        // Si no hay filtros activos por URL, renderizamos
         const params = new URLSearchParams(window.location.search);
-        if(!params.get('view'))
-        {
+        if (!params.get('view')) {
             renderResults(allChecklists);
         }
 
     } catch (error) {
-        console.error("Error CRÍTICO al cargar checklists:", error);
-        container.innerHTML = `
-            <div class="error-message" style="grid-column: 1/-1; color: red; text-align: center; padding: 20px;">
-                <i class="fas fa-exclamation-circle"></i> 
-                <p>Error de conexión: ${error.message}</p>
-            </div>`;
+        console.error("Error CRÍTICO:", error);
+        container.innerHTML = `<div class="error-message" style="grid-column: 1/-1; text-align: center;">Error: ${error.message}</div>`;
     }
 }
 
 // ==========================================
-// 3. LÓGICA DE FILTRADO (CORREGIDA Y BLINDADA)
+// 3. LÓGICA DE FILTRADO
 // ==========================================
 
 function clearFiltersAndReload() {
@@ -121,7 +108,6 @@ function applyFiltersFromUI() {
     const container = document.getElementById('resultsContainer');
     container.innerHTML = `<div class="loading" style="grid-column: 1/-1;"><div class="spinner"></div><p>Filtrando...</p></div>`;
 
-    // 1. Capturar valores
     const filters = {
         dateStart: document.getElementById('filterDateStart').value,
         dateEnd: document.getElementById('filterDateEnd').value,
@@ -129,61 +115,42 @@ function applyFiltersFromUI() {
         plate: document.getElementById('filterPlate').value.toLowerCase().trim()
     };
 
-    console.log("🔍 Filtros aplicados:", filters);
-
-    // 2. Filtrar la lista global
     const filteredList = applyClientFilters(allChecklists, filters);
 
-    console.log(`📊 Resultados: ${filteredList.length} encontrados de ${allChecklists.length} totales.`);
-
     if (filteredList.length === 0) {
-        container.innerHTML = `<p style="text-align:center; grid-column: 1/-1;">No se encontraron resultados con esos filtros.</p>`;
+        container.innerHTML = `<p style="text-align:center; grid-column: 1/-1;">No se encontraron resultados.</p>`;
         return;
     }
-
-    // 3. Renderizar
     renderResults(filteredList);
 }
 
 function applyClientFilters(list, filters) {
     return list.filter(item => {
-        // --- A. PREPARACIÓN DE DATOS ---
         const itemPlate = (item.vehicleInfo?.plates || '').toLowerCase();
         const itemCollaborator = (item.collaboratorInfo?.name || '').toLowerCase();
-        const rawDate = item.tripInfo?.fecha; // Esperamos "YYYY-MM-DD"
+        const rawDate = item.tripInfo?.fecha; 
 
-        // --- B. MANEJO SEGURO DE FECHAS ---
         let recordDate = null;
-        
         if (rawDate) {
-            // Reemplazamos guiones por si acaso y aseguramos hora 00:00:00
             const normalizedDate = rawDate.replace(/\//g, '-'); 
             recordDate = new Date(normalizedDate + "T00:00:00");
         }
 
-        // Si la fecha del viaje es inválida, intentamos usar la fecha de creación del registro
         if (!recordDate || isNaN(recordDate.getTime())) {
             if (item.createdAt) {
                  recordDate = item.createdAt.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
             }
         }
 
-        // Definimos rango de filtro (Inicio 00:00 - Fin 23:59)
         const filterStart = filters.dateStart ? new Date(filters.dateStart + "T00:00:00") : null;
         const filterEnd = filters.dateEnd ? new Date(filters.dateEnd + "T23:59:59") : null;
 
-        // --- C. COMPARACIONES ---
-
-        // 1. Filtro por Fecha
         if (recordDate && !isNaN(recordDate.getTime())) {
             if (filterStart && recordDate < filterStart) return false;
             if (filterEnd && recordDate > filterEnd) return false;
         }
 
-        // 2. Filtro por Placa
         if (filters.plate && !itemPlate.includes(filters.plate)) return false;
-
-        // 3. Filtro por Colaborador
         if (filters.collaborator && !itemCollaborator.includes(filters.collaborator)) return false;
 
         return true;
@@ -191,7 +158,7 @@ function applyClientFilters(list, filters) {
 }
 
 // ==========================================
-// 4. RENDERIZADO (HTML)
+// 4. RENDERIZADO (HTML) 
 // ==========================================
 
 function renderResults(list) {
@@ -224,101 +191,152 @@ function renderResults(list) {
                 </div>
             </div>
             <div class="card-footer">
-                <button class="btn btn-action btn-primary" onclick="openEditModal('${item.id}')">
-                    <i class="fas fa-edit"></i> Editar
+                <button class="btn btn-action" style="background-color: #f39c12; color: white;" onclick="openAddIncidentModal('${item.id}')">
+                    <i class="fas fa-exclamation-triangle"></i> Multas/Gastos
                 </button>
+                
                 <button class="btn btn-action btn-secondary" onclick="viewChecklistDetails('${item.id}')" style="background-color: #3498db; color: white;">
                     <i class="fas fa-eye"></i> Ver Detalles
                 </button>
-                <button class="btn btn-action btn-delete" onclick="deleteChecklist('${item.id}')">
-                    <i class="fas fa-trash-alt"></i> Eliminar
-                </button>
-            </div>
+                
+                </div>
         `;
         container.appendChild(card);
     });
 }
 
 // ==========================================
-// 5. FUNCIONES CRUD (EDITAR, ELIMINAR, VER)
+// 5. NUEVA FUNCIONALIDAD: AGREGAR MULTAS/IMPREVISTOS
 // ==========================================
 
-window.deleteChecklist = async (id) => {
+window.openAddIncidentModal = async (id) => {
     const checklist = allChecklists.find(c => c.id === id);
-    const car = checklist?.vehicleInfo?.name || 'este registro';
+    if (!checklist) return;
 
-    const result = await Swal.fire({
-        title: `Eliminar Checklist de ${car}`,
+    const { value: formValues } = await Swal.fire({
+        title: 'Registrar Novedad',
+        // Usamos el contenedor con las clases nuevas
         html: `
-            <p>Estás a punto de eliminar permanentemente este registro.</p>
-            <p>Para confirmar, escribe <strong>"CONFIRMAR"</strong>:</p>
-            <input type="text" id="confirmInput" class="swal2-input" placeholder="Escribe CONFIRMAR">
+            <div class="incident-form-container">
+                
+                <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> Registrando para: <strong>${checklist.vehicleInfo?.plates || 'N/A'}</strong>
+                </div>
+
+                <div>
+                    <label class="incident-label">Tipo de Novedad</label>
+                    <select id="incType" class="incident-input">
+                        <option value="Multa de Tránsito">👮 Multa de Tránsito</option>
+                        <option value="Gasto Imprevisto">💸 Gasto Imprevisto / Mecánico</option>
+                        <option value="Combustible Extra">⛽ Combustible Extra</option>
+                        <option value="Otro">📝 Otro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="incident-label">Descripción del evento</label>
+                    <input id="incDesc" type="text" class="incident-input" placeholder="Ej: Exceso de velocidad en carretera...">
+                </div>
+
+                <div>
+                    <label class="incident-label">Costo Total</label>
+                    <div class="cost-wrapper">
+                        <span class="cost-symbol">$</span>
+                        <input id="incCost" type="number" class="incident-input cost" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+            </div>
         `,
-        icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, ¡Eliminar!',
+        confirmButtonText: 'Guardar',
         cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#f39c12', // Naranja para alertas
+        cancelButtonColor: '#95a5a6',
+        focusConfirm: false,
+        width: 450, // Ancho fijo ideal para formularios verticales
         preConfirm: () => {
-            const input = document.getElementById('confirmInput').value.trim();
-            if (input !== 'CONFIRMAR') {
-                Swal.showValidationMessage('Debes escribir CONFIRMAR exactamente.');
+            const type = document.getElementById('incType').value;
+            const desc = document.getElementById('incDesc').value.trim();
+            const cost = document.getElementById('incCost').value;
+
+            if (!desc) {
+                Swal.showValidationMessage('⚠ Escribe una descripción');
                 return false;
             }
-            return true;
+            if (!cost) {
+                Swal.showValidationMessage('⚠ Ingresa el costo (pon 0 si no aplica)');
+                return false;
+            }
+
+            return { type, desc, cost, date: new Date().toISOString() };
         }
     });
 
-    if (result.isConfirmed) {
+    if (formValues) {
         try {
-            await db.collection('checkList').doc(id).delete();
-            Swal.fire('¡Eliminado!', 'Registro eliminado.', 'success');
+            // Guardar en Firebase
+            await db.collection('checkList').doc(id).update({
+                incidents: firebase.firestore.FieldValue.arrayUnion(formValues)
+            });
+
+            Swal.fire({
+                title: '¡Registrado!',
+                text: 'La novedad se guardó correctamente.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
             
-            // Recargar datos y reaplicar filtros actuales
-            isDataFetched = false; // Forzar recarga
-            await loadChecklistsFromFirebase(); 
-            applyFiltersFromUI(); 
-            
+            // Actualizar vista local
+            if (!checklist.incidents) checklist.incidents = [];
+            checklist.incidents.push(formValues);
+
         } catch (error) {
-            console.error("Error al eliminar:", error);
-            Swal.fire('Error', 'No se pudo eliminar.', 'error');
+            console.error("Error:", error);
+            Swal.fire('Error', 'No se pudo guardar.', 'error');
         }
     }
 };
 
-window.openEditModal = (id) => {
-    // Redirigir a la página de creación pasando el ID como parámetro
-    // Ajusta el nombre del archivo HTML si es necesario (ej: crear-checklist.html)
-    window.location.href = `../crear-checklist/crear-checklist.html?editId=${id}`;
-};
+// ==========================================
+// 6. VER DETALLES (ACTUALIZADO PARA MOSTRAR MULTAS)
+// ==========================================
 
 window.viewChecklistDetails = (id) => {
     const checklist = allChecklists.find(c => c.id === id);
-    if (!checklist) return Swal.fire('Error', 'No encontrado.', 'error');
-    
+
+    if (!checklist) {
+        Swal.fire('Error', 'Detalles no encontrados.', 'error');
+        return;
+    }
+
+    const photoTypeLabels = photoTypes;
     const car = `${checklist.vehicleInfo?.name || 'N/A'} (${checklist.vehicleInfo?.plates || 'N/A'})`;
     const collab = checklist.collaboratorInfo?.name || 'N/A';
-    
+    const origen = checklist.tripInfo?.origen || 'No registrado';
+    const destino = checklist.tripInfo?.destino || 'No registrado';
+    const km = checklist.tripInfo?.kmSalida || '0';
+    const gasolina = checklist.tripInfo?.gasolina || 'No registrado';
+
     // Fotos
-    const photosData = checklist.vehiclePhotos || {};
+    const photos = checklist.vehiclePhotos || {};
     let photoButtonsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">';
     let foundPhotoCount = 0;
     
-    for (const key in photoTypes) { 
-        if (photosData[key]) {
+    for (const key in photoTypeLabels) { 
+        const imgData = photos[key];
+        if (imgData) {
             foundPhotoCount++;
-            const safeImgData = photosData[key].replace(/'/g, "\\'"); 
             photoButtonsHtml += `
-                <button class="btn btn-primary" style="padding: 8px 12px; font-size: 0.9rem;" onclick="viewPhoto('${safeImgData}')">
-                    <i class="fas fa-camera"></i> ${photoTypes[key]}
+                <button class="btn btn-primary" style="padding: 8px 12px; font-size: 0.9rem;" onclick="viewPhoto('${imgData.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-camera"></i> ${photoTypeLabels[key]}
                 </button>`;
         }
     }
     photoButtonsHtml += '</div>';
 
-    // Detalles
-     const docsList = checklist.checklists?.documentos?.items || [];
+    // Listas
+    const docsList = checklist.checklists?.documentos?.items || [];
     const accsList = checklist.checklists?.accesorios?.items || [];
     const segList = checklist.checklists?.seguridad?.items || [];
     const equipList = checklist.checklists?.equipamiento?.items || [];
@@ -329,9 +347,6 @@ window.viewChecklistDetails = (id) => {
         <p><strong>Seguridad:</strong> ${segList.join(', ') || 'Ninguno'}</p>
         <p><strong>Equipamiento:</strong> ${equipList.join(', ') || 'Ninguno'}</p>
     `;
-    const detallesHtml = (checklist.vehicleDetails?.length > 0)
-        ? `<ul>${checklist.vehicleDetails.map(d => `<li>${d}</li>`).join('')}</ul>`
-        : '— Ningún daño reportado.';
 
     const obsHtml = `
         <p style="margin-top: 10px;">
@@ -347,21 +362,25 @@ window.viewChecklistDetails = (id) => {
         html: `
             <div style="text-align: left; line-height: 1.6; font-size: 1rem;">
                 <p><strong>Colaborador:</strong> ${collab}</p>
-                <p><strong>Ruta:</strong> ${checklist.tripInfo?.origen || 'N/A'} ➝ ${checklist.tripInfo?.destino || 'N/A'}</p>
-                <p><strong>Fecha:</strong> ${checklist.tripInfo?.fecha || 'N/A'}</p>
+                <p><strong>Ruta:</strong> ${origen} ➝ ${destino}</p>
+                <p><strong>KM:</strong> ${km} | <strong>Gasolina:</strong> ${gasolina}</p>
                 
                 <hr style="margin: 15px 0; border-color: #ddd;">
                 <h4><i class="fas fa-camera-retro"></i> Evidencia (${foundPhotoCount})</h4>
                 ${photoButtonsHtml}
                 
                 <hr style="margin: 15px 0; border-color: #ddd;">
-                <h4><i class="fas fa-exclamation-triangle"></i> Daños</h4>
-                <div style="max-height: 100px; overflow-y: auto;">${detallesHtml}</div>
+                <h4><i class="fas fa-exclamation-triangle"></i> Situaciones</h4>
+                <div style="max-height: 100px; overflow-y: auto;">
+                    ${(checklist.vehicleDetails && checklist.vehicleDetails.length > 0) 
+                        ? `<ul>${checklist.vehicleDetails.map(d => `<li>${d}</li>`).join('')}</ul>` 
+                        : '— Ningún daño reportado.'}
+                </div>
                 
-                <h4><i class="fas fa-list-check"></i> Verficacion y Observaciones</h4>
+                <h4><i class="fas fa-list-check"></i> Verificación</h4>
                 <div style="font-size: 0.9rem;">
-                ${checklistItemsHtml}
-                ${obsHtml}
+                    ${checklistItemsHtml}
+                    ${obsHtml}
                 </div>
             </div>
         `,
@@ -370,8 +389,9 @@ window.viewChecklistDetails = (id) => {
     });
 };
 
+
 // ==========================================
-// 6. UTILIDADES
+// 7. UTILIDADES
 // ==========================================
 
 window.viewPhoto = (imageData) => {
@@ -391,34 +411,23 @@ function formatDate(dateString) {
     return dateString; 
 }
 
-// ==========================================
-// 8. FUNCIÓN PARA LLENAR EL SELECT DE COLABORADORES
-// ==========================================
 function populateCollaboratorSelect() {
     const select = document.getElementById('filterCollaborator');
     if (!select) return;
 
-    // 1. Usamos un Set para guardar nombres únicos (evita duplicados)
     const uniqueNames = new Set();
-
     allChecklists.forEach(item => {
         const name = item.collaboratorInfo?.name;
-        if (name) {
-            uniqueNames.add(name.trim()); // Guardamos el nombre limpio
-        }
+        if (name) uniqueNames.add(name.trim());
     });
 
-    // 2. Convertimos a array y ordenamos alfabéticamente
     const sortedNames = Array.from(uniqueNames).sort();
-
-    // 3. Limpiamos el select y dejamos la opción por defecto
     select.innerHTML = '<option value="">Todos los colaboradores</option>';
 
-    // 4. Creamos las opciones
     sortedNames.forEach(name => {
         const option = document.createElement('option');
-        option.value = name.toLowerCase(); // El valor en minúsculas para comparar fácil
-        option.textContent = name; // El texto visible tal cual es
+        option.value = name.toLowerCase(); 
+        option.textContent = name; 
         select.appendChild(option);
     });
 }

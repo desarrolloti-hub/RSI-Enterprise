@@ -229,6 +229,79 @@ body {
 }
 .spinner { padding: 0%;/* (Tu spinner, si lo tienes, va aquí) */ }
 
+/* --- CORRECCIÓN DESBORDAMIENTO EN MODALES --- */
+
+/* 1. Asegurar que las imágenes dentro de SweetAlert no se desborden */
+.swal2-popup img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 8px;
+}
+
+/* 2. Controlar el ancho máximo del modal para que no toque los bordes en celular */
+.swal2-popup {
+    max-width: 95vw !important; /* Ocupa máximo el 95% del ancho de la pantalla */
+    width: auto !important;     /* Se ajusta al contenido, pero respetando el max-width */
+    padding: 1.5em !important;  /* Espaciado interno cómodo */
+}
+
+/* =========================================
+   ESTILOS PARA EL MODAL DE NOVEDADES (ESPECIAL)
+   ========================================= */
+
+/* Contenedor principal del formulario */
+.incident-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre cada campo */
+    text-align: left;
+    padding: 5px;
+    overflow-x: hidden; /* 🚫 PROHIBIDO EL SCROLL HORIZONTAL */
+}
+
+/* Estilo unificado para etiquetas */
+.incident-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #555; /* Color oscuro para lectura */
+    font-size: 0.95rem;
+}
+
+/* Estilo unificado para TODOS los inputs del modal */
+.incident-input {
+    width: 100% !important; /* Ocupar todo el ancho */
+    box-sizing: border-box !important; /* Evita que el padding rompa el ancho */
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #fff;
+    color: #333;
+}
+
+.incident-input:focus {
+    border-color: #f39c12; /* Naranja al enfocar */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.2);
+}
+
+/* Ajuste especial para el input de costo (moneda) */
+.cost-wrapper {
+    position: relative;
+}
+.cost-symbol {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777;
+    font-weight: bold;
+}
+.incident-input.cost {
+    padding-left: 25px; /* Espacio para el signo $ */
+}
+
 
 /* --- RESPONSIVE --- */
 @media (max-width: 768px) {
