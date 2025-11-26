@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-     <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,15 +38,8 @@
                 <div class="attendance-option selected" data-value="normal_exit">
                     <div class="checkbox"></div>
                     <div class="option-icon"><i class="fas fa-sign-out-alt"></i></div>
-                    <div class="option-label">Salida Normal</div>
-                    <div class="option-desc">Finalizar jornada laboral.</div>
-                </div>
-
-                <div class="attendance-option" data-value="extra_hours">
-                    <div class="checkbox"></div>
-                    <div class="option-icon"><i class="fas fa-clock"></i></div>
-                    <div class="option-label">Horas Extra</div>
-                    <div class="option-desc">Registrar salida después del horario.</div>
+                    <div class="option-label">Registrar Salida</div>
+                    <div class="option-desc">Finalizar jornada y calcular horas trabajadas.</div>
                 </div>
             </div>
         </div>
@@ -61,6 +54,10 @@
         const GEOLOCATION_TIMEOUT = 15000;
         const REDIRECT_DELAY = 3000;
         const FALLBACK_ACCURACY = 5000;
+        
+        // HORARIOS BASE (de 9:00 AM a 18:00 PM)
+        const START_HOUR = 9; 
+        const END_HOUR = 18; 
 
         // Configuración de Firebase
         const firebaseConfig = {
@@ -121,6 +118,7 @@
         // Mostrar alertas usando SweetAlert2
         function showAlert(type, title, message) {
             if (typeof window.showCustomAlert === 'function') {
+                // Si las funciones personalizadas están cargadas (asumimos que manejan HTML correctamente)
                 switch(type) {
                     case 'success':
                         window.showCustomSuccess(title, message);
@@ -135,22 +133,80 @@
                         window.showCustomAlert({ title, text: message, icon: type });
                 }
             } else {
+                // Fallback de SweetAlert2: usa 'html' para renderizar etiquetas
                 Swal.fire({ 
                     icon: type, 
                     title: title, 
-                    text: message, 
+                    html: message, // <--- Esto resuelve el problema de las etiquetas visibles
                     confirmButtonColor: '#6C43E0' 
                 });
             }
         }
 
-        // Obtener nombres de tipos de asistencia
-        function getAttendanceTypeName(type) {
-            const types = {
-                'normal_exit': 'Salida Normal',
-                'extra_hours': 'Horas Extra',
+        // Función para buscar la hora de entrada del día
+        async function getEntryTimeForToday(userId) {
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Inicio del día
+                const startOfDayTimestamp = firebase.firestore.Timestamp.fromDate(today);
+
+                const entrySnapshot = await db.collection('asistencias')
+                    .where('userId', '==', userId)
+                    .where('tipo', '==', 'entrada') 
+                    .where('fecha', '>=', startOfDayTimestamp)
+                    .orderBy('fecha', 'desc')
+                    .limit(1)
+                    .get();
+
+                if (!entrySnapshot.empty) {
+                    // Devolvemos el objeto Date del timestamp de la entrada real
+                    return entrySnapshot.docs[0].data().fecha.toDate();
+                }
+            } catch (error) {
+                console.error("Error obteniendo hora de entrada, usando fallback:", error);
+            }
+            
+            // Fallback: 9:00 AM del día de hoy
+            const fallbackEntry = new Date();
+            fallbackEntry.setHours(START_HOUR, 0, 0, 0);
+            return fallbackEntry;
+        }
+
+        // Función para calcular el tiempo trabajado y las horas extra
+        function calculateWorkTime(entryDate, exitDate) {
+            // Tiempo total trabajado en milisegundos
+            const totalWorkedMs = exitDate.getTime() - entryDate.getTime();
+            let totalWorkedMins = Math.floor(totalWorkedMs / (1000 * 60));
+            
+            // Crear la fecha de referencia para las 18:00 hrs (Hora de Salida Estándar)
+            const standardEndTime = new Date(exitDate);
+            standardEndTime.setHours(END_HOUR, 0, 0, 0);
+            
+            // Calcular horas extra
+            let extraHoursMins = 0;
+            let isExtra = false;
+
+            if (exitDate > standardEndTime) {
+                // Si la hora de salida es después de las 18:00 hrs
+                const extraMs = exitDate.getTime() - standardEndTime.getTime();
+                extraHoursMins = Math.floor(extraMs / (1000 * 60));
+                isExtra = true;
+            }
+
+            // Formateo a HH:MM
+            const formatMinutes = (minutes) => {
+                const h = Math.floor(minutes / 60);
+                const m = minutes % 60;
+                return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`;
             };
-            return types[type] || type;
+
+            return {
+                totalWorkedMins,
+                totalWorkedFormat: formatMinutes(totalWorkedMins),
+                extraHoursMins,
+                extraHoursFormat: formatMinutes(extraHoursMins),
+                isExtra
+            };
         }
 
         // --- FUNCIONES DE DATOS ---
@@ -202,7 +258,8 @@
         function updateDateTime() {
             const currentDateElement = document.getElementById('currentDate');
             if (currentDateElement) {
-                currentDateElement.textContent = getFormattedDateTime().fullDateTime;
+                // CORREGIDO: usar innerHTML en lugar de textContent
+                currentDateElement.innerHTML = getFormattedDateTime().fullDateTime;
             }
         }
 
@@ -240,27 +297,19 @@
         function setupAttendanceOptions() {
             const attendanceOptions = document.querySelectorAll('.attendance-option');
             
-            attendanceOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    attendanceOptions.forEach(opt => opt.classList.remove('selected'));
-                    this.classList.add('selected');
-                });
-            });
+            // Dado que solo hay una opción, la seleccionamos por defecto y no necesitamos listeners de cambio
+            if (attendanceOptions.length > 0) {
+                attendanceOptions[0].classList.add('selected');
+            }
         }
 
-        // Redirigir según el rol
+        // MODIFICADO: Siempre redirigir al index
         function redirectByRole(role) {
-            const rolePaths = {
-                'puntoVenta': '../nav-puntoVenta/inicio.html',
-                'facturas': '../nav-facturas/facturas.html',
-                'admincolaborador': '../asistencia/asistencia.html'
-            };
-            
-            const redirectPath = rolePaths[role] || "../gestion-tickets/gestion-tickets.html";
-            window.location.href = redirectPath;
+            // Redirigir siempre al index.html independientemente del rol
+            window.location.href = "/index.html";
         }
 
-        // --- FUNCIONES DE GEOLOCALIZACIÓN ---
+        // --- FUNCIONES DE GEOLOCALIZACIÓN (sin cambios) ---
 
         // Obtener ubicación precisa
         function getLocation() {
@@ -381,36 +430,53 @@
             return true;
         }
 
-        // Registrar salida en Firebase
+        // Registrar salida en Firebase con cálculo de horas
         async function registerExit(exitType, userData) {
             validateUserForExit(userData);
             
             const datetime = getFormattedDateTime();
+            const exitDate = new Date(); // Hora de salida actual
             
-            // Obtener ubicación
+            // 1. Obtener la hora de entrada
+            const entryDate = await getEntryTimeForToday(userData.id);
+            
+            // 2. Calcular tiempo trabajado y extra
+            const timeCalculations = calculateWorkTime(entryDate, exitDate);
+            
+            // 3. Obtener ubicación
             AppState.userCoordinates = await getUserLocation();
             
-            // 1. Actualizar el estado en la colección 'colaboradores'
+            // 4. Actualizar el estado en la colección 'colaboradores'
             const collaboratorRef = db.collection('colaboradores').doc(userData.id);
             await collaboratorRef.update({
                 'asistencia.estado': false,
                 'asistencia.ultimoCierre': datetime.timestamp
             });
 
-            // 2. Registrar la SALIDA en la colección 'asistencias'
+            // 5. Determinar el tipo de registro de asistencia (si hay extra, lo marcamos)
+            const finalExitType = timeCalculations.isExtra ? 'salida_extra' : 'salida';
+            
+            // 6. Registrar la SALIDA en la colección 'asistencias'
             const exitData = {
                 userId: userData.id,
-                email: userData['CORREO ELECTRÓNICO EMPRESARIAL'] || '', // Corregido
-                nombre: userData.NOMBRE || '', // Corregido
-                area: userData['ÁREA'] || '', // Corregido
-                tipo: exitType === 'normal_exit' ? 'salida' : 'salida_extra',
+                email: userData['CORREO ELECTRÓNICO EMPRESARIAL'] || '',
+                nombre: userData.NOMBRE || '', 
+                area: userData['ÁREA'] || '', 
+                tipo: finalExitType, 
                 fecha: datetime.timestamp,
                 dia: datetime.dateString,
                 horaRegistro: datetime.timeString,
                 activo: false,
                 ubicacion: AppState.userCoordinates,
+                
+                // DATOS DE TIEMPO AGREGADOS
+                horasTrabajadasTotal: timeCalculations.totalWorkedFormat,
+                minutosTrabajadosTotal: timeCalculations.totalWorkedMins,
+                horasExtra: timeCalculations.extraHoursFormat,
+                minutosExtra: timeCalculations.extraHoursMins,
+                horaEntradaRegistrada: entryDate.toLocaleTimeString('es-ES'), 
+
                 detalles: {
-                    // CORRECCIÓN CLAVE: Usar || '' para prevenir 'undefined' en Firestore
                     correoPersonal: userData['CORREO ELECTRÓNICO PERSONAL'] || '', 
                     correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'] || '',
                     rfc: userData.RFC || '',
@@ -421,27 +487,33 @@
 
             await db.collection('asistencias').add(exitData);
             
-            return true;
+            return timeCalculations;
         }
 
-  // Finalizar asistencia completa
-async function endAttendance(exitType, userData) {
-    await registerExit(exitType, userData);
-    
-    showAlert(
-        'success', 
-        '¡Salida Registrada!', 
-        // Esta cadena se pasa ahora como HTML gracias a la corrección en showAlert
-        `Tu jornada ha finalizado.
-        Serás redirigido al panel en 3 segundos.`
-    );
-    
-    setTimeout(() => {
-        redirectByRole(AppState.userRole);
-    }, REDIRECT_DELAY);
+        // Finalizar asistencia completa
+        async function endAttendance(exitType, userData) {
+            const timeCalculations = await registerExit(exitType, userData);
+            
+            // Mensaje de éxito con etiquetas HTML
+            const successMessage = `
+                Tu jornada ha finalizado.
+                Tiempo trabajado: <strong>${timeCalculations.totalWorkedFormat}</strong>.
+                Horas Extra registradas: <strong>${timeCalculations.extraHoursFormat}</strong>.
+                Serás redirigido al panel en ${REDIRECT_DELAY / 1000} segundos
+            `;
 
-    return true;
-}
+            showAlert(
+                'success', 
+                '¡Salida Registrada!', 
+                successMessage
+            );
+            
+            setTimeout(() => {
+                redirectByRole(AppState.userRole);
+            }, REDIRECT_DELAY);
+
+            return true;
+        }
 
         // Configurar botón de envío
         function setupSubmitButton() {
@@ -450,14 +522,9 @@ async function endAttendance(exitType, userData) {
             submitBtn.addEventListener('click', async function() {
                 if (AppState.isSubmitting) return;
                 
+                // Dado que solo hay una opción, la tomamos directamente
                 const selectedOption = document.querySelector('.attendance-option.selected');
-                
-                if (!selectedOption) {
-                    showAlert('error', 'Selecciona una opción', 'Debes seleccionar un tipo de salida antes de continuar.');
-                    return;
-                }
-
-                const exitType = selectedOption.getAttribute('data-value');
+                const exitType = selectedOption ? selectedOption.getAttribute('data-value') : 'normal_exit';
                 
                 // Estado de envío
                 AppState.isSubmitting = true;
@@ -474,14 +541,17 @@ async function endAttendance(exitType, userData) {
                         error.message || 'Hubo un problema al registrar tu salida. Intenta nuevamente.'
                     );
                 } finally {
-                    AppState.isSubmitting = false;
-                    submitBtn.innerHTML = '<i class="fas fa-user-clock"></i> Registrar Salida';
-                    submitBtn.disabled = false;
+                    // Solo restablece si no se está redirigiendo
+                    if (AppState.isSubmitting) {
+                        AppState.isSubmitting = false;
+                        submitBtn.innerHTML = '<i class="fas fa-user-clock"></i> Registrar Salida';
+                        submitBtn.disabled = false;
+                    }
                 }
             });
         }
 
-        // --- VALIDACIONES Y FLUJO PRINCIPAL ---
+        // --- VALIDACIONES Y FLUJO PRINCIPAL (sin cambios) ---
 
         // Validar permisos de usuario
         function validateUserPermissions(userRole) {
@@ -514,8 +584,8 @@ async function endAttendance(exitType, userData) {
                     showAlert(
                         'info', 
                         'Salida ya registrada hoy', 
-                        `Ya registraste tu salida hoy.<br>
-                        Serás redirigido al panel en 3 segundos...`
+                        `Ya registraste tu salida hoy.
+                        Serás redirigido al panel en ${REDIRECT_DELAY / 1000} segundos...`
                     );
                     setTimeout(() => {
                         redirectByRole(AppState.userRole);
