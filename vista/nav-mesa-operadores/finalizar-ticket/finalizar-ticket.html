@@ -30,10 +30,33 @@
                     <p><strong>Estado:</strong> <span id="ticketStatus">Cargando...</span></p>
                     <p><strong>Prioridad:</strong> <span id="ticketPriority">Cargando...</span></p>
                     <p><strong>Área:</strong> <span id="ticketArea">Cargando...</span></p>
-                </div>
+                    </div>
             </div>
 
             <form id="finishTicketForm" class="finish-form">
+                
+                <div class="form-group action-group">
+                    <button type="button" class="action-btn pause-btn" id="pauseBtn">
+                        <i class="fas fa-pause"></i> Poner en Pausa
+                    </button>
+                </div>
+                
+                <div class="form-group pause-reason-group" id="pauseReasonGroup" style="display: none;">
+                    <label for="pauseReason">
+                        <i class="fas fa-comment-dots"></i> Razón para poner en pausa (Requerido)
+                    </label>
+                    <textarea 
+                        id="pauseReason" 
+                        class="form-control swal2-textarea" 
+                        rows="3" 
+                        minlength="10" 
+                        maxlength="500" 
+                        placeholder="Escriba la razón detallada para pausar el ticket (mínimo 10 caracteres)"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="pauseCharCount">0</span>/500 caracteres
+                    </div>
+                </div>
                 <div class="form-group">
                     <label for="projectDescription">
                         <i class="fas fa-file-alt"></i> Descripción del proyecto finalizado
@@ -87,6 +110,8 @@
         const MIN_IMAGES = 1;
         const MAX_DESCRIPTION_LENGTH = 10000;
         const MIN_DESCRIPTION_LENGTH = 10;
+        const MAX_PAUSE_REASON_LENGTH = 500;
+        const MIN_PAUSE_REASON_LENGTH = 10;
         // ---------------------------------------------
         
         // Configuración de Firebase
@@ -270,10 +295,10 @@
             });
         }
 
-        // Validar formulario
-        function validateForm(description, imageCount) {
+        // Validar formulario de finalización
+        function validateFinalizeForm(description, imageCount) {
             if (description.length < MIN_DESCRIPTION_LENGTH) {
-                throw new Error(`La descripción debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`);
+                throw new Error(`La descripción de finalización debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`);
             }
             
             if (imageCount < MIN_IMAGES) {
@@ -284,6 +309,17 @@
                 throw new Error(`No puedes subir más de ${MAX_IMAGES} imágenes`);
             }
             
+            return true;
+        }
+
+        // Validar formulario de pausa (Usado internamente por Swal)
+        function validatePauseForm(reason) {
+            if (reason.length < MIN_PAUSE_REASON_LENGTH) {
+                throw new Error(`La razón de pausa debe tener al menos ${MIN_PAUSE_REASON_LENGTH} caracteres`);
+            }
+            if (reason.length > MAX_PAUSE_REASON_LENGTH) {
+                throw new Error(`La razón de pausa no debe exceder ${MAX_PAUSE_REASON_LENGTH} caracteres`);
+            }
             return true;
         }
 
@@ -366,6 +402,17 @@
                     document.getElementById('projectDescription').value = evidencia.descripcion || '';
                     document.getElementById('charCount').textContent = evidencia.descripcion?.length || 0;
                     
+                    // ** IMPORTANTE: Cargar la razón de pausa existente si la hay **
+                    const ticketRef = db.collection('ticketsmesa').doc(ticketId);
+                    const ticketSnap = await ticketRef.get();
+                    const ticketData = ticketSnap.data();
+
+                    if (document.getElementById('pauseReason')) {
+                        document.getElementById('pauseReason').value = ticketData.pauseComment || '';
+                        document.getElementById('pauseCharCount').textContent = ticketData.pauseComment?.length || 0;
+                    }
+                    // ***************************************************************
+                    
                     AppState.selectedImages = evidencia.imagenes || [];
                     updateImagePreviews();
                     
@@ -382,7 +429,7 @@
             }
         }
 
-        // Guardar o actualizar evidencia
+        // Guardar o actualizar evidencia (solo para finalización)
         async function saveOrUpdateEvidence(description) {
             const evidenciaData = {
                 ticketId: AppState.currentTicketId,
@@ -405,7 +452,7 @@
             }
         }
 
-        // Actualizar estado del ticket
+        // Actualizar estado del ticket (solo para finalización)
         async function updateTicketStatus() {
             const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
             const ticketSnap = await ticketRef.get();
@@ -424,10 +471,14 @@
                 evidenciasCompletadas.includes(colabId)
             );
             
+            const oldStatus = ticketData.estado || 'desconocido';
+            const newStatus = todosCompletados ? 'finalizado' : 'en_proceso'; 
+            
             const updateData = {
                 evidenciasCompletadas,
-                estado: todosCompletados ? 'finalizado' : 'en_proceso',
-                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                estado: newStatus, 
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                pauseComment: '' // Limpiar comentario de pausa si se finaliza
             };
             
             if (todosCompletados) {
@@ -435,9 +486,19 @@
             }
             
             await ticketRef.update(updateData);
+            
+            // Registrar en el historial
+            await recordHistory(
+                AppState.currentTicketId,
+                oldStatus,
+                newStatus,
+                `Ticket finalizado por colaborador. Estado: ${newStatus}`,
+                AppState.userData.colaboradorId,
+                AppState.userData.NOMBRE
+            );
         }
 
-        // Manejar envío del formulario
+        // Manejar ENVÍO DEL FORMULARIO DE FINALIZACIÓN
         async function handleFormSubmit(e) {
             e.preventDefault();
             
@@ -449,19 +510,19 @@
             try {
                 const description = document.getElementById('projectDescription').value;
                 
-                // Validar formulario
-                validateForm(description, AppState.selectedImages.length);
+                // Validar formulario de finalización
+                validateFinalizeForm(description, AppState.selectedImages.length);
                 
-                showLoading('Guardando información...');
+                showLoading('Guardando evidencias y finalizando...');
                 
-                // Guardar o actualizar evidencia
+                // 1. Guardar o actualizar evidencia
                 await saveOrUpdateEvidence(description);
                 
-                // Actualizar estado del ticket
+                // 2. Actualizar estado del ticket
                 await updateTicketStatus();
                 
                 hideLoading();
-                await showSuccess('Tus evidencias han sido guardadas correctamente');
+                await showSuccess('Tus evidencias han sido guardadas y el ticket marcado como completado.', 'Proceso Exitoso');
                 
                 // REDIRECCIÓN
                 window.location.href = '../gestion-tickets/gestion-tickets.html';
@@ -476,6 +537,71 @@
             }
         }
         
+        // NUEVA FUNCIÓN: Manejar PAUSAR TICKET
+        async function handlePauseTicket(reason) {
+            try {
+                
+                showLoading('Pausando ticket y registrando razón...');
+
+                const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
+                const ticketSnap = await ticketRef.get();
+                const oldStatus = ticketSnap.data().estado || 'desconocido';
+
+                // 2. Actualizar el estado del ticket a 'en_proceso' (Pausa) y guardar la razón.
+                const updateData = {
+                    estado: 'en_pausa', // Estado de Pausa
+                    pauseComment: reason, // Razón de la pausa
+                    // Esto compensará el contador de abandono en la otra vista
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp() 
+                };
+
+                await ticketRef.update(updateData);
+
+                // 3. Registrar en el historial
+                await recordHistory(
+                    AppState.currentTicketId,
+                    oldStatus,
+                    'en_pausa',
+                    `Pausado desde formulario de Finalización: ${reason}`,
+                    AppState.userData.colaboradorId,
+                    AppState.userData.NOMBRE
+                );
+
+                hideLoading();
+                await showSuccess('El ticket ha sido puesto en pausa. Volverá a la lista activa en Gestión de Tickets.', 'Ticket en Pausa');
+                
+                // Redirigir
+                window.location.href = '../gestion-tickets/gestion-tickets.html';
+                
+            } catch (error) {
+                console.error("Error al pausar ticket:", error);
+                showError(error.message || 'No se pudo pausar el ticket.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Función para registrar el historial (copiada de gestion-tickets.html)
+        async function recordHistory(ticketId, oldStatus, newStatus, motivo, collaboratorId, collaboratorName) {
+            try {
+                const historyData = {
+                    ticketId: ticketId,
+                    fechaCambio: firebase.firestore.FieldValue.serverTimestamp(),
+                    colaboradorId: collaboratorId,
+                    colaboradorNombre: collaboratorName,
+                    estadoAnterior: oldStatus,
+                    estadoNuevo: newStatus,
+                    motivo: motivo || `Cambio de estado de ${oldStatus} a ${newStatus}`
+                };
+                
+                await db.collection('historialTicket').add(historyData);
+                console.log('Historial de ticket registrado exitosamente.');
+            } catch (error) {
+                console.error('Error registrando historial:', error);
+            }
+        }
+
+
         // Cargar datos del usuario
         async function loadUserData(user) {
             try {
@@ -532,17 +658,93 @@
         function setupEventListeners() {
             const textarea = document.getElementById('projectDescription');
             const counter = document.getElementById('charCount');
+            const pauseReasonTextarea = document.getElementById('pauseReason');
+            const pauseCounter = document.getElementById('pauseCharCount');
+            const pauseReasonGroup = document.getElementById('pauseReasonGroup');
             const input = document.getElementById('imageUpload');
             const finishForm = document.getElementById('finishTicketForm');
             const cancelBtn = document.getElementById('cancelBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
             
-            // Contador de caracteres
+            
+            // Lógica para el botón Pausar
+            pauseBtn.addEventListener('click', () => {
+                
+                // Usamos el contenido HTML del grupo de razón de pausa como base para el modal
+                const customHtml = `
+                    <div id="swalPauseGroup">
+                        ${pauseReasonGroup.innerHTML}
+                    </div>
+                `;
+
+                // Lanzar SweetAlert para pedir la razón
+                Swal.fire({
+                    title: 'Razón para Pausar Ticket',
+                    html: customHtml,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-pause"></i> Pausar Ticket',
+                    cancelButtonText: 'Cancelar',
+                    focusConfirm: false,
+                    didOpen: () => {
+                        // VINCULACIÓN CRÍTICA: Obtener los elementos DENTRO del modal
+                        const swalTextarea = Swal.getHtmlContainer().querySelector('#pauseReason');
+                        const swalCounter = Swal.getHtmlContainer().querySelector('#pauseCharCount');
+                        
+                        // Cargar contenido preexistente si hay
+                        swalTextarea.value = pauseReasonTextarea.value;
+
+                        // VINCULAR EL CONTADOR DE CARACTERES AL CAMPO TEMPORAL DEL MODAL
+                        swalTextarea.addEventListener('input', function() {
+                            const length = Math.min(this.value.length, MAX_PAUSE_REASON_LENGTH);
+                            swalCounter.textContent = `${length}/${MAX_PAUSE_REASON_LENGTH} caracteres`;
+                            if (this.value.length > MAX_PAUSE_REASON_LENGTH) {
+                                this.value = this.value.substring(0, MAX_PAUSE_REASON_LENGTH);
+                            }
+                        });
+                        
+                        // Inicializar el contador
+                        swalCounter.textContent = `${swalTextarea.value.length}/${MAX_PAUSE_REASON_LENGTH} caracteres`;
+                    },
+                    preConfirm: () => {
+                        const reasonInput = Swal.getHtmlContainer().querySelector('#pauseReason');
+                        const reason = reasonInput.value.trim();
+                        
+                        try {
+                             validatePauseForm(reason);
+                             return reason; // Devolver la razón validada
+                        } catch (error) {
+                            Swal.showValidationMessage(error.message);
+                            return false;
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Si se confirma, llama a la función de manejo de pausa con la razón validada
+                        handlePauseTicket(result.value);
+                    }
+                    // Si cancela, no hacemos nada.
+                });
+            });
+
+
+            // Contador de caracteres (Descripción Finalización)
             textarea.addEventListener('input', function() {
                 const length = Math.min(this.value.length, MAX_DESCRIPTION_LENGTH);
                 counter.textContent = length;
                 
                 if (this.value.length > MAX_DESCRIPTION_LENGTH) {
                     this.value = this.value.substring(0, MAX_DESCRIPTION_LENGTH);
+                }
+            });
+
+            // Contador de caracteres (Razón de Pausa - Mantenido para cuando se carga data)
+            pauseReasonTextarea.addEventListener('input', function() {
+                const length = Math.min(this.value.length, MAX_PAUSE_REASON_LENGTH);
+                pauseCounter.textContent = length;
+                
+                if (this.value.length > MAX_PAUSE_REASON_LENGTH) {
+                    this.value = this.value.substring(0, MAX_PAUSE_REASON_LENGTH);
                 }
             });
             
@@ -552,7 +754,7 @@
                 e.target.value = ''; 
             });
             
-            // Envío del formulario
+            // Envío del formulario (Finalizar)
             finishForm.addEventListener('submit', handleFormSubmit);
             
             // Botón cancelar

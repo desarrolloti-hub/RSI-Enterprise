@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Multas y Novedades</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./multas.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+           <!-- Por si requiere boton regresar a algun menú
+            <h1><i class="fas fa-user-shield"></i> Mis Multas</h1>
+            <button class="btn-secondary" onclick="window.location.href='../checklist-automoviles/checklist-automoviles.html'">
+               <i class="fas fa-arrow-left"></i> Volver
+            </button>--> 
+        </div>
+
+        <div class="welcome-section">
+            <h2 id="welcomeTitle">Hola, cargando...</h2>
+            <p style=>A continuación se muestra tu historial de reportes.</p>
+        </div>
+
+        <div id="summaryCard" class="total-card" style="display: none;">
+            <h3>Total Acumulado</h3>
+            <div class="total-amount" id="totalAmount">$0.00</div>
+            <p id="totalCount">0 novedades registradas</p>
+        </div>
+
+        <div id="resultsContainer" class="incidents-list">
+            <div style="text-align:center; padding: 40px;">
+                <div class="spinner"></div>
+                <p>Identificando usuario...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="./multas.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegación-operador.js"></script>  
+</body>
+</html>

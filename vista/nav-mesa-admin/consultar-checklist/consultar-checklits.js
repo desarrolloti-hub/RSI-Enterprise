@@ -213,12 +213,13 @@ window.openAddIncidentModal = async (id) => {
     const checklist = allChecklists.find(c => c.id === id);
     if (!checklist) return;
 
+    // Variable temporal para guardar la evidencia
+    let evidencePhotoBase64 = null;
+
     const { value: formValues } = await Swal.fire({
         title: 'Registrar Novedad',
-        // Usamos el contenedor con las clases nuevas
         html: `
             <div class="incident-form-container">
-                
                 <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; font-size: 0.9rem;">
                     <i class="fas fa-info-circle"></i> Registrando para: <strong>${checklist.vehicleInfo?.plates || 'N/A'}</strong>
                 </div>
@@ -234,8 +235,8 @@ window.openAddIncidentModal = async (id) => {
                 </div>
 
                 <div>
-                    <label class="incident-label">Descripción del evento</label>
-                    <input id="incDesc" type="text" class="incident-input" placeholder="Ej: Exceso de velocidad en carretera...">
+                    <label class="incident-label">Descripción</label>
+                    <input id="incDesc" type="text" class="incident-input" placeholder="Ej: Exceso de velocidad...">
                 </div>
 
                 <div>
@@ -245,36 +246,74 @@ window.openAddIncidentModal = async (id) => {
                         <input id="incCost" type="number" class="incident-input cost" placeholder="0.00" step="0.01">
                     </div>
                 </div>
+
+                <div>
+                    <label class="incident-label">Evidencia (Foto/Ticket)</label>
+                    <input type="file" id="incFile" accept="image/*" class="incident-input" style="padding: 8px;">
+                    <div id="previewContainer" style="margin-top: 10px; text-align: center; display: none;">
+                        <img id="imgPreview" src="" style="max-height: 100px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
             </div>
         `,
         showCancelButton: true,
         confirmButtonText: 'Guardar',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#f39c12', // Naranja para alertas
-        cancelButtonColor: '#95a5a6',
-        focusConfirm: false,
-        width: 450, // Ancho fijo ideal para formularios verticales
+        confirmButtonColor: '#f39c12',
+        width: 450,
+        didOpen: () => {
+            // Escuchar cambios en el input file
+            const fileInput = document.getElementById('incFile');
+            const previewContainer = document.getElementById('previewContainer');
+            const imgPreview = document.getElementById('imgPreview');
+
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        Swal.showValidationMessage('Solo se permiten imágenes');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Mostrar preview temporal mientras procesa
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        // Comprimir
+                        try {
+                            const compressed = await comprimirImagen(e.target.result);
+                            evidencePhotoBase64 = compressed; // Guardar en variable
+                            imgPreview.src = compressed;
+                            previewContainer.style.display = 'block';
+                        } catch (err) {
+                            console.error("Error compresión", err);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        },
         preConfirm: () => {
             const type = document.getElementById('incType').value;
             const desc = document.getElementById('incDesc').value.trim();
             const cost = document.getElementById('incCost').value;
 
-            if (!desc) {
-                Swal.showValidationMessage('⚠ Escribe una descripción');
-                return false;
-            }
-            if (!cost) {
-                Swal.showValidationMessage('⚠ Ingresa el costo (pon 0 si no aplica)');
-                return false;
-            }
+            if (!desc) { Swal.showValidationMessage('⚠ Escribe una descripción'); return false; }
+            if (!cost) { Swal.showValidationMessage('⚠ Ingresa el costo'); return false; }
 
-            return { type, desc, cost, date: new Date().toISOString() };
+            // Retornamos el objeto con la evidencia
+            return { 
+                type, 
+                desc, 
+                cost, 
+                date: new Date().toISOString(),
+                evidence: evidencePhotoBase64 // Aquí va la foto comprimida (o null)
+            };
         }
     });
 
     if (formValues) {
         try {
-            // Guardar en Firebase
             await db.collection('checkList').doc(id).update({
                 incidents: firebase.firestore.FieldValue.arrayUnion(formValues)
             });
@@ -287,7 +326,6 @@ window.openAddIncidentModal = async (id) => {
                 showConfirmButton: false
             });
             
-            // Actualizar vista local
             if (!checklist.incidents) checklist.incidents = [];
             checklist.incidents.push(formValues);
 
@@ -317,6 +355,20 @@ window.viewChecklistDetails = (id) => {
     const destino = checklist.tripInfo?.destino || 'No registrado';
     const km = checklist.tripInfo?.kmSalida || '0';
     const gasolina = checklist.tripInfo?.gasolina || 'No registrado';
+
+    const firma = checklist.signature; 
+    let firmaHtml = '';
+    
+    if (firma) {
+        firmaHtml = `
+            <div style="text-align: center; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <p style="font-size: 0.85rem; color: #555; margin-bottom: 5px;">Firma de Conformidad:</p>
+                <img src="${firma}" alt="Firma Colaborador" style="max-height: 80px; border: 1px solid #eee; padding: 5px; border-radius: 4px; background-color: #fff;">
+            </div>
+        `;
+    } else {
+        firmaHtml = `<p style="text-align:center; font-size: 0.8rem; color: #999; margin-top: 15px;">(Sin firma registrada)</p>`;
+    }
 
     // Fotos
     const photos = checklist.vehiclePhotos || {};
@@ -357,6 +409,44 @@ window.viewChecklistDetails = (id) => {
         </p>
     `;
 
+    // Novedades / Multas (HTML)
+    let incidentsHtml = '<p style="color: #777; font-style: italic; font-size: 0.9rem;">No hay novedades registradas.</p>';
+    
+    if (checklist.incidents && checklist.incidents.length > 0) {
+        incidentsHtml = '<div style="max-height: 200px; overflow-y: auto;">';
+        
+        checklist.incidents.forEach(inc => {
+            const date = new Date(inc.date).toLocaleDateString();
+            
+            // Botón para ver evidencia si existe
+            let btnEvidencia = '';
+            if (inc.evidence) {
+                // Escapamos comillas para el onclick
+                const safeEvidence = inc.evidence.replace(/'/g, "\\'");
+                btnEvidencia = `
+                    <button onclick="viewPhoto('${safeEvidence}')" class="btn-sm" style="margin-top: 5px; background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; ">
+                        <i class="fas fa-image"></i> Ver Evidencia
+                    </button>
+                `;
+            }
+
+            incidentsHtml += `
+                <div class="incident-item">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong>${inc.type}</strong> <span style="font-size: 0.8rem; color: #666;">(${date})</span><br>
+                            ${inc.desc}
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>$${inc.cost}</strong>
+                        </div>
+                    </div>
+                    ${btnEvidencia}
+                </div>`;
+        });
+        incidentsHtml += '</div>';
+    }
+
     Swal.fire({
         title: `Detalles: ${car}`,
         html: `
@@ -382,6 +472,9 @@ window.viewChecklistDetails = (id) => {
                     ${checklistItemsHtml}
                     ${obsHtml}
                 </div>
+                ${firmaHtml}
+
+                ${incidentsHtml}
             </div>
         `,
         width: 650,
@@ -429,5 +522,39 @@ function populateCollaboratorSelect() {
         option.value = name.toLowerCase(); 
         option.textContent = name; 
         select.appendChild(option);
+    });
+}
+
+// ==========================================
+// 8. FUNCIÓN DE COMPRESIÓN DE IMÁGENES
+// ==========================================
+async function comprimirImagen(base64Str) {
+    const MAX_BYTES = 1000000; // 1 MB
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64Str;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const MAX_SIDE = 1280; 
+            if (width > height) {
+                if (width > MAX_SIDE) { height *= MAX_SIDE / width; width = MAX_SIDE; }
+            } else {
+                if (height > MAX_SIDE) { width *= MAX_SIDE / height; height = MAX_SIDE; }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            let quality = 0.9;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            while (dataUrl.length * 0.75 > MAX_BYTES && quality > 0.2) {
+                quality -= 0.1;
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            resolve(dataUrl);
+        };
+        img.onerror = () => { resolve(base64Str); };
     });
 }

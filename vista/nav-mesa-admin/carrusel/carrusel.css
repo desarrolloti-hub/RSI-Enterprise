@@ -1,0 +1,98 @@
+/* admin-carrusel.css */
+
+/* Eliminamos estilos del body porque personalizacion.js se encarga de eso */
+
+/* Contenedor de previews de subida */
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.image-preview {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    /* Usamos borde del color primario del tema actual */
+    border: 2px solid var(--primary-color, #6C43E0);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.delete-img {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.delete-img:hover {
+    transform: scale(1.1);
+}
+
+/* Botón de agregar más (dashed) */
+.add-more-container {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--text-color, #ccc);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: rgba(255,255,255,0.05);
+}
+
+.add-more-container:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(255,255,255,0.1);
+    color: var(--primary-color);
+}
+
+.add-more-icon {
+    font-size: 2rem;
+    opacity: 0.7;
+}
+
+/* Ajustes para el Carrusel de Bootstrap dentro de nuestras Cards personalizadas */
+.carousel-item {
+    transition: transform .6s ease-in-out;
+}
+
+/* Forzar que los inputs y cards respeten las variables del tema */
+.card {
+    /* personalizacion.js ya estiliza .card, pero aseguramos bordes sutiles */
+    border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+/* Hacer que el form-control (inputs) se vea bien en modo oscuro y claro */
+.form-control {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--primary-color);
+    opacity: 0.8;
+}
+
+.form-control:focus {
+    opacity: 1;
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+}

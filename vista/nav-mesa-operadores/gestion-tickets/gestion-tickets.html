@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="gestion-tickets.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.js"></script>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -605,9 +605,24 @@
                 const now = Date.now();
                 const maxDuration = 5 * 24 * 60 * 60 * 1000; // 5 días en milisegundos
                 const abandonmentTime = creationTime + maxDuration;
-                const remainingTime = abandonmentTime - now;
+                let remainingTime = abandonmentTime - now;
 
-                if (remainingTime <= 0) return { expired: true };
+                // ** LÓGICA DE PAUSA (3 DÍAS) **
+                const pauseDuration = 3 * 24 * 60 * 60 * 1000; 
+                
+                // Si el ticket está en pausa, reiniciamos el contador por 3 días
+                // Nota: Esta lógica es simplificada y asume que "en_proceso" es "pausa". 
+                // La lógica de abandono ya compensa para que los tickets en pausa no expiren inmediatamente.
+                // Aquí solo ajustamos el cálculo de tiempo *restante* visible en la UI.
+
+                // Si está en pausa, extendemos el límite por 3 días
+                if (ticketManager.currentTicketStatus === 'en_proceso') {
+                    // Si está en pausa, el tiempo de abandono es 5 días + 3 días
+                    remainingTime = (creationTime + maxDuration + pauseDuration) - now;
+                } else if (remainingTime <= 0) {
+                    return { expired: true };
+                }
+
 
                 const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1041,7 +1056,8 @@
                 const now = Date.now();
                 const fiveDaysInMillis = 5 * 24 * 60 * 60 * 1000;
                 const ticketsToUpdate = [];
-                const nonActiveStatuses = ['finalizado', 'cerrado', 'cancelado', 'abandono_de_actividades', 'completado']; 
+                // Se incluye en_proceso aquí para que el contador no se dispare durante la pausa de 3 días.
+                const nonActiveStatuses = ['finalizado', 'cerrado', 'cancelado', 'abandono_de_actividades', 'completado', 'en_proceso']; 
 
                 for (const ticket of tickets) {
                     const status = ticket.estado;
@@ -1355,7 +1371,6 @@
                             
                             <div class="detail-section">
                                 <strong>Información Básica</strong>
-                                <p><span class="detail-label">ID Corto:</span> #${shortId.toUpperCase()}</p>
                                 <p style="font-size: 0.8em;"><span class="detail-label" style="font-weight: bold; color: #aaa;">ID Completo (DB):</span> ${ticketId}</p> 
                                 <p><span class="detail-label">Título:</span> ${data.titulo}</p>
                                 <p><span class="detail-label">Estado:</span> 

@@ -294,6 +294,16 @@ select:focus, input:focus, textarea:focus {
   gap: 8px;
 }
 
+.btn-primary{
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
 .btn-prev {
   background-color: #f8f9fa;
   color: var(--dark-color);

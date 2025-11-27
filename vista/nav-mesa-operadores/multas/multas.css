@@ -1,0 +1,140 @@
+:root {
+    --primary-color: #6C43E0;
+    --bg-color: #f4f6f9;
+    --text-color: #333;
+    --card-bg: #fff;
+    --danger-color: #e74c3c;
+    --warning-color: #f39c12;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px; /* Más angosto para enfoque móvil */
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header h1 { color: var(--primary-color); font-size: 1.5rem; }
+
+/* Sección de Búsqueda */
+.search-section {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.search-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.custom-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Tarjeta de Total */
+.total-card {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    animation: slideIn 0.5s ease;
+}
+
+.total-amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 10px 0;
+}
+
+/* Lista de Incidentes */
+.incidents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.incident-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 5px solid var(--warning-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.incident-info h4 { margin: 0 0 5px 0; color: #d35400; }
+.incident-date { font-size: 0.85rem; color: #888; margin-bottom: 5px; }
+
+.incident-cost { font-weight: bold; font-size: 1.2rem; }
+
+.vehicle-tag {
+    background:var(--card-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+.empty-state i { font-size: 3rem; margin-bottom: 10px; display: block; }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+    .search-group { flex-direction: column; }
+    .incident-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .incident-cost { align-self: flex-end; }
+}

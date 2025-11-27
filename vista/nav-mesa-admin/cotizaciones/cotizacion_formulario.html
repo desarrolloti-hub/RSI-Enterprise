@@ -79,7 +79,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="cotizacionNumero">Número de Cotización</label>
-                                <input type="text" id="cotizacionNumero" name="cotizacionNumero" required readonly>
+                                <input type="text" id="cotizacionNumero" name="cotizacionNumero" required>
                             </div>
                             <div class="form-group">
                                 <label for="tipoCotizacion">Tipo de Cotización</label>
@@ -349,7 +349,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Desactivar la protección del navegador antes de redirigir
-                    formularioGuardadoExitosamente = true; 
+                    formularioGuardadaExitosamente = true; 
                     // Redirigir al listado de cotizaciones en lugar de cerrar
                     window.location.href = 'coti.html';
                 }
@@ -991,7 +991,12 @@
                     await cargarCotizacionParaEdicion(idCoti);
                 } else {
                     resetearFormulario();
-                    document.getElementById('tipoCotizacion').addEventListener('change', generarNumeroCotizacion);
+                    // Solo generar número automático si el campo está vacío
+                    document.getElementById('tipoCotizacion').addEventListener('change', function() {
+                        if (!document.getElementById('cotizacionNumero').value) {
+                            generarNumeroCotizacion();
+                        }
+                    });
                 }
             });
         }
@@ -1145,8 +1150,11 @@
                         nombre: currentUser.nombreCompleto, 
                         fechaGeneracion: new Date().toISOString() 
                     };
-                    const contadorRef = doc(db, 'contadoresCotizaciones', tipoCotizacion);
-                    await setDoc(contadorRef, { count: (contadores[tipoCotizacion] || 0) + 1 }, { merge: true });
+                    // Solo incrementar contador si el número fue generado automáticamente
+                    if (document.getElementById('cotizacionNumero').value.includes('RSI-')) {
+                        const contadorRef = doc(db, 'contadoresCotizaciones', tipoCotizacion);
+                        await setDoc(contadorRef, { count: (contadores[tipoCotizacion] || 0) + 1 }, { merge: true });
+                    }
                     await addDoc(collection(db, 'cotizacionPdf'), cotizacionData);
                     mostrarAlerta('✅ Cotización creada', 'success');
                 }

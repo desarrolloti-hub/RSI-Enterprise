@@ -315,6 +315,20 @@ window.viewChecklistDetails = (id) => {
     const km = checklist.tripInfo?.kmSalida || '0';
     const gasolina = checklist.tripInfo?.gasolina || 'No registrado';
 
+    const firma = checklist.signature; 
+    let firmaHtml = '';
+    
+    if (firma) {
+        firmaHtml = `
+            <div style="text-align: center; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <p style="font-size: 0.85rem; color: #555; margin-bottom: 5px;">Firma de Conformidad:</p>
+                <img src="${firma}" alt="Firma Colaborador" style="max-height: 80px; border: 1px solid #eee; padding: 5px; border-radius: 4px; background-color: #fff;">
+            </div>
+        `;
+    } else {
+        firmaHtml = `<p style="text-align:center; font-size: 0.8rem; color: #999; margin-top: 15px;">(Sin firma registrada)</p>`;
+    }
+
     // Fotos
     const photos = checklist.vehiclePhotos || {};
     let photoButtonsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">';
@@ -353,6 +367,43 @@ window.viewChecklistDetails = (id) => {
             <strong>Obs. Equipamiento:</strong> ${checklist.checklists?.equipamiento?.obs || 'Ninguna'}
         </p>
     `;
+    // Novedades / Multas (HTML)
+    let incidentsHtml = '<p style="color: #777; font-style: italic; font-size: 0.9rem;">No hay novedades registradas.</p>';
+    
+    if (checklist.incidents && checklist.incidents.length > 0) {
+        incidentsHtml = '<div style="max-height: 200px; overflow-y: auto;">';
+        
+        checklist.incidents.forEach(inc => {
+            const date = new Date(inc.date).toLocaleDateString();
+            
+            // Botón para ver evidencia si existe
+            let btnEvidencia = '';
+            if (inc.evidence) {
+                // Escapamos comillas para el onclick
+                const safeEvidence = inc.evidence.replace(/'/g, "\\'");
+                btnEvidencia = `
+                    <button onclick="viewPhoto('${safeEvidence}')" class="btn-sm" style="margin-top: 5px; background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; ">
+                        <i class="fas fa-image"></i> Ver Evidencia
+                    </button>
+                `;
+            }
+
+            incidentsHtml += `
+                <div class="incident-item">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong>${inc.type}</strong> <span style="font-size: 0.8rem; color: #666;">(${date})</span><br>
+                            ${inc.desc}
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>$${inc.cost}</strong>
+                        </div>
+                    </div>
+                    ${btnEvidencia}
+                </div>`;
+        });
+        incidentsHtml += '</div>';
+    }
 
     Swal.fire({
         title: `Detalles: ${car}`,
@@ -379,7 +430,9 @@ window.viewChecklistDetails = (id) => {
                     ${checklistItemsHtml}
                     ${obsHtml}
                 </div>
-            </div>
+                    ${firmaHtml}
+                    ${incidentsHtml}
+                </div>
         `,
         width: 650,
         confirmButtonText: 'Cerrar'
