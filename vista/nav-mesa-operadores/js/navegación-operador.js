@@ -1,4 +1,3 @@
-// navegacion-admin.js - Función autónoma COMPLETA con iconos, gráficas y personalización ACTUALIZADA
 (function() {
     'use strict';
     

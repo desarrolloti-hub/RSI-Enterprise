@@ -767,47 +767,8 @@ body {
     background: var(--secondary-color);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .header .container { flex-direction: column; gap: 16px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .modal-content { margin: 10px; max-height: 95vh; }
-    .modal-body { padding: 20px; }
-    .acciones { flex-direction: column; }
-    .table-container { font-size: 14px; }
-    .cotizaciones-table th, .cotizaciones-table td { padding: 8px 4px; }
-    
-    /* Ocultar columnas menos importantes en móvil */
-    .cotizaciones-table td:nth-child(5), 
-    .cotizaciones-table th:nth-child(5) { display: none; } /* Descripción */
-    
-    .cotizaciones-table td:nth-child(3), 
-    .cotizaciones-table th:nth-child(3) { display: none; } /* Fecha */
-    
-    .acciones button { width: 100%; padding: 4px; font-size: 11px; }
-    
-    /* Tabla de Items Responsive */
-    .items-table { display: block; overflow-x: auto; white-space: nowrap; }
-    .items-table th, .items-table td { display: table-cell; min-width: 80px; }
-}
-
-@media (max-width: 480px) {
-    .cotizaciones-table td:nth-child(4), /* Total */
-    .cotizaciones-table th:nth-child(4) { display: none; }
-    .section-card { padding: 12px; }
-    .form-actions { flex-direction: column; }
-    .form-actions button { width: 100%; }
-}
-
-/* Truncate para descripción en tabla */
-.cotizaciones-table td:nth-child(5) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 160px;
-}
 /* ==========================================================================
-   TRANSFORMACIÓN DE TABLA A TARJETAS (RESPONSIVE MÓVIL)
+   TRANSFORMACIÓN DE TABLA A TARJETAS (RESPONSIVE MÓVIL) - CORREGIDO
    ========================================================================== */
 
 @media (max-width: 768px) {
@@ -830,56 +791,66 @@ body {
     .cotizaciones-table tr {
         margin-bottom: 20px;
         background-color: var(--card-bg, #ffffff);
-        border: 1px solid var(--accent-color, #e5e7eb);
+        border: 2px solid var(--accent-color, #e5e7eb);
         border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        padding: 0; /* El padding va en los td */
-        overflow: hidden; /* Para respetar el border-radius */
+        box-shadow: var(--card-shadow, 0 4px 10px rgba(0,0,0,0.05));
+        padding: 0;
+        overflow: hidden;
         position: relative;
+        transition: all 0.3s ease;
     }
 
-    /* Mantener el borde de color del estatus a la izquierda, pero más grueso */
+    .cotizaciones-table tr:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow, 0 8px 20px rgba(0,0,0,0.1));
+    }
+
+    /* Mantener el borde de color del estatus a la izquierda */
     .cotizaciones-table tr[style*="border-left"] {
-        border-left-width: 6px !important;
+        border-left-width: 8px !important;
     }
 
     /* 4. Estilo de las Celdas (Filas dentro de la tarjeta) */
     .cotizaciones-table td {
         padding: 12px 15px;
-        text-align: right; /* Contenido a la derecha */
+        text-align: left;
         position: relative;
         border-bottom: 1px solid var(--accent-color, #f3f4f6);
         display: flex;
-        justify-content: space-between; /* Separa etiqueta y contenido */
-        align-items: center;
+        justify-content: space-between;
+        align-items: flex-start;
         min-height: 45px;
+        flex-wrap: wrap;
     }
 
     .cotizaciones-table td:last-child {
         border-bottom: none;
     }
 
-    /* 5. Crear las Etiquetas (Labels) usando CSS content */
-    /* Esto reemplaza los TH que ocultamos. IMPORTANTE: El orden debe coincidir con tu HTML */
+    /* 5. Crear las Etiquetas (Labels) para todas las columnas */
     .cotizaciones-table td::before {
-        content: attr(data-label); /* Fallback */
+        content: attr(data-label);
         font-weight: 700;
         text-transform: uppercase;
         font-size: 0.75rem;
         color: var(--primary-color, #1e3a8a);
         text-align: left;
         margin-right: 15px;
-        /* Si no usas data-label en HTML, usamos nth-of-type abajo */
+        min-width: 120px;
+        flex-shrink: 0;
     }
 
-    /* Mapeo manual de columnas (Ya que el HTML se genera dinámicamente) */
-    .cotizaciones-table td:nth-of-type(1)::before { content: "Número"; }
-    .cotizaciones-table td:nth-of-type(2)::before { content: "Cliente"; }
-    .cotizaciones-table td:nth-of-type(3)::before { content: "Fecha"; }
-    .cotizaciones-table td:nth-of-type(4)::before { content: "Total"; }
-    .cotizaciones-table td:nth-of-type(5)::before { content: "Descripción"; }
-    .cotizaciones-table td:nth-of-type(6)::before { content: "Generado por"; }
-    
+    /* Mapeo manual de columnas para cuando no hay data-label */
+    .cotizaciones-table td:nth-of-type(1):not([data-label])::before { content: "Número"; }
+    .cotizaciones-table td:nth-of-type(2):not([data-label])::before { content: "Cliente"; }
+    .cotizaciones-table td:nth-of-type(3):not([data-label])::before { content: "Fecha"; }
+    .cotizaciones-table td:nth-of-type(4):not([data-label])::before { content: "Total"; }
+    .cotizaciones-table td:nth-of-type(5):not([data-label])::before { content: "Descripción"; }
+    .cotizaciones-table td:nth-of-type(6):not([data-label])::before { content: "Generado por"; }
+    .cotizaciones-table td:nth-of-type(7):not([data-label])::before { content: "Ticket Asociado"; }
+    .cotizaciones-table td:nth-of-type(8):not([data-label])::before { content: "Estatus"; }
+    .cotizaciones-table td:nth-of-type(9):not([data-label])::before { content: "Acciones"; }
+
     /* 6. Ajustes específicos para celdas complejas */
 
     /* Celda de Descripción: Permitir texto largo */
@@ -890,44 +861,71 @@ body {
     .cotizaciones-table td:nth-of-type(5)::before {
         display: block;
         margin-bottom: 5px;
+        width: 100%;
+    }
+
+    /* Celda de Ticket Asociado */
+    .cotizaciones-table td:nth-of-type(7) {
+        display: block;
+    }
+    .cotizaciones-table td:nth-of-type(7)::before {
+        display: block;
+        margin-bottom: 8px;
+        width: 100%;
     }
 
     /* Celda de Estatus (Contiene selects y textareas) */
-    .cotizaciones-table td:nth-of-type(7) {
+    .cotizaciones-table td:nth-of-type(8) {
         display: block;
         text-align: left;
-        background-color: rgba(0,0,0,0.02);
+        background-color: rgba(var(--primary-color), 0.05);
+        border-left: 4px solid var(--primary-color);
     }
-    .cotizaciones-table td:nth-of-type(7)::before {
+    .cotizaciones-table td:nth-of-type(8)::before {
         content: "Gestión de Estatus";
         display: block;
         margin-bottom: 10px;
         border-bottom: 1px dashed var(--accent-color);
         padding-bottom: 5px;
+        width: 100%;
+        font-size: 0.9rem;
     }
     
     /* Asegurar que el contenedor de estatus se vea bien */
     .estatus-container {
         width: 100%;
         box-sizing: border-box;
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--accent-color) !important;
     }
+    
     .estatus-select, .pago-estatus-select, .motivo-rechazo-input {
         width: 100% !important;
         margin-top: 5px;
         padding: 10px;
         height: auto;
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--accent-color) !important;
+        border-radius: 6px;
+    }
+
+    .estatus-select:focus, .pago-estatus-select:focus, .motivo-rechazo-input:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 2px var(--primary-color) !important;
     }
 
     /* Celda de Acciones (Botones) */
-    .cotizaciones-table td:nth-of-type(8) {
+    .cotizaciones-table td:nth-of-type(9) {
         display: flex;
         flex-direction: row;
         justify-content: center;
         gap: 10px;
         padding: 15px;
         background-color: var(--card-bg);
+        border-top: 2px solid var(--accent-color);
     }
-    .cotizaciones-table td:nth-of-type(8)::before {
+    .cotizaciones-table td:nth-of-type(9)::before {
         display: none; /* No necesitamos etiqueta para los botones */
     }
 
@@ -939,21 +937,90 @@ body {
     }
 
     .acciones button, .acciones a {
-        width: 100%;
+        width: 100% !important;
         justify-content: center;
-        padding: 10px 0;
+        padding: 10px 0 !important;
+        margin: 0 !important;
+        background-color: var(--primary-color) !important;
+        border: 1px solid var(--secondary-color) !important;
+        color: white !important;
     }
 
-    /* Ajuste de textos */
+    .acciones button:hover, .acciones a:hover {
+        background-color: var(--secondary-color) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Ajuste de textos y elementos específicos */
     .cotizaciones-table td strong {
         font-size: 1.1rem;
+        color: var(--primary-color);
+    }
+
+    /* Ticket asociado styles en móvil */
+    .ticket-asociado {
+        width: 100%;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    .btn-ticket {
+        width: 100%;
+        margin-top: 5px;
+        background-color: var(--primary-color) !important;
+        color: white !important;
+    }
+
+    .btn-ticket:hover {
+        background-color: var(--secondary-color) !important;
+    }
+}
+
+/* Ajuste para pantallas medianas (tabletas) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .cotizaciones-table th:nth-child(5), /* Descripción */
+    .cotizaciones-table td:nth-child(5) {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
 
 /* Ajuste para pantallas MUY pequeñas (menos de 400px) */
 @media (max-width: 400px) {
     .acciones {
-        grid-template-columns: 1fr 1fr; /* 2 botones arriba, 2 abajo */
+        grid-template-columns: 1fr 1fr !important; /* 2 botones arriba, 2 abajo */
+    }
+    
+    .cotizaciones-table td {
+        padding: 10px 12px;
+    }
+    
+    .cotizaciones-table td::before {
+        min-width: 100px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Mejoras visuales para modo oscuro en responsive */
+@media (max-width: 768px) {
+    .cotizaciones-table tr {
+        background-color: var(--card-bg);
+    }
+    
+    .cotizaciones-table td {
+        border-bottom-color: var(--accent-color);
+        color: var(--text-color);
+    }
+    
+    .estatus-container {
+        background-color: var(--card-bg) !important;
+    }
+    
+    .estatus-select, .pago-estatus-select, .motivo-rechazo-input {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
     }
 }
 
@@ -1043,6 +1110,7 @@ body {
         }
     }
 }
+
 /* ===========================================================
    CORRECCIÓN MODAL VISTA PREVIA PDF (VERSIÓN FINAL FULL SCREEN) 📱
    =========================================================== */
