@@ -14,15 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="coti.css">
-    
-    <style>
-        /* Estilos específicos para elementos dinámicos/JS que no están en el CSS principal */
-        .loading-spinner { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: var(--card-bg, #fefefe); color: var(--text-color, #333); margin: 5% auto; padding: 20px; border-radius: 8px; width: 80%; max-width: 900px; }
-        .modal.show { display: block; }
-        .pdf-container { width: 100%; height: 600px; border: 1px solid var(--accent-color, #ddd); }
-    </style>
 </head>
 <body>
     <div id="app">
@@ -68,6 +59,7 @@
                                     <th>Total</th>
                                     <th>Descripción</th>
                                     <th>Generado por:</th>
+                                    <th>Ticket Asociado</th>
                                     <th>Estatus</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -539,7 +531,7 @@
             const paginatedItems = filteredCotizaciones.slice(startIndex, startIndex + rowsPerPage);
 
             if (paginatedItems.length === 0) {
-                cotizacionesTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">${buscarInput.value ? 'No se encontraron cotizaciones.' : 'Cargando cotizaciones...'}</td></tr>`;
+                cotizacionesTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px;">${buscarInput.value ? 'No se encontraron cotizaciones.' : 'Cargando cotizaciones...'}</td></tr>`;
                 setupPagination();
                 return;
             }
@@ -556,6 +548,20 @@
                 if (estatusActual === 'vendida') textoCompleto += ` - ${coti.pagoEstatus === 'pagada' ? 'Pagada' : 'Pendiente'}`;
                 else if (estatusActual === 'rechazada' && coti.motivoRechazo) textoCompleto += `: ${coti.motivoRechazo}`;
                 
+                // Determinar si tiene ticket asociado
+                const tieneTicketAsociado = coti.ticketAsociado && coti.ticketAsociado.trim() !== '';
+                const ticketDisplay = tieneTicketAsociado ? 
+                    `<div class="ticket-asociado asociado">
+                        <strong>${coti.ticketAsociado}</strong>
+                        <br>
+                        <a href="../verticket/verTicket.html?id=${coti.ticketAsociado}" class="btn-ticket">
+                            Ver Ticket
+                        </a>
+                    </div>` :
+                    `<div class="ticket-asociado no-asociado">
+                        N/A
+                    </div>`;
+                
                 const row = document.createElement('tr');
                 row.style.borderLeft = `5px solid ${info.color}`;
                 row.innerHTML = `
@@ -565,6 +571,7 @@
                     <td><strong>${formatearMoneda(coti.totalFinal)}</strong></td>
                     <td>${coti.cotizacionDescripcion || 'N/A'}</td>
                     <td><small>${coti.generadoPor?.nombre || 'N/A'}</small></td>
+                    <td>${ticketDisplay}</td>
                     <td>
                         <div class="estatus-container" style="background-color: ${info.color}1A; border: 1px solid ${info.color}; padding: 8px; border-radius: 8px;">
                             <span style="color: ${info.color}; font-weight: bold; font-size: 0.8rem;">${textoCompleto}</span>
