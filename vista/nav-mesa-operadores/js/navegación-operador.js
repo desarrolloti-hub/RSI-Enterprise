@@ -1,4 +1,3 @@
-// navegacion-admin.js - Función autónoma COMPLETA con iconos, gráficas y personalización ACTUALIZADA
 (function() {
     'use strict';
     
@@ -328,38 +327,6 @@
                 .menu-nav-btn-finish:hover {
                     background: rgba(255, 193, 7, 0.4);
                 }
-
-                /* ESTILOS PARA EL FOOTER */
-                .menu-nav-footer {
-                    padding: 20px;
-                    text-align: center;
-                    border-top: 1px solid rgba(255,255,255,0.1);
-                    background: rgba(255,255,255,0.02);
-                    margin-top: auto;
-                    max-width: 100%;
-                    box-sizing: border-box;
-                }
-                
-                .menu-nav-footer-content {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 12px;
-                    flex-wrap: wrap;
-                }
-                
-                .menu-nav-footer-logo {
-                    width: 24px;
-                    height: 24px;
-                    object-fit: contain;
-                }
-                
-                .menu-nav-footer-text {
-                    font-size: 0.8rem;
-                    color: #a0a0c0;
-                    margin: 0;
-                    line-height: 1.4;
-                }
                 
                 /* RESPONSIVE PARA ESCRITORIO */
                 @media (min-width: 769px) {
@@ -403,10 +370,6 @@
                     }
                     
                     .menu-nav-buttons-container {
-                        padding: 15px;
-                    }
-                    
-                    .menu-nav-footer {
                         padding: 15px;
                     }
                 }
@@ -478,23 +441,6 @@
                     .menu-nav-chart-title {
                         font-size: 0.8rem;
                     }
-                    
-                    .menu-nav-footer {
-                        padding: 12px 10px;
-                    }
-                    
-                    .menu-nav-footer-content {
-                        gap: 8px;
-                    }
-                    
-                    .menu-nav-footer-logo {
-                        width: 20px;
-                        height: 20px;
-                    }
-                    
-                    .menu-nav-footer-text {
-                        font-size: 0.75rem;
-                    }
                 }
                 
                 /* RESPONSIVE EXTREMO PARA PANTALLAS MUY PEQUEÑAS */
@@ -526,16 +472,6 @@
                         width: 70px;
                         font-size: 0.75rem;
                     }
-                    
-                    .menu-nav-footer-content {
-                        flex-direction: column;
-                        gap: 6px;
-                    }
-                    
-                    .menu-nav-footer-text {
-                        font-size: 0.7rem;
-                        text-align: center;
-                    }
                 }
                 
                 /* Prevenir scroll horizontal en todo el documento */
@@ -551,7 +487,7 @@
             document.head.appendChild(style);
         }
         
-        // Crear HTML del menú CON ICONOS Y GRÁFICAS Y FOOTER
+        // Crear HTML del menú CON ICONOS Y GRÁFICAS
         function createMenuHTML() {
             // Overlay
             const overlay = document.createElement('div');
@@ -628,6 +564,8 @@
                 </div>
                 
                 <div class="menu-nav-buttons-container">
+                    
+                  
                     <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                         <i class="fas fa-ticket-alt"></i>  Ver Mis Tickets
                     </a>
@@ -656,58 +594,11 @@
                         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </button>
                 </div>
-
-                <!-- FOOTER DEL MENÚ -->
-                <div class="menu-nav-footer">
-                    <div class="menu-nav-footer-content">
-                        <img src="/vista/css/img/logoApp.png" alt="RSI Enterprise Mexico" class="menu-nav-footer-logo">
-                        <p class="menu-nav-footer-text">Mesa de ayuda desarrollada por RSI Enterprise Mexico.</p>
-                    </div>
-                </div>
             `;
             
             document.body.appendChild(overlay);
             document.body.appendChild(floatingBtn);
             document.body.appendChild(sidebar);
-        }
-
-        // Crear footer para el contenido principal de la página
-        function createMainContentFooter() {
-            // Verificar si ya existe un footer para evitar duplicados
-            if (document.getElementById('mainContentFooter')) {
-                return;
-            }
-
-            const mainFooter = document.createElement('footer');
-            mainFooter.id = 'mainContentFooter';
-            mainFooter.style.cssText = `
-                width: 100%;
-                padding: 15px 20px;
-                text-align: center;
-                background: rgba(108, 67, 224, 0.05);
-                border-top: 1px solid rgba(108, 67, 224, 0.1);
-                margin-top: auto;
-                box-sizing: border-box;
-            `;
-
-            mainFooter.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                    <img src="/vista/css/img/logoApp.png" alt="RSI Enterprise Mexico" 
-                         style="width: 20px; height: 20px; object-fit: contain;">
-                    <p style="margin: 0; font-size: 0.8rem; color: #666; line-height: 1.4;">
-                        Mesa de ayuda desarrollada por RSI Enterprise Mexico.
-                    </p>
-                </div>
-            `;
-
-            // Insertar el footer al final del body
-            document.body.appendChild(mainFooter);
-
-            // Asegurarse de que el footer esté siempre al final
-            const mainContent = document.querySelector('main') || document.querySelector('.container') || document.body;
-            mainContent.style.minHeight = 'calc(100vh - 80px)';
-            mainContent.style.display = 'flex';
-            mainContent.style.flexDirection = 'column';
         }
         
         // Cargar datos del usuario
@@ -1438,16 +1329,6 @@ function applyCustomMenuStyles(preferences) {
             background: rgba(255, 193, 7, 0.4) !important;
             border-color: rgba(255, 193, 7, 0.8) !important;
         }
-
-        /* ESTILOS PERSONALIZADOS PARA EL FOOTER */
-        .menu-nav-footer {
-            border-top: 2px solid ${selectedTheme.accent}20 !important;
-            background: ${selectedBackground.cardBg}10 !important;
-        }
-        
-        .menu-nav-footer-text {
-            color: ${selectedTheme.accent} !important;
-        }
         
         /* Ajustes para modo oscuro */
         ${selectedBackground.id === 'dark' ? `
@@ -1494,7 +1375,6 @@ function applyCustomMenuStyles(preferences) {
             loadFontAwesome(); // Cargar FontAwesome primero
             addMenuStyles();
             createMenuHTML();
-            createMainContentFooter(); // Crear footer del contenido principal
             setupMenuEventListeners();
             
             // Esperar a que el usuario esté autenticado
