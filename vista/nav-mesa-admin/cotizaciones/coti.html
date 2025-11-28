@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSI Enterprise Quotation System - Listado</title>
     
-       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,6 +14,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="coti.css">
+    
+
 </head>
 <body>
     <div id="app">
@@ -21,7 +23,6 @@
             <div class="container">
                 <h1>📋 Cotizaciones - RSI Enterprise</h1>
                 <div class="header-actions">
-                    <!-- MODIFICADO: Eliminado target="_blank" -->
                     <a href="cotizacion_formulario.html" class="btn btn-primary">
                         <span>➕</span> Nueva Cotización
                     </a>
@@ -33,8 +34,6 @@
                     <button id="resumenCuentasBtn" class="btn btn-info" style="display: none;">
                         <span>📊</span> Resumen de Cuentas
                     </button>
-
-                   
                 </div>
             </div>
         </header>
@@ -65,7 +64,8 @@
                                 </tr>
                             </thead>
                             <tbody id="cotizacionesTableBody">
-                                </tbody>
+                                <!-- Las cotizaciones se cargarán aquí -->
+                            </tbody>
                         </table>
                     </div>
                 </div> 
@@ -142,7 +142,6 @@
 
         // === CONFIGURACIÓN Y ESTADO ===
         
-        // ** RUTA DE IMAGEN SOLICITADA **
         const LOGO_URL = '../../css/img/Logo-RSI-OFICIAL.png';
         let logoBase64Cache = null; 
 
@@ -192,7 +191,6 @@
 
         // === UTILIDADES ===
         
-        // ** FUNCIÓN CLAVE: Convierte la imagen de la URL a Base64 (para jsPDF) **
         async function getBase64ImageFromURL(url) {
             if (logoBase64Cache) return logoBase64Cache;
             
@@ -340,7 +338,7 @@
             });
         }
         
-        // PDF Generator (Implementa carga de imagen por ruta)
+        // PDF Generator
         async function generarPDF(data) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
@@ -358,14 +356,12 @@
                 'AI': '🚨 ALARMA INTRUSIÓN', 'ALARMA': '🚨 ALARMA INTRUSIÓN'
             };
             
-            // ** SOLUCIÓN DEL LOGO: Carga asíncrona de la ruta y conversión a Base64 **
             try {
                 const logoData = await getBase64ImageFromURL(LOGO_URL);
                 pdf.addImage(logoData, 'PNG', pageWidth - margin - 40, margin, 40, 40);
             } catch (e) { 
                 console.warn('No se pudo cargar el logo desde la ruta:', e); 
             }
-            // -------------------------------------------------------------------------
             
             pdf.setFontSize(10).setTextColor(navy).text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
             pdf.setFontSize(8).setTextColor(gray).text(data.empresaDireccion || "", margin, y + 10).text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, y + 15);
@@ -436,28 +432,20 @@
             return pdf.output('blob');
         }
 
-        // === FUNCIÓN CORREGIDA PARA VISTA PREVIA DEL PDF ===
         async function verPDF(id) {
             try {
                 mostrarLoading(true);
                 
-                // Buscar la cotización
                 const cotizacion = cotizaciones.find(c => c.id === id);
                 if (!cotizacion) {
                     mostrarAlerta('❌ No se encontró la cotización', 'error');
                     return;
                 }
 
-                // Generar el PDF
                 const pdfBlob = await generarPDF(cotizacion);
-                
-                // Crear URL para el PDF
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 
-                // Mostrar el PDF en el modal
                 pdfViewer.innerHTML = `<iframe src="${pdfUrl}" width="100%" height="100%" frameborder="0"></iframe>`;
-                
-                // Mostrar el modal
                 modalPDF.classList.add('show');
                 
             } catch (error) {
@@ -467,8 +455,6 @@
                 mostrarLoading(false);
             }
         }
-
-        // --- Lógica de la tabla (Paginación, Filtros, Renderizado) ---
 
         function filtrarCotizaciones() {
             const searchTerm = buscarInput.value.toLowerCase().trim();
@@ -548,7 +534,6 @@
                 if (estatusActual === 'vendida') textoCompleto += ` - ${coti.pagoEstatus === 'pagada' ? 'Pagada' : 'Pendiente'}`;
                 else if (estatusActual === 'rechazada' && coti.motivoRechazo) textoCompleto += `: ${coti.motivoRechazo}`;
                 
-                // Determinar si tiene ticket asociado
                 const tieneTicketAsociado = coti.ticketAsociado && coti.ticketAsociado.trim() !== '';
                 const ticketDisplay = tieneTicketAsociado ? 
                     `<div class="ticket-asociado asociado">
@@ -562,6 +547,12 @@
                         N/A
                     </div>`;
                 
+                // **IMPLEMENTACIÓN DEL TOOLTIP QUE SÍ FUNCIONA**
+                const descripcionCompleta = coti.cotizacionDescripcion || 'N/A';
+                const descripcionCorta = descripcionCompleta.length > 30 ? 
+                    descripcionCompleta.substring(0, 30) + '...' : 
+                    descripcionCompleta;
+                
                 const row = document.createElement('tr');
                 row.style.borderLeft = `5px solid ${info.color}`;
                 row.innerHTML = `
@@ -569,7 +560,14 @@
                     <td>${coti.clienteNombre}</td>
                     <td>${new Date(coti.cotizacionFecha).toLocaleDateString('es-MX')}</td>
                     <td><strong>${formatearMoneda(coti.totalFinal)}</strong></td>
-                    <td>${coti.cotizacionDescripcion || 'N/A'}</td>
+                    <td>
+                        <div class="descripcion-container">
+                            <span class="descripcion-texto">${descripcionCorta}</span>
+                            <div class="descripcion-tooltip">
+                                ${descripcionCompleta}
+                            </div>
+                        </div>
+                    </td>
                     <td><small>${coti.generadoPor?.nombre || 'N/A'}</small></td>
                     <td>${ticketDisplay}</td>
                     <td>
@@ -594,7 +592,6 @@
                     <td class="acciones">
                         <button class="btn btn-small btn-primary ver-pdf" data-id="${coti.id}"><span>👁️</span></button>
                         <button class="btn btn-small btn-success descargar-pdf" data-id="${coti.id}"><span>⬇️</span></button>
-                        <!-- MODIFICADO: Eliminado target="_blank" -->
                         <a href="cotizacion_formulario.html?id=${coti.id}" class="btn btn-small btn-secondary">
                             <span>✏️</span>
                         </a>
@@ -604,7 +601,7 @@
                 cotizacionesTableBody.appendChild(row);
             });
             
-            // Event listeners para los botones
+            // Event listeners
             cotizacionesTableBody.querySelectorAll('.ver-pdf').forEach(btn => 
                 btn.addEventListener('click', (e) => verPDF(e.currentTarget.dataset.id))
             );
@@ -696,7 +693,6 @@
                 await updateDoc(doc(db, 'cotizacionPdf', id), dataToUpdate);
                 mostrarAlerta('✅ Estatus actualizado correctamente', 'success');
                 
-                // Actualizar localmente
                 const index = cotizaciones.findIndex(c => c.id === id);
                 if (index !== -1) {
                     cotizaciones[index] = { ...cotizaciones[index], ...dataToUpdate };
@@ -762,6 +758,7 @@
         cerrarPdfBtn.addEventListener('click', () => modalPDF.classList.remove('show'));
         confirmCloseBtn.addEventListener('click', () => confirmModal.classList.remove('show'));
         confirmNo.addEventListener('click', () => confirmModal.classList.remove('show'));
+
     </script>
 
     <script src="../js/navegacion-admin.js"></script>
