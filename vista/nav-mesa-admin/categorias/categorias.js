@@ -67,7 +67,7 @@
             document.querySelectorAll(".btn-editar").forEach((btn) => {
                 btn.addEventListener("click", () => {
                     const categoriaId = btn.dataset.id;
-                    window.location.href = `editarCategoria.html?id=${categoriaId}`;
+                    window.location.href = `../editar-categoria/editar-categoria.html?id=${categoriaId}`;
                 });
             });
 
