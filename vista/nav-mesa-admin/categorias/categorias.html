@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Categorías</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="./categorias.css">
+</head>
+<body>
+
+    <br><br><br>
+
+    <div class="container container-custom mt-5">
+        <h2 class="text-center mb-4 titulo-pagina">Gestión de Categorías</h2>
+        
+        <div class="d-flex justify-content-end mb-3">
+            <a href="../nueva-categoria/nueva-categoria.html" class="btn btn-primary btn-accion">
+                <i class="fas fa-plus"></i> Nueva Categoría
+            </a>
+        </div>
+
+        <div class="table-responsive card p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Imagen</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="categorias-lista">
+                    <tr>
+                        <td colspan="4" class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="floating-button-container">
+        <a href="../categorias-papelera/categorias-papelera.html" class="boton-flotante" title="Ver Papelera">
+            <i class="fas fa-trash-restore"></i> Papelera
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="../js/firebase-init.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    
+    <script src="./categorias.js"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@
             width: 100% !important;
             
             /* ESTILOS BASE - COLORES SE APLICARÁN VIA CSS PERSONALIZADO */
-            padding: 12px 20px !important;
+            padding: 8px 15px !important;
             text-align: center !important;
             background: var(--primary-color, rgba(108, 67, 224, 0.95)) !important;
             border-top: 1px solid var(--secondary-color, rgba(108, 67, 224, 0.3)) !important;
@@ -37,32 +37,34 @@
             
             /* TRANSICIÓN PARA CAMBIOS DE COLOR */
             transition: background-color 0.3s ease, border-color 0.3s ease !important;
+            
+            /* ALTURA MÍNIMA REDUCIDA */
+            min-height: auto !important;
         `;
 
-        mainFooter.innerHTML = `
+        mainFooter.innerHTML =/*html*/ `
             <div style="
                 display: flex !important; 
                 align-items: center !important; 
                 justify-content: center !important; 
-                gap: 12px !important; 
+                gap: 8px !important; 
                 flex-wrap: wrap !important;
                 margin: 0 auto !important;
                 max-width: 1200px !important;
             ">
                 <img src="/vista/css/img/logoApp.png" alt="RSI Enterprise Mexico" 
                      style="
-                         width: 20px !important; 
-                         height: 20px !important; 
+                         width: 16px !important; 
+                         height: 16px !important; 
                          object-fit: contain !important; 
                          opacity: 0.9 !important; 
                          display: block !important;
-                        
                      ">
                 <p style="
                     margin: 0 !important; 
-                    font-size: 0.8rem !important; 
+                    font-size: 0.7rem !important; 
                     color: white !important; 
-                    line-height: 1.4 !important;
+                    line-height: 1.2 !important;
                     font-weight: 500 !important;
                 ">
                     Mesa de ayuda desarrollada por RSI Enterprise Mexico
@@ -74,8 +76,9 @@
         document.body.appendChild(mainFooter);
         
         // Agregar padding al body para que el contenido no quede detrás del footer
+        // REDUCIDO significativamente para móviles
         const originalBodyPaddingBottom = document.body.style.paddingBottom;
-        document.body.style.paddingBottom = '70px';
+        document.body.style.paddingBottom = '45px'; // Reducido de 70px a 45px
         
         console.log('✅ Footer fijo creado en la parte inferior de la pantalla');
         
@@ -119,6 +122,91 @@
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             }
             
+            /* RESPONSIVE - TAMAÑOS MÁS PEQUEÑOS PARA MÓVILES */
+            
+            /* Tablets y móviles grandes */
+            @media (max-width: 1024px) {
+                #mainContentFooter {
+                    padding: 7px 12px !important;
+                }
+                
+                .body-padding-adjust {
+                    padding-bottom: 40px !important;
+                }
+            }
+            
+            /* Tablets pequeñas */
+            @media (max-width: 768px) {
+                #mainContentFooter {
+                    padding: 6px 10px !important;
+                }
+                
+                #mainContentFooter div {
+                    gap: 6px !important;
+                }
+                
+                #mainContentFooter img {
+                    width: 14px !important;
+                    height: 14px !important;
+                }
+                
+                #mainContentFooter p {
+                    font-size: 0.65rem !important;
+                    line-height: 1.1 !important;
+                }
+                
+                .body-padding-adjust {
+                    padding-bottom: 35px !important;
+                }
+            }
+            
+            /* Móviles */
+            @media (max-width: 480px) {
+                #mainContentFooter {
+                    padding: 4px 8px !important;
+                    min-height: 30px !important;
+                }
+                
+                #mainContentFooter div {
+                    gap: 4px !important;
+                }
+                
+                #mainContentFooter img {
+                    width: 12px !important;
+                    height: 12px !important;
+                }
+                
+                #mainContentFooter p {
+                    font-size: 0.6rem !important;
+                    line-height: 1 !important;
+                }
+                
+                .body-padding-adjust {
+                    padding-bottom: 30px !important;
+                }
+            }
+            
+            /* Móviles muy pequeños */
+            @media (max-width: 360px) {
+                #mainContentFooter {
+                    padding: 3px 6px !important;
+                    min-height: 25px !important;
+                }
+                
+                #mainContentFooter p {
+                    font-size: 0.55rem !important;
+                }
+                
+                #mainContentFooter img {
+                    width: 10px !important;
+                    height: 10px !important;
+                }
+                
+                .body-padding-adjust {
+                    padding-bottom: 25px !important;
+                }
+            }
+            
             /* Ajustes específicos para modo oscuro */
             body[style*="background-color: #1a1a1a"] #mainContentFooter,
             body[style*="background-color: #2a2a2a"] #mainContentFooter {
@@ -130,28 +218,10 @@
             body[style*="background-color: #909090"] #mainContentFooter {
                 box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2) !important;
             }
-            
-            /* Responsive */
-            @media (max-width: 768px) {
-                #mainContentFooter {
-                    padding: 10px 15px !important;
-                }
-                
-                #mainContentFooter p {
-                    font-size: 0.75rem !important;
-                }
-            }
-            
-            @media (max-width: 480px) {
-                #mainContentFooter {
-                    padding: 8px 10px !important;
-                }
-                
-                #mainContentFooter div {
-                    gap: 8px !important;
-                }
-            }
         `;
+        
+        // Aplicar clase al body para el padding ajustado
+        document.body.classList.add('body-padding-adjust');
     }
     
     // Función para actualizar estilos del footer cuando cambien las preferencias

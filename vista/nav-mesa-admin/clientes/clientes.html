@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Clientes</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="./clientes.css">
+</head>
+<body>
+
+    <br><br><br>
+
+    <div class="container container-custom mt-5">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+            <h2 class="titulo-pagina mb-0"><i class="fas fa-users"></i> Lista de Clientes</h2>
+            
+            <div class="d-flex gap-2 w-100 w-md-auto search-container">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" id="search-input" class="form-control border-start-0" placeholder="Buscar por nombre, RFC...">
+                </div>
+                <button class="btn btn-primary text-nowrap" id="btn-add-cliente">
+                    <i class="fas fa-plus"></i> Nuevo
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive card p-0 mb-3">
+            <table class="table table-hover mb-0" id="clientes-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-hashtag"></i> ID</th>
+                        <th><i class="fas fa-building"></i> Razón Social</th>
+                        <th><i class="fas fa-id-card"></i> RFC</th>
+                        <th><i class="fas fa-phone"></i> Contacto</th>
+                        <th><i class="fas fa-envelope"></i> Correo</th>
+                        <th><i class="fas fa-info-circle"></i> Estatus</th>
+                        <th><i class="fas fa-cog"></i> Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="clientes-body">
+                    <tr><td colspan="7" class="text-center p-4">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pagination-container">
+            <div class="pagination-info mb-2 mb-md-0" id="pagination-info">Mostrando 0 de 0</div>
+            <div class="btn-group">
+                <button id="first-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-double-left"></i></button>
+                <button id="prev-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-left"></i></button>
+                <div id="page-numbers" class="d-flex"></div>
+                <button id="next-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-right"></i></button>
+                <button id="last-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-double-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cliente-modal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content card"> <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title" id="form-title"><i class="fas fa-user-edit"></i> Gestión de Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cliente-form">
+                        <input type="hidden" id="cliente-id">
+                        
+                        <h6 class="text-primary mb-3 border-bottom pb-2">Información General</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Número de Cliente</label>
+                                <input type="text" class="form-control" id="numeroCliente" placeholder="Opcional">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Razón Social / Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="razonSocialNombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">RFC</label>
+                                <input type="text" class="form-control" id="RFC">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre Comercial</label>
+                                <input type="text" class="form-control" id="nombreComercial">
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary mb-3 border-bottom pb-2 mt-4">Contacto</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="Telefono">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Móvil</label>
+                                <input type="tel" class="form-control" id="Movil">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="Correo">
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary mb-3 border-bottom pb-2 mt-4">Dirección Fiscal</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Calle</label>
+                                <input type="text" class="form-control" id="Calle">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">No. Exterior</label>
+                                <input type="text" class="form-control" id="noExterior">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">No. Interior</label>
+                                <input type="text" class="form-control" id="noInterior">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">C.P.</label>
+                                <input type="text" class="form-control" id="codigoPostal">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Colonia</label>
+                                <input type="text" class="form-control" id="Colonia">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Municipio/Alcaldía</label>
+                                <input type="text" class="form-control" id="Municipio">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Estado</label>
+                                <input type="text" class="form-control" id="Estado">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">País</label>
+                                <input type="text" class="form-control" id="Pais" value="MEX">
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary mb-3 border-bottom pb-2 mt-4">Datos Comerciales</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Estatus</label>
+                                <select class="form-select" id="Estatus">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo Persona</label>
+                                <select class="form-select" id="tipoPersona">
+                                    <option value="Física">Física</option>
+                                    <option value="Moral">Moral</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Régimen Fiscal</label>
+                                <input type="text" class="form-control" id="regimenFiscal">
+                            </div>
+                            
+                            <div class="col-12 mt-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="vendeACredito">
+                                    <label class="form-check-label" for="vendeACredito">Vende a Crédito</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="permiteFactoraje">
+                                    <label class="form-check-label" for="permiteFactoraje">Factoraje Financiero</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="esTercero">
+                                    <label class="form-check-label" for="esTercero">Es Tercero</label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-btn">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="submit-btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="../js/firebase-init.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    
+    <script src="./clientes.js"></script>
+</body>
+</html>

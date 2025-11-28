@@ -1,0 +1,92 @@
+/* admin-opiniones.css */
+
+.titulo-pagina {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Grid layout para las opiniones */
+.opiniones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+/* Tarjetas de opinión */
+.opinion-card {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color);
+    border: 1px solid rgba(128,128,128,0.2);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.opinion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    border-color: var(--primary-color);
+}
+
+.card-title {
+    color: var(--primary-color) !important; /* Forzar el color del tema */
+}
+
+.opinion-texto {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.estrellas {
+    letter-spacing: 2px;
+}
+
+.opinion-footer {
+    border-top-color: rgba(128,128,128,0.2) !important;
+}
+
+/* Botón de eliminar flotante dentro de la card */
+.btn-eliminar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.7;
+}
+
+.btn-eliminar:hover {
+    background-color: #dc3545;
+    color: white;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Tarjeta de resumen superior */
+.resumen-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--primary-color);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.resumen-card h4 {
+    color: var(--text-color);
+}
+
+/* Ajustes para modo oscuro (si el tema lo activa) */
+/* El script personalizacion-colores.js maneja la mayoría, 
+   pero aseguramos que el texto 'muted' sea legible */
+[data-theme="dark"] .text-muted {
+    color: #a0a0a0 !important;
+}
