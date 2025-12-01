@@ -1,24 +1,19 @@
 /* ==============================================
-   editar-ticket.css - Estilos para Finalizar Ticket
-   (CORREGIDO: Estilo del botón CANCELAR mejorado)
-   ==============================================
-   Utiliza variables CSS inyectadas por personalizacion-colores.js:
-   --primary-color, --text-color, --card-bg, --card-shadow, --accent-color
-   ============================================== */
+    finalizar-ticket.css: Versión Final y Optimizada
+    ============================================== */
 
 /* 1. Base y Resets */
 body {
-    font-family: 'Inter', sans-serif; /* Asumiendo una fuente moderna */
+    font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
-    /* Las variables se aplican aquí desde personalizacion-colores.js */
     background-color: var(--background-color, #f5f5f5);
     color: var(--text-color, #333);
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Alinear arriba en lugar de centrar verticalmente */
+    align-items: flex-start;
     padding: 20px;
 }
 
@@ -29,10 +24,10 @@ body {
 /* 2. Estructura principal */
 .container {
     width: 100%;
-    max-width: 900px; /* Ancho máximo para el contenido principal */
-    background-color: transparent; /* El fondo lo maneja el body/tarjeta */
+    max-width: 900px;
+    background-color: transparent;
     padding: 0;
-    margin-top: 50px; /* Espacio para el botón flotante del menú */
+    margin-top: 50px;
 }
 
 /* 3. Encabezado y Botón de Regreso */
@@ -42,7 +37,7 @@ body {
     align-items: center;
     margin-bottom: 25px;
     padding: 0 10px;
-    flex-wrap: wrap; /* Para responsividad */
+    flex-wrap: wrap;
 }
 
 .header h1 {
@@ -202,7 +197,6 @@ body {
 }
 
 .confirm-btn {
-    /* Estilo para Guardar/Confirmar (usa color primario) */
     background-color: var(--primary-color, #6C43E0) !important;
     color: white !important;
     box-shadow: 0 4px 10px var(--primary-color, #6C43E0)40;
@@ -214,7 +208,6 @@ body {
 }
 
 .cancel-btn {
-    /* ESTILO CORREGIDO PARA CANCELAR (usa color neutro con borde primario) */
     background-color: var(--card-bg, #ffffff) !important;
     color: var(--text-color, #495057) !important;
     border: 2px solid var(--primary-color, #6C43E0) !important;
@@ -222,8 +215,7 @@ body {
 }
 
 .cancel-btn:hover {
-    /* Hover más sutil para no competir con el botón principal */
-    background-color: var(--primary-color, #6C43E0)10 !important; /* Ligeramente más claro/oscuro */
+    background-color: var(--primary-color, #6C43E0)10 !important;
     color: var(--primary-color, #6C43E0) !important;
     transform: translateY(-1px);
 }
@@ -279,50 +271,11 @@ body {
     opacity: 1;
 }
 
-/* 9. Modal del Visor de Imágenes */
-.modal {
-    display: none; /* Oculto por defecto */
-    position: fixed;
-    z-index: 2000; /* Asegurar que esté por encima de todo */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.85); /* Fondo muy oscuro */
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-}
-
-.close {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    transition: 0.3s;
-}
-
-.close:hover,
-.close:focus {
-    color: #bbb;
-    text-decoration: none;
-    cursor: pointer;
-}
-
 /* 10. Estilos Responsivos */
 @media (max-width: 768px) {
     .container {
         padding: 0 10px;
-        margin-top: 70px; /* Más espacio para el botón flotante en móvil */
+        margin-top: 70px;
     }
     
     .header {
@@ -346,7 +299,7 @@ body {
     }
     
     .form-actions {
-        flex-direction: column-reverse; /* Pone Confirmar/Guardar arriba */
+        flex-direction: column-reverse;
         gap: 10px;
     }
 
@@ -394,3 +347,60 @@ body {
         height: 80px;
     }
 }
+
+
+/* ======= REGLAS PARA CORREGIR SWEETALERT2 DE PAUSA (Final) ======= */
+
+/* 1. Centra el modal completamente en la pantalla y asegura que el contenedor no cause scroll vertical global */
+.swal2-container {
+    align-items: center !important; 
+    justify-content: center !important; 
+    overflow-y: auto !important; 
+}
+
+/* 2. Corrige el desplazamiento del contenido inyectado */
+.swal2-html-container {
+    /* CORRECCIÓN CLAVE para centrar el texto del textarea y el contador: */
+    text-align: center !important; 
+    /* Ajustamos el padding para que el contenido use todo el ancho del modal */
+    padding: 1em 1.5em 1em 1.5em !important; 
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* 3. Estilos específicos para los elementos inyectados en el modal de pausa */
+
+/* Alineación forzada para el texto de la etiqueta (Razón para poner en pausa) */
+/* La etiqueta debe ir a la izquierda, incluso si el contenedor HTML está centrado */
+.swal2-popup .swal2-label {
+    text-align: left !important;
+    width: 100%;
+    display: block;
+}
+
+/* El textarea debe ocupar el 100% del ancho, eliminar barras de scroll y centrar su TEXTO */
+.swal2-textarea {
+    width: 100% !important; 
+    max-width: 100% !important;
+    box-sizing: border-box;
+    overflow: hidden !important; 
+    resize: none !important;
+    height: auto !important; 
+    /* CORRECCIÓN CLAVE: Centrar el texto dentro del textarea */
+    text-align: center !important; 
+}
+
+/* 4. El contador de caracteres debe estar centrado debajo del textarea */
+.swal2-html-container .char-counter {
+    /* CORRECCIÓN CLAVE: Centrar el contador */
+    text-align: center !important; 
+    width: 100%;
+    padding: 0;
+    margin-top: 5px; 
+    white-space: nowrap; 
+    overflow: hidden;
+    box-sizing: border-box; 
+    display: block;
+}
+
+/* ======================================================== */
