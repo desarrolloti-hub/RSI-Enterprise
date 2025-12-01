@@ -236,16 +236,98 @@
             });
         });
 
-        btnExportar.addEventListener("click", () => {
-            // Lógica simple de exportación (placeholder)
-            const rows = [];
-            const headers = ["ID", "Fecha", "Cliente", "Total", "Estado"];
-            rows.push(headers.join(","));
-            
-            // Aquí se iteraría sobre los datos visibles o se haría una consulta completa
-            // ...
-            
-            Swal.fire("Exportar", "Generando reporte CSV...", "success");
+        // --- FUNCIÓN DE EXPORTACIÓN A EXCEL (CSV) ---
+        btnExportar.addEventListener("click", async () => {
+            try {
+                // 1. Feedback visual
+                Swal.fire({
+                    title: 'Generando reporte...',
+                    text: 'Recopilando las últimas ventas',
+                    didOpen: () => Swal.showLoading(),
+                    background: getComputedStyle(document.body).getPropertyValue('--card-bg'),
+                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                });
+
+                // 2. Traer datos reales (Limitamos a 1000 para no saturar el navegador)
+                const snapshot = await db.collection(COLLECTION_NAME)
+                    .orderBy('created_at', 'desc')
+                    .limit(1000) 
+                    .get();
+
+                if (snapshot.empty) {
+                    Swal.fire('Atención', 'No hay datos para exportar', 'info');
+                    return;
+                }
+
+                // 3. Construir el CSV
+                // \uFEFF es el BOM para que Excel reconozca acentos y caracteres especiales (UTF-8)
+                let csvContent = "\uFEFF"; 
+                
+                // Encabezados
+                const headers = ["ID Venta", "Fecha", "Cliente", "Teléfono", "Sucursal", "Productos (Cant)", "Total", "Método Pago", "Estado"];
+                csvContent += headers.join(",") + "\n";
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // Preparar datos limpios (sin comas que rompan el CSV)
+                    const id = (data.order_id || doc.id).replace(/,/g, "");
+                    const fecha = formatDate(data.created_at).replace(/,/g, "");
+                    const cliente = (data.user_email || "N/A").replace(/,/g, "");
+                    const telefono = (data.phone_number || "N/A").replace(/,/g, "");
+                    const sucursal = (data.branch || "N/A").replace(/,/g, "");
+                    const total = data.amount || 0;
+                    const metodo = (data.payment_method || "N/A").replace(/,/g, "");
+                    const estado = (data.payment_status || "N/A").replace(/,/g, "");
+                    
+                    // Resumen de productos: "Cámara (1) | Cable (2)"
+                    const productosResumen = (data.items || []).map(i => 
+                        `${i.name || 'Item'} (${i.quantity})`
+                    ).join(" | ").replace(/,/g, " "); // Reemplazar comas internas por espacios
+
+                    // Construir fila
+                    const row = [
+                        id, 
+                        fecha, 
+                        cliente, 
+                        telefono, 
+                        sucursal, 
+                        `"${productosResumen}"`, // Entre comillas por si acaso
+                        total, 
+                        metodo, 
+                        estado
+                    ];
+                    
+                    csvContent += row.join(",") + "\n";
+                });
+
+                // 4. Crear Blob y Descargar
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                
+                // Crear link invisible
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                const fechaHoy = new Date().toISOString().slice(0,10);
+                link.setAttribute("download", `Reporte_Ventas_RSI_${fechaHoy}.csv`);
+                document.body.appendChild(link);
+                
+                // Clic y limpieza
+                link.click();
+                document.body.removeChild(link);
+                
+                Swal.close();
+                
+                // Notificación final pequeña
+                const Toast = Swal.mixin({
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
+                });
+                Toast.fire({ icon: 'success', title: 'Reporte descargado' });
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'No se pudo generar el reporte', 'error');
+            }
         });
 
         async function eliminarVenta(id) {

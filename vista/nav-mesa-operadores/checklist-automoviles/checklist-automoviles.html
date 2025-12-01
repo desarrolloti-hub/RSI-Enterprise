@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Vehiculos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./checklist-automoviles.css">    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <body>
+    <div class="container">
+        <div class="header">
+
+            <h1><i class="fas fa-history"></i> Historial de checklists</h1>
+            <div class="header-actions">
+                <button class="btn-primary" id="btnAddVehicles" onclick="window.location.href='../multas/multas.html'">
+                    <i class="fas fa-file-alt"></i> Ver mis Multas e Imprevistos
+                </button>
+                
+            </div>
+                
+        </div>
+        <div class="toolbar">
+    <div class="filter-group">
+        <label><i class="fas fa-list-ol"></i> Mostrar:</label>
+        <select id="limitSelect">
+            <option value="5">5 por página</option>
+            <option value="10" selected>10 por página</option>
+            <option value="15">15 por página</option>
+        </select>
+    </div>
+        
+        <div class="filter-group">
+        <label><i class="far fa-calendar-alt"></i> Filtrar Mes:</label>
+        <select id="selectMonth" class="custom-select">
+        <option value="">Mes...</option>
+        <option value="01">Enero</option>
+        <option value="02">Febrero</option>
+        <option value="03">Marzo</option>
+        <option value="04">Abril</option>
+        <option value="05">Mayo</option>
+        <option value="06">Junio</option>
+        <option value="07">Julio</option>
+        <option value="08">Agosto</option>
+        <option value="09">Septiembre</option>
+        <option value="10">Octubre</option>
+        <option value="11">Noviembre</option>
+        <option value="12">Diciembre</option>
+    </select>
+    <select id="selectYear" class="custom-select">
+
+    </select>
+        <button id="btnClearMonth" class="btn-icon" title="Borrar fecha">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+
+<div id="checklistsContainer" class="checklists-grid">
+    </div>
+
+<div id="paginationContainer" style="text-align: center; margin: 30px 0; display: none;">
+    <button id="btnLoadMore" class="btn-secondary">
+        <i class="fas fa-arrow-down"></i> Cargar más registros
+    </button>
+</div>
+
+    
+        
+
+
+<script src="../js/navegación-operador.js"></script>
+<script src="../js/personalizacion-colores.js"></script>
+
+<script src="./checklist-automoviles.js"></script>
+</body>
+</html>

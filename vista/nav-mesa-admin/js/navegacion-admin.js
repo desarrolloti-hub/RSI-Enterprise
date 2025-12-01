@@ -1,4 +1,4 @@
-// sistema-unificado-admin.js - Combina footer fijo y navegación de administrador
+
 (function() {
     'use strict';
     
@@ -897,6 +897,9 @@
                         </a>
                         <a href="../checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
                             <i class="fas fa-car"></i> Chekclist automoviles
+                        </a>
+                        <a href="../multas/multas.html" class="menu-nav-btn">
+                            <i class="fas fa-file-alt"></i> Multas e imprevistos
                         </a>
                     </div>
                 </div>

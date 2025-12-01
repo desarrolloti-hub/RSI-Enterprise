@@ -294,22 +294,38 @@ window.openAddIncidentModal = async (id) => {
             });
         },
         preConfirm: () => {
-            const type = document.getElementById('incType').value;
-            const desc = document.getElementById('incDesc').value.trim();
-            const cost = document.getElementById('incCost').value;
+            // VALIDACIÓN: descripción mínima 10 caracteres
+            if (desc.length < 10) {
+                Swal.showValidationMessage('⚠ La descripción debe tener al menos 10 caracteres.');
+                return false;
+            }
 
-            if (!desc) { Swal.showValidationMessage('⚠ Escribe una descripción'); return false; }
-            if (!cost) { Swal.showValidationMessage('⚠ Ingresa el costo'); return false; }
+            // VALIDACIÓN: costo numérico
+            if (!cost || isNaN(cost)) {
+                Swal.showValidationMessage('⚠ El costo debe ser un número válido.');
+                return false;
+            }
 
-            // Retornamos el objeto con la evidencia
-            return { 
-                type, 
-                desc, 
-                cost, 
-                date: new Date().toISOString(),
-                evidence: evidencePhotoBase64 // Aquí va la foto comprimida (o null)
-            };
-        }
+            // VALIDACIÓN: costo > 0
+            if (parseFloat(cost) <= 0) {
+                Swal.showValidationMessage('⚠ El costo debe ser mayor a 0.');
+                return false;
+            }
+
+            // VALIDACIÓN: evidencia obligatoria
+            if (!file) {
+                Swal.showValidationMessage('⚠ Debes subir una evidencia en imagen (JPG o PNG).');
+                return false;
+            }
+
+            // VALIDACIÓN: formato JPG/PNG
+            if (!file.type.startsWith('image/jpeg') && !file.type.startsWith('image/png')) {
+                Swal.showValidationMessage('⚠ Solo se permiten imágenes JPG o PNG.');
+                return false;
+            }
+
+            return { desc, cost, file };
+                }
     });
 
     if (formValues) {
