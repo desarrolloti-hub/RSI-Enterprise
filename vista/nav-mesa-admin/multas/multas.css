@@ -27,11 +27,7 @@ body {
     margin-bottom: 30px;
 }
 
-.header h1 {
-    color: var(--primary-color);
-    font-size: 2rem; /* Incrementado desde 1.5rem */
-    font-weight: bold; /* Añadido para mayor énfasis */
-}
+.header h1 { color: var(--primary-color); font-size: 1.5rem; }
 
 /* Sección de Búsqueda */
 .search-section {
@@ -70,11 +66,9 @@ body {
     background-color: #95a5a6;
     color: white;
     border: none;
-    padding: 12px 20px; /* Incrementado desde 8px 15px */
+    padding: 8px 15px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem; /* Incrementado para mayor visibilidad */
-    font-weight: bold; /* Añadido para énfasis */
 }
 
 /* Tarjeta de Total */
