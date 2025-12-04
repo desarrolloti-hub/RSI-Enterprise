@@ -1,0 +1,90 @@
+/* admin-entregas.css */
+
+.titulo-pagina {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Tabla Adaptable */
+.table {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+.table thead th {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 15px;
+    font-weight: 600;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-bottom: 1px solid rgba(128,128,128,0.2);
+    padding: 12px;
+}
+
+.table-hover tbody tr:hover td {
+    background-color: rgba(var(--primary-rgb), 0.05) !important;
+}
+
+/* Botones de Acción */
+.btn-detalles:hover {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.btn-eliminar:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Paginación */
+.pagination-container {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(128,128,128,0.2);
+    color: var(--text-color);
+}
+
+#paginaActual {
+    color: var(--primary-color);
+}
+
+/* Botón Principal */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+}
+
+/* Ajustes Responsive */
+@media (max-width: 768px) {
+    .table thead {
+        display: none; /* Ocultar cabeceras en móviles */
+    }
+    
+    .table tbody td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border-bottom: 1px solid rgba(128,128,128,0.1);
+    }
+    
+    .table tbody td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        text-align: left;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+}

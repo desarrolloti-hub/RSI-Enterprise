@@ -1,4 +1,4 @@
-// sistema-unificado-admin.js - Combina footer fijo y navegación de administrador
+
 (function() {
     'use strict';
     
@@ -229,7 +229,23 @@
     // =============================================
     // FUNCIONALIDAD DEL MENÚ DE NAVEGACIÓN ADMIN
     // =============================================
-    
+    //Funcion para cargar imagenes
+    // Cargar html2canvas dinámicamente si no existe
+    function loadHtml2Canvas(callback) {
+        if (window.html2canvas) {
+            callback();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = callback;
+        script.onerror = () => {
+            console.error('Error cargando html2canvas');
+            callback(); // Ejecutar callback aunque falle para no bloquear al usuario
+        };
+        document.head.appendChild(script);
+    }
+
     // Agregar FontAwesome CDN si no existe
     function loadFontAwesome() {
         if (!document.querySelector('link[href*="font-awesome"]')) {
@@ -889,6 +905,9 @@
                         <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
                             <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                         </a>
+                        <a href="../sistema-reportes/sistema-reportes.html" class="menu-nav-btn">
+                            <i class="fas fa-bug"></i> Gestión de errores
+                        </a>
                         <a href="../manuales/manuales.html" class="menu-nav-btn">
                             <i class="fas fa-file-alt"></i> Ver manuales
                         </a>
@@ -897,6 +916,9 @@
                         </a>
                         <a href="../checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
                             <i class="fas fa-car"></i> Chekclist automoviles
+                        </a>
+                        <a href="../multas/multas.html" class="menu-nav-btn">
+                            <i class="fas fa-file-alt"></i> Multas e imprevistos
                         </a>
                     </div>
                 </div>
@@ -955,6 +977,9 @@
                         <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                             <i class="fas fa-palette"></i> Personalizar interfaz
                         </a>
+                        <a href="#" id="menuNavReportBtn" class="menu-nav-btn">
+                            <i class="fas fa-bug"></i> Reportar un problema
+                        </a>
                         <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
                             <a href="../fin-asistencia/fin-asistencia.html">
                             <i class="fas fa-flag-checkered"></i> Terminar asistencia
@@ -980,7 +1005,9 @@
         const overlay = document.getElementById('menuNavOverlay');
         const finishBtn = document.getElementById('menuNavFinishAttendanceBtn');
         const logoutBtn = document.getElementById('menuNavLogoutBtn');
-        
+        //Funcion para reportar errores
+        const reportBtn = document.getElementById('menuNavReportBtn');
+
         // Event listeners para el botón flotante y overlay
         if (floatingBtn && sidebar && overlay) {
             floatingBtn.addEventListener('click', () => {
@@ -1035,7 +1062,65 @@
                 }
             });
         });
-        
+
+        //Logica de captura de errores
+       if (reportBtn) {
+            reportBtn.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                
+                const originalContent = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...';
+                this.style.pointerEvents = 'none';
+
+                // LLAMADA A TU FUNCIÓN (Callback Pattern)
+                loadHtml2Canvas(async () => { // <--- AQUÍ declaramos que el CALLBACK es async
+                    
+                    // El try/catch va DENTRO del callback
+                    try {
+                        console.log('📸 Iniciando captura de pantalla...');
+                        
+                        // 1. Ocultar interfaz
+                        const sidebar = document.getElementById('menuNavSidebar');
+                        const overlay = document.getElementById('menuNavOverlay');
+                        if(sidebar) sidebar.classList.remove('active');
+                        if(overlay) overlay.classList.remove('active');
+
+                        // 2. Esperar animación (pequeño delay para asegurar que se cerró)
+                        await new Promise(resolve => setTimeout(resolve, 300));
+
+                        // 3. CAPTURA (Aquí es donde puede fallar html2canvas)
+                        const canvas = await html2canvas(document.body, {
+                            useCORS: true, 
+                            logging: false,
+                            // COORDENADAS EXACTAS (Lo que vimos antes)
+                            scale: 1,
+                            x: window.scrollX,
+                            y: window.scrollY,
+                            width: window.innerWidth,
+                            height: window.innerHeight,
+                            windowWidth: window.innerWidth,
+                            windowHeight: window.innerHeight,
+                            ignoreElements: (element) => element.id === 'menuNavFloatingBtn'
+                        });
+
+                        // 4. Guardar
+                        const imgData = canvas.toDataURL('image/jpeg', 0.5);
+                        console.log("Tamaño aprox imagen:", Math.round(imgData.length / 1024), "KB");
+                        sessionStorage.setItem('tempReportScreenshot', imgData);
+                        sessionStorage.setItem('tempReportSource', window.location.pathname);
+
+                    } catch (error) {
+                        // Este catch atrapa errores DE LA CAPTURA (html2canvas), no de la carga del script
+                        console.error('Error generando la imagen:', error);
+                        sessionStorage.setItem('tempReportSource', window.location.pathname);
+                    } finally {
+                        // 5. Redirigir siempre
+                        window.location.href = '../crear-reporte/crear-reporte.html';
+                    }
+                });
+            });
+        }
+
         // Event listeners para botones de acción
         if (finishBtn) {
             finishBtn.addEventListener('click', finishAttendance);

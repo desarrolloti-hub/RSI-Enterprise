@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="./panel-ventas.css">
+</head>
+<body>
+
+    <br><br><br>
+
+    <div class="container container-custom mt-5">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="titulo-pagina mb-0"><i class="fas fa-shopping-cart"></i> Pedidos Activos</h2>
+                <p class="text-muted small mb-0">Gestión de órdenes pendientes de entrega</p>
+            </div>
+            <button id="refresh-all" class="btn btn-outline-primary mt-3 mt-md-0">
+                <i class="fas fa-sync-alt"></i> Actualizar Estados
+            </button>
+        </div>
+
+        <div class="table-responsive card p-0 mb-3">
+            <table class="table table-hover mb-0" id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>ID Orden</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Sucursal</th>
+                        <th>Estado Pago</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="pedidos-body">
+                    <tr>
+                        <td colspan="8" class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-container card p-3 d-flex flex-row justify-content-between align-items-center">
+            <button id="btnAnterior" class="btn btn-outline-secondary btn-sm" disabled>
+                <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <span id="paginaActual" class="fw-bold small">Página 1</span>
+            <button id="btnSiguiente" class="btn btn-outline-secondary btn-sm" disabled>
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript" src="https://resources.openpay.mx/lib/openpay-js/1.2.38/openpay.v1.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="../js/firebase-init.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    
+    <script src="./panel-ventas.js"></script>
+            <script src="../js/particulas.js"></script>
+
+</body>
+</html>

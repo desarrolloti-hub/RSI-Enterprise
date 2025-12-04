@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finalizar Ticket | RSI Enterprise</title>
+    <title>Finalizar/Pausar Ticket | RSI Enterprise</title>
     <link rel="stylesheet" href="finalizar-ticket.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -36,6 +34,24 @@
             </div>
 
             <form id="finishTicketForm" class="finish-form">
+                
+                <div class="form-group action-group">
+                    <button type="button" class="action-btn pause-btn" id="pauseBtn"
+                     style="background-color: #2d2d2d; color: white;">
+                        <i class="fas fa-pause"></i> Poner en Pausa
+                    </button>
+                </div>
+                
+                <div class="form-group pause-reason-group" id="pauseReasonGroup" style="display: none;">
+                    <label for="pauseReason">Razón para poner en pausa</label>
+                    <textarea 
+                        id="pauseReason" 
+                        class="form-control" 
+                        rows="3" 
+                        minlength="10" 
+                        maxlength="500" 
+                    ></textarea>
+                </div>
                 <div class="form-group">
                     <label for="projectDescription">
                         <i class="fas fa-file-alt"></i> Descripción del proyecto finalizado
@@ -76,22 +92,17 @@
         </div>
     </div>
 
-    <div id="imageViewerModal" class="modal">
-        <div class="modal-content" style="max-width: 90%; max-height: 90vh; background: transparent; box-shadow: none;">
-            <span class="close" style="position: absolute; top: 15px; right: 15px; color: rgb(255, 255, 255); font-size: 35px; z-index: 100;">&times;</span>
-            <img id="expandedImage" style="width: 100%; height: auto; max-height: 90vh; object-fit: contain;">
-        </div>
-    </div>
-
     <script>
         // --- CONSTANTES DE VALIDACIÓN ---
         const MAX_IMAGES = 20;
         const MIN_IMAGES = 1;
         const MAX_DESCRIPTION_LENGTH = 10000;
         const MIN_DESCRIPTION_LENGTH = 10;
+        const MAX_PAUSE_REASON_LENGTH = 500;
+        const MIN_PAUSE_REASON_LENGTH = 10;
         // --------------------------------
 
-        // Configuración de Firebase (AJUSTA TUS CREDENCIALES AQUÍ)
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
             authDomain: "rsienterprise.firebaseapp.com",
@@ -114,11 +125,12 @@
             currentUser: null,
             userData: null,
             currentTicketId: null,
-            selectedImages: [], // Aquí se guardan los Base64 de las imágenes
+            selectedImages: [], 
             currentEvidenciaId: null
         };
 
-        // Obtener parámetros de la URL
+        // --- FUNCIONES DE UTILIDAD (CRUD, ALERTAS) ---
+        
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             return {
@@ -127,7 +139,6 @@
             };
         }
 
-        // --- FUNCIONES DE ALERTA (Fallback si no tienes window.showCustomAlert) ---
         function showLoading(message = 'Cargando...') {
             Swal.fire({
                 title: message,
@@ -158,10 +169,8 @@
             });
         }
 
-        // --- FUNCIONES DE DATOS Y UTILIDAD ---
         async function getColaboradorNames(colaboradorIds) {
             if (!colaboradorIds || colaboradorIds.length === 0) return 'Ninguno';
-
             try {
                 const promises = colaboradorIds.map(async (id) => {
                     const colabRef = db.collection('colaboradores').doc(id);
@@ -176,16 +185,13 @@
             }
         }
 
-        // Comprimir imagen (Base64)
         function compressImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                
                 reader.onload = function(event) {
                     const img = new Image();
                     img.src = event.target.result;
-                    
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
@@ -211,17 +217,31 @@
                         canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Calidad de compresión a 70%
                         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); 
                         resolve(compressedBase64);
                     };
                 };
-                
                 reader.onerror = () => resolve(null);
             });
         }
 
-        // Actualizar vista previa de imágenes
+        function showImageInSwal(imgSrc) {
+            Swal.fire({
+                title: 'Evidencia',
+                imageUrl: imgSrc,
+                imageAlt: 'Evidencia ampliada',
+                showConfirmButton: true,
+                confirmButtonText: 'Cerrar',
+                showCloseButton: true,
+                width: 'auto',
+                customClass: {
+                    container: 'swal-dark-bg',
+                    popup: 'swal-dark',
+                    image: 'swal-image-fit' 
+                }
+            });
+        }
+
         function updateImagePreviews() {
             const previewContainer = document.getElementById('imagePreviewContainer');
             if (!previewContainer) return;
@@ -239,13 +259,10 @@
                 `;
                 previewContainer.appendChild(imgPreview);
                 
-                // Evento para abrir el modal al hacer clic en la imagen
                 imgPreview.querySelector('img').addEventListener('click', function() {
-                    document.getElementById('expandedImage').src = img;
-                    document.getElementById('imageViewerModal').style.display = 'flex';
+                    showImageInSwal(img);
                 });
                 
-                // Evento para eliminar la imagen
                 imgPreview.querySelector('.delete-image-btn').addEventListener('click', function(e) {
                     e.stopPropagation();
                     const idx = parseInt(this.getAttribute('data-index'));
@@ -255,49 +272,33 @@
             });
         }
 
-        // Validar formulario
-        function validateForm(description, imageCount) {
+        // --- FUNCIONES DE VALIDACIÓN ---
+
+        function validateFinalizeForm(description, imageCount) {
             if (description.length < MIN_DESCRIPTION_LENGTH) {
-                throw new Error(`La descripción debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`);
+                throw new Error(`La descripción de finalización debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`);
             }
-            
             if (imageCount < MIN_IMAGES) {
                 throw new Error(`Debes subir al menos ${MIN_IMAGES} imagen como evidencia`);
             }
-            
             if (imageCount > MAX_IMAGES) {
                 throw new Error(`No puedes subir más de ${MAX_IMAGES} imágenes`);
             }
-            
             return true;
         }
 
-        // Cargar datos del usuario
-        async function loadUserData(user) {
-            try {
-                const colaboradoresRef = db.collection('colaboradores');
-                const q = colaboradoresRef.where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email).get();
-                const collabSnapshot = await q;
-
-                if (collabSnapshot.empty) {
-                    showError('No se encontraron tus datos de colaborador');
-                    return false;
-                }
-
-                collabSnapshot.forEach(doc => {
-                    AppState.userData = doc.data();
-                    AppState.userData.colaboradorId = doc.id;
-                    AppState.userData.NOMBRE = doc.data().NOMBRE;
-                });
-                return true;
-            } catch (error) {
-                console.error("Error cargando datos de colaborador:", error);
-                showError('Error al cargar tus datos de colaborador.');
-                return false;
+        function validatePauseForm(reason) {
+            if (reason.length < MIN_PAUSE_REASON_LENGTH) {
+                throw new Error(`La razón de pausa debe tener al menos ${MIN_PAUSE_REASON_LENGTH} caracteres`);
             }
+            if (reason.length > MAX_PAUSE_REASON_LENGTH) {
+                throw new Error(`La razón de pausa no debe exceder ${MAX_PAUSE_REASON_LENGTH} caracteres`);
+            }
+            return true;
         }
-        
-        // Cargar evidencias existentes (si está en modo edición o ya se guardó)
+
+        // --- FUNCIONES DE CARGA DE DATOS ---
+
         async function loadExistingEvidences(ticketId) {
             try {
                 const evidenciasRef = db.collection('evidenciatickets');
@@ -315,6 +316,14 @@
                     document.getElementById('projectDescription').value = evidencia.descripcion || '';
                     document.getElementById('charCount').textContent = evidencia.descripcion?.length || 0;
                     
+                    const ticketRef = db.collection('ticketsmesa').doc(ticketId);
+                    const ticketSnap = await ticketRef.get();
+                    const ticketData = ticketSnap.data();
+
+                    if (document.getElementById('pauseReason')) {
+                        document.getElementById('pauseReason').value = ticketData.pauseComment || '';
+                    }
+                    
                     AppState.selectedImages = evidencia.imagenes || []; 
                     updateImagePreviews();
                     
@@ -331,7 +340,6 @@
             }
         }
 
-        // Cargar información del ticket
         async function loadTicketInfo(ticketId) {
             try {
                 showLoading('Cargando información del ticket...');
@@ -387,67 +395,33 @@
                 showError('No se pudo cargar la información del ticket');
             }
         }
-        
-        // Manejar carga y compresión de imágenes (desde input file o paste)
-        async function handleImageUpload(files) {
-            const newFiles = Array.from(files).filter(file => file.type.match('image.*'));
 
-            if (newFiles.length === 0) return;
+        async function loadUserData(user) {
+            try {
+                const colaboradoresRef = db.collection('colaboradores');
+                const q = colaboradoresRef.where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email).get();
+                const collabSnapshot = await q;
 
-            // VALIDACIÓN DEL MÁXIMO DE FOTOS (20)
-            if (AppState.selectedImages.length + newFiles.length > MAX_IMAGES) {
-                showError(`Solo puedes subir hasta ${MAX_IMAGES} imágenes en total (tienes ${AppState.selectedImages.length} y quieres agregar ${newFiles.length})`);
-                return;
-            }
-            
-            const compressionPromises = [];
-            
-            newFiles.forEach((file) => {
-                compressionPromises.push(
-                    compressImage(file).then(compressedBase64 => {
-                        if (compressedBase64) {
-                            AppState.selectedImages.push(compressedBase64);
-                        }
-                    })
-                );
-            });
-            
-            // Mostrar una carga temporal si son varias imágenes
-            if (newFiles.length > 2) {
-                showLoading(`Comprimiendo ${newFiles.length} imágenes...`);
-            }
-            
-            await Promise.all(compressionPromises);
-            
-            if (newFiles.length > 2) {
-                hideLoading();
-            }
-            
-            updateImagePreviews();
-        }
-
-        // FUNCIONALIDAD CLAVE: Manejar el evento de pegar (Ctrl+V / Cmd+V).
-        function handlePaste(e) {
-            const items = e.clipboardData.items;
-            const imageFiles = [];
-
-            for (let i = 0; i < items.length; i++) {
-                // Verificar si el item es una imagen
-                if (items[i].type.indexOf('image') !== -1) {
-                    const file = items[i].getAsFile();
-                    if (file) {
-                        imageFiles.push(file);
-                    }
+                if (collabSnapshot.empty) {
+                    showError('No se encontraron tus datos de colaborador');
+                    return false;
                 }
-            }
 
-            if (imageFiles.length > 0) {
-                e.preventDefault(); 
-                handleImageUpload(imageFiles);
+                collabSnapshot.forEach(doc => {
+                    AppState.userData = doc.data();
+                    AppState.userData.colaboradorId = doc.id;
+                    AppState.userData.NOMBRE = doc.data().NOMBRE;
+                });
+                return true;
+            } catch (error) {
+                console.error("Error cargando datos de colaborador:", error);
+                showError('Error al cargar tus datos de colaborador.');
+                return false;
             }
         }
 
-        // Guardar o actualizar evidencia
+        // --- FUNCIONES DE ACCIÓN (SUBMIT, PAUSE) ---
+
         async function saveOrUpdateEvidence(description) {
             const evidenciaData = {
                 ticketId: AppState.currentTicketId,
@@ -460,17 +434,14 @@
             };
 
             if (AppState.currentEvidenciaId) {
-                // Actualizar evidencia existente
                 await db.collection('evidenciatickets').doc(AppState.currentEvidenciaId).update(evidenciaData);
             } else {
-                // Crear nueva evidencia
                 evidenciaData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
                 const result = await db.collection('evidenciatickets').add(evidenciaData);
                 AppState.currentEvidenciaId = result.id;
             }
         }
 
-        // Actualizar estado del ticket
         async function updateTicketStatus() {
             const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
             const ticketSnap = await ticketRef.get();
@@ -489,10 +460,14 @@
                 evidenciasCompletadas.includes(colabId)
             );
             
+            const oldStatus = ticketData.estado || 'desconocido';
+            const newStatus = todosCompletados ? 'finalizado' : 'en_proceso'; 
+            
             const updateData = {
                 evidenciasCompletadas,
-                estado: todosCompletados ? 'finalizado' : 'en_proceso',
-                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                estado: newStatus, 
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                pauseComment: '' // Limpiar comentario de pausa si se finaliza
             };
             
             if (todosCompletados) {
@@ -500,9 +475,17 @@
             }
             
             await ticketRef.update(updateData);
+            
+            await recordHistory(
+                AppState.currentTicketId,
+                oldStatus,
+                newStatus,
+                `Ticket finalizado por colaborador. Estado: ${newStatus}`,
+                AppState.userData.colaboradorId,
+                AppState.userData.NOMBRE
+            );
         }
-        
-        // Manejar envío del formulario
+
         async function handleFormSubmit(e) {
             e.preventDefault();
             
@@ -514,21 +497,16 @@
             try {
                 const description = document.getElementById('projectDescription').value;
                 
-                // Validar formulario
-                validateForm(description, AppState.selectedImages.length);
+                validateFinalizeForm(description, AppState.selectedImages.length);
                 
-                showLoading('Guardando información...');
+                showLoading('Guardando evidencias y finalizando...');
                 
-                // Guardar o actualizar evidencia
                 await saveOrUpdateEvidence(description);
-                
-                // Actualizar estado del ticket
                 await updateTicketStatus();
                 
                 hideLoading();
-                await showSuccess('Tus evidencias han sido guardadas correctamente');
+                await showSuccess('Tus evidencias han sido guardadas y el ticket marcado como completado.', 'Proceso Exitoso');
                 
-                // REDIRECCIÓN
                 window.location.href = '../gestion-tickets/gestion-tickets.html';
                 
             } catch (error) {
@@ -540,16 +518,191 @@
                 hideLoading();
             }
         }
+        
+        async function handlePauseTicket(reason) {
+            try {
+                showLoading('Pausando ticket y registrando razón...');
 
-        // Configurar eventos del DOM
+                const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
+                const ticketSnap = await ticketRef.get();
+                const oldStatus = ticketSnap.data().estado || 'desconocido';
+
+                const updateData = {
+                    estado: 'en_proceso', // Estado de Pausa
+                    pauseComment: reason, // Razón de la pausa
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp() 
+                };
+
+                await ticketRef.update(updateData);
+
+                await recordHistory(
+                    AppState.currentTicketId,
+                    oldStatus,
+                    'en_proceso',
+                    `Pausado desde formulario de Finalización: ${reason}`,
+                    AppState.userData.colaboradorId,
+                    AppState.userData.NOMBRE
+                );
+
+                hideLoading();
+                await showSuccess('El ticket ha sido puesto en pausa. Volverá a la lista activa en Gestión de Tickets.', 'Ticket en Pausa');
+                
+                window.location.href = '../gestion-tickets/gestion-tickets.html';
+                
+            } catch (error) {
+                console.error("Error al pausar ticket:", error);
+                showError(error.message || 'No se pudo pausar el ticket.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function recordHistory(ticketId, oldStatus, newStatus, motivo, collaboratorId, collaboratorName) {
+            try {
+                const historyData = {
+                    ticketId: ticketId,
+                    fechaCambio: firebase.firestore.FieldValue.serverTimestamp(),
+                    colaboradorId: collaboratorId,
+                    colaboradorNombre: collaboratorName,
+                    estadoAnterior: oldStatus,
+                    estadoNuevo: newStatus,
+                    motivo: motivo || `Cambio de estado de ${oldStatus} a ${newStatus}`
+                };
+                
+                await db.collection('historialTicket').add(historyData);
+                console.log('Historial de ticket registrado exitosamente.');
+            } catch (error) {
+                console.error('Error registrando historial:', error);
+            }
+        }
+        
+        function handlePaste(e) {
+            const items = e.clipboardData.items;
+            const imageFiles = [];
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        imageFiles.push(file);
+                    }
+                }
+            }
+
+            if (imageFiles.length > 0) {
+                e.preventDefault(); 
+                handleImageUpload(imageFiles);
+            }
+        }
+
+        // --- MANEJO DE IMÁGENES SUBIDAS/PEGADAS ---
+        async function handleImageUpload(files) {
+            if (!files || files.length === 0) return;
+
+            const totalImages = AppState.selectedImages.length + files.length;
+            if (totalImages > MAX_IMAGES) {
+                showError(`Solo puedes subir un máximo de ${MAX_IMAGES} imágenes. Ya tienes ${AppState.selectedImages.length} y estás intentando añadir ${files.length}.`);
+                return;
+            }
+
+            showLoading('Procesando imágenes...');
+            const uploadPromises = Array.from(files).map(async (file) => {
+                const compressedImage = await compressImage(file);
+                if (compressedImage) {
+                    AppState.selectedImages.push(compressedImage);
+                }
+            });
+
+            await Promise.all(uploadPromises);
+            hideLoading();
+            updateImagePreviews();
+        }
+
+        // --- SETUP DE EVENTOS ---
+        
         function setupEventListeners() {
             const textarea = document.getElementById('projectDescription');
             const counter = document.getElementById('charCount');
-            const input = document.getElementById('imageUpload');
             const finishForm = document.getElementById('finishTicketForm');
             const cancelBtn = document.getElementById('cancelBtn');
+            const input = document.getElementById('imageUpload');
+            const pauseBtn = document.getElementById('pauseBtn');
             
-            // Contador de caracteres
+            
+            // Lógica para el botón Pausar (Ahora usa SweetAlert2)
+            pauseBtn.addEventListener('click', () => {
+                
+                // USAMOS UN TEMPLATE HTML LIMPIO SIN CONTENEDORES CONFLICTIVOS
+                const swalHtml = `
+                    <label for="swalPauseReason" class="swal2-label" style="text-align: left; display: block; margin-bottom: 10px;">
+                        <i class="fas fa-comment-dots"></i> Razón para poner en pausa (Requerido)
+                    </label>
+                    <textarea 
+                        id="swalPauseReason" 
+                        class="swal2-textarea" 
+                        rows="4" 
+                        minlength="10" 
+                        maxlength="500" 
+                        placeholder="Escriba la razón detallada para pausar el ticket (mínimo 10 caracteres)"
+                        style="width: 100%; box-sizing: border-box;"
+                    ></textarea>
+                    <div class="char-counter" style="text-align: right; font-size: 0.8em; color: #999; margin-top: 5px;">
+                        <span id="swalPauseCharCount">0</span>/${MAX_PAUSE_REASON_LENGTH} caracteres
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Razón para Pausar Ticket',
+                    html: swalHtml, 
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-pause"></i> Pausar Ticket',
+                    cancelButtonText: 'Cancelar',
+                    focusConfirm: false,
+                    didOpen: () => {
+                        // VINCULACIÓN CRÍTICA: Obtener los elementos DENTRO del modal de SweetAlert
+                        const swalTextarea = Swal.getHtmlContainer().querySelector('#swalPauseReason');
+                        const swalCounter = Swal.getHtmlContainer().querySelector('#swalPauseCharCount');
+                        
+                        // Cargar contenido preexistente si hay
+                        const initialPauseReason = document.getElementById('pauseReason').value || '';
+                        swalTextarea.value = initialPauseReason;
+
+                        // VINCULAR EL CONTADOR DE CARACTERES
+                        swalTextarea.addEventListener('input', function() {
+                            const length = Math.min(this.value.length, MAX_PAUSE_REASON_LENGTH);
+                            swalCounter.textContent = `${length}/${MAX_PAUSE_REASON_LENGTH} caracteres`;
+                            if (this.value.length > MAX_PAUSE_REASON_LENGTH) {
+                                this.value = this.value.substring(0, MAX_PAUSE_REASON_LENGTH);
+                            }
+                        });
+                        
+                        // Inicializar el contador
+                        swalCounter.textContent = `${swalTextarea.value.length}/${MAX_PAUSE_REASON_LENGTH} caracteres`;
+                    },
+                    preConfirm: () => {
+                        const reasonInput = Swal.getHtmlContainer().querySelector('#swalPauseReason');
+                        const reason = reasonInput.value.trim();
+                        
+                        try {
+                             validatePauseForm(reason);
+                             return reason; // Devolver la razón validada
+                        } catch (error) {
+                            Swal.showValidationMessage(error.message);
+                            return false;
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Si se confirma, guarda el valor en el textarea original y llama a la función de manejo
+                        document.getElementById('pauseReason').value = result.value;
+                        handlePauseTicket(result.value);
+                    }
+                });
+            });
+
+
+            // Contador de caracteres (Descripción Finalización)
             textarea.addEventListener('input', function() {
                 const length = Math.min(this.value.length, MAX_DESCRIPTION_LENGTH);
                 counter.textContent = length;
@@ -562,13 +715,13 @@
             // Carga de imágenes (input file)
             input.addEventListener('change', function(e) {
                 handleImageUpload(e.target.files);
-                e.target.value = ''; // Limpiar input
+                e.target.value = ''; 
             });
-            
-            // **IMPORTANTE:** Escuchador para pegar imágenes (Ctrl+V) en cualquier parte de la página.
+
+            // Escuchador para pegar imágenes (Ctrl+V)
             document.addEventListener('paste', handlePaste);
 
-            // Envío del formulario
+            // Envío del formulario (Finalizar)
             finishForm.addEventListener('submit', handleFormSubmit);
             
             // Botón cancelar
@@ -576,23 +729,6 @@
                 window.location.href = '../gestion-tickets/gestion-tickets.html';
             });
             
-            // Configurar modal de imágenes
-            const imageModalClose = document.querySelector('#imageViewerModal .close');
-            const imageViewerModal = document.getElementById('imageViewerModal');
-            
-            if (imageModalClose) {
-                imageModalClose.addEventListener('click', function() {
-                    imageViewerModal.style.display = 'none';
-                });
-            }
-            
-            if (imageViewerModal) {
-                imageViewerModal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        imageViewerModal.style.display = 'none';
-                    }
-                });
-            }
         }
 
         // Inicializar aplicación
@@ -606,7 +742,6 @@
             
             AppState.currentTicketId = ticketId;
             
-            // Esperar a que el usuario esté autenticado
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     AppState.currentUser = user;
@@ -629,5 +764,6 @@
 
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegación-operador.js"></script>
+    <script src="../js/particulas.js"></script>
 </body>
 </html>

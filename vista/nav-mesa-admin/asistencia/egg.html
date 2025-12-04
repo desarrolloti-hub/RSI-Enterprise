@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris - Tiempo Extra</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* ESTILOS BASE Y RESPONSIVOS */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-family: Arial, sans-serif;
+            padding: 10px; /* Reducido para móviles */
+        }
+
+        #tetris-container {
+            text-align: center;
+            background: #34495e;
+            padding: 15px; /* Reducido */
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            max-width: 95%; /* Ocupa casi todo el ancho disponible */
+            width: 400px; /* Ancho máximo estándar para el juego */
+            box-sizing: border-box; /* Crucial para padding */
+        }
+
+        #tetris-title {
+            color: #f1c40f;
+            margin-bottom: 5px;
+            font-size: 1.5em; /* Ajuste para pantallas pequeñas */
+        }
+
+        #tetris-message {
+            margin-bottom: 15px;
+            font-size: 0.8em;
+        }
+
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        #tetris-canvas {
+            border: 5px solid #bdc3c7;
+            display: block;
+            margin: 0 auto 15px;
+            /* El tamaño de la fuente debe ser controlado por el JS (TILE_SIZE)
+               Asegúrate de que TILE_SIZE * COLS no exceda el ancho del contenedor.
+               (30 * 10 = 300px, lo cual cabe en 400px de ancho). */
+        }
+
+        #start-btn, .exit-button {
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            width: 100%; /* Ocupa todo el ancho */
+            margin-bottom: 10px;
+        }
+
+        #start-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .exit-button {
+            background-color: #e74c3c;
+            color: white;
+            margin-top: 10px;
+        }
+
+        /* Controles táctiles */
+        #tetris-controls p {
+            font-size: 0.8em;
+        }
+
+        .touch-controls {
+            display: flex;
+            justify-content: space-around; /* Distribuye el espacio */
+            gap: 5px; /* Espacio reducido */
+            margin-top: 15px;
+            padding: 0 5px;
+        }
+
+        .control-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            flex-grow: 1; /* Permite que los botones crezcan y ocupen el espacio */
+            height: 45px; /* Altura ajustada */
+            font-size: 1em;
+            border-radius: 5px; /* Cuadrados/redondeados ajustables */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+        }
+
+        /* MEDIA QUERY para hacer los ajustes específicos en pantallas muy pequeñas */
+        @media (max-width: 450px) {
+            body {
+                padding: 5px;
+            }
+            #tetris-container {
+                padding: 10px;
+                max-width: 100%;
+            }
+            /* Aumentar el tamaño de los iconos en los botones de control */
+            .control-button i {
+                font-size: 1.2em;
+            }
+            /* Ocultar las instrucciones del teclado en móviles */
+            #tetris-controls p {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="tetris-container">
+        <h2 id="tetris-title">Tiempo Extra: ¡Hora de Tetris!</h2>
+        <p id="tetris-message">Tu asistencia excede los límites (o alguien descubrió un secreto). Juega un rato y relájate.</p>
+        <div id="game-info">
+            <div>Puntuación: <span id="score">0</span></div>
+            <div>Récord: <span id="highScore">0</span></div>
+        </div>
+        <canvas id="tetris-canvas"></canvas> 
+        <div id="tetris-controls">
+            <p>Flechas: Mover / Rotar | Abajo: Caída suave | Espacio: Caída rápida</p>
+            <button onclick="startGame()" id="start-btn">Iniciar Juego</button>
+        </div>
+        
+        <div class="touch-controls" id="touchControls">
+            <button class="control-button" data-action="left"><i class="fas fa-arrow-left"></i></button>
+            <button class="control-button" data-action="rotate"><i class="fas fa-sync-alt"></i></button>
+            <button class="control-button" data-action="down"><i class="fas fa-arrow-down"></i></button>
+            <button class="control-button" data-action="drop"><i class="fas fa-caret-down"></i></button>
+            <button class="control-button" data-action="right"><i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <button class="exit-button" onclick="goBackToAttendance()">
+            <i class="fas fa-arrow-left"></i> Regresar a Asistencia
+        </button>
+    </div>
+
+    <script>
+        // --- FUNCIÓN DE REGRESO ---
+        function goBackToAttendance() {
+            window.location.href = 'asistencia.html';
+        }
+
+        // --- FUNCIONES DE ALERTA (Mínimas para Tetris) ---
+        async function showAlert(type, title, message) {
+             return await Swal.fire({ 
+                icon: type, 
+                title: title, 
+                html: message, 
+                confirmButtonColor: '#4e54c8',
+                allowOutsideClick: false
+            });
+        }
+        
+        // --- LÓGICA DE TETRIS ---
+        
+        let canvas, context, scoreElement, highScoreElement, startButton, touchControls;
+
+        const TILE_SIZE = 30; 
+        const COLS = 10;
+        const ROWS = 20;
+
+        let board = [];
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('tetrisHighScore') || '0', 10);
+        let currentPiece = null;
+        let nextPiece = null;
+        let gameLoop = null;
+        let isGameOver = false;
+        let dropCounter = 0;
+        let dropInterval = 1000; 
+        let lastTime = 0;
+
+        const PIECES = [
+            [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], 
+            [[2, 0, 0], [2, 2, 2], [0, 0, 0]],                     
+            [[0, 0, 3], [3, 3, 3], [0, 0, 0]],                     
+            [[4, 4], [4, 4]],                                      
+            [[0, 5, 5], [5, 5, 0], [0, 0, 0]],                     
+            [[0, 6, 0], [6, 6, 6], [0, 0, 0]],                     
+            [[7, 7, 0], [0, 7, 7], [0, 0, 0]]                      
+        ];
+
+        const COLORS = [
+            '#000', '#00FFFF', '#0000FF', '#FFA500', '#FFFF00', '#008000', '#800080', '#FF0000'
+        ];
+        
+        function initTetrisElements() {
+             canvas = document.getElementById('tetris-canvas');
+             context = canvas ? canvas.getContext('2d') : null;
+             scoreElement = document.getElementById('score');
+             highScoreElement = document.getElementById('highScore');
+             startButton = document.getElementById('start-btn');
+             touchControls = document.getElementById('touchControls');
+
+             if (canvas) {
+                 canvas.width = COLS * TILE_SIZE;
+                 canvas.height = ROWS * TILE_SIZE;
+             }
+             if (highScoreElement) {
+                highScoreElement.textContent = highScore;
+             }
+        }
+
+
+        function createBoard() {
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        }
+
+        function createPiece(type) {
+            const matrix = PIECES[type];
+            return {
+                matrix: matrix,
+                pos: {
+                    x: Math.floor((COLS / 2) - (matrix[0].length / 2)),
+                    y: 0
+                },
+                colorIndex: type + 1
+            };
+        }
+
+        function drawMatrix(matrix, offset) {
+            if (!context) return;
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        context.fillStyle = COLORS[value];
+                        context.fillRect((offset.x + x) * TILE_SIZE,
+                                         (offset.y + y) * TILE_SIZE,
+                                         TILE_SIZE, TILE_SIZE);
+                        context.strokeStyle = '#222';
+                        context.strokeRect((offset.x + x) * TILE_SIZE,
+                                           (offset.y + y) * TILE_SIZE,
+                                           TILE_SIZE, TILE_SIZE);
+                    }
+                });
+            });
+        }
+
+        function draw() {
+            if (!context) return;
+            context.fillStyle = '#111';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawMatrix(board, { x: 0, y: 0 });
+            
+            if (currentPiece) {
+                drawMatrix(currentPiece.matrix, currentPiece.pos);
+            }
+
+            if (isGameOver) {
+                context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                context.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
+                context.fillStyle = 'white';
+                context.font = '30px Arial';
+                context.textAlign = 'center';
+                context.fillText('¡Juego Terminado!', canvas.width / 2, canvas.height / 2);
+                context.font = '16px Arial';
+                context.fillText('Presiona INICIAR JUEGO para reiniciar', canvas.width / 2, canvas.height / 2 + 30);
+            }
+        }
+
+        function merge() {
+            currentPiece.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        board[currentPiece.pos.y + y][currentPiece.pos.x + x] = value;
+                    }
+                });
+            });
+        }
+
+        function rotate(matrix) {
+            const N = matrix.length - 1;
+            const result = matrix.map((row, i) =>
+                row.map((val, j) => matrix[N - j][i])
+            );
+            return result;
+        }
+
+        function collide() {
+            const m = currentPiece.matrix;
+            const o = currentPiece.pos;
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 &&
+                       (board[o.y + y] && board[o.y + y][o.x + x]) !== 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function pieceDrop() {
+            if (!currentPiece) return;
+            currentPiece.pos.y++;
+            if (collide()) {
+                currentPiece.pos.y--;
+                merge();
+                checkLineClears();
+                nextPiece.pos = { 
+                    x: Math.floor((COLS / 2) - (nextPiece.matrix[0].length / 2)), 
+                    y: 0 
+                };
+                currentPiece = nextPiece;
+                nextPiece = createPiece(Math.floor(Math.random() * PIECES.length));
+                
+                if (collide()) {
+                    gameOver();
+                }
+            }
+            dropCounter = 0;
+            if (score > 500 && dropInterval > 300) {
+                 dropInterval = 500;
+            } else if (score > 1500 && dropInterval > 100) {
+                 dropInterval = 300;
+            }
+        }
+        
+        function pieceHardDrop() {
+            if (isGameOver) return;
+            while (!collide()) {
+                currentPiece.pos.y++;
+            }
+            currentPiece.pos.y--;
+            pieceDrop();
+        }
+
+        function pieceMove(dir) {
+            if (isGameOver) return;
+            currentPiece.pos.x += dir;
+            if (collide()) {
+                currentPiece.pos.x -= dir;
+            }
+        }
+
+        function pieceRotate() {
+            if (isGameOver) return;
+            const originalPos = currentPiece.pos.x;
+            let offset = 1;
+            currentPiece.matrix = rotate(currentPiece.matrix);
+            
+            while (collide()) {
+                currentPiece.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > currentPiece.matrix.length) {
+                    currentPiece.matrix = rotate(currentPiece.matrix); 
+                    currentPiece.matrix = rotate(currentPiece.matrix);
+                    currentPiece.matrix = rotate(currentPiece.matrix);
+                    currentPiece.pos.x = originalPos;
+                    return;
+                }
+            }
+        }
+
+        function checkLineClears() {
+            outer: for (let y = board.length - 1; y >= 0; --y) {
+                for (let x = 0; x < board[y].length; ++x) {
+                    if (board[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+                
+                const row = board.splice(y, 1)[0].fill(0);
+                board.unshift(row);
+                ++y;
+                
+                score += 100;
+                scoreElement.textContent = score;
+                
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 50,
+                        startVelocity: 30,
+                        spread: 360,
+                        origin: {
+                            x: 0.5,
+                            y: 0.5
+                        }
+                    });
+                }
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            cancelAnimationFrame(gameLoop);
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('tetrisHighScore', highScore);
+                highScoreElement.textContent = highScore;
+            }
+
+            draw(); 
+            startButton.textContent = 'Jugar de Nuevo';
+            startButton.style.display = 'block';
+            
+            showAlert('error', 'Fin del Juego', `Tu puntuación final es: ${score}. ¡Inténtalo de nuevo!`);
+        }
+
+        function update(time = 0) {
+            if (isGameOver) return;
+
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                pieceDrop();
+            }
+
+            draw();
+            gameLoop = requestAnimationFrame(update);
+        }
+
+        window.startGame = function() {
+            if (!context) {
+                showAlert('error', 'Error', 'El canvas de Tetris no está disponible.');
+                return;
+            }
+            
+            if (gameLoop) {
+                cancelAnimationFrame(gameLoop);
+            }
+            
+            isGameOver = false;
+            score = 0;
+            scoreElement.textContent = score;
+            dropInterval = 1000;
+            
+            createBoard();
+            currentPiece = createPiece(Math.floor(Math.random() * PIECES.length));
+            nextPiece = createPiece(Math.floor(Math.random() * PIECES.length));
+            
+            startButton.style.display = 'none';
+            lastTime = 0;
+            update();
+        }
+
+        // --- Manejo de Eventos de Tetris ---
+
+        document.addEventListener('keydown', event => {
+            if (isGameOver) return;
+            if (!currentPiece) return;
+            
+            if (event.key === 'ArrowLeft') {
+                pieceMove(-1);
+            } else if (event.key === 'ArrowRight') {
+                pieceMove(1);
+            } else if (event.key === 'ArrowDown') {
+                pieceDrop();
+            } else if (event.key === 'ArrowUp' || event.key === 'x' || event.key === 'X') {
+                pieceRotate();
+            } else if (event.key === ' ') {
+                event.preventDefault(); 
+                pieceHardDrop();
+            }
+            draw();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTetrisElements(); // Inicializa variables de DOM y Canvas aquí
+            if (touchControls) {
+                touchControls.addEventListener('click', event => {
+                    const action = event.target.closest('.control-button')?.getAttribute('data-action');
+                    if (isGameOver || !currentPiece || !action) return;
+
+                    switch (action) {
+                        case 'left':
+                            pieceMove(-1);
+                            break;
+                        case 'right':
+                            pieceMove(1);
+                            break;
+                        case 'rotate':
+                            pieceRotate();
+                            break;
+                        case 'down':
+                            pieceDrop();
+                            break;
+                        case 'drop':
+                            pieceHardDrop();
+                            break;
+                    }
+                    draw();
+                });
+            }
+            // Iniciar el juego automáticamente al cargar la página
+            startGame();
+        });
+        
+    </script>
+    <script src="../js/particulas.js"></script>
+
+</body>
+</html>

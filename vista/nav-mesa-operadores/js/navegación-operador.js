@@ -799,6 +799,9 @@
                 <a href="../manuales/manuales.html" class="menu-nav-btn">
                     <i class="fas fa-file-alt"></i> Ver manuales
                 </a>
+                <a href="../checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
+                    <i class="fas fa-clipboard-check"></i> Ver mis Checklists
+                </a>
                                     
                 <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                     <i class="fas fa-palette"></i> Personalizar Interfaz

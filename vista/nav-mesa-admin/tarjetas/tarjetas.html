@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Productos</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="./tarjetas.css">
+</head>
+<body>
+
+    <br><br><br>
+
+    <div class="container container-custom mt-5 mb-5">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+            <div>
+                <h2 class="titulo-pagina mb-0"><i class="fas fa-store"></i> Catálogo de Productos</h2>
+                <p class="text-muted small mb-0">Vista previa de cómo ven los clientes tus productos</p>
+            </div>
+            </div>
+
+        <div id="loader" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-2 text-muted">Cargando catálogo...</p>
+        </div>
+
+        <div id="products-container" style="display: none;">
+            <div class="mb-5">
+                <h4 class="seccion-titulo mb-4"><i class="fas fa-rocket"></i> Nuevos Lanzamientos</h4>
+                <div id="new-releases" class="productos-grid">
+                    </div>
+            </div>
+
+            <div class="mb-5">
+                <h4 class="seccion-titulo mb-4"><i class="fas fa-fire"></i> Más Vendidos</h4>
+                <div id="best-sellers" class="productos-grid">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="custom-modal-overlay" id="quick-view-modal">
+        <div class="custom-modal-content quick-view-card">
+            <button class="modal-close-btn" id="close-quick-view">&times;</button>
+            <div class="quick-view-body text-center">
+                <div class="img-wrapper mb-3">
+                    <img id="qv-image" src="" alt="Producto">
+                </div>
+                <h5 id="qv-name" class="fw-bold mb-2"></h5>
+                <div id="qv-price" class="fs-4 fw-bold text-success mb-2"></div>
+                <small class="text-muted">RSI Enterprise</small>
+                <br>
+                <button class="btn btn-primary mt-3 w-100" id="btn-ver-detalle-completo">Ver Detalles Completos</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="detail-view" class="detail-view-overlay">
+        <div class="detail-view-container container">
+            <button id="close-detail" class="close-detail-btn"><i class="fas fa-times"></i></button>
+            
+            <div class="row mt-4">
+                <div class="col-md-6 mb-4">
+                    <div class="main-image-container mb-3">
+                        <img id="detail-image" src="" alt="Imagen Principal" class="img-fluid rounded shadow-sm">
+                    </div>
+                    <div id="detail-gallery" class="d-flex gap-2 justify-content-center flex-wrap">
+                        </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h2 id="detail-name" class="fw-bold mb-2 display-6"></h2>
+                    <p id="detail-sku" class="text-muted small mb-3"></p>
+                    <h3 id="detail-price" class="text-success fw-bold mb-4"></h3>
+
+                    <div class="d-flex gap-3 mb-5">
+                        <button class="btn btn-primary px-4 py-2"><i class="fas fa-shopping-cart"></i> Añadir al carrito</button>
+                        <button class="btn btn-outline-secondary px-4 py-2"><i class="far fa-heart"></i> Guardar</button>
+                    </div>
+
+                    <div class="info-bloque border-top pt-4">
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Marca:</div>
+                            <div class="col-8 fw-bold" id="detail-brand"></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Modelo:</div>
+                            <div class="col-8" id="detail-model"></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Categoría:</div>
+                            <div class="col-8" id="detail-category"></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Tipo:</div>
+                            <div class="col-8" id="detail-type"></div>
+                        </div>
+                        <div class="row mb-2" id="struct-row">
+                            <div class="col-4 text-muted">Estructura:</div>
+                            <div class="col-8" id="detail-structure"></div>
+                        </div>
+                    </div>
+
+                    <div class="info-bloque border-top mt-4 pt-4">
+                        <h5 class="mb-3">Especificaciones</h5>
+                        <p id="detail-specs" class="text-justify small" style="white-space: pre-line;"></p>
+                    </div>
+
+                    <div id="detail-link-container" class="mt-4">
+                        <a id="detail-link" href="#" target="_blank" class="btn btn-link ps-0">
+                            <i class="fas fa-external-link-alt"></i> Ver en sitio oficial
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="../js/firebase-init.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    
+    <script src="./tarjetas.js"></script>
+            <script src="../js/particulas.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Categoría</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <link rel="stylesheet" href="./editar-categoria.css">
+</head>
+<body>
+
+    <br><br><br>
+
+    <div class="container mt-5 d-flex justify-content-center">
+        
+        <div class="edit-card-container">
+            <form id="editar-categoria-form" class="edit-card">
+                
+                <div class="card-circle-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+
+                <h2 class="text-center mb-4 mt-4 titulo-form">Editar Categoría</h2>
+
+                <div class="input-group mb-3 custom-input-group">
+                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                    <input type="text" id="nombreCategoria" class="form-control" placeholder="Nombre de la categoría" required>
+                </div>
+
+                <div id="imagen-actual-container" class="text-center mb-3" style="display: none;">
+                    <p class="small text-muted mb-1">Imagen Actual:</p>
+                    <div class="img-preview-wrapper mb-2">
+                        <img id="imagen-actual" src="" alt="Imagen actual">
+                    </div>
+                    <button type="button" id="eliminar-imagen" class="btn btn-sm btn-outline-danger w-100">
+                        <i class="fas fa-trash"></i> Eliminar Imagen
+                    </button>
+                </div>
+
+                <div class="input-group mb-4 custom-input-group">
+                    <span class="input-group-text"><i class="fas fa-image"></i></span>
+                    <input type="file" id="imagenCategoria" class="form-control" accept="image/*">
+                </div>
+
+                <button type="submit" id="btn-guardar" class="btn btn-primary w-100 py-2 fw-bold">
+                    Guardar Cambios <i class="fas fa-save ms-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="floating-button-container-left">
+        <a href="../categorias/categorias.html" class="boton-flotante-azul" title="Regresar">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="../js/firebase-init.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+
+    <script src="../js/particulas.js"></script>
+    <script src="./editar-categoria.js"></script>
+</body>
+</html>

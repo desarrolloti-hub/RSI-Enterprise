@@ -230,7 +230,7 @@
                     this.updateProgress(50, 'Procesando evidencias...');
                     if (evidencias && evidencias.length > 0) {
                         for (let i = 0; i < evidencias.length; i++) {
-                            this.updateProgress(50 + (i / evidences.length) * 40, 'Añadiendo evidencias...');
+                            this.updateProgress(50 + (i / evidencias.length) * 40, 'Añadiendo evidencias...');
                             yPosition = await this.addEvidenceSection(pdf, evidencias[i], yPosition, pageWidth, pageHeight);
                         }
                     }
@@ -598,31 +598,25 @@
                 }
             },
             
-            calculateAbandonmentTime: (creationTimestamp) => {
+            calculateAbandonmentTime: (creationTimestamp, currentStatus) => {
                 if (!creationTimestamp || typeof creationTimestamp.toDate !== 'function') return { expired: true };
 
                 const creationTime = creationTimestamp.toDate().getTime(); 
                 const now = Date.now();
                 const maxDuration = 5 * 24 * 60 * 60 * 1000; // 5 días en milisegundos
-                const abandonmentTime = creationTime + maxDuration;
+                
+                // SI ESTÁ EN PAUSA, AÑADIR 3 DÍAS ADICIONALES
+                let additionalTime = 0;
+                if (currentStatus === 'en_pausa') {
+                    additionalTime = 3 * 24 * 60 * 60 * 1000; // 3 días adicionales
+                }
+                
+                const abandonmentTime = creationTime + maxDuration + additionalTime;
                 let remainingTime = abandonmentTime - now;
 
-                // ** LÓGICA DE PAUSA (3 DÍAS) **
-                const pauseDuration = 3 * 24 * 60 * 60 * 1000; 
-                
-                // Si el ticket está en pausa, reiniciamos el contador por 3 días
-                // Nota: Esta lógica es simplificada y asume que "en_proceso" es "pausa". 
-                // La lógica de abandono ya compensa para que los tickets en pausa no expiren inmediatamente.
-                // Aquí solo ajustamos el cálculo de tiempo *restante* visible en la UI.
-
-                // Si está en pausa, extendemos el límite por 3 días
-                if (ticketManager.currentTicketStatus === 'en_proceso') {
-                    // Si está en pausa, el tiempo de abandono es 5 días + 3 días
-                    remainingTime = (creationTime + maxDuration + pauseDuration) - now;
-                } else if (remainingTime <= 0) {
+                if (remainingTime <= 0) {
                     return { expired: true };
                 }
-
 
                 const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -644,7 +638,7 @@
                         return 'badge-success';
                     case 'abandono_de_actividades': 
                         return 'badge-danger';
-                    case 'en_proceso': 
+                    case 'en_pausa': // CAMBIADO: de en_proceso a en_pausa
                         return 'badge-warning';
                     case 'en_camino': 
                         return 'badge-primary'; 
@@ -653,6 +647,8 @@
                         return 'badge-danger';
                     case 'aceptado': 
                         return 'badge-info';
+                    case 'en_proceso': // Estado separado para trabajo activo
+                        return 'badge-primary';
                     default: 
                         return 'badge-info';
                 }
@@ -666,7 +662,7 @@
                         return 'fa-check-circle';
                     case 'abandono_de_actividades': 
                         return 'fa-exclamation-triangle';
-                    case 'en_proceso': 
+                    case 'en_pausa': // CAMBIADO: icono de pausa
                         return 'fa-pause-circle'; 
                     case 'en_camino': 
                         return 'fa-truck';
@@ -677,6 +673,8 @@
                         return 'fa-check';
                     case 'cancelado': 
                         return 'fa-times-circle'; 
+                    case 'en_proceso': // Icono para trabajo activo
+                        return 'fa-play-circle';
                     default: 
                         return 'fa-question-circle';
                 }
@@ -1056,8 +1054,8 @@
                 const now = Date.now();
                 const fiveDaysInMillis = 5 * 24 * 60 * 60 * 1000;
                 const ticketsToUpdate = [];
-                // Se incluye en_proceso aquí para que el contador no se dispare durante la pausa de 3 días.
-                const nonActiveStatuses = ['finalizado', 'cerrado', 'cancelado', 'abandono_de_actividades', 'completado', 'en_proceso']; 
+                // Se incluye en_pausa aquí para que el contador no se dispare durante la pausa de 3 días.
+                const nonActiveStatuses = ['finalizado', 'cerrado', 'cancelado', 'abandono_de_actividades', 'completado', 'en_pausa']; // CAMBIADO: en_proceso -> en_pausa
 
                 for (const ticket of tickets) {
                     const status = ticket.estado;
@@ -1296,13 +1294,19 @@
                         `;
                     }
                     
+                    // CORREGIDO: Se pasa el estado actual para el cálculo del tiempo de abandono
                     let abandonmentTimerHTML = '';
-                    const abandonmentTime = Utils.calculateAbandonmentTime(data.fechaCreacion);
+                    const abandonmentTime = Utils.calculateAbandonmentTime(data.fechaCreacion, data.estado);
 
                     if (data.estado !== 'abandono_de_actividades' && data.estado !== 'cerrado' && data.estado !== 'finalizado' && !abandonmentTime.expired) {
+                        // Indicar si está en pausa con tiempo adicional
+                        const pauseText = data.estado === 'en_pausa' ? 
+                            '<div style="color: #fd7e14; font-weight: bold; margin-bottom: 10px;"><i class="fas fa-info-circle"></i> TICKET EN PAUSA: Se añadieron 3 días adicionales al tiempo de abandono</div>' : '';
+                        
                         abandonmentTimerHTML = `
                             <div class="detail-section" style="border: 2px dashed #fd7e14; padding: 15px; border-radius: 8px;">
                                 <strong>Cierre por Inactividad Automático</strong>
+                                ${pauseText}
                                 <p style="font-size: 1.1em; color: #fd7e14; font-weight: bold;">
                                     <i class="fas fa-hourglass-half"></i> Tiempo restante para Abandono:
                                 </p>
@@ -1323,7 +1327,8 @@
                     }
                     
                     let pauseReasonHTML = '';
-                    if (data.estado === 'en_proceso' && data.pauseComment) {
+                    // CORREGIDO: Cambiado a 'en_pausa'
+                    if (data.estado === 'en_pausa' && data.pauseComment) {
                         pauseReasonHTML = `
                             <div class="detail-section" style="border-left: 5px solid #fd7e14; padding-left: 10px; background-color: rgba(253, 126, 20, 0.1);">
                                 <strong><i class="fas fa-pause-circle"></i> Razón de Pausa:</strong>
@@ -1578,11 +1583,12 @@
                             .status-badge { padding: 4px 8px; border-radius: 12px; font-weight: bold; color: white; white-space: nowrap; }
                             .status-aceptado, .status-completado { background-color: #17a2b8; }
                             .status-pendiente_de_aceptación, .status-pendiente { background-color: #ffc107; color: #333; }
-                            .status-en_proceso { background-color: #fd7e14; } 
+                            .status-en_pausa { background-color: #fd7e14; } <!-- CAMBIADO -->
                             .status-en_camino { background-color: #007bff; }
                             .status-abandono_de_actividades { background-color: #dc3545; } 
                             .status-cerrado, .status-finalizado { background-color: #28a745; }
                             .status-cancelado { background-color: #dc3545; }
+                            .status-en_proceso { background-color: #17a2b8; } <!-- NUEVO -->
                             .history-table td:nth-child(2) span,
                             .history-table td:nth-child(3) span { text-transform: capitalize; }
                             
@@ -1864,13 +1870,14 @@
             const colors = {
                 'pendiente_de_aceptación': '#ffc107',
                 'aceptado': '#17a2b8',
-                'en_proceso': '#fd7e14', 
+                'en_pausa': '#fd7e14', // CAMBIADO
                 'en_camino': '#007bff',
                 'completado': '#28a745',
                 'finalizado': '#28a745', 
                 'cerrado': '#6c757d',
                 'abandono_de_actividades': '#dc3545', 
-                'cancelado': '#dc3545' 
+                'cancelado': '#dc3545',
+                'en_proceso': '#17a2b8' // NUEVO
             };
             return colors[status] || '#6c757d';
         }
@@ -1968,5 +1975,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/navegación-operador.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/partuculas.js"></script>
 </body>
 </html>

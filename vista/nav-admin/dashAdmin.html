@@ -133,7 +133,7 @@
 <body class="cuerpo">
     <header class="nan_header">
         <nav class="nan_navbar">
-            <div class="nan_logo">
+            <div class="nan_logo" >
                 <img src="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png" alt="Logo">
             </div>
             <button class="nan_hamburger">&#9776;</button>
@@ -324,22 +324,23 @@
         };
 
         // Manejo de autenticación
+        //Se cambio la ruta para que mande al lugar correcto 
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                window.location.href = "../nav-visitantes/inicio-de-sesion.html";
+                window.location.href = "../nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
                 return;
             }
 
             try {
                 const userDoc = await db.collection("usuarios").doc(user.uid).get();
                 if (!userDoc.exists || userDoc.data().rol !== "admin") {
-                    window.location.href = "../nav-visitantes/inicio-de-sesion.html";
+                    window.location.href = "../nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
                     return;
                 }
                 actualizarContadores();
             } catch (error) {
                 console.error("Error de autenticación:", error);
-                window.location.href = "../nav-visitantes/inicio-de-sesion.html";
+                window.location.href = "../nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
             }
         });
 
@@ -357,7 +358,7 @@
                 if (result.isConfirmed) {
                     auth.signOut().then(() => {
                         localStorage.removeItem(CACHE_KEY); // Limpiar caché
-                        window.location.href = "../nav-visitantes/inicio-de-sesion.html";
+                        window.location.href = "../nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
                     });
                 }
             });

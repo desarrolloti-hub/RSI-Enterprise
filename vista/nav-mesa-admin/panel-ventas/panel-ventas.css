@@ -1,0 +1,136 @@
+/* admin-entregas.css */
+
+.titulo-pagina {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Tabla Adaptable */
+.table {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+.table thead th {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-bottom: 1px solid rgba(128,128,128,0.2);
+    padding: 12px;
+}
+
+.table-hover tbody tr:hover td {
+    background-color: rgba(var(--primary-rgb), 0.05) !important;
+}
+
+/* Badges de Estado */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.8em;
+}
+
+/* Botones de Acción */
+.btn-detalles:hover {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+/* Paginación */
+.pagination-container {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(128,128,128,0.2);
+    color: var(--text-color);
+}
+
+#paginaActual {
+    color: var(--primary-color);
+}
+
+/* Modal personalizado (ajustes sobre SweetAlert) */
+.bg-light {
+    background-color: rgba(128,128,128,0.1) !important;
+    color: var(--text-color) !important;
+}
+
+/* Botón Principal */
+.btn-primary, .btn-outline-primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+/* ... (todo tu código css anterior) ... */
+
+/* ESTILOS PARA EL MODAL DE DETALLES */
+
+/* Asegurar que el texto dentro del modal herede el color del tema */
+.custom-modal-body {
+    color: var(--text-color) !important;
+}
+
+.custom-modal-body .text-muted {
+    color: var(--text-color) !important;
+    opacity: 0.6;
+}
+
+/* Forzar que la tabla dentro del modal use el color de texto correcto */
+.custom-modal-body table {
+    color: var(--text-color) !important;
+}
+
+.custom-modal-body thead th {
+    color: var(--primary-color) !important;
+}
+
+/* Ajustes de bordes para que se vean sutiles */
+.border-secondary {
+    border-color: rgba(128,128,128,0.3) !important;
+}
+
+/* Si usas modo oscuro, esto ayuda a que los fondos internos resalten un poco */
+.bg-opacity-10 {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+
+/* PERSONALIZACIÓN BOTÓN SECUNDARIO (DETALLES) */
+.btn-outline-secondary {
+    color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    background-color: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--secondary-color) !important;
+    color: white !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Ajustes Responsive */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
