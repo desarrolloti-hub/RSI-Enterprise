@@ -905,6 +905,9 @@
                         <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
                             <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                         </a>
+                        <a href="../sistema-reportes/sistema-reportes.html" class="menu-nav-btn">
+                            <i class="fas fa-bug"></i> Gestión de errores
+                        </a>
                         <a href="../manuales/manuales.html" class="menu-nav-btn">
                             <i class="fas fa-file-alt"></i> Ver manuales
                         </a>

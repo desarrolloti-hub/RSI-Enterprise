@@ -10,7 +10,9 @@
     const userDisplay = document.getElementById('userInfoDisplay');
     const origenInput = document.getElementById('origenUrl');
     const moduloInput = document.getElementById('modulo');
+    
     let currentUser = null;
+    let currentUserName = 'Anónimo'; // Variable para guardar el nombre real de la BD
 
     // ==========================================
     // FUNCIONES AUXILIARES
@@ -22,13 +24,13 @@
         const sourcePath = sessionStorage.getItem('tempReportSource');
 
         if (screenshotData) {
+            console.log("📸 Captura encontrada en sesión, tamaño:", screenshotData.length);
             imgPreview.src = screenshotData;
             screenshotDataField.value = screenshotData;
             screenshotArea.style.display = 'block';
 
             if (sourcePath && origenInput) {
                 origenInput.value = sourcePath;
-                // Formatear nombre del módulo
                 const cleanModule = sourcePath.split('/').pop().replace(/-/g, ' ') || 'Inicio';
                 if(moduloInput) {
                     moduloInput.value = cleanModule.charAt(0).toUpperCase() + cleanModule.slice(1);
@@ -52,10 +54,16 @@
 
     // Subir imagen a Storage
     const uploadScreenshotToStorage = async (base64String, userId) => {
+        // Validación básica
+        if (!base64String || base64String.length < 100) {
+            throw new Error("La cadena base64 de la imagen está vacía o corrupta.");
+        }
+
         const storageRef = firebase.storage().ref();
         const fileName = `reportes_screenshots/${userId || 'anon'}_${Date.now()}.jpg`;
         const imageRef = storageRef.child(fileName);
 
+        // Convertir Base64 a Blob
         const response = await fetch(base64String);
         const blob = await response.blob();
 
@@ -63,18 +71,43 @@
         return await snapshot.ref.getDownloadURL();
     };
 
+    // Función para obtener datos reales del colaborador
+    const fetchUserData = async (email) => {
+        try {
+            const db = firebase.firestore();
+            const snapshot = await db.collection('colaboradores')
+                .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                .limit(1)
+                .get();
+
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                // Ajusta 'NOMBRE' según como lo tengas en tu BD (NOMBRE, nombre, Name, etc.)
+                currentUserName = data.NOMBRE || data.nombre || data.nombreCompleto || email;
+                console.log("👤 Nombre encontrado en BD:", currentUserName);
+            } else {
+                console.warn("⚠️ Usuario no encontrado en colección colaboradores");
+                currentUserName = email; // Fallback al email
+            }
+        } catch (error) {
+            console.error("Error buscando usuario:", error);
+        }
+    };
+
     // ==========================================
     // INICIALIZACIÓN
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
         // A. Auth Observer
-        firebase.auth().onAuthStateChanged((user) => {
+        firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
                 if(userDisplay) {
                     userDisplay.textContent = user.email;
                     userDisplay.classList.add('logged-in');
                 }
+                // Obtener el nombre real de la base de datos
+                await fetchUserData(user.email);
             } else {
                 if(userDisplay) userDisplay.textContent = 'Usuario Anónimo';
             }
@@ -113,7 +146,7 @@
     });
 
    // ==========================================
-    // 2. FUNCIÓN DE ENVÍO (CON VALIDACIÓN Y SUBIDA)
+    // 2. FUNCIÓN DE ENVÍO
     // ==========================================
     const handleFormSubmit = async (e) => {
         e.preventDefault();
@@ -122,85 +155,77 @@
         const originalBtnText = submitBtn.innerHTML;
         let screenshotURL = null;
 
-        // 1. Recolección de datos crudos para validación
         const descripcion = document.getElementById('descripcion').value;
         const tipo = document.getElementById('tipo').value;
         const screenshotBase64 = screenshotDataField.value;
 
-        // Preparar objeto para el validador
+        // 1. Validaciones
         const dataToValidate = {
             description: descripcion,
             type: tipo,
             module: document.getElementById('modulo').value,
-            // Simulamos el attachment para el validador si hay imagen base64
             attachments: screenshotBase64 ? [{ sizeBytes: Math.round(screenshotBase64.length * 0.75) }] : []
         };
 
-        // 2. VALIDACIÓN CON ERRORFILTER (El "filtro justo")
         if (window.ErrorFilter) {
             const validacion = await window.ErrorFilter.validateManualReport(dataToValidate);
-            
             if (!validacion.isValid) {
-                // Si no pasa el filtro, mostramos la advertencia y detenemos todo
                 Swal.fire({
                     icon: 'warning',
                     title: 'Falta información',
                     text: validacion.message,
                     confirmButtonColor: 'var(--primary)'
                 });
-                return; // 🛑 DETENER ENVÍO
+                return; 
             }
         }
 
         try {
-            // 3. UI Loading (Deshabilitar botón)
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
             const db = firebase.firestore();
 
-            // 4. Subir imagen a Storage (Si existe)
-            if (screenshotBase64) {
+            // 2. Subir imagen (AHORA SI MOSTRAMOS EL ERROR SI FALLA)
+            if (screenshotBase64 && screenshotBase64.length > 0) {
                 try {
                     submitBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Subiendo evidencia...';
-                    // Usamos el UID del usuario o 'anonimo' para la carpeta
                     const userId = currentUser ? currentUser.uid : 'anonimo';
+                    console.log("🚀 Iniciando subida de imagen...");
                     screenshotURL = await uploadScreenshotToStorage(screenshotBase64, userId);
+                    console.log("✅ Imagen subida URL:", screenshotURL);
                 } catch (uploadError) {
-                    console.error("Error subiendo imagen:", uploadError);
-                    // Decidimos continuar aunque falle la imagen, pero avisamos en consola
-                    // Si prefieres que se detenga, lanza un throw aquí.
+                    console.error("❌ Error CRÍTICO subiendo imagen:", uploadError);
+                    // Lanzamos el error para detener el proceso y avisar al usuario
+                    // Si prefieres que se guarde sin imagen, comenta la siguiente linea:
+                    throw new Error("No se pudo subir la captura de pantalla: " + uploadError.message);
                 }
+            } else {
+                console.log("ℹ️ No hay captura de pantalla para subir.");
             }
 
-            // 5. Construcción del objeto final para Firestore
+            // 3. Guardar en Firestore
             submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardando reporte...';
 
             const reportePayload = {
-                // Datos del formulario
                 tipo: tipo,
                 prioridad: document.getElementById('prioridad').value,
                 moduloUsuario: document.getElementById('modulo').value,
                 descripcion: descripcion,
                 origenDetectado: document.getElementById('origenUrl').value,
-
-                // Imagen (URL de descarga o null)
-                capturaPantallaUrl: screenshotURL || null,
-                
-                // Metadatos automáticos
-                estado: 'Pendiente', // Flujo: Pendiente -> En Revisión -> Resuelto
+                capturaPantallaUrl: screenshotURL || null, // Aquí se guarda la URL
+                estado: 'Pendiente',
                 origenReporte: 'manual_web',
                 
-                // Auditoría
+                // AQUÍ ESTÁ LA CORRECCIÓN DEL NOMBRE
                 creadoPor: currentUser ? {
                     uid: currentUser.uid,
                     email: currentUser.email,
-                    displayName: currentUser.displayName || 'Sin nombre'
+                    displayName: currentUserName // Usamos la variable que llenamos desde BD
                 } : 'Anónimo',
                 
                 fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
                 
-                // Contexto Técnico (Útil para ti como dev)
                 contextoTecnico: {
                     navegador: navigator.userAgent,
                     plataforma: navigator.platform,
@@ -210,10 +235,8 @@
                 }
             };
 
-            // 6. Guardar en Firestore (Colección 'reportesSistema')
             await db.collection('reportesSistema').add(reportePayload);
 
-            // 7. Éxito
             Swal.fire({
                 icon: 'success',
                 title: '¡Recibido!',
@@ -222,28 +245,19 @@
                 timer: 2000,
                 showConfirmButton: false
             }).then(() => {
-                // Regresar a la pantalla anterior automáticamente
                 window.history.back();
             });
 
         } catch (error) {
-            // Si algo falla (red, permisos, etc.)
             console.error('Error reportando:', error);
             
-            // Usamos tu manejador global si está disponible, si no, alerta normal
-            if (window.manejarErrorGlobal) {
-                window.manejarErrorGlobal(error);
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al enviar',
-                    text: 'Hubo un problema técnico al guardar tu reporte. Intenta de nuevo.',
-                    footer: error.message
-                });
-            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al enviar',
+                text: 'Hubo un problema: ' + error.message, // Mostramos el mensaje real
+            });
 
         } finally {
-            // Restaurar botón siempre (éxito o error)
             if(submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;

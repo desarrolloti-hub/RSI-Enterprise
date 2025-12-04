@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes del Sistema</title>
+    <title>Gestión de Reportes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./sistema-reportes.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
@@ -16,35 +17,24 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1><i class="fas fa-bug"></i> Reportes de Sistema</h1>
-                <p style="color: #666; font-size: 0.9rem;">Gestión de errores y sugerencias de la plataforma.</p>
+                <h1><i class="fas fa-tools"></i> Mesa de Reportes</h1>
+                <p style="color: #666; font-size: 0.9rem;">Gestión técnica de incidencias.</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-primary" onclick="crearReporteDemo()">
-                    <i class="fas fa-plus"></i> Nuevo Reporte
-                </button>
-                <button class="btn-secondary" onclick="window.history.back()">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </button>
+            
             </div>
-        </div>
-        <div>
-                <h1><i class="fas fa-bug"></i> Reportes de Sistema</h1>
-                <p style="color: #666; font-size: 0.9rem;">Gestión de errores y sugerencias de la plataforma.</p>
-        </div>
 
         <div class="kpi-grid">
             <div class="kpi-card danger">
                 <h3>Pendientes</h3>
-                <span id="countPending">0</span>
+                <span id="countPending">--</span>
             </div>
             <div class="kpi-card warning">
-                <h3>En Revisión</h3>
-                <span id="countReview">0</span>
+                <h3>En Proceso</h3>
+                <span id="countProcess">--</span>
             </div>
             <div class="kpi-card success">
                 <h3>Resueltos</h3>
-                <span id="countSolved">0</span>
+                <span id="countSolved">--</span>
             </div>
         </div>
 
@@ -53,23 +43,23 @@
                 <thead>
                     <tr>
                         <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Descripción</th>
-                        <th>Modulo</th>
-                        <th>Usuario</th>
-                        <th>Prioridad</th>
+                        <th>Reportado Por</th>
+                        <th>Módulo / Origen</th>
+                        <th>Incidencia</th>
+                        <th>Evidencia</th>
                         <th>Estado</th>
-                        <th>Acción</th>
+                        <th style="text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="reportsTableBody">
-                    <tr><td colspan="8" style="text-align:center;">Cargando sistema...</td></tr>
+                    <tr><td colspan="7" style="text-align:center; padding: 20px;">Cargando base de datos...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <script src="../js/firebase-init.js"></script>
+    <script src="../js/filtrar-error.js"></script>
+    <script src="../js/config/firebase-init.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
     
