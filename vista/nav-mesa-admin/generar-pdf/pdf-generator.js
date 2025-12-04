@@ -18,6 +18,10 @@ const pdfManager = {
     FOOTER_HEIGHT: 15,
     COLOR_AZUL_MARINO: '#002D62',
     COLOR_DORADO: '#D4AF37',
+    
+    // Tamaño estándar para imágenes en el PDF (45mm x 45mm como en la imagen original)
+    IMAGE_WIDTH: 45, // mm (tamaño original)
+    IMAGE_HEIGHT: 45, // mm (tamaño original)
 
     // Inicializar el manager
     initialize(colaboradores, db) {
@@ -36,143 +40,68 @@ const pdfManager = {
         return this.getAvailableHeight(doc, currentY) < requiredHeight;
     },
 
-    // NUEVA FUNCIÓN: Agregar nueva página con encabezado
+    // NUEVA FUNCIÓN CORREGIDA: Agregar nueva página con encabezado
     addNewPageWithHeader(doc, reportTitle) {
-        this.addFooter(doc);
+        // Agregar pie de página a la página actual
+        if (this.currentPage > 1) {
+            this.addFooter(doc);
+        }
+        
+        // Agregar nueva página
         doc.addPage();
         this.currentPage++;
         
+        // Agregar encabezado a la nueva página
         const y = this.PAGE_MARGINS.top;
         this.addHeaderNewFormat(doc, reportTitle, this.PAGE_MARGINS.left, y);
         
         return y + this.HEADER_HEIGHT + 5;
     },
 
-    // Preparar la generación del PDF con SweetAlert2
-    async preparePdfGenerationWithSweetAlert(ticketData) {
-        this.ticketData = ticketData;
-        this.featuredItem = null;
-        this.currentPage = 1;
-        this.totalPages = 1;
-
-        // Crear HTML para las imágenes disponibles
-        let imagesHtml = '';
-        if (ticketData.imagenes && ticketData.imagenes.length > 0) {
-            imagesHtml = ticketData.imagenes.map(imgUrl => `
-                <div class="image-item" style="text-align: center; cursor: pointer; padding: 8px; border: 2px solid transparent; border-radius: 8px; transition: all 0.3s ease;" onclick="pdfManager.selectImage(this, '${imgUrl}')">
-                    <img src="${imgUrl}" style="width: 100%; height: 80px; object-fit: cover; border-radius: 5px;">
-                    <small style="display: block; margin-top: 0px; color: #666; font-size: 15px;">Seleccionar</small>
-                </div>
-            `).join('');
-        } else {
-            imagesHtml = '<p style="text-align: center; color: #666; padding: 20px;">No hay imágenes disponibles para este ticket.</p>';
+    // NUEVA FUNCIÓN: Crear y guardar PDF con descripciones
+    async createAndSavePdfWithDescriptions(imageDescriptions = []) {
+        if (!this.ticketData) {
+            Swal.fire('Error', 'No hay datos del ticket para generar el PDF.', 'error');
+            return;
         }
 
-        // Crear el modal con SweetAlert2
-        const { value: formValues } = await Swal.fire({
-            title: 'Adjuntar a Reporte PDF',
-            html: `
-                <div>
-                    <p>Seleccione una evidencia existente o suba un nuevo archivo (Imagen o PDF) para adjuntarlo al final del reporte.</p>
-                    
-                    <div style="margin: 15px 0; padding: 15px; border-radius: 8px;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 10px;">Subir un archivo nuevo para adjuntar</label>
-                        <input type="file" id="swalFeaturedFileUpload" 
-                            accept="image/*,.pdf">
-                        <small style="display: block; margin-top: 5px; font-size: 12px;">
-                            Formatos aceptados: JPG, PNG, PDF (Tamaño máximo: 10MB)
-                        </small>
-                    </div>
-
-                    <p style="margin: 20px 0 10px 0; font-weight: 500;">O seleccione una de las evidencias existentes:</p>
-                    <div id="swalImageSelectionGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; max-height: 300px; overflow-y: auto; padding: 15px; border-radius: 8px;">
-                        ${imagesHtml}
-                    </div>
-
-                    <div style="margin-top: 15px; padding: 12px; border-radius: 6px; border-left: 4px solid;">
-                        <small style="font-size: 12px;">
-                            <strong>💡 Nota:</strong> La selección de archivo es opcional. Puede generar el PDF sin adjuntar archivos adicionales.
-                        </small>
-                    </div>
-                </div>
-            `,
-            width: 800,
-            showCancelButton: true,
-            confirmButtonText: 'Generar PDF',
-            cancelButtonText: 'Cancelar',
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return new Promise((resolve) => {
-                    resolve();
-                });
-            },
-            didOpen: () => {
-                const fileUpload = document.getElementById('swalFeaturedFileUpload');
-                fileUpload.addEventListener('change', (e) => {
-                    this.handleFileUpload(e);
-                    document.querySelectorAll('#swalImageSelectionGrid .image-item').forEach(item => {
-                        item.style.borderColor = 'transparent';
-                        item.style.backgroundColor = 'transparent';
-                    });
-                });
-            }
+        Swal.fire({ 
+            title: 'Generando PDF', 
+            html: 'Aplicando marcas de agua y creando documento...', 
+            allowOutsideClick: false, 
+            didOpen: () => Swal.showLoading() 
         });
 
-        if (formValues) {
-            // Generar el PDF
-            await this.createAndSavePdf();
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            // Determinar tipo de reporte basado en la imagen proporcionada
+            const reportTitle = 'REPORTE FOTOGRÁFICO';
+            
+            // Generar el PDF con el nuevo formato y descripciones
+            await this.generatePdfContentNewFormat(doc, this.ticketData, reportTitle, imageDescriptions);
+            
+            // Agregar pie de página final
+            this.addFooter(doc);
+            
+            // Guardar PDF
+            const fileName = `${reportTitle.replace(/\s+/g, '_')}_${this.ticketData.idTicket || this.ticketData.id || 'ticket'}.pdf`;
+            doc.save(fileName);
+            
+            Swal.close();
+            Swal.fire({ 
+                title: '¡PDF Generado!', 
+                text: `El archivo "${fileName}" se ha descargado exitosamente.`, 
+                icon: 'success', 
+                confirmButtonColor: '#6C43E0',
+                timer: 3000
+            });
+            
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+            Swal.fire('Error', 'Ocurrió un error al generar el PDF.', 'error');
         }
-    },
-
-    // Manejar subida de archivos
-    handleFileUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                this.featuredItem = { 
-                    type: 'image', 
-                    data: event.target.result,
-                    fileName: file.name
-                };
-            };
-            reader.readAsDataURL(file);
-        } else if (file.type === 'application/pdf') {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                this.featuredItem = { 
-                    type: 'pdf', 
-                    data: event.target.result,
-                    fileName: file.name
-                };
-            };
-            reader.readAsDataURL(file);
-        } else {
-            Swal.fire('Formato no válido', 'Solo se permiten imágenes y archivos PDF.', 'warning');
-            e.target.value = '';
-        }
-    },
-
-    // Seleccionar imagen existente
-    selectImage(element, imageUrl) {
-        // Deseleccionar todas las imágenes
-        document.querySelectorAll('#swalImageSelectionGrid .image-item').forEach(item => {
-            item.style.borderColor = 'transparent';
-            item.style.backgroundColor = 'transparent';
-        });
-
-        // Seleccionar la imagen clickeada
-        element.style.borderColor = '#6C43E0';
-        element.style.backgroundColor = 'rgba(108, 67, 224, 0.1)';
-
-        // Limpiar input de archivo
-        const fileUpload = document.getElementById('swalFeaturedFileUpload');
-        if (fileUpload) fileUpload.value = '';
-
-        // Establecer como elemento destacado
-        this.featuredItem = { type: 'image', data: imageUrl };
     },
 
     // Función principal para crear y guardar PDF
@@ -199,6 +128,9 @@ const pdfManager = {
             // Generar el PDF con el nuevo formato
             await this.generatePdfContentNewFormat(doc, this.ticketData, reportTitle);
             
+            // Agregar pie de página final
+            this.addFooter(doc);
+            
             // Guardar PDF
             const fileName = `${reportTitle.replace(/\s+/g, '_')}_${this.ticketData.idTicket || this.ticketData.id || 'ticket'}.pdf`;
             doc.save(fileName);
@@ -219,7 +151,7 @@ const pdfManager = {
     },
 
     // NUEVA FUNCIÓN: Generar contenido del PDF en el formato de la imagen
-    async generatePdfContentNewFormat(doc, ticketData, reportTitle) {
+    async generatePdfContentNewFormat(doc, ticketData, reportTitle, imageDescriptions = []) {
         const MARGIN = this.PAGE_MARGINS.left;
         const PAGE_WIDTH = doc.internal.pageSize.getWidth();
         const CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
@@ -237,17 +169,131 @@ const pdfManager = {
 
         // ===== DESCRIPCIÓN DE ACTIVIDADES =====
         y = this.addActivityDescriptionSimple(doc, ticketData, MARGIN, y, CONTENT_WIDTH);
-
-        // ===== EVIDENCIAS FOTOGRÁFICAS =====
-        y = await this.addEvidenceImagesGrid(doc, ticketData, MARGIN, y, CONTENT_WIDTH);
-
-        // ===== ELEMENTO DESTACADO (si existe) =====
-        if (this.featuredItem) {
-            y = await this.addFeaturedItemNewFormat(doc, MARGIN, y, CONTENT_WIDTH);
+        
+        // ===== DESCRIPCIÓN DE EVIDENCIAS (si existe) =====
+        if (ticketData.descripcionEvidencias && ticketData.descripcionEvidencias.trim() !== '') {
+            y = this.addEvidenciasDescription(doc, ticketData, MARGIN, y, CONTENT_WIDTH);
         }
 
-        // ===== FIRMAS =====
-        this.addSignaturesCentered(doc, ticketData, MARGIN, y, PAGE_WIDTH);
+        // ===== EVIDENCIAS FOTOGRÁFICAS (SIEMPRE EN NUEVA PÁGINA) =====
+        // Verificar si necesitamos nueva página para evidencias
+        if (this.needsNewPage(doc, y, 50)) {
+            y = this.addNewPageWithHeader(doc, reportTitle);
+        } else if (y > this.PAGE_MARGINS.top + this.HEADER_HEIGHT + 20) {
+            // Si ya hay contenido en la página actual, forzar nueva página para evidencias
+            y = this.addNewPageWithHeader(doc, reportTitle);
+        }
+        
+        // Agregar título de evidencias fotográficas
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
+        doc.text('EVIDENCIAS FOTOGRÁFICAS', MARGIN, y);
+        y += 15;
+        
+        y = await this.addEvidenceImagesGrid(doc, ticketData, MARGIN, y, CONTENT_WIDTH, imageDescriptions);
+
+        // ===== ORDEN DE SERVICIO (SIEMPRE EN NUEVA PÁGINA) =====
+        if (this.featuredItem) {
+            // Forzar nueva página para orden de servicio
+            y = this.addNewPageWithHeader(doc, reportTitle);
+            y = await this.addFeaturedItemNewFormat(doc, MARGIN, y, CONTENT_WIDTH);
+        }
+        
+        // ===== CONCLUSIÓN Y SELLO (EN NUEVA PÁGINA SI ES NECESARIO) =====
+        // Verificar si necesitamos nueva página para conclusión y sello
+        const neededHeightForSeal = 80; // Espacio para conclusión + sello + nombre
+        if (this.needsNewPage(doc, y, neededHeightForSeal)) {
+            y = this.addNewPageWithHeader(doc, reportTitle);
+        }
+        
+        // ===== CONCLUSIÓN (si existe) =====
+        if (ticketData.conclusion && ticketData.conclusion.trim() !== '') {
+            y = this.addConclusionSection(doc, ticketData, MARGIN, y, CONTENT_WIDTH);
+        }
+        
+        // ===== SELLO DE OPERACIONES CON JEFE OPERATIVO =====
+        await this.addSealWithJefeOperativo(doc, ticketData, MARGIN, y, PAGE_WIDTH);
+    },
+    
+    // NUEVA FUNCIÓN: Agregar descripción de evidencias
+    addEvidenciasDescription(doc, ticketData, MARGIN, y, CONTENT_WIDTH) {
+        const reportTitle = 'REPORTE FOTOGRÁFICO';
+        
+        // Verificar si necesitamos nueva página
+        const minSpaceForTitle = 20;
+        if (this.needsNewPage(doc, y, minSpaceForTitle)) {
+            y = this.addNewPageWithHeader(doc, reportTitle);
+        }
+
+        // Título de la sección en azul marino
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
+        doc.text('DESCRIPCIÓN DE EVIDENCIAS', MARGIN, y);
+        
+        y += 8;
+
+        // Descripción de evidencias
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor('#000000');
+        
+        const descripcionText = ticketData.descripcionEvidencias || '';
+        
+        if (descripcionText.trim() !== '') {
+            const splitDescripcion = doc.splitTextToSize(descripcionText, CONTENT_WIDTH);
+            
+            // Verificar espacio para la descripción
+            const descHeight = splitDescripcion.length * 4;
+            if (this.needsNewPage(doc, y, descHeight)) {
+                y = this.addNewPageWithHeader(doc, reportTitle);
+                doc.text('DESCRIPCIÓN DE EVIDENCIAS (continuación)', MARGIN, y);
+                y += 8;
+            }
+            
+            doc.text(splitDescripcion, MARGIN, y);
+            y += descHeight + 10;
+        }
+
+        return y;
+    },
+    
+    // NUEVA FUNCIÓN: Agregar sección de conclusión
+    addConclusionSection(doc, ticketData, MARGIN, y, CONTENT_WIDTH) {
+        const reportTitle = 'REPORTE FOTOGRÁFICO';
+
+        // Título de la sección en azul marino
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(this.COLOR_AZUL_MARINO);
+        doc.text('CONCLUSIÓN', MARGIN, y);
+        
+        y += 8;
+
+        // Conclusión
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor('#000000');
+        
+        const conclusionText = ticketData.conclusion || '';
+        
+        if (conclusionText.trim() !== '') {
+            const splitConclusion = doc.splitTextToSize(conclusionText, CONTENT_WIDTH);
+            
+            // Verificar espacio para la conclusión
+            const conclusionHeight = splitConclusion.length * 4;
+            if (this.needsNewPage(doc, y, conclusionHeight)) {
+                y = this.addNewPageWithHeader(doc, reportTitle);
+                doc.text('CONCLUSIÓN (continuación)', MARGIN, y);
+                y += 8;
+            }
+            
+            doc.text(splitConclusion, MARGIN, y);
+            y += conclusionHeight + 20; // Espacio extra antes del sello
+        }
+
+        return y;
     },
 
     // NUEVO ENCABEZADO con logo y Agency FB - CORREGIDO
@@ -399,21 +445,13 @@ const pdfManager = {
             getDynamicValue(ticketData.servicio, 'Revision y mantenimiento'), 
             midX + 2, y + 29, CONTENT_WIDTH/2 - 2);
         
-        // Fila 5: CORREO | TÉCNICO RESPONSABLE
+        // Fila 5: CORREO | TÉCNICO RESPONSABLE (JEFE OPERATIVO)
         this.addTableFieldUnified(doc, 'CORREO:', 
             getDynamicValue(ticketData.correo, 'N/A'), 
             MARGIN, y + 37, CONTENT_WIDTH/2 - 2);
         
-        // SOLO EL PRIMER COLABORADOR como técnico responsable
-        let tecnicoResponsable = 'Samuel Alejandro Aragón Vilchez';
-        if (ticketData.nombresColaboradores && ticketData.nombresColaboradores !== 'Ninguno') {
-            const colaboradoresArray = ticketData.nombresColaboradores.split(',');
-            tecnicoResponsable = colaboradoresArray[0].trim();
-        }
-
-        this.addTableFieldUnified(doc, 'TÉCNICO RESPONSABLE:', 
-            getDynamicValue(tecnicoResponsable, 'Samuel Alejandro Aragón Vilchez'), 
-            midX + 2, y + 37, CONTENT_WIDTH/2 - 2);
+        // USAR EL JEFE OPERATIVO SELECCIONADO
+        
 
         return y + TABLE_HEIGHT + 5;
     },
@@ -522,55 +560,49 @@ const pdfManager = {
         return y + descHeight + 10;
     },
 
-    // EVIDENCIAS FOTOGRÁFICAS EN GRID (máximo 3 por fila) - MEJORADA
-    async addEvidenceImagesGrid(doc, ticketData, MARGIN, y, CONTENT_WIDTH) {
+    // EVIDENCIAS FOTOGRÁFICAS EN GRID (máximo 3 por fila) - TAMAÑO ORIGINAL
+    async addEvidenceImagesGrid(doc, ticketData, MARGIN, y, CONTENT_WIDTH, imageDescriptions = []) {
         if (!ticketData.imagenes || ticketData.imagenes.length === 0) {
             return y;
         }
 
-        const reportTitle = 'REPORTE FOTOGRÁFICO';
+        // Configuración del grid - 3 imágenes por fila con tamaño original
+        const imagesPerRow = 3;
+        const imageSpacing = 5; // Espacio entre imágenes
+        const imageWidth = this.IMAGE_WIDTH; // Tamaño original 45mm
+        const imageHeight = this.IMAGE_HEIGHT; // Tamaño original 45mm
+        const descriptionHeight = 12; // Espacio para descripciones
+        const rowSpacing = 15;
         
-        // Verificar si necesitamos nueva página antes de empezar
-        const minSpaceForTitle = 20;
-        if (this.needsNewPage(doc, y, minSpaceForTitle)) {
-            y = this.addNewPageWithHeader(doc, reportTitle);
-        }
-
-        // Título de la sección en azul marino
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.setTextColor(this.COLOR_AZUL_MARINO);
-        doc.text('EVIDENCIAS FOTOGRÁFICAS', MARGIN, y);
-        y += 10;
+        // Calcular ancho total de una fila
+        const rowWidth = (imageWidth * imagesPerRow) + (imageSpacing * (imagesPerRow - 1));
+        
+        // Centrar el grid si es necesario
+        const startX = MARGIN + ((CONTENT_WIDTH - rowWidth) / 2);
+        let currentX = startX;
+        let currentY = y;
 
         const currentTime = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
         const address = 'C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx.';
 
-        // Configuración del grid
-        const imagesPerRow = 3;
-        const imageWidth = (CONTENT_WIDTH - 10) / imagesPerRow;
-        const imageHeight = 45;
-        const rowSpacing = 15;
-        
-        let currentX = MARGIN;
-        let currentY = y;
-
         // Procesar todas las imágenes con gestión de páginas mejorada
         for (let i = 0; i < ticketData.imagenes.length; i++) {
             const imageUrl = ticketData.imagenes[i];
+            const imageDesc = imageDescriptions[i] || '';
             
             // Verificar si necesitamos nueva página para la siguiente imagen
-            const spaceNeeded = imageHeight + rowSpacing;
+            const spaceNeeded = imageHeight + descriptionHeight + rowSpacing;
             if (this.needsNewPage(doc, currentY, spaceNeeded)) {
-                currentY = this.addNewPageWithHeader(doc, reportTitle);
-                currentX = MARGIN;
+                // Crear nueva página
+                y = this.addNewPageWithHeader(doc, 'REPORTE FOTOGRÁFICO');
                 
                 // Re-agregar título de sección en nueva página
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(12);
                 doc.setTextColor(this.COLOR_AZUL_MARINO);
-                doc.text('EVIDENCIAS FOTOGRÁFICAS (continuación)', MARGIN, currentY);
-                currentY += 10;
+                doc.text('EVIDENCIAS FOTOGRÁFICAS (continuación)', MARGIN, y);
+                currentY = y + 15;
+                currentX = startX;
             }
 
             try {
@@ -579,16 +611,16 @@ const pdfManager = {
                     const imageWithWatermark = await this.addWatermarkNewFormat(imageDataUrl, address, currentTime);
                     const img = await this.loadImage(imageWithWatermark);
                     
-                    // Calcular dimensiones manteniendo proporción
+                    // Calcular dimensiones manteniendo proporción pero ajustando al tamaño original
                     const aspectRatio = img.width / img.height;
                     let finalWidth = imageWidth;
                     let finalHeight = imageHeight;
                     
                     if (aspectRatio > 1) {
-                        // Imagen horizontal
+                        // Imagen horizontal - mantener ancho, ajustar altura
                         finalHeight = imageWidth / aspectRatio;
                     } else {
-                        // Imagen vertical
+                        // Imagen vertical - mantener altura, ajustar ancho
                         finalWidth = imageHeight * aspectRatio;
                     }
                     
@@ -596,15 +628,38 @@ const pdfManager = {
                     const xOffset = currentX + (imageWidth - finalWidth) / 2;
                     const yOffset = currentY;
                     
+                    // Agregar la imagen con tamaño original
                     doc.addImage(imageWithWatermark, 'JPEG', xOffset, yOffset, finalWidth, finalHeight);
                     
+                    // Agregar descripción debajo de la imagen si existe
+                    if (imageDesc) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+                        doc.setTextColor('#000000');
+                        
+                        // Calcular posición Y para la descripción
+                        const descY = currentY + imageHeight + 3;
+                        
+                        // Verificar si hay espacio para la descripción
+                        if (!this.needsNewPage(doc, descY, descriptionHeight)) {
+                            // Dividir descripción si es muy larga
+                            const maxDescWidth = imageWidth - 2;
+                            const splitDesc = doc.splitTextToSize(imageDesc, maxDescWidth);
+                            
+                            splitDesc.forEach((line, lineIndex) => {
+                                const lineY = descY + (lineIndex * 4);
+                                doc.text(line, currentX, lineY);
+                            });
+                        }
+                    }
+                    
                     // Actualizar posición para la siguiente imagen
-                    currentX += imageWidth + 5;
+                    currentX += imageWidth + imageSpacing;
                     
                     // Si hemos llegado al máximo de imágenes por fila, pasar a la siguiente
                     if ((i + 1) % imagesPerRow === 0) {
-                        currentX = MARGIN;
-                        currentY += imageHeight + rowSpacing;
+                        currentX = startX;
+                        currentY += imageHeight + rowSpacing + (imageDesc ? descriptionHeight : 0);
                     }
                 }
             } catch (error) {
@@ -623,22 +678,6 @@ const pdfManager = {
             } else if (fullRows > 0) {
                 currentY += 5;
             }
-        }
-
-        // Agregar descripción general de evidencias al final
-        if (ticketData.descripcionEvidencias) {
-            const descHeight = 20; // Altura estimada para la descripción
-            
-            if (this.needsNewPage(doc, currentY, descHeight)) {
-                currentY = this.addNewPageWithHeader(doc, reportTitle);
-            }
-            
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor('#000000');
-            const splitDesc = doc.splitTextToSize(ticketData.descripcionEvidencias, CONTENT_WIDTH);
-            doc.text(splitDesc, MARGIN, currentY);
-            currentY += (splitDesc.length * 3) + 10;
         }
 
         return currentY;
@@ -677,272 +716,356 @@ const pdfManager = {
         }
     },
 
-    // NUEVO ELEMENTO DESTACADO - MEJORADO SIN TEXTO INNECESARIO
-// NUEVO ELEMENTO DESTACADO - MEJORADO CON VALIDACIÓN DE CONTENIDO
-async addFeaturedItemNewFormat(doc, MARGIN, y, CONTENT_WIDTH) {
-    const reportTitle = 'REPORTE FOTOGRÁFICO';
-    
-    // Guardar posición Y inicial para verificar si se agregó contenido
-    const initialY = y;
-    const initialPage = this.currentPage;
-    
-    // SIEMPRE CREAR NUEVA PÁGINA PARA EL DOCUMENTO ADICIONAL
-    y = this.addNewPageWithHeader(doc, reportTitle);
+    // NUEVO ELEMENTO DESTACADO - ORDEN DE SERVICIO SIN MARCA DE AGUA Y SIN HOJA EN BLANCO
+    async addFeaturedItemNewFormat(doc, MARGIN, y, CONTENT_WIDTH) {
+        const reportTitle = 'REPORTE FOTOGRÁFICO';
+        
+        // Verificar si necesitamos nueva página
+        const minSpaceForTitle = 30;
+        if (this.needsNewPage(doc, y, minSpaceForTitle)) {
+            y = this.addNewPageWithHeader(doc, reportTitle);
+        }
 
-    if (this.featuredItem) {
-        try {
-            if (this.featuredItem.type === 'image') {
-                // Verificar espacio para imagen
-                const imageHeight = 120;
-                if (this.needsNewPage(doc, y, imageHeight)) {
-                    y = this.addNewPageWithHeader(doc, reportTitle);
+        if (this.featuredItem) {
+            try {
+                // Título de la sección
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor(this.COLOR_AZUL_MARINO);
+                doc.text('ORDEN DE SERVICIO ADJUNTA', MARGIN, y);
+                y += 8;
+
+                if (this.featuredItem.type === 'image') {
+                    // Verificar espacio para imagen
+                    const estimatedHeight = 100;
+                    if (this.needsNewPage(doc, y, estimatedHeight)) {
+                        y = this.addNewPageWithHeader(doc, reportTitle);
+                        doc.text('ORDEN DE SERVICIO ADJUNTA (continuación)', MARGIN, y);
+                        y += 15;
+                    }
+                    
+                    // Procesar imagen SIN marca de agua
+                    const imageDataUrl = this.featuredItem.data;
+                    const img = await this.loadImage(imageDataUrl);
+                    
+                    // Calcular dimensiones manteniendo proporción
+                    const aspectRatio = img.width / img.height;
+                    let finalWidth = CONTENT_WIDTH;
+                    let finalHeight = (CONTENT_WIDTH / aspectRatio);
+                    
+                    // Limitar altura máxima
+                    if (finalHeight > 150) {
+                        finalHeight = 150;
+                        finalWidth = 150 * aspectRatio;
+                    }
+
+                    // Centrar la imagen
+                    const xOffset = MARGIN + (CONTENT_WIDTH - finalWidth) / 2;
+                    
+                    // Usar la imagen original SIN marca de agua
+                    doc.addImage(imageDataUrl, 'JPEG', xOffset, y, finalWidth, finalHeight);
+                    y += finalHeight + 10;
+                    
+                } else if (this.featuredItem.type === 'pdf') {
+                    // CONVERTIR PDF A IMÁGENES SIN MARCA DE AGUA Y SIN HOJA EN BLANCO
+                    y = await this.insertPdfAsImagesWithoutWatermark(doc, this.featuredItem.data, MARGIN, y, CONTENT_WIDTH, 'ORDEN DE SERVICIO');
                 }
+            } catch (error) {
+                console.error("Error al procesar orden de servicio:", error);
                 
-                // Procesar imagen directamente sin título
-                const imageDataUrl = this.featuredItem.data;
-                const currentTime = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                const address = 'C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx.';
-                
-                const imageWithWatermark = await this.addWatermarkNewFormat(imageDataUrl, address, currentTime);
-                const img = await this.loadImage(imageWithWatermark);
-                
-                const imgWidth = CONTENT_WIDTH;
-                const imgHeight = Math.min((img.height * imgWidth) / img.width, imageHeight);
-
-                doc.addImage(imageWithWatermark, 'JPEG', MARGIN, y, imgWidth, imgHeight);
-                y += imgHeight + 15;
-                
-            } else if (this.featuredItem.type === 'pdf') {
-                // Procesar PDF directamente sin texto adicional
-                y = await this.insertPdfAsImages(doc, this.featuredItem.data, MARGIN, y, CONTENT_WIDTH);
-            }
-        } catch (error) {
-            console.error("Error al procesar elemento destacado:", error);
-            
-            // Si no se pudo procesar y estamos en una página adicional vacía, no hacer nada
-            if (this.needsNewPage(doc, y, 15)) {
-                y = this.addNewPageWithHeader(doc, reportTitle);
+                // Mostrar mensaje de error
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor('#e74c3c');
+                doc.text('Error al procesar el archivo adjunto.', MARGIN, y);
+                y += 10;
             }
         }
-    }
 
-    // Verificar si se agregó contenido real
-    const contentAdded = (y > initialY + 10) || (this.currentPage > initialPage);
-    
-    if (!contentAdded) {
-        console.log("No se agregó contenido válido al documento adicional, omitiendo...");
-        // En este caso, podrías considerar eliminar la página, pero jsPDF no permite eliminar páginas
-        // Simplemente retornamos la Y inicial para continuar desde allí
-        return initialY;
-    }
+        return y;
+    },
 
-    return y;
-},
-    
-
-    // NUEVA FUNCIÓN: Convertir PDF a imágenes con manejo de errores mejorado
-async insertPdfAsImages(doc, pdfDataUrl, MARGIN, y, CONTENT_WIDTH) {
-    try {
-        const reportTitle = 'REPORTE FOTOGRÁFICO';
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-        
-        const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
-        const pdf = await loadingTask.promise;
-        const totalPages = pdf.numPages;
-
-        // Si no hay páginas, retornar sin hacer nada
-        if (totalPages === 0) {
-            console.warn("PDF vacío detectado");
+    // NUEVA FUNCIÓN: Convertir PDF a imágenes SIN marca de agua Y SIN HOJA EN BLANCO
+    async insertPdfAsImagesWithoutWatermark(doc, pdfDataUrl, MARGIN, y, CONTENT_WIDTH, sectionTitle = 'DOCUMENTO ADJUNTO') {
+        try {
+            const reportTitle = 'REPORTE FOTOGRÁFICO';
+            
+            // Configurar worker de PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+            
+            // Cargar el PDF
+            const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
+            const pdf = await loadingTask.promise;
+            const totalPages = pdf.numPages;
+            
+            console.log(`PDF cargado con ${totalPages} páginas`);
+            
+            // Procesar cada página
+            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                try {
+                    // Verificar si necesitamos nueva página antes de cada página del PDF
+                    const estimatedPageHeight = 150;
+                    if (this.needsNewPage(doc, y, estimatedPageHeight + 20)) {
+                        y = this.addNewPageWithHeader(doc, reportTitle);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(12);
+                        doc.setTextColor(this.COLOR_AZUL_MARINO);
+                        doc.text(`${sectionTitle} (continuación)`, MARGIN, y);
+                        y += 10;
+                    }
+                    
+                    const page = await pdf.getPage(pageNum);
+                    
+                    // Configurar viewport para renderizar
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    
+                    // Crear canvas para renderizar
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    
+                    // Renderizar la página del PDF en el canvas
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    
+                    await page.render(renderContext).promise;
+                    
+                    // Convertir canvas a DataURL
+                    const pageImage = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    // Calcular dimensiones para ajustar al ancho del contenido
+                    const scaleFactor = 0.9; // 80% del ancho disponible
+                    const imageWidth = CONTENT_WIDTH * scaleFactor; // 
+                    const imageHeight = (canvas.height * imageWidth) / canvas.width;
+                    
+                    // Verificar si necesitamos nueva página para esta imagen específica
+                    if (this.needsNewPage(doc, y, imageHeight + 10)) {
+                        y = this.addNewPageWithHeader(doc, reportTitle);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(12);
+                        doc.setTextColor(this.COLOR_AZUL_MARINO);
+                        doc.text(`${sectionTitle} (continuación)`, MARGIN, y);
+                        y += 10;
+                    }
+                    
+                    
+                    // Agregar la imagen SIN marca de agua
+                    doc.addImage(pageImage, 'JPEG', MARGIN, y, imageWidth, imageHeight);
+                    y += imageHeight + 10;
+                    
+                } catch (pageError) {
+                    console.error(`Error al procesar página ${pageNum}:`, pageError);
+                    continue;
+                }
+            }
+            
+            return y;
+            
+        } catch (error) {
+            console.error("Error en insertPdfAsImagesWithoutWatermark:", error);
+            
+            // Mostrar mensaje de error
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor('#e74c3c');
+            doc.text('Error al procesar el documento PDF.', MARGIN, y);
+            y += 10;
+            
             return y;
         }
+    },
 
-        let pagesProcessed = 0;
+    // SELLO DE OPERACIONES CON JEFE OPERATIVO (AHORA VA DESPUÉS DE LA CONCLUSIÓN)
+    async addSealWithJefeOperativo(doc, ticketData, MARGIN, y, PAGE_WIDTH) {
+        const reportTitle = 'REPORTE FOTOGRÁFICO';
+        
+        y += 10; // Espacio después de la conclusión
 
-        // Procesar cada página del PDF sin agregar texto adicional
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.8 });
+        try {
+            // Intentar cargar la imagen del sello desde diferentes rutas
+            const possibleSealPaths = [
+                '/vista/css/img/selloOperaciones.png',
+                '../vista/css/img/selloOperaciones.png',
+                '../../vista/css/img/selloOperaciones.png',
+                './vista/css/img/selloOperaciones.png',
+                'css/img/selloOperaciones.png',
+                '../css/img/selloOperaciones.png',
+                '../../css/img/selloOperaciones.png',
+                'vista/css/img/selloOperaciones.png',
+                // Rutas alternativas
+                '/css/img/selloOperaciones.png',
+                '../../../../vista/css/img/selloOperaciones.png'
+            ];
             
-            // Calcular altura estimada de la página
-            const estimatedHeight = (viewport.height * CONTENT_WIDTH) / viewport.width;
+            let sealLoaded = false;
+            let sealDataUrl = null;
             
-            // Verificar si necesitamos nueva página
-            if (this.needsNewPage(doc, y, estimatedHeight + 10)) {
-                y = this.addNewPageWithHeader(doc, reportTitle);
+            for (const sealPath of possibleSealPaths) {
+                try {
+                    // Intentar cargar como DataURL
+                    sealDataUrl = await this.loadImageAsDataURL(sealPath);
+                    if (sealDataUrl) {
+                        sealLoaded = true;
+                        console.log(`Sello cargado desde: ${sealPath}`);
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`No se pudo cargar sello desde: ${sealPath}`);
+                    continue;
+                }
             }
             
-            // Crear canvas para renderizar la página
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            
-            // Renderizar la página en el canvas
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-            
-            // Verificar si el canvas tiene contenido (no está en blanco)
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const hasContent = this.canvasHasContent(imageData);
-            
-            if (hasContent) {
-                // Convertir canvas a imagen
-                const pageImage = canvas.toDataURL('image/jpeg', 0.85);
-                const imgWidth = CONTENT_WIDTH;
-                const imgHeight = (canvas.height * CONTENT_WIDTH) / canvas.width;
+            if (sealLoaded && sealDataUrl) {
+                // Cargar imagen para obtener dimensiones
+                const img = await this.loadImage(sealDataUrl);
                 
-                // Agregar la imagen de la página al PDF SIN texto adicional
-                doc.addImage(pageImage, 'JPEG', MARGIN, y, imgWidth, imgHeight);
-                y += imgHeight + 10;
-                pagesProcessed++;
+                // Calcular dimensiones del sello (manteniendo proporción)
+                const sealWidth = 40; // Ancho fijo para el sello
+                const sealHeight = (img.height * sealWidth) / img.width;
+                
+                // Centrar el sello
+                const sealX = (PAGE_WIDTH - sealWidth) / 2;
+                
+                // Agregar la imagen del sello con fondo transparente
+                // Usar 'PNG' para mantener la transparencia
+                doc.addImage(sealDataUrl, 'PNG', sealX, y, sealWidth, sealHeight);
+                
+                y += sealHeight + 10;
+                
+                // Agregar nombre del jefe operativo
+                const jefeOperativo = ticketData.nombresColaboradores || 'Jefe Operativo';
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor('#000000');
+                doc.text(jefeOperativo, PAGE_WIDTH / 2, y, { align: 'center' });
+                
+                y += 8;
+                
+                // Agregar texto del sello
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor('#666666');
+                doc.text('SELLO DE OPERACIONES', PAGE_WIDTH / 2, y, { align: 'center' });
+                
             } else {
-                console.warn(`Página ${pageNum} del PDF está en blanco, omitiendo...`);
+                // Si no se puede cargar el sello, mostrar solo el texto
+                console.warn('No se pudo cargar el sello de operaciones');
+                
+                // Agregar nombre del jefe operativo
+                const jefeOperativo = ticketData.nombresColaboradores || 'Jefe Operativo';
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor('#000000');
+                doc.text(jefeOperativo, PAGE_WIDTH / 2, y, { align: 'center' });
+                
+                y += 15;
+                
+                // Agregar texto del sello
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor('#666666');
+                doc.text('SELLO DE OPERACIONES', PAGE_WIDTH / 2, y, { align: 'center' });
+                
+                // Dibujar un recuadro para representar el sello faltante
+                doc.setDrawColor(212, 175, 55); // Color dorado
+                doc.setLineWidth(0.5);
+                const sealWidth = 40;
+                const sealX = (PAGE_WIDTH - sealWidth) / 2;
+                doc.rect(sealX, y - 30, sealWidth, 25);
             }
+            
+        } catch (error) {
+            console.error('Error al cargar el sello:', error);
+            
+            // Mostrar solo el texto en caso de error
+            const jefeOperativo = ticketData.nombresColaboradores || 'Jefe Operativo';
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor('#000000');
+            doc.text(jefeOperativo, PAGE_WIDTH / 2, y, { align: 'center' });
+            
+            y += 8;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor('#666666');
+            doc.text('SELLO DE OPERACIONES', PAGE_WIDTH / 2, y, { align: 'center' });
         }
-        
-        // Si no se procesó ninguna página, revertir la página adicional
-        if (pagesProcessed === 0) {
-            console.warn("PDF sin contenido válido, no se agregaron páginas");
-            // Si estamos en una página adicional creada específicamente para el PDF, eliminarla
-            if (this.currentPage > 1) {
-                // No podemos eliminar páginas directamente en jsPDF, pero podemos evitar crear contenido
-                // En este caso, simplemente retornamos la Y anterior
-                return y - 10; // Ajustar para compensar
-            }
-        }
-        
-        return y;
-        
-    } catch (error) {
-        console.error("Error al convertir PDF a imágenes:", error);
-        
-        // Si hubo error y estamos en una página adicional, intentar manejarlo
-        if (this.currentPage > 1) {
-            // En jsPDF no podemos eliminar páginas, pero podemos evitar agregar contenido
-            console.warn("Error procesando PDF, omitiendo documento adicional");
-        }
-        
-        return y; // Retornar Y actual sin cambios
-    }
-},
+    },
 
-// NUEVA FUNCIÓN: Verificar si el canvas tiene contenido
-canvasHasContent(imageData) {
-    const data = imageData.data;
-    
-    // Verificar si hay píxeles no blancos (considerando transparencia)
-    for (let i = 0; i < data.length; i += 4) {
-        // Si el píxel no es completamente blanco (255,255,255) o completamente transparente
-        if (data[i] !== 255 || data[i + 1] !== 255 || data[i + 2] !== 255 || data[i + 3] !== 0) {
-            return true;
-        }
-    }
-    
-    return false;
-},
-
-
-    // FIRMAS CENTRADAS CON SOLO EL PRIMER COLABORADOR
-addSignaturesCentered(doc, ticketData, MARGIN, y, PAGE_WIDTH) {
-    const reportTitle = 'REPORTE FOTOGRÁFICO';
-    
-    // Verificar si necesitamos nueva página para las firmas
-    const signatureHeight = 40;
-    if (this.needsNewPage(doc, y, signatureHeight)) {
-        y = this.addNewPageWithHeader(doc, reportTitle);
-    }
-
-    y += 15;
-
-    // Línea para firma del técnico centrada en color dorado
-    const lineWidth = 80;
-    const lineX = (PAGE_WIDTH - lineWidth) / 2;
-    
-    doc.setDrawColor(212, 175, 55); // Color dorado
-    doc.setLineWidth(0.5);
-    doc.line(lineX, y, lineX + lineWidth, y);
-    
-    y += 6;
-
-    // Texto de la firma centrado
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor('#000000');
-    doc.text('NOMBRE Y FIRMA DEL TÉCNICO RESPONSABLE', PAGE_WIDTH / 2, y, { align: 'center' });
-    
-    y += 10;
-
-    // SOLO EL PRIMER COLABORADOR como técnico responsable
-    let tecnicoResponsable = 'Samuel Alejandro Aragón Vilchez'; // Valor por defecto
-    
-    if (ticketData.nombresColaboradores && ticketData.nombresColaboradores !== 'Ninguno') {
-        // Tomar solo el primer colaborador de la lista
-        const colaboradoresArray = ticketData.nombresColaboradores.split(',');
-        tecnicoResponsable = colaboradoresArray[0].trim();
-    }
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor('#000000');
-    doc.text(tecnicoResponsable, PAGE_WIDTH / 2, y, { align: 'center' });
-
-    // Agregar pie de página final
-    this.addFooter(doc);
-},
-
-    // FUNCIÓN MEJORADA: Pie de página en todas las hojas CON COLOR DORADO
+    // MODIFICAR LA FUNCIÓN addFooter para que no agregue página extra
     addFooter(doc) {
         const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
         const PAGE_WIDTH = doc.internal.pageSize.getWidth();
         const fechaCreacion = new Date().toLocaleDateString('es-MX');
         
-        // Posicionar el pie de página en el área reservada
+        // Solo agregar pie de página si hay suficiente espacio
         const footerY = PAGE_HEIGHT - this.PAGE_MARGINS.bottom + 5;
         
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor('#000000');
-        
-        // Línea divisoria en color dorado
-        doc.setDrawColor(212, 175, 55);
-        doc.setLineWidth(0.2);
-        doc.line(15, footerY - 5, PAGE_WIDTH - 15, footerY - 5);
-        
-        // Texto del pie de página
-        const footerText = `RAFHA SOLUCION INTEGRALES SAS DE CV - Generado el: ${fechaCreacion} - Página ${this.currentPage}`;
-        doc.text(footerText, PAGE_WIDTH / 2, footerY, { align: 'center' });
+        // Verificar si estamos cerca del final de la página (al menos 10mm disponibles)
+        if (footerY < PAGE_HEIGHT - 10) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor('#000000');
+            
+            // Línea divisoria en color dorado
+            doc.setDrawColor(212, 175, 55);
+            doc.setLineWidth(0.2);
+            doc.line(15, footerY - 5, PAGE_WIDTH - 15, footerY - 5);
+            
+            // Texto del pie de página
+            const footerText = `RAFHA SOLUCION INTEGRALES SAS DE CV - Generado el: ${fechaCreacion} - Página ${this.currentPage}`;
+            doc.text(footerText, PAGE_WIDTH / 2, footerY, { align: 'center' });
+        }
     },
 
-    // NUEVA MARCA DE AGUA
+    // NUEVA MARCA DE AGUA MEJORADA (solo para imágenes de evidencias)
     async addWatermarkNewFormat(imageDataUrl, address, time) {
         try {
             const originalImage = await this.loadImage(imageDataUrl);
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            
+            // Establecer tamaño del canvas igual al de la imagen
             canvas.width = originalImage.width;
             canvas.height = originalImage.height;
-            ctx.drawImage(originalImage, 0, 0);
-
-            const watermarkHeight = canvas.height * 0.08;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.fillRect(0, canvas.height - watermarkHeight, canvas.width, watermarkHeight);
-
-            ctx.fillStyle = 'white';
-            ctx.font = `${watermarkHeight * 0.3}px Arial`;
-            ctx.textAlign = 'left';
             
-            const textY = canvas.height - (watermarkHeight / 3);
-            ctx.fillText(`${address} - ${time}`, 10, textY);
-
+            // Dibujar la imagen original
+            ctx.drawImage(originalImage, 0, 0);
+            
+            // Verificar si la imagen es suficientemente grande para la marca de agua
+            if (canvas.height >= 100) { // Mínimo 100px de alto
+                const watermarkHeight = Math.max(canvas.height * 0.08, 20); // Mínimo 20px
+                const watermarkY = canvas.height - watermarkHeight;
+                
+                // Fondo semitransparente para la marca de agua
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, watermarkY, canvas.width, watermarkHeight);
+                
+                // Texto de la marca de agua
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${watermarkHeight * 0.4}px Arial`;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                
+                const text = `${address} - ${time}`;
+                const textX = 10;
+                const textY = watermarkY + (watermarkHeight / 2);
+                
+                ctx.fillText(text, textX, textY);
+            }
+            
             return canvas.toDataURL('image/jpeg', 0.9);
         } catch (error) {
             console.error("Error al aplicar marca de agua:", error);
-            return imageDataUrl;
+            return imageDataUrl; // Retornar la imagen original si hay error
         }
     },
 
-    // FUNCIÓN MEJORADA: Cargar imagen como DataURL
+    // FUNCIÓN MEJORADA: Cargar imagen como DataURL (con soporte para PNG transparente)
     async loadImageAsDataURL(url) {
         return new Promise((resolve, reject) => {
             if (url.startsWith('data:')) {
@@ -959,8 +1082,19 @@ addSignaturesCentered(doc, ticketData, MARGIN, y, PAGE_WIDTH) {
                     const ctx = canvas.getContext('2d');
                     canvas.width = img.width;
                     canvas.height = img.height;
+                    
+                    // Si es PNG, mantener transparencia
+                    if (url.toLowerCase().includes('.png')) {
+                        // Crear fondo blanco para PNG transparentes
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    
                     ctx.drawImage(img, 0, 0);
-                    const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+                    
+                    // Determinar formato basado en la extensión
+                    const format = url.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
+                    const dataURL = canvas.toDataURL(`image/${format}`, format === 'JPEG' ? 0.9 : 1.0);
                     resolve(dataURL);
                 } catch (error) {
                     reject(error);
@@ -975,17 +1109,173 @@ addSignaturesCentered(doc, ticketData, MARGIN, y, PAGE_WIDTH) {
         });
     },
 
-    // Función para cargar imágenes
+    // Función mejorada para cargar imágenes con manejo de errores
     loadImage(url) {
         return new Promise((resolve, reject) => {
+            // Si ya es una data URL, crear imagen directamente
+            if (url.startsWith('data:image/')) {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    console.error('Error al cargar imagen DataURL');
+                    // Crear una imagen de reemplazo
+                    const fallbackImg = new Image();
+                    fallbackImg.width = 100;
+                    fallbackImg.height = 100;
+                    resolve(fallbackImg);
+                };
+                img.src = url;
+                return;
+            }
+            
+            // Para URLs remotas
             const img = new Image();
             img.crossOrigin = 'Anonymous';
-            img.onload = () => resolve(img);
-            img.onerror = (err) => reject(new Error(`Falló la carga de la imagen: ${url}`));
+            
+            // Establecer timeout para evitar bloqueos
+            const timeout = setTimeout(() => {
+                console.warn('Timeout al cargar imagen');
+                img.src = ''; // Cancelar carga
+                // Crear imagen de reemplazo
+                const fallbackImg = new Image();
+                fallbackImg.width = 100;
+                fallbackImg.height = 100;
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 100;
+                canvas.height = 100;
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, 100, 100);
+                ctx.fillStyle = '#999';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Carga timeout', 50, 50);
+                
+                fallbackImg.src = canvas.toDataURL();
+                resolve(fallbackImg);
+            }, 10000); // 10 segundos timeout
+            
+            img.onload = img.onerror = () => {
+                clearTimeout(timeout);
+                if (img.complete && img.naturalHeight !== 0) {
+                    resolve(img);
+                } else {
+                    // Crear imagen de reemplazo
+                    const fallbackImg = new Image();
+                    fallbackImg.width = 100;
+                    fallbackImg.height = 100;
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 100;
+                    canvas.height = 100;
+                    ctx.fillStyle = '#f8f9fa';
+                    ctx.fillRect(0, 0, 100, 100);
+                    ctx.fillStyle = '#999';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Error carga', 50, 50);
+                    
+                    fallbackImg.src = canvas.toDataURL();
+                    resolve(fallbackImg);
+                }
+            };
+            
             img.src = url;
         });
     }
 };
 
+// Agrega esta función después de la función createAndSavePdf() en pdf-generator.js
+
+// NUEVA FUNCIÓN: Generar PDF desde la interfaz HTML
+async function generatePdfFromInterface(ticketData, additionalImages = [], ordenServicio = null) {
+    if (!ticketData) {
+        Swal.fire('Error', 'No hay datos del ticket para generar el PDF.', 'error');
+        return false;
+    }
+
+    Swal.fire({ 
+        title: 'Generando PDF', 
+        html: 'Aplicando marcas de agua y creando documento...', 
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Determinar tipo de reporte basado en la imagen proporcionada
+        const reportTitle = 'REPORTE FOTOGRÁFICO';
+        
+        // Combinar imágenes de evidencias con imágenes adicionales
+        const allImages = [...(ticketData.imagenes || [])];
+        
+        // Agregar imágenes adicionales si existen
+        if (additionalImages && additionalImages.length > 0) {
+            additionalImages.forEach(img => {
+                if (img.url && img.selected) {
+                    allImages.push(img.url);
+                }
+            });
+        }
+        
+        // Actualizar ticketData con todas las imágenes
+        ticketData.imagenes = allImages;
+        
+        // Establecer orden de servicio como featuredItem si existe
+        if (ordenServicio) {
+            this.featuredItem = ordenServicio;
+        } else {
+            this.featuredItem = null;
+        }
+        
+        // Inicializar manager
+        this.initialize([], null); // Colaboradores y DB no son necesarios para esta generación
+        this.ticketData = ticketData;
+        this.currentPage = 1;
+        this.totalPages = 1;
+        
+        // Generar el PDF con el nuevo formato
+        await this.generatePdfContentNewFormat(doc, ticketData, reportTitle);
+        
+        // Agregar pie de página final
+        this.addFooter(doc);
+        
+        // Guardar PDF
+        const fileName = `${reportTitle.replace(/\s+/g, '_')}_${ticketData.idTicket || ticketData.id || 'ticket'}_${new Date().getTime()}.pdf`;
+        doc.save(fileName);
+        
+        Swal.close();
+        Swal.fire({ 
+            title: '¡PDF Generado!', 
+            text: `El archivo "${fileName}" se ha descargado exitosamente.`, 
+            icon: 'success', 
+            confirmButtonColor: '#6C43E0',
+            timer: 3000
+        });
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Error generando PDF:', error);
+        Swal.close();
+        Swal.fire('Error', 'Ocurrió un error al generar el PDF: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// Agrega esta función al objeto pdfManager (al final, antes del cierre)
+pdfManager.generatePdfFromInterface = generatePdfFromInterface;
+
 // Definir COLOR_AZUL_MARINO como variable global para compatibilidad
 const COLOR_AZUL_MARINO = '#002D62';
+
+pdfManager.createAndSavePdfWithDescriptions = pdfManager.createAndSavePdfWithDescriptions || 
+    async function(imageDescriptions = []) {
+        return this.createAndSavePdfWithDescriptions(imageDescriptions);
+    }.bind(pdfManager);

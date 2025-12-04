@@ -5,397 +5,21 @@
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSI Enterprise - Generar PDF</title>
+    <title>RSI Enterprise - Generar PDF con Vista Previa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* MANTENER LAS VARIABLES CSS PERO SIN VALORES FIJOS - EL JS LAS SOBRESCRIBIRÁ */
-        :root {
-            --primary-color: #6C43E0;
-            --secondary-color: #5a35c7;
-            --accent-color: #8B5FEB;
-            --background-color: #f5f5f5;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background-color);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-color);
-        }
-
-        .main-c {
-            background: var(--card-bg);
-            border-radius: 15px;
-            box-shadow: var(--card-shadow);
-            overflow: hidden;
-            min-height: calc(100vh - 40px);
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-            color: white;
-            padding: 25px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .header-title-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-
-        .header-title-container h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: white !important;
-            text-align: center;
-            margin: 0;
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            background: white;
-            color: var(--primary-color);
-            border: 2px solid white;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary-color);
-        }
-
-        .content-container {
-            padding: 25px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-
-        @media (max-width: 1024px) {
-            .content-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .section {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .section h3 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-size: 1.3rem;
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-            background: var(--card-bg);
-            color: var(--text-color);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        textarea.form-control {
-            min-height: 120px;
-            resize: vertical;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .images-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .image-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            background: var(--card-bg);
-        }
-
-        .image-card.selected {
-            border-color: var(--primary-color);
-            box-shadow: 0 4px 12px var(--primary-color)30;
-        }
-
-        .image-card-header {
-            padding: 10px;
-            background: var(--card-bg);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-color);
-        }
-
-        .image-checkbox {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .image-preview {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .image-description {
-            padding: 12px;
-        }
-
-        .image-description textarea {
-            width: 100%;
-            min-height: 80px;
-            padding: 8px;
-            border: 1px solid rgba(0,0,0,0.1);
-            border-radius: 5px;
-            font-size: 0.9rem;
-            resize: vertical;
-            font-family: 'Inter', sans-serif;
-            background: var(--card-bg);
-            color: var(--text-color);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-color);
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--text-color);
-            opacity: 0.5;
-        }
-
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-            color: var(--text-color);
-        }
-
-        .loading i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .badge-success {
-            background: #e8f5e8;
-            color: #2ecc71;
-        }
-
-        .badge-warning {
-            background: #fff8e1;
-            color: #f39c12;
-        }
-
-        .badge-danger {
-            background: #ffeaea;
-            color: #e74c3c;
-        }
-
-        .ticket-info {
-            background: rgba(0,0,0,0.05);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            color: var(--text-color);
-        }
-
-        .info-row:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .info-value {
-            color: var(--text-color);
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 20px;
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .header-title-container {
-                order: -1;
-                margin-bottom: 15px;
-            }
-
-            .header-controls {
-                justify-content: center;
-            }
-
-            .content-container {
-                padding: 15px;
-                gap: 15px;
-            }
-
-            .section {
-                padding: 20px;
-            }
-
-            .images-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-
-            .header-title-container h2 {
-                font-size: 1.4rem;
-            }
-
-            .btn {
-                padding: 10px 15px;
-                font-size: 0.9rem;
-            }
-
-            .content-container {
-                padding: 10px;
-            }
-
-            .section {
-                padding: 15px;
-            }
-
-            .images-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ESTILOS ESPECÍFICOS PARA ASEGURAR COMPATIBILIDAD CON PERSONALIZACIÓN */
-        .ticket-info,
-        .image-card,
-        .image-card-header,
-        .form-control,
-        .image-description textarea {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
-        }
-
-        .info-label {
-            color: var(--primary-color) !important;
-        }
-
-        .info-value {
-            color: var(--text-color) !important;
-        }
-
-        /* GARANTIZAR QUE EL TÍTULO SIEMPRE SEA BLANCO */
-        .header-title-container h2 {
-            color: white !important;
-        }
-    </style>
+    <link rel="stylesheet" href="generar-pdf.css">
+    <!-- SortableJS para arrastrar imágenes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <!-- PDF.js para convertir PDF a imágenes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
     <div class="main-c">
         <div class="header">
             <div class="header-title-container">
-                <h2>Generar Reporte PDF</h2>
+                <h2>Generar PDF con Vista Previa</h2>
             </div>
             <div class="header-controls">
                 <button class="btn" onclick="history.back()">
@@ -404,81 +28,105 @@
                 </button>
                 <button class="btn btn-primary" id="generatePdfBtn">
                     <i class="fas fa-file-pdf"></i>
-                    Generar PDF
+                    Generar PDF Final
                 </button>
             </div>
         </div>
 
         <div class="content-container">
-            <!-- Columna izquierda: Información del ticket y contenido editable -->
+            <!-- Columna izquierda: Configuración del PDF -->
             <div class="left-column">
-                <!-- Información básica del ticket -->
-                <div class="section">
-                    <h3>Información del Ticket</h3>
-                    <div class="ticket-info">
-                        <div class="info-row">
-                            <span class="info-label">ID del Ticket:</span>
-                            <span class="info-value" id="ticketId">Cargando...</span>
+                <!-- Tabs para diferentes secciones -->
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('config')">
+                        <i class="fas fa-cog"></i> Configuración
+                    </div>
+                    <div class="tab" onclick="showTab('images')">
+                        <i class="fas fa-images"></i> Imágenes
+                    </div>
+                    <div class="tab" onclick="showTab('header')">
+                        <i class="fas fa-heading"></i> Encabezado
+                    </div>
+                </div>
+
+                <!-- Tab de Configuración -->
+                <div id="tab-config" class="tab-content active">
+                    <div class="section">
+                        <h3><i class="fas fa-file-alt"></i> Información del Ticket</h3>
+                        <div class="ticket-info" id="ticketInfoPreview">
+                            <!-- Información cargada dinámicamente -->
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Título:</span>
-                            <span class="info-value" id="ticketTitle">Cargando...</span>
+                    </div>
+
+                    <div class="section">
+                        <h3><i class="fas fa-edit"></i> Descripción de Actividades</h3>
+                        <div class="form-group">
+                            <textarea 
+                                id="pdfDescription" 
+                                class="form-control" 
+                                placeholder="Escribe la descripción de actividades..."
+                                rows="6"
+                                oninput="updatePreview()"
+                            ></textarea>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Estado:</span>
-                            <span class="info-value" id="ticketStatus">Cargando...</span>
+                    </div>
+
+                    <!-- SECCIÓN CORREGIDA: Descripción de Evidencias -->
+                    <div class="section">
+                        <h3><i class="fas fa-camera"></i> Descripción de Evidencias</h3>
+                        <div class="form-group">
+                            <label for="pdfEvidenciasDescription">Descripción General de Todas las Evidencias:</label>
+                            <textarea 
+                                id="pdfEvidenciasDescription" 
+                                class="form-control" 
+                                placeholder="Escribe aquí la descripción general de TODAS las evidencias fotográficas..."
+                                rows="6"
+                                oninput="updatePreview()"
+                            ></textarea>
+                            <small style="color: var(--text-color); opacity: 0.7; margin-top: 5px; display: block;">
+                                Esta descripción aparecerá en el apartado "DESCRIPCIÓN DE EVIDENCIAS" en el PDF.
+                                <br>Las descripciones de cada imagen se cargan automáticamente desde la base de datos.
+                            </small>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Prioridad:</span>
-                            <span class="info-value" id="ticketPriority">Cargando...</span>
+                    </div>
+
+                    <div class="section">
+                        <h3><i class="fas fa-check-circle"></i> Conclusión</h3>
+                        <div class="form-group">
+                            <textarea 
+                                id="pdfConclusion" 
+                                class="form-control" 
+                                placeholder="Escribe la conclusión..."
+                                rows="4"
+                                oninput="updatePreview()"
+                            ></textarea>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Colaboradores:</span>
-                            <span class="info-value" id="ticketCollaborators">Cargando...</span>
+                    </div>
+
+                    <div class="section">
+                        <h3><i class="fas fa-list-check"></i> Sistemas</h3>
+                        <div class="sistemas-container" id="sistemasContainer">
+                            <!-- Sistemas cargados dinámicamente -->
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3><i class="fas fa-signature"></i> Firma del Técnico</h3>
+                        <div class="form-group">
+                            <div class="tecnico-select-container">
+                                <label for="tecnicoResponsableSelect">Seleccionar Jefe Operativo:</label>
+                                <select id="tecnicoResponsableSelect" class="tecnico-select" onchange="updateTecnicoResponsable(this.value)">
+                                    <option value="">Cargando jefes operativos...</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Descripción de actividades editable -->
-                <div class="section">
-                    <h3>Descripción de Actividades (PDF)</h3>
-                    <div class="form-group">
-                        <label for="pdfDescription">Descripción para el PDF:</label>
-                        <textarea 
-                            id="pdfDescription" 
-                            class="form-control" 
-                            placeholder="Modifica la descripción de actividades que aparecerá en el PDF..."
-                        ></textarea>
-                        <small style="color: #666; margin-top: 5px; display: block;">
-                            Esta descripción reemplazará la original en el PDF generado.
-                        </small>
-                    </div>
-                </div>
-
-                <!-- Conclusión editable -->
-                <div class="section">
-                    <h3>Conclusión (PDF)</h3>
-                    <div class="form-group">
-                        <label for="pdfConclusion">Conclusión para el PDF:</label>
-                        <textarea 
-                            id="pdfConclusion" 
-                            class="form-control" 
-                            placeholder="Modifica la conclusión que aparecerá en el PDF..."
-                        ></textarea>
-                        <small style="color: #666; margin-top: 5px; display: block;">
-                            Esta conclusión reemplazará la original en el PDF generado.
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Columna derecha: Selección de imágenes -->
-            <div class="right-column">
-                <!-- Selección de imágenes -->
-                <div class="section">
-                    <h3>Selección de Imágenes para el PDF</h3>
-                    <div class="form-group">
-                        <label>Selecciona las imágenes que deseas incluir en el PDF:</label>
+                <!-- Tab de Imágenes -->
+                <div id="tab-images" class="tab-content">
+                    <div class="section">
+                        <h3><i class="fas fa-camera"></i> Imágenes de Evidencias</h3>
                         <div id="imagesContainer" class="images-grid">
                             <div class="loading">
                                 <i class="fas fa-spinner fa-spin"></i>
@@ -486,23 +134,176 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Descripción general de evidencias -->
-                <div class="section">
-                    <h3>Descripción General de Evidencias (PDF)</h3>
-                    <div class="form-group">
-                        <label for="pdfEvidencesDescription">Descripción general para las evidencias:</label>
-                        <textarea 
-                            id="pdfEvidencesDescription" 
-                            class="form-control" 
-                            placeholder="Agrega una descripción general para todas las evidencias del PDF..."
-                        ></textarea>
-                        <small style="color: #666; margin-top: 5px; display: block;">
-                            Esta descripción aparecerá en la sección de evidencias del PDF.
-                        </small>
+                    <div class="section">
+                        <h3><i class="fas fa-plus-circle"></i> Agregar Imágenes Adicionales</h3>
+                        <div class="form-group">
+                            <div class="add-more-images" onclick="document.getElementById('additionalImagesInput').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Haz clic aquí para agregar más imágenes</p>
+                                <small>Formatos: JPG, PNG, GIF (Máx. 5MB cada una)</small>
+                            </div>
+                            <input type="file" id="additionalImagesInput" accept="image/*" multiple style="display: none;" 
+                                   onchange="handleAdditionalImages(event)">
+                            
+                            <div id="additionalImagesContainer" class="additional-images-grid" style="display: none;">
+                                <!-- Imágenes adicionales se agregarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3><i class="fas fa-paperclip"></i> Orden de Servicio</h3>
+                        <div class="form-group">
+                            <div class="orden-servicio-section" id="ordenServicioSection">
+                                <div id="ordenServicioEmpty" style="text-align: center; padding: 20px;">
+                                    <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                                    <p>No se ha adjuntado ninguna orden de servicio</p>
+                                    <button class="btn btn-success" onclick="openOrdenServicioModal()" style="margin-top: 15px;">
+                                        <i class="fas fa-paperclip"></i> Adjuntar Orden
+                                    </button>
+                                </div>
+                                <div id="ordenServicioPreview" style="display: none;">
+                                    <div class="orden-preview-container" id="ordenServicioContent">
+                                        <!-- Contenido de la orden de servicio -->
+                                    </div>
+                                    <button class="btn btn-danger" onclick="removeOrdenServicio()" style="margin-top: 15px; width: 100%;">
+                                        <i class="fas fa-trash"></i> Eliminar Orden
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Tab de Encabezado -->
+                <div id="tab-header" class="tab-content">
+                    <div class="section">
+                        <h3><i class="fas fa-heading"></i> Configuración del Encabezado</h3>
+                        <div class="header-form-grid">
+                            <div class="header-form-group">
+                                <label>Título del Reporte:</label>
+                                <input type="text" id="reportTitle" value="REPORTE FOTOGRÁFICO" 
+                                       oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Área:</label>
+                                <input type="text" id="reportArea" value="INGENIERÍA DE PROYECTOS Y MANTENIMIENTO" 
+                                       oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Dirección:</label>
+                                <input type="text" id="reportDireccion" 
+                                       value="C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx. RFC:RSI1810319G0" 
+                                       oninput="updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3><i class="fas fa-table"></i> Información del Cliente</h3>
+                        <div class="header-form-grid">
+                            <div class="header-form-group">
+                                <label>Cliente:</label>
+                                <input type="text" id="clienteName" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Fecha:</label>
+                                <input type="date" id="fechaCreacion" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Dirección Fiscal:</label>
+                                <input type="text" id="direccionFiscal" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Orden de Servicio:</label>
+                                <input type="text" id="ordenServicioInput" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>RFC:</label>
+                                <input type="text" id="rfcCliente" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Proyecto:</label>
+                                <input type="text" id="proyectoName" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Atención A:</label>
+                                <input type="text" id="atencionA" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Servicio:</label>
+                                <input type="text" id="servicioType" oninput="updatePreview()">
+                            </div>
+                            <div class="header-form-group">
+                                <label>Correo:</label>
+                                <input type="email" id="correoCliente" oninput="updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Vista Previa del PDF -->
+            <div class="right-column">
+                <div class="pdf-preview-section">
+                    <div class="section">
+                        <h3><i class="fas fa-eye"></i> Vista Previa del PDF</h3>
+                        <div class="preview-controls">
+                            <div class="zoom-controls">
+                                <button class="zoom-btn" onclick="zoomOut()" title="Alejar">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <span id="zoomLevel">100%</span>
+                                <button class="zoom-btn" onclick="zoomIn()" title="Acercar">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </div>
+                            <div class="page-controls">
+                                <button class="page-btn" onclick="prevPage()" title="Página anterior">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="page-info" id="pageInfo">Página 1 de 1</span>
+                                <button class="page-btn" onclick="nextPage()" title="Página siguiente">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pdf-preview-container" id="pdfPreviewScroll">
+                        <div class="pdf-preview-content" id="pdfPreviewContent" style="transform: scale(1);">
+                            <!-- Vista previa generada dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para orden de servicio -->
+    <div id="ordenServicioModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Adjuntar Orden de Servicio</h3>
+                <button class="modal-close" onclick="closeOrdenServicioModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <input type="file" id="ordenFileInput" accept="image/*,.pdf" 
+                           style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 5px; background: var(--card-bg); color: var(--text-color);">
+                    <small style="color: var(--text-color); opacity: 0.7;">Formatos: JPG, PNG, PDF (Máx. 10MB)</small>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" onclick="closeOrdenServicioModal()">
+                    Cancelar
+                </button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmOrdenServicio()" id="confirmOrdenBtn">
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
@@ -513,8 +314,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
     <script>
         // Configuración de Firebase
@@ -536,16 +335,38 @@
         const appState = {
             currentUser: null,
             currentTicketId: null,
-            colaboradores: [],
             ticketData: null,
             activities: [],
-            pdfData: {
-                description: '',
-                conclusion: '',
-                evidencesDescription: '',
-                selectedImages: [] // Array de objetos {url, description, selected}
+            jefesOperativos: [],
+            ordenServicio: null,
+            additionalImages: [],
+            selectedImages: [],
+            pdfConfig: {
+                zoom: 1,
+                currentPage: 1,
+                totalPages: 1
+            },
+            headerData: {
+                reportTitle: 'REPORTE FOTOGRÁFICO',
+                reportArea: 'INGENIERÍA DE PROYECTOS Y MANTENIMIENTO',
+                reportDireccion: 'C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx. RFC:RSI1810319G0',
+                cliente: '',
+                fecha: '',
+                direccionFiscal: '',
+                ordenServicio: '',
+                rfc: '',
+                proyecto: '',
+                atencionA: '',
+                servicio: '',
+                correo: '',
+                tecnico: 'Samuel Alejandro Aragón Vilchez'
             }
         };
+
+        // Variables globales para el modal
+        let selectedOrdenData = null;
+        let sortableSelectedImages = null;
+        let sortableAdditionalImages = null;
 
         // =================================================================================
         // FUNCIONES PRINCIPALES
@@ -554,10 +375,12 @@
         async function initialLoad() {
             try {
                 await loadUserProfile();
-                await loadCollaborators();
                 await loadTicketData();
+                await loadJefesOperativos();
                 await loadActivities();
                 setupEventListeners();
+                setupDefaultHeaderData();
+                updatePreview();
             } catch (error) {
                 console.error("Error en la carga inicial:", error);
                 showError('No se pudieron cargar los datos iniciales.');
@@ -571,42 +394,14 @@
                 return;
             }
             
-            try {
-                const querySnapshot = await db.collection("colaboradores")
-                    .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
-                    .get();
-                
-                if (!querySnapshot.empty) {
-                    const doc = querySnapshot.docs[0];
-                    const userData = doc.data();
-                    appState.currentUser = {
-                        id: doc.id,
-                        nombre: userData.NOMBRE,
-                        area: userData.ÁREA,
-                        imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
-                    };
-                }
-            } catch (error) {
-                console.error("Error al cargar perfil:", error);
-            }
-        }
-
-        async function loadCollaborators() {
-            try {
-                const snapshot = await db.collection('colaboradores').get();
-                appState.colaboradores = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    nombre: doc.data().NOMBRE,
-                    area: doc.data().ÁREA
-                }));
-            } catch (error) {
-                console.error("Error al cargar colaboradores:", error);
-            }
+            appState.currentUser = {
+                email: user.email,
+                uid: user.uid
+            };
         }
 
         async function loadTicketData() {
             try {
-                // Obtener el ID del ticket de la URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const ticketId = urlParams.get('id');
                 
@@ -617,7 +412,6 @@
                 
                 appState.currentTicketId = ticketId;
                 
-                // Cargar datos del ticket
                 const ticketDoc = await db.collection('ticketsmesa').doc(ticketId).get();
                 
                 if (!ticketDoc.exists) {
@@ -625,26 +419,14 @@
                     return;
                 }
                 
+                const ticketData = ticketDoc.data();
                 appState.ticketData = {
                     id: ticketDoc.id,
-                    ...ticketDoc.data()
+                    ...ticketData
                 };
                 
-                // Procesar nombres de colaboradores
-                if (appState.ticketData.colaboradores && appState.ticketData.colaboradores.length > 0) {
-                    appState.ticketData.nombresColaboradores = appState.ticketData.colaboradores.map(colabId => {
-                        const colaborador = appState.colaboradores.find(c => c.id === colabId);
-                        return colaborador ? colaborador.nombre : 'Desconocido';
-                    }).filter(Boolean).join(', ');
-                } else {
-                    appState.ticketData.nombresColaboradores = 'Sin asignar';
-                }
-                
-                // Actualizar la interfaz con los datos del ticket
-                updateTicketUI();
-                
-                // Cargar datos iniciales para el PDF
-                loadInitialPdfData();
+                // Actualizar UI con información del ticket
+                updateTicketInfoUI();
                 
             } catch (error) {
                 console.error("Error al cargar datos del ticket:", error);
@@ -652,159 +434,250 @@
             }
         }
 
-        async function loadActivities() {
+        async function loadJefesOperativos() {
             try {
-                if (!appState.currentTicketId) {
-                    appState.activities = [];
-                    updateImagesUI();
-                    return;
-                }
+                console.log("Buscando jefes operativos...");
                 
-                // Cargar actividades desde evidenciatickets
-                const activitiesSnapshot = await db.collection('evidenciatickets')
-                    .where('ticketId', '==', appState.currentTicketId)
+                const snapshot = await db.collection('colaboradores')
+                    .where('ÁREA', '==', 'Jefe Operativo')
                     .get();
                 
-                appState.activities = [];
+                appState.jefesOperativos = [];
                 
-                activitiesSnapshot.forEach(doc => {
-                    const activityData = doc.data();
-                    appState.activities.push({
-                        id: doc.id,
-                        ...activityData
+                if (snapshot.empty) {
+                    console.log("No se encontraron jefes operativos con 'Jefe Operativo'");
+                    
+                    // Intentar con diferentes variaciones del nombre del área
+                    const snapshot2 = await db.collection('colaboradores')
+                        .where('ÁREA', '==', 'JEFE OPERATIVO')
+                        .get();
+                    
+                    if (!snapshot2.empty) {
+                        snapshot2.forEach(doc => {
+                            const data = doc.data();
+                            appState.jefesOperativos.push({
+                                id: doc.id,
+                                nombre: data.NOMBRE || 'Sin nombre',
+                                area: data.ÁREA
+                            });
+                        });
+                    } else {
+                        // Si aún no encuentra, buscar cualquier área que contenga "operativo"
+                        const allColaboradores = await db.collection('colaboradores').get();
+                        allColaboradores.forEach(doc => {
+                            const data = doc.data();
+                            const area = data.ÁREA || '';
+                            if (area.toLowerCase().includes('operativo')) {
+                                appState.jefesOperativos.push({
+                                    id: doc.id,
+                                    nombre: data.NOMBRE || 'Sin nombre',
+                                    area: area
+                                });
+                            }
+                        });
+                    }
+                } else {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        appState.jefesOperativos.push({
+                            id: doc.id,
+                            nombre: data.NOMBRE || 'Sin nombre',
+                            area: data.ÁREA
+                        });
                     });
-                });
+                }
                 
-                updateImagesUI();
+                console.log(`Jefes operativos encontrados: ${appState.jefesOperativos.length}`);
+                
+                // Actualizar select de jefes operativos
+                updateJefesOperativosSelect();
                 
             } catch (error) {
-                console.error("Error al cargar actividades:", error);
-                showError('No se pudieron cargar las actividades.');
+                console.error("Error al cargar jefes operativos:", error);
+                // En caso de error, mantener el valor por defecto
             }
         }
 
-        function loadInitialPdfData() {
-            // Cargar datos originales en los campos editables
-            document.getElementById('pdfDescription').value = 
-                appState.ticketData.descripcionActividades || 
-                appState.ticketData.descripcion || 
-                '';
-                
-            document.getElementById('pdfConclusion').value = 
-                appState.ticketData.conclusion || 
-                '';
-            
-            // Cargar descripción general de evidencias desde las actividades (igual que en verTicket.html)
-            let evidencesDescription = '';
-            if (appState.activities && appState.activities.length > 0) {
-                // Crear una descripción estructurada similar a verTicket.html
-                const activityDescriptions = [];
-                
-                appState.activities.forEach((activity, index) => {
-                    const collaboratorName = getCollaboratorName(activity.colaboradorId);
-                    const activityDate = activity.fechaCreacion ? 
-                        (activity.fechaCreacion.toDate ? 
-                            activity.fechaCreacion.toDate().toLocaleDateString('es-MX') : 
-                            new Date(activity.fechaCreacion).toLocaleDateString('es-MX')
-                        ) : 'Fecha no disponible';
-                    
-                    let activityText = `Actividad ${index + 1} - ${collaboratorName} (${activityDate}):\n`;
-                    
-                    if (activity.descripcion && activity.descripcion.trim() !== '') {
-                        activityText += `${activity.descripcion.trim()}`;
-                    } else {
-                        activityText += 'Sin descripción detallada.';
-                    }
-                    
-                    activityDescriptions.push(activityText);
-                });
-                
-                if (activityDescriptions.length > 0) {
-                    evidencesDescription = activityDescriptions.join('\n\n');
-                }
-            }
-                
-            document.getElementById('pdfEvidencesDescription').value = evidencesDescription;
-            
-            // Guardar en el estado
-            appState.pdfData.description = document.getElementById('pdfDescription').value;
-            appState.pdfData.conclusion = document.getElementById('pdfConclusion').value;
-            appState.pdfData.evidencesDescription = evidencesDescription;
+        async function loadActivities() {
+    try {
+        if (!appState.currentTicketId) {
+            appState.activities = [];
+            updateImagesUI();
+            return;
         }
-
-        function getCollaboratorName(collaboratorId) {
-            if (!collaboratorId) return 'Colaborador desconocido';
-            const colaborador = appState.colaboradores.find(c => c.id === collaboratorId);
-            return colaborador ? colaborador.nombre : 'Colaborador desconocido';
-        }
-
-        function updateTicketUI() {
-            const ticket = appState.ticketData;
-            
-            document.getElementById('ticketId').textContent = ticket.idTicket || ticket.id || 'N/A';
-            document.getElementById('ticketTitle').textContent = ticket.titulo || 'Sin título';
-            document.getElementById('ticketStatus').innerHTML = getStatusBadge(ticket.estado);
-            document.getElementById('ticketPriority').innerHTML = getPriorityBadge(ticket.prioridad);
-            document.getElementById('ticketCollaborators').textContent = ticket.nombresColaboradores || 'Sin asignar';
-        }
-
-        function updateImagesUI() {
-            const container = document.getElementById('imagesContainer');
-            
-            // Obtener todas las imágenes únicas de todas las actividades
-            const allImages = [];
-            appState.activities.forEach(activity => {
-                if (activity.imagenes && activity.imagenes.length > 0) {
-                    activity.imagenes.forEach(imgUrl => {
-                        if (!allImages.some(img => img.url === imgUrl)) {
-                            allImages.push({
-                                url: imgUrl,
-                                description: '', // Descripción vacía para que el usuario la complete si quiere
-                                selected: true // Por defecto seleccionar todas
-                            });
-                        }
-                    });
-                }
+        
+        const activitiesSnapshot = await db.collection('evidenciatickets')
+            .where('ticketId', '==', appState.currentTicketId)
+            .get();
+        
+        appState.activities = [];
+        appState.selectedImages = [];
+        let descripcionesEvidencias = [];
+        
+        activitiesSnapshot.forEach(doc => {
+            const activityData = doc.data();
+            appState.activities.push({
+                id: doc.id,
+                ...activityData
             });
             
-            if (allImages.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-images"></i>
-                        <p>No hay imágenes disponibles</p>
-                        <small>No se encontraron imágenes en las actividades de este ticket</small>
-                    </div>
-                `;
+            // Agregar imágenes de esta actividad
+            if (activityData.imagenes && activityData.imagenes.length > 0) {
+                activityData.imagenes.forEach(imgUrl => {
+                    // Evitar duplicados verificando la URL
+                    if (!appState.selectedImages.some(img => img.url === imgUrl)) {
+                        // IMPORTANTE: NO cargar la descripción de la base de datos
+                        // Dejar el campo description vacío para que el usuario lo complete
+                        appState.selectedImages.push({
+                            url: imgUrl,
+                            description: '', // VACÍO - el usuario pondrá su propia descripción
+                            selected: true,
+                            type: 'evidence',
+                            fileName: `Evidencia ${appState.selectedImages.length + 1}`
+                        });
+                    }
+                });
+            }
+            
+            // Recopilar descripciones de evidencias para la sección general
+            if (activityData.descripcion && activityData.descripcion.trim() !== '') {
+                descripcionesEvidencias.push(activityData.descripcion);
+            }
+        });
+        
+        console.log(`Total de imágenes cargadas: ${appState.selectedImages.length}`);
+        console.log(`Descripciones encontradas para sección general: ${descripcionesEvidencias.length}`);
+        
+        // Combinar todas las descripciones en un solo texto para la sección "DESCRIPCIÓN DE EVIDENCIAS"
+        if (descripcionesEvidencias.length > 0) {
+            const descripcionCombinada = descripcionesEvidencias.join('\n\n');
+            document.getElementById('pdfEvidenciasDescription').value = descripcionCombinada;
+            console.log("Descripción general cargada automáticamente en la sección correspondiente");
+        }
+        
+        updateImagesUI();
+        
+    } catch (error) {
+        console.error("Error al cargar actividades:", error);
+        showError('No se pudieron cargar las actividades.');
+    }
+}
+
+        function setupDefaultHeaderData() {
+            const ticket = appState.ticketData;
+            if (!ticket) return;
+            
+            // Establecer valores por defecto para el encabezado
+            appState.headerData.cliente = ticket.cuentaNombre || 'TIENDAS CHEDRAUI';
+            appState.headerData.fecha = ticket.fechaCreacion ? 
+                (ticket.fechaCreacion.toDate ? 
+                    ticket.fechaCreacion.toDate().toISOString().split('T')[0] : 
+                    new Date(ticket.fechaCreacion).toISOString().split('T')[0]
+                ) : new Date().toISOString().split('T')[0];
+            appState.headerData.direccionFiscal = ticket.direccionFiscal || 'CONSTITUYENTES, 1150, LOMAS ALTAS, 11950, MEX';
+            appState.headerData.ordenServicio = ticket.ordenServicio || '';
+            appState.headerData.rfc = ticket.rfc || 'TCH850701RM1';
+            appState.headerData.proyecto = ticket.proyecto || 'N/A';
+            appState.headerData.atencionA = ticket.atencionA || 'N/A';
+            appState.headerData.servicio = ticket.servicio || 'Revision y mantenimiento';
+            appState.headerData.correo = ticket.correo || 'N/A';
+            
+            // Si hay jefes operativos, usar el primero como valor por defecto
+            if (appState.jefesOperativos.length > 0) {
+                appState.headerData.tecnico = appState.jefesOperativos[0].nombre;
+            }
+            
+            // Actualizar campos del formulario
+            document.getElementById('clienteName').value = appState.headerData.cliente;
+            document.getElementById('fechaCreacion').value = appState.headerData.fecha;
+            document.getElementById('direccionFiscal').value = appState.headerData.direccionFiscal;
+            document.getElementById('ordenServicioInput').value = appState.headerData.ordenServicio;
+            document.getElementById('rfcCliente').value = appState.headerData.rfc;
+            document.getElementById('proyectoName').value = appState.headerData.proyecto;
+            document.getElementById('atencionA').value = appState.headerData.atencionA;
+            document.getElementById('servicioType').value = appState.headerData.servicio;
+            document.getElementById('correoCliente').value = appState.headerData.correo;
+            
+            // Actualizar sistemas
+            updateSistemasUI();
+            
+            // Establecer descripción inicial
+            document.getElementById('pdfDescription').value = ticket.descripcionActividades || ticket.descripcion || '';
+            document.getElementById('pdfConclusion').value = ticket.conclusion || '';
+        }
+
+        // =================================================================================
+        // FUNCIONES DE UI
+        // =================================================================================
+
+        function updateTicketInfoUI() {
+            const ticket = appState.ticketData;
+            if (!ticket) return;
+            
+            const container = document.getElementById('ticketInfoPreview');
+            const statusBadge = getStatusBadge(ticket.estado);
+            const priorityBadge = getPriorityBadge(ticket.prioridad);
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px;">
+                    <div style="font-weight: 600; color: var(--text-color);">ID:</div>
+                    <div>${ticket.idTicket || ticket.id || 'N/A'}</div>
+                    
+                    <div style="font-weight: 600; color: var(--text-color);">Título:</div>
+                    <div>${ticket.titulo || 'Sin título'}</div>
+                    
+                    <div style="font-weight: 600; color: var(--text-color);">Estado:</div>
+                    <div>${statusBadge}</div>
+                    
+                    <div style="font-weight: 600; color: var(--text-color);">Prioridad:</div>
+                    <div>${priorityBadge}</div>
+                    
+                    <div style="font-weight: 600; color: var(--text-color);">Descripción:</div>
+                    <div style="grid-column: 2;">${ticket.descripcion || 'Sin descripción'}</div>
+                </div>
+            `;
+        }
+
+        function updateJefesOperativosSelect() {
+            const select = document.getElementById('tecnicoResponsableSelect');
+            
+            if (appState.jefesOperativos.length === 0) {
+                select.innerHTML = '<option value="">No se encontraron jefes operativos</option>';
+                select.style.color = 'var(--text-color)';
                 return;
             }
             
-            // Inicializar el estado de las imágenes si es la primera vez
-            if (appState.pdfData.selectedImages.length === 0) {
-                appState.pdfData.selectedImages = allImages;
+            let html = '<option value="">Seleccionar jefe operativo...</option>';
+            
+            appState.jefesOperativos.forEach((jefe, index) => {
+                const selected = index === 0 ? 'selected' : '';
+                html += `<option value="${jefe.nombre}" ${selected}>${jefe.nombre} (${jefe.area})</option>`;
+            });
+            
+            select.innerHTML = html;
+            select.style.color = 'var(--text-color)';
+            
+            // Si hay jefes operativos, establecer el primero como valor por defecto
+            if (appState.jefesOperativos.length > 0) {
+                appState.headerData.tecnico = appState.jefesOperativos[0].nombre;
+                select.value = appState.jefesOperativos[0].nombre;
             }
+        }
+
+        function updateSistemasUI() {
+            const container = document.getElementById('sistemasContainer');
+            const sistemas = ['CCTV', 'DH', 'CA', 'AI', 'SM'];
+            const ticketSistemas = appState.ticketData?.sistemas || 'CCTV';
             
             let html = '';
-            
-            appState.pdfData.selectedImages.forEach((image, index) => {
+            sistemas.forEach(sistema => {
+                const isChecked = ticketSistemas.includes(sistema);
                 html += `
-                    <div class="image-card ${image.selected ? 'selected' : ''}" data-index="${index}">
-                        <div class="image-card-header">
-                            <span>Imagen ${index + 1}</span>
-                            <input 
-                                type="checkbox" 
-                                class="image-checkbox" 
-                                ${image.selected ? 'checked' : ''}
-                                onchange="toggleImageSelection(${index}, this.checked)"
-                            >
-                        </div>
-                        <img src="${image.url}" alt="Evidencia ${index + 1}" class="image-preview"
-                             onerror="this.src='../css/img/image-placeholder.png'">
-                        <div class="image-description">
-                            <textarea 
-                                placeholder="Descripción opcional para esta imagen..."
-                                onchange="updateImageDescription(${index}, this.value)"
-                            >${image.description || ''}</textarea>
-                        </div>
+                    <div class="sistema-item">
+                        <input type="checkbox" id="sistema-${sistema}" ${isChecked ? 'checked' : ''} 
+                               onchange="updateSistema('${sistema}', this.checked)"
+                               style="margin-right: 5px; accent-color: var(--primary-color);">
+                        <label for="sistema-${sistema}" style="cursor: pointer; color: var(--text-color);">${sistema}</label>
                     </div>
                 `;
             });
@@ -812,124 +685,791 @@
             container.innerHTML = html;
         }
 
+        function updateImagesUI() {
+    const container = document.getElementById('imagesContainer');
+    
+    if (appState.selectedImages.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-images"></i>
+                <p>No hay imágenes disponibles</p>
+                <small>No se encontraron imágenes en las actividades de este ticket</small>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    appState.selectedImages.forEach((image, index) => {
+        html += `
+            <div class="image-card ${image.selected ? 'selected' : ''}" data-index="${index}">
+                <div class="image-card-header">
+                    <span style="color: var(--text-color);">Imagen ${index + 1}</span>
+                    <input 
+                        type="checkbox" 
+                        class="image-checkbox" 
+                        ${image.selected ? 'checked' : ''}
+                        onchange="toggleImageSelection(${index}, this.checked)"
+                    >
+                </div>
+                <img src="${image.url}" alt="Evidencia ${index + 1}" class="image-preview"
+                     onerror="this.src='../css/img/image-placeholder.png'">
+                <div class="image-description">
+                    <textarea 
+                        placeholder="Descripción específica para ESTA imagen..."
+                        oninput="updateImageDescription(${index}, this.value)"
+                        style="color: var(--text-color); background: var(--card-bg);"
+                    >${image.description || ''}</textarea>
+                    <small style="color: var(--text-color); opacity: 0.7; font-size: 11px; display: block; margin-top: 5px;">
+                        Esta descripción aparecerá DEBAJO de esta imagen específica en el PDF
+                    </small>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Inicializar Sortable para arrastrar imágenes
+    if (sortableSelectedImages) {
+        sortableSelectedImages.destroy();
+    }
+    
+    sortableSelectedImages = new Sortable(container, {
+        animation: 150,
+        onEnd: function(evt) {
+            // Actualizar el orden en appState.selectedImages
+            const oldIndex = evt.oldIndex;
+            const newIndex = evt.newIndex;
+            
+            // Reordenar el array
+            const [movedItem] = appState.selectedImages.splice(oldIndex, 1);
+            appState.selectedImages.splice(newIndex, 0, movedItem);
+            
+            // Actualizar números de imagen
+            updateImageNumbers();
+            updatePreview();
+        }
+    });
+}
+
+        function updateImageNumbers() {
+            const imageCards = document.querySelectorAll('#imagesContainer .image-card');
+            imageCards.forEach((card, index) => {
+                const titleSpan = card.querySelector('.image-card-header span');
+                if (titleSpan) {
+                    titleSpan.textContent = `Imagen ${index + 1}`;
+                }
+            });
+        }
+
+        // =================================================================================
+        // FUNCIONES DE VISTA PREVIA
+        // =================================================================================
+
+        function updatePreview() {
+            // Actualizar datos del encabezado desde los inputs
+            updateHeaderDataFromInputs();
+            
+            // Actualizar la descripción general con todas las descripciones individuales
+            //actualizarDescripcionGeneral();
+            
+            // Generar vista previa
+            generatePdfPreview();
+        }
+
+        function updateHeaderDataFromInputs() {
+            appState.headerData.reportTitle = document.getElementById('reportTitle').value;
+            appState.headerData.reportArea = document.getElementById('reportArea').value;
+            appState.headerData.reportDireccion = document.getElementById('reportDireccion').value;
+            appState.headerData.cliente = document.getElementById('clienteName').value;
+            appState.headerData.fecha = document.getElementById('fechaCreacion').value;
+            appState.headerData.direccionFiscal = document.getElementById('direccionFiscal').value;
+            appState.headerData.ordenServicio = document.getElementById('ordenServicioInput').value;
+            appState.headerData.rfc = document.getElementById('rfcCliente').value;
+            appState.headerData.proyecto = document.getElementById('proyectoName').value;
+            appState.headerData.atencionA = document.getElementById('atencionA').value;
+            appState.headerData.servicio = document.getElementById('servicioType').value;
+            appState.headerData.correo = document.getElementById('correoCliente').value;
+            
+            // El técnico se actualiza desde el select
+            const select = document.getElementById('tecnicoResponsableSelect');
+            if (select && select.value) {
+                appState.headerData.tecnico = select.value;
+            }
+        }
+
+        function actualizarDescripcionGeneral() {
+            // Obtener texto manual del usuario
+            const textoManual = document.getElementById('pdfEvidenciasDescription').value;
+            
+            // Obtener descripciones de imágenes seleccionadas
+            const descripcionesImagenes = appState.selectedImages
+                .filter(img => img.selected && img.description && img.description.trim() !== '')
+                .map(img => img.description);
+            
+            // Obtener descripciones de imágenes adicionales
+            const descripcionesAdicionales = appState.additionalImages
+                .filter(img => img.selected && img.description && img.description.trim() !== '')
+                .map(img => img.description);
+            
+            // Combinar todo
+            const todasDescripciones = [
+                textoManual,
+                ...descripcionesImagenes,
+                ...descripcionesAdicionales
+            ].filter(text => text && text.trim() !== '');
+            
+            // Si hay texto manual, mantenerlo tal cual
+            if (textoManual.trim() !== '') {
+                // El texto manual ya está en el textarea
+                return;
+            } else if (todasDescripciones.length > 0) {
+                // Si no hay texto manual pero hay descripciones de imágenes, combinarlas
+                const textoCombinado = todasDescripciones.join('\n\n');
+                document.getElementById('pdfEvidenciasDescription').value = textoCombinado;
+            }
+        }
+
+        function generatePdfPreview() {
+    const container = document.getElementById('pdfPreviewContent');
+    const sistemas = getSelectedSistemas();
+    const descripcion = document.getElementById('pdfDescription').value;
+    const descripcionEvidencias = document.getElementById('pdfEvidenciasDescription').value;
+    const conclusion = document.getElementById('pdfConclusion').value;
+    const imagenesSeleccionadas = appState.selectedImages.filter(img => img.selected);
+    const imagenesAdicionales = appState.additionalImages.filter(img => img.selected);
+    const todasImagenes = [...imagenesSeleccionadas, ...imagenesAdicionales];
+    
+    let html = `
+        <!-- Encabezado -->
+        <div class="pdf-preview-header">
+            <div class="pdf-preview-logo">
+                <img class="pdf-preview-logo" src="/vista/css/img/Logo-RSI-OFICIAL.png" alt="">
+            </div>
+            <div class="pdf-preview-title">
+                <h1>${appState.headerData.reportTitle}</h1>
+                <p>${appState.headerData.reportArea}</p>
+                <p style="font-size: 10px;">${appState.headerData.reportDireccion}</p>
+            </div>
+        </div>
+
+        <!-- Tabla de información -->
+        <table class="pdf-preview-table">
+            <tr>
+                <td width="50%"><span class="pdf-preview-label">CLIENTE:</span> ${appState.headerData.cliente}</td>
+                <td width="50%"><span class="pdf-preview-label">FECHA:</span> ${formatDate(appState.headerData.fecha)}</td>
+            </tr>
+            <tr>
+                <td><span class="pdf-preview-label">DIRECCIÓN FISCAL:</span> ${appState.headerData.direccionFiscal}</td>
+                <td><span class="pdf-preview-label">ORDEN DE SERVICIO:</span> ${appState.headerData.ordenServicio || 'Ticket Interno'}</td>
+            </tr>
+            <tr>
+                <td><span class="pdf-preview-label">RFC:</span> ${appState.headerData.rfc}</td>
+                <td><span class="pdf-preview-label">PROYECTO:</span> ${appState.headerData.proyecto}</td>
+            </tr>
+            <tr>
+                <td><span class="pdf-preview-label">ATENCIÓN A:</span> ${appState.headerData.atencionA}</td>
+                <td><span class="pdf-preview-label">SERVICIO:</span> ${appState.headerData.servicio}</td>
+            </tr>
+            <tr>
+                <td><span class="pdf-preview-label">CORREO:</span> ${appState.headerData.correo}</td>
+                <td><span class="pdf-preview-label"></td>
+            </tr>
+        </table>
+
+        <!-- Sistemas -->
+        <div class="pdf-preview-sistemas">
+            <h3>SISTEMAS:</h3>
+            <div class="sistemas-container">
+    `;
+    
+    // Agregar checkboxes de sistemas
+    const sistemasList = ['CCTV', 'DH', 'CA', 'AI', 'SM'];
+    sistemasList.forEach(sistema => {
+        const isChecked = sistemas.includes(sistema);
+        html += `
+            <div class="sistema-item">
+                <div class="sistema-checkbox ${isChecked ? 'checked' : ''}"></div>
+                <span>${sistema}</span>
+            </div>
+        `;
+    });
+    
+    html += `
+            </div>
+        </div>
+
+        <!-- Descripción de actividades -->
+        <div class="pdf-preview-content-section">
+            <h3>DESCRIPCIÓN DE ACTIVIDADES</h3>
+            <p>${descripcion || 'Descripción de actividades no especificada.'}</p>
+        </div>
+    `;
+    
+    // ===== Descripción de evidencias =====
+    if (descripcionEvidencias && descripcionEvidencias.trim() !== '') {
+        html += `
+            <div class="pdf-preview-content-section">
+                <h3>DESCRIPCIÓN DE EVIDENCIAS</h3>
+                <p>${descripcionEvidencias}</p>
+            </div>
+        `;
+    }
+    
+    // ===== Evidencias fotográficas =====
+    if (todasImagenes.length > 0) {
+        html += `
+            <div class="pdf-preview-content-section">
+                <h3>EVIDENCIAS FOTOGRÁFICAS</h3>
+                <div class="pdf-preview-images">
+        `;
+        
+        // Mostrar imágenes
+        todasImagenes.forEach((image, index) => {
+            // Solo mostrar la descripción individual de cada imagen
+            const descripcionIndividual = image.description || '';
+            
+            html += `
+                <div class="pdf-preview-image-item">
+                    <div class="pdf-preview-image">
+                        <img src="${image.url}" alt="Imagen ${index + 1}" 
+                             onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-image\\'></i> Imagen ${index + 1}';">
+                    </div>
+                    <!-- Mostrar SOLO descripción individual si existe -->
+                    ${descripcionIndividual ? `<div class="pdf-preview-image-description">${descripcionIndividual}</div>` : ''}
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // Orden de servicio si existe
+    if (appState.ordenServicio) {
+        html += `
+            <div class="pdf-preview-orden-servicio">
+                <h4>ORDEN DE SERVICIO ADJUNTA</h4>
+                <div class="pdf-preview-orden-content">
+                    ${appState.ordenServicio.type === 'image' ? 
+                        `<img src="${appState.ordenServicio.data}" alt="Orden de Servicio" style="max-width: 100px;">` :
+                        `<div style="padding: 20px; background: #f0f0f0; border-radius: 5px;">
+                            <i class="fas fa-file-pdf" style="font-size: 24px; color: #e74c3c;"></i>
+                            <p style="font-size: 10px; margin-top: 5px;">Documento PDF convertido a imágenes</p>
+                        </div>`
+                    }
+                    <div>
+                        <p style="font-size: 11px; font-weight: bold;">${appState.ordenServicio.fileName}</p>
+                        <p style="font-size: 10px; color: #666;">Archivo adjunto al reporte</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Conclusión
+    if (conclusion && conclusion.trim() !== '') {
+        html += `
+            <div class="pdf-preview-content-section">
+                <h3>CONCLUSIÓN</h3>
+                <p>${conclusion}</p>
+            </div>
+        `;
+    }
+    
+    // FIRMA
+    html += `
+        <div class="pdf-preview-firma">
+            <div class="firma-empresa">RAFHA SOLUCIÓN INTEGRALES SAS DE CV</div>
+            <div class="firma-espacio"></div>
+            <div class="firma-line"></div>
+            <div class="firma-nombre">${appState.headerData.tecnico}</div>
+        </div>
+
+        <!-- Pie de página -->
+        <div class="pdf-preview-footer">
+            RAFHA SOLUCION INTEGRALES SAS DE CV - Generado el: ${formatDate(new Date().toISOString().split('T')[0])} - Página 1 de 1
+        </div>
+    `;
+    
+    container.innerHTML = html;
+    updatePageInfo();
+}
         // =================================================================================
         // FUNCIONES DE INTERACCIÓN
         // =================================================================================
 
         function toggleImageSelection(index, selected) {
-            appState.pdfData.selectedImages[index].selected = selected;
+            appState.selectedImages[index].selected = selected;
             
-            // Actualizar la apariencia de la tarjeta
             const card = document.querySelector(`.image-card[data-index="${index}"]`);
             if (card) {
-                if (selected) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
+                card.classList.toggle('selected', selected);
             }
+            
+            updatePreview();
         }
 
         function updateImageDescription(index, description) {
-            appState.pdfData.selectedImages[index].description = description;
+            appState.selectedImages[index].description = description;
+            // Actualizar la descripción general cuando se edita una descripción individual
+            actualizarDescripcionGeneral();
+            updatePreview();
+        }
+
+        function updateTecnicoResponsable(nombre) {
+            appState.headerData.tecnico = nombre;
+            updatePreview();
+        }
+
+        function updateSistema(sistema, checked) {
+            updatePreview();
+        }
+
+        function getSelectedSistemas() {
+            const sistemas = [];
+            const sistemasList = ['CCTV', 'DH', 'CA', 'AI', 'SM'];
+            
+            sistemasList.forEach(sistema => {
+                const checkbox = document.getElementById(`sistema-${sistema}`);
+                if (checkbox && checkbox.checked) {
+                    sistemas.push(sistema);
+                }
+            });
+            
+            return sistemas;
         }
 
         // =================================================================================
-        // FUNCIONES DE GENERACIÓN DE PDF
+        // FUNCIONES DE IMÁGENES ADICIONALES
         // =================================================================================
 
-        async function generatePDF() {
-            try {
-                // Actualizar datos del PDF desde los campos
-                appState.pdfData.description = document.getElementById('pdfDescription').value;
-                appState.pdfData.conclusion = document.getElementById('pdfConclusion').value;
-                appState.pdfData.evidencesDescription = document.getElementById('pdfEvidencesDescription').value;
+        function handleAdditionalImages(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const container = document.getElementById('additionalImagesContainer');
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) {
+            showError(`El archivo "${file.name}" no es una imagen válida. Se omitirá.`);
+            continue;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            showError(`La imagen "${file.name}" es demasiado grande (máximo 5MB). Se omitirá.`);
+            continue;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageData = e.target.result;
+            
+            // Verificar si ya existe esta imagen para evitar duplicados
+            const alreadyExists = appState.additionalImages.some(img => 
+                img.url === imageData
+            );
+            
+            if (!alreadyExists) {
+                // IMPORTANTE: Dejar la descripción vacía para que el usuario la complete
+                appState.additionalImages.push({
+                    url: imageData,
+                    description: '', // VACÍO - el usuario pondrá su propia descripción
+                    selected: true,
+                    fileName: file.name,
+                    type: 'additional'
+                });
+                
+                updateAdditionalImagesUI();
+                updatePreview();
+            }
+        };
+        reader.onerror = function() {
+            showError(`Error al leer el archivo "${file.name}".`);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    event.target.value = '';
+}
 
-                // Validar que haya al menos una imagen seleccionada si hay imágenes disponibles
-                const selectedImages = appState.pdfData.selectedImages.filter(img => img.selected);
-                if (selectedImages.length === 0 && appState.pdfData.selectedImages.length > 0) {
-                    const result = await Swal.fire({
-                        title: '¿Continuar sin imágenes?',
-                        text: 'No has seleccionado ninguna imagen para incluir en el PDF. ¿Deseas continuar?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sí, generar sin imágenes',
-                        cancelButtonText: 'Seleccionar imágenes',
-                        confirmButtonColor: '#6C43E0'
-                    });
-                    
-                    if (!result.isConfirmed) {
-                        return;
-                    }
+
+        function updateAdditionalImagesUI() {
+    const container = document.getElementById('additionalImagesContainer');
+    
+    if (appState.additionalImages.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    appState.additionalImages.forEach((image, index) => {
+        html += `
+            <div class="image-card ${image.selected ? 'selected' : ''}" data-index="${index}">
+                <div class="image-card-header">
+                    <span style="color: var(--text-color);">${image.fileName || 'Imagen ' + (index + 1)}</span>
+                    <input 
+                        type="checkbox" 
+                        class="image-checkbox" 
+                        ${image.selected ? 'checked' : ''}
+                        onchange="toggleAdditionalImageSelection(${index}, this.checked)"
+                    >
+                </div>
+                <img src="${image.url}" alt="Imagen Adicional ${index + 1}" class="image-preview">
+                <div class="image-description">
+                    <textarea 
+                        placeholder="Escribe una descripción para esta imagen..."
+                        oninput="updateAdditionalImageDescription(${index}, this.value)"
+                        style="color: var(--text-color); background: var(--card-bg);"
+                    >${image.description || ''}</textarea>
+                    <small style="color: var(--text-color); opacity: 0.7; font-size: 11px; display: block; margin-top: 5px;">
+                        Esta descripción aparecerá debajo de esta imagen en el PDF
+                    </small>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    container.style.display = 'grid';
+    
+    // Inicializar Sortable para imágenes adicionales
+    if (sortableAdditionalImages) {
+        sortableAdditionalImages.destroy();
+    }
+    
+    sortableAdditionalImages = new Sortable(container, {
+        animation: 150,
+        onEnd: function(evt) {
+            // Actualizar el orden en appState.additionalImages
+            const oldIndex = evt.oldIndex;
+            const newIndex = evt.newIndex;
+            
+            // Reordenar el array
+            const [movedItem] = appState.additionalImages.splice(oldIndex, 1);
+            appState.additionalImages.splice(newIndex, 0, movedItem);
+            
+            updatePreview();
+        }
+    });
+}
+
+        function toggleAdditionalImageSelection(index, selected) {
+            appState.additionalImages[index].selected = selected;
+            
+            const card = document.querySelector(`#additionalImagesContainer .image-card[data-index="${index}"]`);
+            if (card) {
+                card.classList.toggle('selected', selected);
+            }
+            
+            updatePreview();
+        }
+
+        function updateAdditionalImageDescription(index, description) {
+            appState.additionalImages[index].description = description;
+            // Actualizar la descripción general cuando se edita una descripción individual
+            actualizarDescripcionGeneral();
+            updatePreview();
+        }
+
+        // =================================================================================
+        // FUNCIONES DE ORDEN DE SERVICIO
+        // =================================================================================
+
+        function openOrdenServicioModal() {
+            const modal = document.getElementById('ordenServicioModal');
+            modal.style.display = 'flex';
+            document.getElementById('ordenFileInput').value = '';
+        }
+
+        function closeOrdenServicioModal() {
+            const modal = document.getElementById('ordenServicioModal');
+            modal.style.display = 'none';
+            selectedOrdenData = null;
+        }
+
+        function confirmOrdenServicio() {
+            const fileInput = document.getElementById('ordenFileInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showError('Por favor, selecciona un archivo para subir.');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            // Validar tamaño (10MB máximo)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('El archivo es demasiado grande. El tamaño máximo es 10MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (file.type.startsWith('image/')) {
+                    selectedOrdenData = {
+                        type: 'image',
+                        data: e.target.result,
+                        fileName: file.name
+                    };
+                    saveOrdenServicio();
+                } else if (file.type === 'application/pdf') {
+                    selectedOrdenData = {
+                        type: 'pdf',
+                        data: e.target.result,
+                        fileName: file.name
+                    };
+                    saveOrdenServicio();
+                } else {
+                    showError('Formato no válido. Solo se permiten imágenes (JPG, PNG) y PDF.');
                 }
+            };
+            reader.onerror = function() {
+                showError('Error al leer el archivo. Inténtalo de nuevo.');
+            };
+            reader.readAsDataURL(file);
+        }
 
-                // Mostrar loading
-                Swal.fire({
-                    title: 'Generando PDF',
-                    html: 'Preparando documento...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
+        function saveOrdenServicio() {
+            appState.ordenServicio = selectedOrdenData;
+            updateOrdenServicioUI();
+            closeOrdenServicioModal();
+            updatePreview();
+            
+            Swal.fire({
+                title: '¡Orden adjuntada!',
+                text: 'La orden de servicio se ha adjuntado correctamente.',
+                icon: 'success',
+                timer: 2000,
+                confirmButtonColor: '#6C43E0'
+            });
+        }
 
-                // Crear el PDF usando el pdfManager existente
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
+        function updateOrdenServicioUI() {
+            const previewContainer = document.getElementById('ordenServicioPreview');
+            const emptyContainer = document.getElementById('ordenServicioEmpty');
+            const contentContainer = document.getElementById('ordenServicioContent');
+            
+            if (appState.ordenServicio) {
+                previewContainer.style.display = 'block';
+                emptyContainer.style.display = 'none';
                 
-                // Preparar datos para el PDF
-                const pdfTicketData = {
-                    ...appState.ticketData,
-                    descripcionActividades: appState.pdfData.description,
-                    conclusion: appState.pdfData.conclusion,
-                    descripcionEvidencias: appState.pdfData.evidencesDescription,
-                    imagenes: selectedImages.map(img => img.url),
-                    // Agregar descripciones individuales de imágenes si es necesario
-                    imageDescriptions: selectedImages.reduce((acc, img, index) => {
-                        acc[img.url] = img.description;
-                        return acc;
-                    }, {})
-                };
-
-                // Inicializar y usar el pdfManager
-                pdfManager.initialize(appState.colaboradores, db);
-                pdfManager.ticketData = pdfTicketData;
-                pdfManager.currentPage = 1;
-                pdfManager.totalPages = 1;
-
-                // Generar el PDF
-                await pdfManager.generatePdfContentNewFormat(doc, pdfTicketData, 'REPORTE FOTOGRÁFICO');
-                
-                // Guardar PDF
-                const fileName = `REPORTE_FOTOGRÁFICO_${appState.ticketData.idTicket || appState.ticketData.id || 'ticket'}.pdf`;
-                doc.save(fileName);
-                
-                Swal.close();
-                Swal.fire({
-                    title: '¡PDF Generado!',
-                    text: `El archivo "${fileName}" se ha descargado exitosamente.`,
-                    icon: 'success',
-                    confirmButtonColor: '#6C43E0',
-                    timer: 3000
-                });
-                
-            } catch (error) {
-                console.error('Error generando PDF:', error);
-                Swal.fire('Error', 'Ocurrió un error al generar el PDF.', 'error');
+                if (appState.ordenServicio.type === 'image') {
+                    contentContainer.innerHTML = `
+                        <img src="${appState.ordenServicio.data}" alt="Orden de Servicio" 
+                             style="max-width: 100%; border-radius: 5px;"
+                             onerror="this.src='../css/img/image-placeholder.png'">
+                        <p style="margin-top: 10px; font-size: 0.9rem; text-align: center; color: var(--text-color);">${appState.ordenServicio.fileName}</p>
+                    `;
+                } else {
+                    contentContainer.innerHTML = `
+                        <div style="text-align: center; padding: 20px; background: var(--background-color); border-radius: 5px;">
+                            <i class="fas fa-file-pdf" style="font-size: 3rem; color: #e74c3c; margin-bottom: 10px;"></i>
+                            <p style="font-weight: bold; color: var(--text-color);">Documento PDF</p>
+                            <p style="font-size: 0.9rem; color: var(--text-color);">${appState.ordenServicio.fileName}</p>
+                            <p style="font-size: 0.8rem; color: var(--text-color); margin-top: 5px;">(Se incluirá como imágenes en el PDF)</p>
+                        </div>
+                    `;
+                }
+            } else {
+                previewContainer.style.display = 'none';
+                emptyContainer.style.display = 'block';
             }
         }
 
+        function removeOrdenServicio() {
+            appState.ordenServicio = null;
+            updateOrdenServicioUI();
+            updatePreview();
+            
+            Swal.fire({
+                title: 'Orden eliminada',
+                text: 'La orden de servicio se ha eliminado correctamente.',
+                icon: 'info',
+                timer: 2000,
+                confirmButtonColor: '#6C43E0'
+            });
+        }
+
+        // =================================================================================
+        // FUNCIONES DE NAVEGACIÓN Y ZOOM
+        // =================================================================================
+
+        function showTab(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar la pestaña seleccionada
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+
+        function zoomIn() {
+            if (appState.pdfConfig.zoom < 2) {
+                appState.pdfConfig.zoom += 0.1;
+                updateZoom();
+            }
+        }
+
+        function zoomOut() {
+            if (appState.pdfConfig.zoom > 0.5) {
+                appState.pdfConfig.zoom -= 0.1;
+                updateZoom();
+            }
+        }
+
+        function updateZoom() {
+            const previewContent = document.getElementById('pdfPreviewContent');
+            const zoomLevel = document.getElementById('zoomLevel');
+            
+            previewContent.style.transform = `scale(${appState.pdfConfig.zoom})`;
+            zoomLevel.textContent = `${Math.round(appState.pdfConfig.zoom * 100)}%`;
+        }
+
+        function prevPage() {
+            if (appState.pdfConfig.currentPage > 1) {
+                appState.pdfConfig.currentPage--;
+                updatePageInfo();
+            }
+        }
+
+        function nextPage() {
+            if (appState.pdfConfig.currentPage < appState.pdfConfig.totalPages) {
+                appState.pdfConfig.currentPage++;
+                updatePageInfo();
+            }
+        }
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = 
+                `Página ${appState.pdfConfig.currentPage} de ${appState.pdfConfig.totalPages}`;
+        }
+
+        // =================================================================================
+        // FUNCIONES DE GENERACIÓN DE PDF FINAL
+        // =================================================================================
+
+        async function generateFinalPDF() {
+    try {
+        // Validar datos mínimos
+        if (!appState.ticketData) {
+            showError('No hay datos del ticket para generar el PDF.');
+            return;
+        }
+
+        // Mostrar loading
+        Swal.fire({
+            title: 'Generando PDF Final',
+            html: 'Preparando documento final...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        // Preparar datos para el PDF
+        const pdfTicketData = {
+            ...appState.ticketData,
+            descripcionActividades: document.getElementById('pdfDescription').value,
+            descripcionEvidencias: document.getElementById('pdfEvidenciasDescription').value,
+            conclusion: document.getElementById('pdfConclusion').value,
+            sistemas: getSelectedSistemas().join(','),
+            imagenes: appState.selectedImages.filter(img => img.selected).map(img => img.url),
+            // Datos del encabezado
+            cuentaNombre: appState.headerData.cliente,
+            fechaCreacion: appState.headerData.fecha,
+            direccionFiscal: appState.headerData.direccionFiscal,
+            ordenServicio: appState.headerData.ordenServicio,
+            rfc: appState.headerData.rfc,
+            proyecto: appState.headerData.proyecto,
+            atencionA: appState.headerData.atencionA,
+            servicio: appState.headerData.servicio,
+            correo: appState.headerData.correo,
+            nombresColaboradores: appState.headerData.tecnico
+        };
+
+        // Agregar imágenes adicionales
+        const additionalSelectedImages = appState.additionalImages.filter(img => img.selected);
+        if (additionalSelectedImages.length > 0) {
+            additionalSelectedImages.forEach(img => {
+                if (!pdfTicketData.imagenes.includes(img.url)) {
+                    pdfTicketData.imagenes.push(img.url);
+                }
+            });
+        }
+
+        // Crear array de descripciones INDIVIDUALES de imágenes (EN EL MISMO ORDEN que las imágenes)
+        const imageDescriptions = [];
+        
+        // Primero las imágenes seleccionadas (sus descripciones individuales)
+        appState.selectedImages.filter(img => img.selected).forEach(img => {
+            imageDescriptions.push(img.description || '');
+        });
+        
+        // Luego las imágenes adicionales (sus descripciones individuales)
+        additionalSelectedImages.forEach(img => {
+            imageDescriptions.push(img.description || '');
+        });
+
+        console.log('Total de imágenes para PDF:', pdfTicketData.imagenes.length);
+        console.log('Total de descripciones individuales:', imageDescriptions.length);
+        console.log('Descripción general de evidencias:', pdfTicketData.descripcionEvidencias);
+
+        // Verificar si existe pdfManager
+        if (typeof pdfManager === 'undefined') {
+            throw new Error('El generador de PDF no está disponible. Cargue pdf-generator.js');
+        }
+
+        // Inicializar pdfManager con los datos necesarios
+        pdfManager.initialize([], null);
+        pdfManager.ticketData = pdfTicketData;
+        pdfManager.featuredItem = appState.ordenServicio; // Incluir orden de servicio
+        pdfManager.currentPage = 1;
+        pdfManager.totalPages = 1;
+        
+        // Generar el PDF con descripciones INDIVIDUALES de imágenes
+        await pdfManager.createAndSavePdfWithDescriptions(imageDescriptions);
+        
+    } catch (error) {
+        console.error('Error generando PDF final:', error);
+        Swal.fire({
+            title: 'Error', 
+            text: 'Ocurrió un error al generar el PDF: ' + error.message, 
+            icon: 'error',
+            confirmButtonColor: '#6C43E0'
+        });
+    }
+}
         // =================================================================================
         // FUNCIONES AUXILIARES
         // =================================================================================
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('es-MX');
+            } catch (e) {
+                return dateString;
+            }
+        }
 
         function getStatusBadge(status) {
             const statusMap = {
                 'finalizado': { class: 'badge-success', text: 'Finalizado' },
                 'en_proceso': { class: 'badge-warning', text: 'En Proceso' },
                 'pendiente': { class: 'badge-danger', text: 'Pendiente' },
-                'cancelado': { class: 'badge-secondary', text: 'Cancelado' }
+                'cancelado': { class: 'badge-info', text: 'Cancelado' }
             };
             
-            const statusInfo = statusMap[status] || { class: 'badge-secondary', text: status || 'N/A' };
+            const statusInfo = statusMap[status] || { class: 'badge-info', text: status || 'N/A' };
             return `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
         }
 
@@ -940,7 +1480,7 @@
                 'baja': { class: 'badge-success', text: 'Baja' }
             };
             
-            const priorityInfo = priorityMap[priority] || { class: 'badge-secondary', text: priority || 'N/A' };
+            const priorityInfo = priorityMap[priority] || { class: 'badge-info', text: priority || 'N/A' };
             return `<span class="badge ${priorityInfo.class}">${priorityInfo.text}</span>`;
         }
 
@@ -954,19 +1494,13 @@
         }
 
         function setupEventListeners() {
-            document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
+            document.getElementById('generatePdfBtn').addEventListener('click', generateFinalPDF);
             
-            // Guardar cambios en tiempo real
-            document.getElementById('pdfDescription').addEventListener('input', (e) => {
-                appState.pdfData.description = e.target.value;
-            });
-            
-            document.getElementById('pdfConclusion').addEventListener('input', (e) => {
-                appState.pdfData.conclusion = e.target.value;
-            });
-            
-            document.getElementById('pdfEvidencesDescription').addEventListener('input', (e) => {
-                appState.pdfData.evidencesDescription = e.target.value;
+            // Configurar clic fuera del modal para cerrarlo
+            document.getElementById('ordenServicioModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeOrdenServicioModal();
+                }
             });
         }
 
@@ -987,7 +1521,51 @@
 
     <!-- Incluir el pdf-generator.js existente -->
     <script src="pdf-generator.js"></script>
+    
+    <!-- Incluir la personalización de colores -->
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
+    <script>
+        // Inicializar zoom
+        appState.pdfConfig.zoom = 1;
+        updateZoom();
+        
+        // Ajustar el contenedor del PDF para que tenga scroll vertical
+        document.addEventListener('DOMContentLoaded', function() {
+            const pdfContainer = document.getElementById('pdfPreviewScroll');
+            if (pdfContainer) {
+                pdfContainer.style.overflowY = 'auto';
+                pdfContainer.style.maxHeight = 'calc(100vh - 300px)';
+            }
+        });
+        
+        // Aplicar colores personalizados a todos los elementos
+        function applyCustomColors() {
+            // Esta función se llamará desde personalizacion-colores.js
+            console.log('Aplicando colores personalizados...');
+            
+            // Aplicar colores a elementos específicos
+            document.querySelectorAll('.section h3, .tab, .form-group label, .info-label').forEach(el => {
+                el.style.color = 'var(--text-color)';
+            });
+            
+            // Asegurar que los iconos tengan el color del texto
+            document.querySelectorAll('.section h3 i, .tab i, .add-more-images i, .loading i').forEach(icon => {
+                icon.style.color = 'var(--text-color)';
+            });
+            
+            // Aplicar bordes personalizados
+            document.querySelectorAll('.section, .image-card, .form-control, textarea').forEach(el => {
+                el.style.borderColor = 'var(--border-color)';
+            });
+        }
+        
+        // Esperar a que cargue personalizacion-colores.js y luego aplicar colores
+        setTimeout(() => {
+            if (typeof applyCustomColors === 'function') {
+                applyCustomColors();
+            }
+        }, 500);
+    </script>
 </body>
 </html>
