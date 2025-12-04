@@ -35,25 +35,59 @@
                 <h3>Resueltos</h3>
                 <span id="countSolved">--</span>
             </div>
+            <div class="kpi-card descarted card">
+                <h3>Descartado</h3>
+                <span id="countDescarted">--</span>
+            </div>
         </div>
 
-        <div class="table-wrapper card">
-            <table class="reports-table">
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">Fecha</th>
-                        <th style="width: 35%;">Error / Incidencia</th>
-                        <th style="width: 15%;">Proyecto</th>
-                        <th style="width: 20%;">Usuario</th>
-                        <th style="width: 15%; text-align: center;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="reportsTableBody">
-                    <tr><td colspan="5" style="text-align:center; padding: 20px;">Cargando base de datos...</td></tr>
-                </tbody>
-            </table>
+        <div class="filters-toolbar card">
+            <div class="filter-group">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar por error, usuario o módulo...">
+                </div>
+                <div class="filter-group">
+                <i class="fas fa-filter"></i>
+                <select id="statusFilter">
+                    <option value="todos">Todos los estados</option>
+                    <option value="Pendiente">Pendientes</option>
+                    <option value="En Proceso">En Proceso</option>
+                    <option value="Resuelto">Resueltos</option>
+                    <option value="Descartado">Descartados</option>
+                </select>
+                </div>
+         </div>
+
+         <!-- Reemplaza el div .table-wrapper y la tabla por esto: -->
+<div class="table-container card">
+    <!-- TABLA PARA ESCRITORIO -->
+    <table class="desktop-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">Fecha</th>
+                <th style="width: 35%;">Error / Incidencia</th>
+                <th style="width: 15%;">Proyecto</th>
+                <th style="width: 20%;">Usuario</th>
+                <th style="width: 15%; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="reportsTableBody">
+            <tr><td colspan="5" style="text-align:center; padding: 20px;">Cargando base de datos...</td></tr>
+        </tbody>
+    </table>
+    
+    <!-- TARJETAS PARA MÓVIL -->
+            <div class="mobile-cards" id="mobileCardsContainer">
+            <!-- Las tarjetas se generarán dinámicamente con JavaScript -->
+            </div>
         </div>
-    </div>
+
+            <div class="pagination-controls">
+                <button id="btnPrev" class="btn-pagination" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+                <span id="pageIndicator">Página 1</span>
+                <button id="btnNext" class="btn-pagination">Siguiente <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
 
     <script src="../js/firebase-init.js"></script>
     <script src="../js/personalizacion-colores.js"></script> 

@@ -21,7 +21,9 @@
         colaboradores: [],
         clientes: [],
         currentTicketType: 'operativo',
-        cotizacionesVendidas: []
+        cotizacionesVendidas: [],
+        //Para sistema de reportes
+        origenReporteId: null
     };
 
     // Variables de control para el estado del guardado
@@ -64,6 +66,11 @@
             await loadCollaborators();
             setupEventListeners();
             setupSelect2();
+
+            //Sistema reportes
+            checkPendingReportData();
+
+
         } catch (error) {
             console.error("Error en la carga inicial:", error);
             showError('No se pudieron cargar los datos iniciales.');
@@ -551,8 +558,33 @@
             tipo: 'administracion'
         };
         
-        await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
         
+        //SISTEMA DE REPORTES
+        if (appState.origenReporteId) {
+            ticketData.origenReporteId = appState.origenReporteId;
+        }
+
+        await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
+
+
+        if (appState.origenReporteId) {
+            try {
+                console.log(`🔗 Vinculando Ticket ${idTicket} con Reporte ${appState.origenReporteId}`);
+                
+                await db.collection('reportesSistema').doc(appState.origenReporteId).update({
+                    estado: 'En Proceso', // REQUERIMIENTO: Cambiar estado
+                    ticketAsociado: idTicket,
+                    responsableAsignado: ticketData.responsableNombre
+                });
+                
+            } catch (error) {
+                console.error("Error actualizando reporte original:", error);
+                // No detenemos el flujo, el ticket ya se creó
+            }
+        }
+        
+
+
         return idTicket;
     }
 
@@ -684,3 +716,43 @@
             }
         });
     });
+
+
+    //funcion para sistema de reportes
+    function checkPendingReportData() {
+        const dataJSON = sessionStorage.getItem('ticketPrefillData');
+        
+        if (dataJSON) {
+            console.log("📥 Datos recibidos desde Reportes:", dataJSON);
+            const data = JSON.parse(dataJSON);
+
+            // 1. Cambiar a la pestaña administrativa automáticamente
+            changeTicketType('administracion');
+
+            // 2. Rellenar campos del formulario Administrativo
+            // Esperamos un poco para asegurar que el DOM (pestañas) haya cambiado
+            setTimeout(() => {
+                if(document.getElementById('rsiTitulo')) {
+                    document.getElementById('rsiTitulo').value = data.titulo || '';
+                    document.getElementById('rsiDescripcionActividades').value = data.descripcion || '';
+                    document.getElementById('rsiPrioridad').value = data.prioridad || 'Media';
+                    
+                    // Guardar el ID del reporte original en el estado para usarlo al guardar
+                    appState.origenReporteId = data.origenReporteId;
+
+                    // Notificar visualmente
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'Datos cargados desde reporte',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                }
+            }, 500);
+
+            // 3. Limpiar memoria para que no se vuelva a cargar al recargar la página
+            sessionStorage.removeItem('ticketPrefillData');
+        }
+    }
