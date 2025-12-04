@@ -18,15 +18,19 @@ body {
     margin: 30px auto;
     padding: 0 15px;
 }
+.container-custom {
+    max-width: 98%; /* Ocupar más espacio horizontal */
+    margin: 20px auto;
+}
 
 /* Header */
 .header {
-    background: white;
+    
     padding: 20px 30px;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     display: flex;
-    justify-content: space-between;
+    justify-content:center;
     align-items: center;
     margin-bottom: 25px;
 }
@@ -42,20 +46,25 @@ body {
 }
 
 .kpi-card {
-    background: var(color(--bg-light));
+    
     padding: 20px;
     border-radius: 12px;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    border-top: 4px solid #ccc;
+    border-top: 4px solid transparent;
 }
 
-.kpi-card.danger { border-color: var(--danger); }
-.kpi-card.warning { border-color: var(--warning); }
-.kpi-card.success { border-color: var(--success); }
+.kpi-card.danger { border-color: var(--danger,#dc3545); }
+.kpi-card.warning { border-color: var(--warning,#ffc107); }
+.kpi-card.success { border-color: var(--success,#28a745); }
 
 .kpi-card h3 { margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-.kpi-card span { display: block; font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #2c3e50; }
+.kpi-card span { 
+    display: block;
+    font-size: 2rem;
+    font-weight: bold; 
+    margin-top: 10px; 
+    color: #2c3e50;
+ }
 
 /* Tabla */
 .table-wrapper {
@@ -72,23 +81,20 @@ body {
     min-width: 900px;
 }
 
-.reports-table th {
-    background: #f1f3f5;
+.reports-table th, .reports-table td {
     padding: 15px;
-    text-align: left;
-    font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.reports-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* Borde sutil */
     vertical-align: middle;
 }
 
-.reports-table tr:hover {
-    background-color: #f8f9fa;
+/* Ajuste específico para descripción larga */
+.desc-truncate {
+    display: inline-block;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
 }
 
 /* Celdas específicas */
@@ -96,6 +102,12 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+.action-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
 
 .desc-truncate {
@@ -131,17 +143,44 @@ body {
     transition: all 0.2s;
 }
 .btn-icon:hover { background: var(--primary); color: white; border-color: var(--primary); }
-
 .btn-action {
+    background: none;
     border: none;
-    background: transparent;
     cursor: pointer;
     font-size: 1.1rem;
-    padding: 5px 10px;
-    color: #6c757d;
-    transition: transform 0.2s;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.2s;
 }
-.btn-action:hover { transform: scale(1.1); color: var(--primary); }
-.btn-edit:hover { color: #2196f3; }
+.btn-action:hover { opacity: 1; transform: scale(1.1); }
 
+/* Botón de estado tipo pastilla (Pill) */
+.btn-status-pill {
+    background: transparent;
+    border: 1px solid; /* El color se define inline en el JS */
+    border-radius: 15px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: rgba(255,255,255,0.05);
+    transition: all 0.2s;
+}
+.btn-status-pill:hover {
+    background-color: rgba(0,0,0,0.05);
+    transform: translateY(-1px);
+}
+
+/* Badges generales */
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.badge-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.text-muted { opacity: 0.7; font-size: 0.85em; }
 .text-center { text-align: center; }

@@ -1093,6 +1093,7 @@
                             useCORS: true, 
                             logging: false,
                             // COORDENADAS EXACTAS (Lo que vimos antes)
+                            scale: 1,
                             x: window.scrollX,
                             y: window.scrollY,
                             width: window.innerWidth,
@@ -1103,7 +1104,8 @@
                         });
 
                         // 4. Guardar
-                        const imgData = canvas.toDataURL('image/jpeg', 0.6);
+                        const imgData = canvas.toDataURL('image/jpeg', 0.5);
+                        console.log("Tamaño aprox imagen:", Math.round(imgData.length / 1024), "KB");
                         sessionStorage.setItem('tempReportScreenshot', imgData);
                         sessionStorage.setItem('tempReportSource', window.location.pathname);
 

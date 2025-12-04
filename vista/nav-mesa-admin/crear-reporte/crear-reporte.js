@@ -12,7 +12,7 @@
     const moduloInput = document.getElementById('modulo');
     
     let currentUser = null;
-    let currentUserName = 'Anónimo'; // Variable para guardar el nombre real de la BD
+    let currentUserName = 'Anónimo'; 
 
     // ==========================================
     // FUNCIONES AUXILIARES
@@ -52,26 +52,8 @@
         }
     };
 
-    // Subir imagen a Storage
-    const uploadScreenshotToStorage = async (base64String, userId) => {
-        // Validación básica
-        if (!base64String || base64String.length < 100) {
-            throw new Error("La cadena base64 de la imagen está vacía o corrupta.");
-        }
+    // NOTA: Se eliminó la función 'uploadScreenshotToStorage' porque no tienes permisos.
 
-        const storageRef = firebase.storage().ref();
-        const fileName = `reportes_screenshots/${userId || 'anon'}_${Date.now()}.jpg`;
-        const imageRef = storageRef.child(fileName);
-
-        // Convertir Base64 a Blob
-        const response = await fetch(base64String);
-        const blob = await response.blob();
-
-        const snapshot = await imageRef.put(blob);
-        return await snapshot.ref.getDownloadURL();
-    };
-
-    // Función para obtener datos reales del colaborador
     const fetchUserData = async (email) => {
         try {
             const db = firebase.firestore();
@@ -82,12 +64,11 @@
 
             if (!snapshot.empty) {
                 const data = snapshot.docs[0].data();
-                // Ajusta 'NOMBRE' según como lo tengas en tu BD (NOMBRE, nombre, Name, etc.)
                 currentUserName = data.NOMBRE || data.nombre || data.nombreCompleto || email;
                 console.log("👤 Nombre encontrado en BD:", currentUserName);
             } else {
                 console.warn("⚠️ Usuario no encontrado en colección colaboradores");
-                currentUserName = email; // Fallback al email
+                currentUserName = email; 
             }
         } catch (error) {
             console.error("Error buscando usuario:", error);
@@ -98,7 +79,6 @@
     // INICIALIZACIÓN
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
-        // A. Auth Observer
         firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -106,7 +86,6 @@
                     userDisplay.textContent = user.email;
                     userDisplay.classList.add('logged-in');
                 }
-                // Obtener el nombre real de la base de datos
                 await fetchUserData(user.email);
             } else {
                 if(userDisplay) userDisplay.textContent = 'Usuario Anónimo';
@@ -115,7 +94,6 @@
             checkPendingScreenshot();
         });
 
-        // B. Botón eliminar captura
         if(btnRemoveScreenshot){
             btnRemoveScreenshot.addEventListener('click', () => {
                 screenshotDataField.value = '';
@@ -124,7 +102,7 @@
             });
         }
 
-        // C. Detectar Origen URL
+        // Detectar Origen URL
         const urlParams = new URLSearchParams(window.location.search);
         const sourceModule = urlParams.get('source') || urlParams.get('modulo');
         const referrer = document.referrer;
@@ -153,17 +131,17 @@
 
         const submitBtn = form.querySelector('.btn-submit') || form.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
-        let screenshotURL = null;
 
         const descripcion = document.getElementById('descripcion').value;
         const tipo = document.getElementById('tipo').value;
-        const screenshotBase64 = screenshotDataField.value;
+        const screenshotBase64 = screenshotDataField.value; // IMAGEN EN TEXTO
 
         // 1. Validaciones
         const dataToValidate = {
             description: descripcion,
             type: tipo,
             module: document.getElementById('modulo').value,
+            // Validación simulada basada en el tamaño del texto base64
             attachments: screenshotBase64 ? [{ sizeBytes: Math.round(screenshotBase64.length * 0.75) }] : []
         };
 
@@ -182,30 +160,12 @@
 
         try {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
             const db = firebase.firestore();
 
-            // 2. Subir imagen (AHORA SI MOSTRAMOS EL ERROR SI FALLA)
-            if (screenshotBase64 && screenshotBase64.length > 0) {
-                try {
-                    submitBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Subiendo evidencia...';
-                    const userId = currentUser ? currentUser.uid : 'anonimo';
-                    console.log("🚀 Iniciando subida de imagen...");
-                    screenshotURL = await uploadScreenshotToStorage(screenshotBase64, userId);
-                    console.log("✅ Imagen subida URL:", screenshotURL);
-                } catch (uploadError) {
-                    console.error("❌ Error CRÍTICO subiendo imagen:", uploadError);
-                    // Lanzamos el error para detener el proceso y avisar al usuario
-                    // Si prefieres que se guarde sin imagen, comenta la siguiente linea:
-                    throw new Error("No se pudo subir la captura de pantalla: " + uploadError.message);
-                }
-            } else {
-                console.log("ℹ️ No hay captura de pantalla para subir.");
-            }
-
-            // 3. Guardar en Firestore
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardando reporte...';
+            // ⚠️ YA NO INTENTAMOS SUBIR A STORAGE (Opción 1 aplicada)
+            // Pasamos directamente a guardar en Firestore
 
             const reportePayload = {
                 tipo: tipo,
@@ -213,15 +173,20 @@
                 moduloUsuario: document.getElementById('modulo').value,
                 descripcion: descripcion,
                 origenDetectado: document.getElementById('origenUrl').value,
-                capturaPantallaUrl: screenshotURL || null, // Aquí se guarda la URL
+                
+                // === CAMBIO CRÍTICO PARA OPCIÓN 1 ===
+                // Guardamos la cadena base64 directamente en la BD
+                capturaPantallaBase64: screenshotBase64 || null, 
+                
+                // ====================================
+
                 estado: 'Pendiente',
                 origenReporte: 'manual_web',
                 
-                // AQUÍ ESTÁ LA CORRECCIÓN DEL NOMBRE
                 creadoPor: currentUser ? {
                     uid: currentUser.uid,
                     email: currentUser.email,
-                    displayName: currentUserName // Usamos la variable que llenamos desde BD
+                    displayName: currentUserName 
                 } : 'Anónimo',
                 
                 fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
@@ -235,12 +200,20 @@
                 }
             };
 
+            // Verificamos tamaño antes de enviar (Firestore límite 1MB)
+            const payloadSize = new Blob([JSON.stringify(reportePayload)]).size;
+            console.log(`📦 Tamaño del reporte: ${(payloadSize / 1024).toFixed(2)} KB`);
+
+            if (payloadSize > 1000000) {
+                throw new Error("La imagen es demasiado pesada para guardar sin Storage. Intenta una pantalla con menos detalles.");
+            }
+
             await db.collection('reportesSistema').add(reportePayload);
 
             Swal.fire({
                 icon: 'success',
                 title: '¡Recibido!',
-                text: 'Gracias por ayudarnos a mejorar el sistema.',
+                text: 'Reporte guardado correctamente.',
                 confirmButtonColor: '#6C43E0',
                 timer: 2000,
                 showConfirmButton: false
@@ -253,8 +226,8 @@
             
             Swal.fire({
                 icon: 'error',
-                title: 'Error al enviar',
-                text: 'Hubo un problema: ' + error.message, // Mostramos el mensaje real
+                title: 'Error al guardar',
+                text: error.message, 
             });
 
         } finally {

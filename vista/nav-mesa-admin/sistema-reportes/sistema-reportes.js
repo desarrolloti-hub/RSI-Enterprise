@@ -1,12 +1,12 @@
 (function() {
     'use strict';
 
-    const tableBody = document.getElementById('reportsTableBody');
-    let allReports = []; // Cache local para filtrado rápido
+    const auth = firebase.auth();
 
-    // Inicialización
+    const tableBody = document.getElementById('reportsTableBody');
+    let allReports = []; 
+
     const initPage = () => {
-        // Esperar a que Firebase cargue
         if (typeof firebase === 'undefined' || !firebase.apps.length) {
             setTimeout(initPage, 100);
             return;
@@ -14,21 +14,13 @@
         loadSystemReports();
     };
 
-    // 1. CARGAR REPORTES DE FIRESTORE
+    // 1. CARGAR REPORTES
     async function loadSystemReports() {
         const db = firebase.firestore();
-        
         try {
-            // Referencia a la colección PLURAL correcta
-            let query = db.collection('reportesSistemas').orderBy('fechaCreacion', 'desc').limit(50);
-
-            /* // --- FUTURO: FILTRO POR PROYECTO ---
-            // const projectID = document.getElementById('projectFilter')?.value;
-            // if(projectID && projectID !== 'all') {
-            //    query = query.where('projectId', '==', projectID);
-            // }
-            */
-
+            // Ordenamos por fecha de creación descendente
+            let query = db.collection('reportesSistema').orderBy('fechaCreacion', 'desc').limit(50);
+            
             const snapshot = await query.get();
 
             if (snapshot.empty) {
@@ -42,61 +34,78 @@
 
         } catch (error) {
             console.error("Error cargando reportes:", error);
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-error">Error de conexión: ${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-error">Error: ${error.message}</td></tr>`;
         }
     }
 
-    // 2. RENDERIZADO DE TABLA
+    // 2. RENDERIZADO DE TABLA (Ajustado a tus columnas)
     function renderReports(reports) {
         tableBody.innerHTML = '';
 
         reports.forEach(r => {
-            // Procesar Fechas
-            let fechaStr = 'Sin fecha';
+            // A. FECHA
+            let fechaStr = '---';
             if (r.fechaCreacion && r.fechaCreacion.seconds) {
                 fechaStr = new Date(r.fechaCreacion.seconds * 1000).toLocaleDateString('es-MX', {
-                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                 });
             }
 
-            // Badges de Estado
-            let statusClass = 'status-pendiente';
-            if (r.estado === 'En Revisión' || r.estado === 'En Proceso') statusClass = 'status-revisando';
-            if (r.estado === 'Resuelto' || r.estado === 'Finalizado') statusClass = 'status-resuelto';
+            // B. PROYECTO (Lógica a futuro: si el campo existe úsalo, si no 'General')
+            const proyecto = r.proyecto || 'RSI Enterprise'; // Puedes cambiar el default aquí
+            const proyectoBadge = `<span class="badge badge-secondary" style="font-size: 0.75rem;">${proyecto}</span>`;
 
-            // Usuario
+            // C. USUARIO
             const userEmail = r.creadoPor?.email || 'Anónimo';
-            const userBadge = r.creadoPor?.uid ? '<i class="fas fa-user-check text-success"></i>' : '<i class="fas fa-user-secret"></i>';
+            const userName = r.creadoPor?.displayName || userEmail.split('@')[0];
 
-            // Fila HTML
+            //D. Evidencia
+            const tieneEvidencia = r.capturaPantallaBase64 || r.capturaPantallaUrl ? true : false;
+
+            // E. ESTADO (Clase para el color del puntito o texto)
+            let statusColor = 'var(--text-color)';
+            if (r.estado === 'Pendiente') statusColor = 'var(--danger)'; 
+            if (r.estado === 'En Proceso') statusColor = 'var(--warning)';
+            if (r.estado === 'Resuelto') statusColor = 'var(--success)';
+
+            // --- CONSTRUCCIÓN DE FILA ---
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><small>${fechaStr}</small></td>
+
                 <td>
-                    <div class="user-cell">
-                        ${userBadge} <span>${userEmail}</span>
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <div>
+                            <strong>${r.tipo || 'Error'}:</strong> <span class="desc-truncate">${r.descripcion}</span>
+                            <br>
+                            <small class="text-muted"><i class="fas fa-layer-group"></i> ${r.moduloUsuario || 'Módulo desconocido'}</small>
+                        </div>
+                        ${r.capturaPantallaUrl ? 
+                            `<i class="fas fa-image" style="cursor:pointer; color:var(--primary-color); margin-top:3px;" 
+                                onclick="window.verEvidencia('${r.capturaPantallaUrl}')" title="Ver evidencia"></i>` 
+                            : ''}
                     </div>
                 </td>
+
+                <td>${proyectoBadge}</td>
+
                 <td>
-                    <strong>${r.moduloUsuario || r.origenReporte}</strong><br>
-                    <small class="text-muted">${r.tipo} • ${r.prioridad}</small>
+                    <div class="user-cell">
+                        <i class="fas fa-user-circle"></i> 
+                        <span title="${userEmail}">${userName}</span>
+                    </div>
                 </td>
-                <td style="max-width: 300px;">
-                    <div class="desc-truncate">${r.descripcion}</div>
-                </td>
+
                 <td class="text-center">
-                    ${r.capturaPantallaUrl 
-                        ? `<button class="btn-icon" onclick="window.verEvidencia('${r.capturaPantallaUrl}')"><i class="fas fa-image"></i></button>` 
-                        : '<span class="text-muted">-</span>'}
-                </td>
-                <td><span class="badge ${statusClass}">${r.estado}</span></td>
-                <td class="text-center">
-                    <button class="btn-action" onclick="window.verDetallesTecnicos('${r.id}')" title="Ver Info Técnica">
-                        <i class="fas fa-microchip"></i>
-                    </button>
-                    <button class="btn-action btn-edit" onclick="window.cambiarEstado('${r.id}', '${r.estado}')" title="Gestionar">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                    <div class="action-group">
+                        <button class="btn-action" onclick="window.verDetallesTecnicos('${r.id}')" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        
+                        <button class="btn-status-pill" onclick="window.cambiarEstado('${r.id}', '${r.estado}')" style="border-color: ${statusColor}; color: ${statusColor}">
+                            ${r.estado} <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
                 </td>
             `;
             tableBody.appendChild(row);
@@ -105,112 +114,117 @@
 
     // 3. ACTUALIZAR KPIs
     function updateKPIs(data) {
-        // Normalizamos los strings para contar bien
         const count = (statusArr) => data.filter(r => statusArr.includes(r.estado)).length;
-
         document.getElementById('countPending').textContent = count(['Pendiente']);
         document.getElementById('countProcess').textContent = count(['En Revisión', 'En Proceso']);
         document.getElementById('countSolved').textContent = count(['Resuelto', 'Finalizado']);
     }
 
     function renderEmptyState() {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding: 40px;">
-                    <i class="fas fa-check-circle" style="font-size: 3rem; color: #2ecc71; margin-bottom:10px;"></i>
-                    <p>No hay reportes activos. ¡Buen trabajo!</p>
-                </td>
-            </tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px;">No hay reportes.</td></tr>`;
         updateKPIs([]);
     }
 
-    // --- FUNCIONES GLOBALES (Expuestas a window) ---
+    // --- FUNCIONES GLOBALES ---
 
-    // A. Ver Evidencia (Imagen)
-    window.verEvidencia = (url) => {
-        Swal.fire({
-            imageUrl: url,
-            imageAlt: 'Captura de pantalla',
-            width: '80%',
-            showConfirmButton: false,
-            showCloseButton: true,
-            background: '#fff'
-        });
+    window.verEvidenciaPorId = (id) => {
+        const report = allReports.find(r => r.id === id);
+        if (report) {
+            // Prioridad: Base64 (Opción 1) > URL (Opción antigua)
+            const evidencia = report.capturaPantallaBase64 || report.capturaPantallaUrl;
+            if (evidencia) {
+                window.verEvidencia(evidencia);
+            } else {
+                Swal.fire('Info', 'No se encontró la imagen.', 'info');
+            }
+        }
     };
 
-    // B. Ver Detalles Técnicos (JSON Viewer Bonito)
+    //Visualzador de evidencia
+    window.verEvidencia = (data) => {
+        const config = {
+            imageUrl: data,
+            imageAlt: 'Evidencia',
+            width: '90%', // Más grande para ver bien
+            showConfirmButton: false,
+            showCloseButton: true,
+            background: '#fff' // Fallback
+        };
+        if (window.showCustomAlert) {
+            window.showCustomAlert(config);
+        }else{
+            Swal.fire(config);
+        }
+    }
+
     window.verDetallesTecnicos = (id) => {
         const report = allReports.find(r => r.id === id);
         if(!report) return;
-
         const ctx = report.contextoTecnico || {};
+
+        const tieneEvidencia = report.capturaPantallaBase64 || report.capturaPantallaUrl ? true : false;
         
-        // Creamos una tabla HTML para el modal
         const htmlDetails = `
             <div style="text-align: left; font-size: 0.9rem;">
-                <p><strong>🆔 ID Reporte:</strong> ${id}</p>
-                <p><strong>🌐 URL Origen:</strong> <a href="${ctx.urlActual || '#'}" target="_blank">Link</a></p>
-                <hr>
-                <table style="width:100%; border-collapse: collapse;">
-                    <tr><td style="padding:4px;"><strong>💻 Resolución:</strong></td><td>${ctx.resolucionPantalla || 'N/A'}</td></tr>
-                    <tr><td style="padding:4px;"><strong>🌍 Navegador:</strong></td><td>${ctx.navegador || 'N/A'}</td></tr>
-                    <tr><td style="padding:4px;"><strong>📱 Plataforma:</strong></td><td>${ctx.plataforma || 'N/A'}</td></tr>
-                    <tr><td style="padding:4px;"><strong>📡 Online:</strong></td><td>${ctx.online !== undefined ? ctx.online : '?'}</td></tr>
-                </table>
-                <hr>
-                <p><strong>📝 Descripción completa:</strong></p>
-                <div style="background:#f5f5f5; padding:10px; border-radius:4px; max-height:100px; overflow-y:auto;">
+                <p><strong>Origen:</strong> ${report.origenDetectado}</p>
+                <hr class="separator">
+                <p><strong>Navegador:</strong> ${ctx.navegador || 'N/A'}</p>
+                <p><strong>Resolución:</strong> ${ctx.resolucionPantalla || 'N/A'}</p>
+                <hr class="separator">
+                <p><strong>Descripción Completa:</strong></p>
+                <div class="content-box" style="padding:10px; border-radius:4px; max-height:150px; overflow-y:auto; border:1px solid var(--secondary-color);">
                     ${report.descripcion}
                 </div>
-            </div>
+
+                ${tieneEvidencia ? `<div style="text-align: center;">
+                        <button class="btn-secondary" style="width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px;" 
+                            onclick="window.verEvidenciaPorId('${id}')">
+                            <i class="fas fa-camera"></i> Ver Captura de Pantalla
+                        </button>
+                    </div>
+                ` : '<div style="text-align:center; color:#999; font-style:italic;">Sin evidencia visual adjunta</div>'}
+              </div>             
         `;
 
-        Swal.fire({
-            title: 'Diagnóstico Técnico',
-            html: htmlDetails,
-            confirmButtonText: 'Cerrar',
-            confirmButtonColor: '#333'
-        });
+        const config = { title: 'Detalles Técnicos', html: htmlDetails, confirmButtonText: 'Cerrar' };
+        window.showCustomAlert ? window.showCustomAlert(config) : Swal.fire(config);
     };
 
-    // C. Cambiar Estado
     window.cambiarEstado = async (id, estadoActual) => {
         const { value: nuevoEstado } = await Swal.fire({
             title: 'Actualizar Estado',
             input: 'select',
             inputOptions: {
                 'Pendiente': '🔴 Pendiente',
-                'En Proceso': '🟡 En Proceso / Revisión',
-                'Resuelto': '🟢 Resuelto / Cerrado',
-                'Descartado': '⚪ Descartado (No es bug)'
+                'En Proceso': '🟡 En Proceso',
+                'Resuelto': '🟢 Resuelto',
+                'Descartado': '⚪ Descartado'
             },
             inputValue: estadoActual,
             showCancelButton: true,
-            confirmButtonColor: '#6C43E0',
-            confirmButtonText: 'Guardar Cambio'
+            confirmButtonColor: '#6C43E0' // Fallback si no carga personalización
         });
 
         if (nuevoEstado && nuevoEstado !== estadoActual) {
             try {
-                await firebase.firestore().collection('reportesSistemas').doc(id).update({
-                    estado: nuevoEstado,
-                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                await firebase.firestore().collection('reportesSistema').doc(id).update({
+                    estado: nuevoEstado
                 });
                 
-                Swal.fire({
-                    toast: true, position: 'top-end', 
-                    icon: 'success', title: 'Estado actualizado', 
-                    showConfirmButton: false, timer: 1500
-                });
+                // Recargar
+                loadSystemReports(); 
                 
-                loadSystemReports(); // Recargar tabla
+                const toastConfig = {
+                    toast: true, position: 'top-end', icon: 'success', 
+                    title: 'Estado actualizado', showConfirmButton: false, timer: 1500
+                };
+                window.showCustomAlert ? window.showCustomAlert(toastConfig) : Swal.fire(toastConfig);
+
             } catch (e) {
-                Swal.fire('Error', e.message, 'error');
+                console.error(e);
             }
         }
     };
 
-    // Iniciar
     document.addEventListener('DOMContentLoaded', initPage);
-
 })();
