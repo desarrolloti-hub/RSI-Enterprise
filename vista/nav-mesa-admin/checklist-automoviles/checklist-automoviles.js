@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initYearSelect();
     loadChecklists(true); // Carga inicial
     setupEventListeners();
-    applyChecklistCustomizations();
+    
 });
 
 // Función para llenar el select de Años
@@ -460,9 +460,3 @@ function formatDate(dateString) {
     return dateString;
 }
 
-function applyChecklistCustomizations() {
-    try {
-        if (typeof actualizarColoresPersonalizados === 'function') actualizarColoresPersonalizados();
-        if (typeof updateMenuStyles === 'function') setTimeout(() => updateMenuStyles(), 100);
-    } catch (e) { console.warn("Estilos no aplicados:", e); }
-}

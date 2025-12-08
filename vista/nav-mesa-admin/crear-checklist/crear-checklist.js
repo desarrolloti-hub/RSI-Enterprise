@@ -65,12 +65,7 @@ async function initialLoad() {
         }
 
     } catch (error) {
-        console.error("Error en la carga inicial:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudieron cargar los datos iniciales: ' + error.message
-        });
+        window.manejadorErrorGlobal(error);
     }
 }
 
@@ -157,8 +152,8 @@ async function loadDataForEdit(id) {
         Swal.close();
 
     } catch (error) {
-        console.error("Error cargando edición:", error);
-        Swal.fire('Error', 'No se pudo cargar la información para editar.', 'error');
+        window.manejadorErrorGlobal(error);
+
     }
 }
 
@@ -177,7 +172,8 @@ async function loadVehicles() {
 
         populateVehicleSelect();
     } catch (error) {
-        console.error('Error loading vehicles:', error);
+        window.manejadorErrorGlobal(error);
+
     }
 }
 
@@ -210,7 +206,8 @@ async function loadCollaborators() {
         }));
         displayCollaborators();
     } catch (error) {
-        console.error('Error loading collaborators:', error);
+        window.manejadorErrorGlobal(error);
+
     }
 }
 
@@ -362,8 +359,7 @@ function setupPhotoItemEvents(item, pt) {
                     updatePhotoPreview(pt.id, compressedImage);
                     Swal.close();
                 }catch (error) {
-                    console.error(error);
-                    Swal.fire('Error', ' No se pudo procesar la imagen', 'error');
+                    window.manejadorErrorGlobal(error);
                 }
 
             };
@@ -423,8 +419,7 @@ async function openCameraModal(photoType) {
         document.getElementById('retakeBtn').style.display = 'none';
         document.getElementById('usePhotoBtn').style.display = 'none';
     } catch (error) {
-        closeCamera();
-        Swal.fire('Error', 'No se pudo acceder a la cámara.', 'error');
+        window.manejadorErrorGlobal(error);
     }
 }
 
@@ -639,8 +634,7 @@ async function saveChecklist() {
         }
 
     } catch (error) {
-        console.error(error);
-        Swal.fire('Error', 'No se pudo guardar: ' + error.message, 'error');
+        window.manejadorErrorGlobal(error);
     }
 }
 
