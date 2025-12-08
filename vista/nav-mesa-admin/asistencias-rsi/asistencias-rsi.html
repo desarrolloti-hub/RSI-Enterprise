@@ -143,6 +143,7 @@
         </div>
     </div>
 
+<script src="../js/filtrar-error.js"></script>
 <script>
 // Configuración de Firebase
 const firebaseConfig = {
@@ -209,15 +210,25 @@ async function loadUserProfile() {
                 imagen: userData.imagen || 'https://randomuser.me/api/portraits/men/32.jpg'
             };
             
-            // Actualizar UI con datos del usuario
-            document.querySelector('.user-info .name').textContent = currentUser.nombre;
-            document.querySelector('.user-info .role').textContent = 'Administrador';
-            if (currentUser.imagen) {
-                document.querySelector('.avatar img').src = currentUser.imagen;
+           // Verificamos si los elementos existen antes de intentar modificarlos
+            const nameElement = document.querySelector('.user-info .name');
+            const roleElement = document.querySelector('.user-info .role');
+            const avatarImg = document.querySelector('.avatar img');
+
+            if (nameElement) {
+                nameElement.textContent = currentUser.nombre;
+            }
+            
+            if (roleElement) {
+                roleElement.textContent = 'Administrador';
+            }
+
+            if (currentUser.imagen && avatarImg) {
+                avatarImg.src = currentUser.imagen;
             }
         }
     } catch (error) {
-        console.error("Error al cargar perfil:", error);
+        window.manejadorErrorGlobal(error);
     }
 }
 
@@ -237,7 +248,7 @@ async function loadEmployees() {
         
         renderCalendar();
     } catch (error) {
-        console.error("Error al cargar colaboradores:", error);
+        manejadorErrorGlobal(error);
         // Usar datos de ejemplo si hay error
         employees = [
             { id: 1, name: 'Juan Pérez', area: 'Desarrollo de Software' },
@@ -720,11 +731,11 @@ function formatDate(date) {
     return `${year}-${month}-${day}`;
 }
 </script>
-
 <!-- Scripts de personalización y navegación -->
 <script src="../js/personalizacion-colores.js"></script>
 <script src="../js/navegacion-admin.js"></script>
 <script src="../js/particulas.js"></script>
+
 
 </body>
 </html>

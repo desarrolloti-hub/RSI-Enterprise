@@ -62,7 +62,6 @@
             if (!files || files.length === 0) return;
 
             if (currentImages.length + files.length > 5) {
-                // Usamos la función global personalizada si existe, sino Swal nativo
                 const alertFn = window.showCustomError || Swal.fire;
                 alertFn('Error', 'Máximo 5 imágenes permitidas');
                 e.target.value = '';
@@ -70,7 +69,7 @@
             }
 
             let loadedCount = 0;
-            
+
             Array.from(files).forEach(file => {
                 if (!file.type.match('image.*')) return;
 
@@ -78,17 +77,16 @@
                 reader.onload = async (e) => {
                     try {
                         let result = e.target.result;
-                        // Usamos la misma lógica de compresión
                         const compressionQuality = file.size > 500000 ? 0.5 : 0.7;
                         result = await compressImage(result, file.type, compressionQuality);
-                        
+
                         currentImages.push({
                             file: file,
                             preview: result,
                             base64: result.split(',')[1],
                             type: file.type
                         });
-                        
+
                         loadedCount++;
                         if (loadedCount === files.length) {
                             updatePreview();
@@ -96,7 +94,7 @@
                             imageUpload.value = '';
                         }
                     } catch (error) {
-                        console.error("Error procesando imagen:", error);
+                        window.manejarErrorGlobal(error); // Usar el manejador de errores global
                     }
                 };
                 reader.readAsDataURL(file);
@@ -114,13 +112,13 @@
                     let height = img.height;
                     if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
                     if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
-                    
+
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
+
                     // Simplicación para brevedad:
                     resolve(canvas.toDataURL(imageType, quality));
                 };
@@ -164,7 +162,7 @@
         function updatePreview() {
             clearInterval(carouselInterval);
             carouselItems.innerHTML = '';
-            
+
             if (currentImages.length === 0) {
                 carouselItems.innerHTML = `
                     <div class="carousel-item active">
@@ -175,7 +173,7 @@
                 `;
                 return;
             }
-            
+
             currentImages.forEach((img, index) => {
                 const item = document.createElement('div');
                 item.className = `carousel-item ${index === 0 ? 'active' : ''}`;
@@ -183,7 +181,7 @@
                 item.innerHTML = `<img src="${img.preview}" class="d-block w-100" style="object-fit: contain; height: 300px;">`;
                 carouselItems.appendChild(item);
             });
-            
+
             // Reiniciar carrusel de bootstrap
             const carouselElement = document.getElementById('previewCarousel');
             new bootstrap.Carousel(carouselElement, { interval: 3000 });
@@ -193,7 +191,7 @@
             e.preventDefault();
             const btn = document.getElementById('saveBtn');
             const originalContent = btn.innerHTML;
-            
+
             try {
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
@@ -203,14 +201,12 @@
                 if (currentImages.length === 0) throw new Error('Agrega al menos una imagen');
 
                 const id = editingId || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                
-                // Si es nuevo, verificar duplicados
+
                 if (!editingId) {
                     const doc = await carouselsRef.doc(id).get();
-                    if (doc.exists) throw new Error('Ya existe un carrusel con este nombre ID');
+                    if (doc.exists) throw new Error('Ya existe un carrusel con este nombre');
                 }
 
-                // Preparar datos
                 const imagesData = currentImages.map(img => ({
                     base64: img.base64,
                     type: img.type
@@ -229,24 +225,18 @@
                     await carouselsRef.doc(id).update(data);
                 }
 
-                // Usar alertas personalizadas
                 if (window.showCustomSuccess) {
                     window.showCustomSuccess('Éxito', 'Carrusel guardado correctamente');
                 } else {
                     Swal.fire('Éxito', 'Guardado', 'success');
                 }
-                
+
                 formContainer.style.display = 'none';
                 resetForm();
                 loadCarousels();
 
             } catch (error) {
-                console.error(error);
-                if (window.showCustomError) {
-                    window.showCustomError('Error', error.message);
-                } else {
-                    Swal.fire('Error', error.message, 'error');
-                }
+                window.manejarErrorGlobal(error); // Usar el manejador de errores global
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
@@ -256,7 +246,7 @@
         async function loadCarousels() {
             try {
                 carouselsList.innerHTML = '<div class="text-center w-100"><span class="spinner-border"></span> Cargando...</div>';
-                
+
                 const snapshot = await carouselsRef.orderBy('updatedAt', 'desc').get();
                 carouselsList.innerHTML = '';
 
@@ -272,8 +262,7 @@
 
                     const col = document.createElement('div');
                     col.className = 'col-md-6 col-lg-4 mb-4';
-                    
-                    // Nota: Usamos clases estándar, el CSS global las coloreará
+
                     col.innerHTML = `
                         <div class="card h-100">
                             <div style="height: 150px; overflow: hidden; background-color: #000;">
@@ -296,15 +285,14 @@
                     carouselsList.appendChild(col);
                 });
 
-                // Event delegation o asignar eventos
                 carouselsList.querySelectorAll('.edit-btn').forEach(b => 
                     b.addEventListener('click', () => loadCarouselForEdit(b.dataset.id)));
-                
+
                 carouselsList.querySelectorAll('.delete-btn').forEach(b => 
                     b.addEventListener('click', () => deleteCarousel(b.dataset.id)));
 
             } catch (error) {
-                console.error(error);
+                window.manejarErrorGlobal(error); // Usar el manejador de errores global
                 carouselsList.innerHTML = '<p class="text-danger">Error cargando datos.</p>';
             }
         }
@@ -313,27 +301,26 @@
             try {
                 const doc = await carouselsRef.doc(id).get();
                 if (!doc.exists) return;
-                
+
                 const data = doc.data();
                 editingId = id;
                 document.getElementById('editId').value = id;
                 document.getElementById('carouselName').value = data.name;
-                
+
                 currentImages = data.images.map(img => ({
                     preview: `data:${img.type};base64,${img.base64}`,
                     base64: img.base64,
                     type: img.type
                 }));
-                
+
                 updatePreview();
                 updateImagePreviews();
-                
+
                 formContainer.style.display = 'block';
                 formContainer.scrollIntoView({behavior: 'smooth'});
 
             } catch (error) {
-                console.error(error);
-                window.showCustomError('Error', 'No se pudo cargar el carrusel');
+                window.manejarErrorGlobal(error); // Usar el manejador de errores global
             }
         }
 
@@ -346,9 +333,13 @@
                 try {
                     await carouselsRef.doc(id).delete();
                     loadCarousels();
-                    if(window.showCustomSuccess) window.showCustomSuccess('Eliminado', 'El carrusel ha sido eliminado');
+                    if (window.showCustomSuccess) {
+                        window.showCustomSuccess('Éxito', 'Carrusel eliminado correctamente');
+                    } else {
+                        Swal.fire('Éxito', 'Eliminado', 'success');
+                    }
                 } catch (error) {
-                    window.showCustomError('Error', 'No se pudo eliminar');
+                    window.manejarErrorGlobal(error); // Usar el manejador de errores global
                 }
             }
         }

@@ -73,6 +73,7 @@
         </div>
     </div>
 
+
     <script>
         // --- CONSTANTES Y CONFIGURACIÓN ---
         const LONG_PRESS_DELAY = 5000;
@@ -172,7 +173,7 @@
                 const querySnapshot = await db.collection('usuarios').where('email', '==', email).limit(1).get();
                 return !querySnapshot.empty ? querySnapshot.docs[0].data().rol : null;
             } catch (error) {
-                console.error("Error al obtener rol del usuario:", error);
+                window.manejarErrorGlobal(error);
                 return null;
             }
         }
@@ -187,7 +188,7 @@
                 
                 return !querySnapshot.empty ? { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } : null;
             } catch (error) { 
-                console.error("Error al obtener datos del usuario:", error); 
+                window.manejarErrorGlobal(error);
                 return null; 
             }
         }
@@ -213,7 +214,7 @@
                 }
                 return null;
             } catch (error) { 
-                console.error("Error al verificar asistencia activa:", error); 
+                window.manejarErrorGlobal(error);
                 return null; 
             }
         }
@@ -281,17 +282,26 @@
 
         function getLocation() { 
             return new Promise((resolve, reject) => {
+
+                //axuliar para el manejador de errores global
+                const rechazarComoUsuario = (msg)=>{
+                    const error = new Error(msg);
+                    error.isUserError = true;
+                    return(error);
+                }
+
+
                 if (!navigator.geolocation) {
-                    reject(new Error("Geolocalización no soportada por el navegador")); return;
+                    reject(rechazarComoUsuario("Geolocalización no soportada por el navegador")); return;
                 }
                 const timeout = setTimeout(() => {
-                    reject(new Error("Tiempo de espera agotado al obtener ubicación"));
+                    reject(rechazarComoUsuario("Tiempo de espera agotado al obtener ubicación"));
                 }, GEOLOCATION_TIMEOUT); 
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         clearTimeout(timeout); 
                         if (position.coords.accuracy > 100) {
-                            reject(new Error("La precisión de la ubicación es demasiado baja. Intenta en un área con mejor señal.")); return;
+                            reject(rechazarComoUsuario("La precisión de la ubicación es demasiado baja. Intenta en un área con mejor señal.")); return;
                         }
                         const coordinates = { latitude: Math.round(position.coords.latitude * 1000) / 1000, longitude: Math.round(position.coords.longitude * 1000) / 1000, accuracy: position.coords.accuracy, timestamp: firebase.firestore.Timestamp.fromDate(new Date()) };
                         sessionStorage.setItem('userCoordinates', JSON.stringify(coordinates));
@@ -305,7 +315,7 @@
                             case error.POSITION_UNAVAILABLE: errorMessage = "La información de ubicación no está disponible."; break;
                             case error.TIMEOUT: errorMessage = "La solicitud de ubicación ha caducado. Intenta nuevamente."; break;
                         }
-                        reject(new Error(errorMessage));
+                        reject(rechazarComoUsuario(errorMessage));
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
@@ -330,7 +340,7 @@
                 }
                 return await getLocation();
             } catch (error) {
-                console.warn("No se pudo obtener ubicación precisa, intentando con fallback...", error);
+                console.warn("No se pudo obtener la ubicación precisa, usando ubicación de respaldo:", error.message);
                 return await getFallbackLocation();
             }
         }
@@ -348,8 +358,14 @@
                         }
                         return true;
                     } catch (error) {
-                        console.error("Error obteniendo ubicación:", error);
-                        await showAlert('error', 'Error de ubicación', error.message || 'No se pudo obtener tu ubicación. Intenta de nuevo.');
+                        if (error.isUserError) {
+                            console.warn("Error de geolocalización controlado:", error.message);
+                            await showAlert('error', 'Problema de Ubicación', error.message);
+                        } else {
+                            // Si es un error real de código, dejamos que el sistema crítico lo maneje
+                            window.manejarErrorGlobal(error);
+                            await showAlert('error', 'Error Crítico', 'Ha ocurrido un error inesperado.');
+                        }
                         return false;
                     }
                 } else {
@@ -357,8 +373,7 @@
                     return false;
                 }
             } catch (error) {
-                console.error("Error en el modal de ubicación:", error);
-                await showAlert('error', 'Error', 'Hubo un problema al solicitar permisos de ubicación.');
+                window.manejarErrorGlobal(error);
                 return false;
             }
         }
@@ -404,7 +419,7 @@
                 setTimeout(() => { redirectByRole(userRole); }, REDIRECT_DELAY);
                 return true;
             } catch (error) { 
-                console.error("Error al registrar asistencia:", error); 
+                window.manejarErrorGlobal(error);
                 await showAlert('error', 'Error', 'No se pudo registrar la asistencia. Intenta nuevamente.');
                 return false; 
             }
@@ -441,7 +456,7 @@
                         AppState.isSubmitting = false;
                     }
                 } catch (error) {
-                    console.error("Error en el proceso de registro:", error);
+                    window.manejarErrorGlobal(error);
                     await showAlert('error', 'Error', 'Ocurrió un error inesperado. Intenta nuevamente.');
                     submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
                     submitBtn.disabled = false;
@@ -476,7 +491,7 @@
                 }
                 return true;
             } catch (error) {
-                console.error("Error manejando usuario autenticado:", error);
+                window.manejarErrorGlobal(error);
                 await showAlert('error', 'Error', error.message);
                 setTimeout(() => {
                     auth.signOut().then(() => {
@@ -583,7 +598,7 @@
         `;
         document.head.appendChild(style);
     </script>
-
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/particulas.js"></script>
 </body>

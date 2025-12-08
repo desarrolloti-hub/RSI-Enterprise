@@ -322,7 +322,7 @@ async function loadAllEmployees() {
             });
         });
     } catch (error) {
-        console.error('Error al cargar colaboradores:', error);
+        window.manejarErrorGlobal(error);
     }
 }
 
@@ -440,12 +440,9 @@ async function loadEmployeeData() {
             showEmployeeModal();
         }
     } catch (error) {
-        console.error('Error al cargar datos del colaborador:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error al cargar datos del colaborador'
-        });
+
+       window.manejarErrorGlobal(error);
+
     }
 }
 
@@ -549,7 +546,7 @@ async function loadAttendanceData() {
         updateStats();
         
     } catch (error) {
-        console.error('Error al cargar asistencias:', error);
+            window.manejarErrorGlobal(error);
         // Usar datos de ejemplo si hay error
         generateSampleData();
     } finally {
@@ -967,6 +964,8 @@ function updateStats() {
     document.getElementById('total-hours').textContent = `${totalHours}h ${totalMinutes}m`;
 }
 </script>
+
+<script src="../js/filtrar-error.js"></script>
 <script src="../js/personalizacion-colores.js"></script>
 <script src="../js/particulas.js"></script>
 <script src="../js/navegacion-admin.js"></script>

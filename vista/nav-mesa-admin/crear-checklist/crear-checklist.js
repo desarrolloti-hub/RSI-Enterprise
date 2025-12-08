@@ -309,13 +309,7 @@ function initSpecificPhotoSection() {
         setupPhotoItemEvents(item, pt);
     });
     
-    // Eventos de botones de método (Cámara/Subir)
-    document.querySelectorAll('.capture-method-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.capture-method-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
+    
 }
 
 function setupPhotoItemEvents(item, pt) {

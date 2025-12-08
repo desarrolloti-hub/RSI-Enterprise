@@ -27,7 +27,16 @@
     if (isRedirecting) return;
     // Si es un error controlado (validación de usuario, etc.)
     if (error && error.isUserError === true) {
+        if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: error.message,
+            confirmButtonColor: '#4e54c8'
+        });
+    } else {
         alert(error.message);
+    }
         return;
     }
 
