@@ -392,7 +392,7 @@
                     this.applyFilters();
                     
                 } catch (error) {
-                    console.error("Error inicializando:", error);
+                    window.manejarErrorGlobal(error);
                     Utils.showError("No se pudieron cargar los datos del colaborador");
                 } finally {
                     Utils.hideLoading();
@@ -420,7 +420,7 @@
                     this.renderColaboradorProfile();
                     
                 } catch (error) {
-                    console.error("Error cargando datos del colaborador:", error);
+                    window.manejarErrorGlobal(error);
                     throw error;
                 }
             },
@@ -499,7 +499,7 @@
                     console.log(`🎫 Tickets del colaborador cargados: ${AppState.allTickets.length}`);
                     
                 } catch (error) {
-                    console.error("Error cargando tickets del colaborador:", error);
+                   window.manejarErrorGlobal(error);
                     throw error;
                 }
             },
@@ -526,7 +526,7 @@
                             const fecha = Utils.safeToDate(ticket.fechaCreacion);
                             return fecha >= firstDay && fecha <= lastDay;
                         } catch (error) {
-                            console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                            window.manejarErrorGlobal(error);
                             return false;
                         }
                     });
@@ -725,7 +725,7 @@
                         if (ticket.estado === 'en_proceso') monthlyData[monthYear].inProgress++;
                         if (ticket.estado === 'pendiente') monthlyData[monthYear].pending++;
                     } catch (error) {
-                        console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
+                        window.manejarErrorGlobal(error);
                     }
                 });
                 
@@ -984,6 +984,8 @@
     </script>
 
     <!-- Scripts de personalización y navegación -->
+    <script src="../js/filtrar-error.js"></script>
+
     <script>
         // Cargar scripts de navegación y personalización
         function loadNavigationScript() {

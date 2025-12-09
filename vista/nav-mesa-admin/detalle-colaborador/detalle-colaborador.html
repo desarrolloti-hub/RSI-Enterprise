@@ -145,6 +145,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
 
     <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
 
@@ -247,7 +248,7 @@
                 actualizarInterfaz(colaboradorData, usuarioData);
                 
             } catch (error) {
-                console.error('Error cargando colaborador:', error);
+                window.manejarErrorGlobal(error);
                 mostrarError('No se pudo cargar la información del colaborador');
             }
         }
@@ -397,7 +398,7 @@
                 }, 1000);
                 
             } catch (error) {
-                console.error('Error cambiando estado de acceso:', error);
+                window.manejarErrorGlobal(error);
                 if (typeof showCustomError !== 'undefined') {
                     showCustomError('Error', 'No se pudo cambiar el estado del colaborador');
                 } else {

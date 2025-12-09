@@ -72,7 +72,7 @@
                 form.reset();
 
             } catch (error) {
-                console.error("Error:", error);
+                window.manejarErrorGlobal(error);
                 Swal.fire('Error', 'No se pudo registrar la categoría', 'error');
             } finally {
                 btnGuardar.disabled = false;

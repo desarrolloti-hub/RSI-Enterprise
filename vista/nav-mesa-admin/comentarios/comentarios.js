@@ -101,7 +101,7 @@
                 asignarEventosEliminar();
 
             } catch (error) {
-                console.error("Error cargando comentarios:", error);
+                window.manejarErrorGlobal(error);
                 opinionesContainer.innerHTML = `
                     <div class="alert alert-danger w-100 text-center">
                         ⚠️ Error cargando comentarios. Verifica tu conexión.
@@ -138,7 +138,7 @@
                             // Recargar lista
                             cargarOpiniones();
                         } catch (error) {
-                            console.error("Error eliminando:", error);
+                            window.manejarErrorGlobal(error);
                             const errorFn = window.showCustomError || Swal.fire;
                             errorFn('Error', 'No se pudo eliminar el comentario');
                         }

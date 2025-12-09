@@ -473,6 +473,7 @@
 
     <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
     <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/navegacion-admin.js"></script>
 
     <script>
@@ -525,7 +526,7 @@
                         }
                     })
                     .catch(error => {
-                        console.warn('Error al buscar colaborador:', error);
+                window.manejarErrorGlobal(error);
                     });
             }
 
@@ -572,7 +573,7 @@
                 
                 return null;
             } catch (error) {
-                console.error('Error al buscar colaborador:', error);
+                window.manejarErrorGlobal(error);
                 return null;
             }
         }
@@ -647,7 +648,7 @@
                 actualizarSelectAreas();
                 
             } catch (error) {
-                console.error('Error al cargar áreas:', error);
+                window.manejarErrorGlobal(error);
                 // En caso de error, cargar áreas por defecto
                 cargarAreasPorDefecto();
             }
@@ -765,7 +766,7 @@
                 const nit = await generarNIT(subarea);
                 nitInput.value = nit;
             } catch (error) {
-                console.error('Error generando NIT:', error);
+                window.manejarErrorGlobal(error);
                 nitInput.value = 'Error al generar';
             }
         }
@@ -850,7 +851,7 @@
                 
                 return user;
             } catch (error) {
-                console.error('Error creando usuario en Auth:', error);
+                window.manejarErrorGlobal(error);
                 
                 // Asegurarse de eliminar la app temporal en caso de error
                 try {
@@ -908,7 +909,7 @@
                 
                 return true;
             } catch (error) {
-                console.error('Error creando documentos en Firestore:', error);
+                window.manejarErrorGlobal(error);
                 throw new Error('No se pudieron guardar los datos: ' + error.message);
             }
         }
@@ -968,7 +969,7 @@
                         photoPreview.appendChild(img);
                         
                     } catch (error) {
-                        console.error('Error procesando imagen:', error);
+                window.manejarErrorGlobal(error);
                         if (typeof showCustomError !== 'undefined') {
                             showCustomError('Error', error.message);
                         } else {
@@ -1096,7 +1097,7 @@
                     }, 4000);
                     
                 } catch (error) {
-                    console.error('Error creando colaborador:', error);
+                window.manejarErrorGlobal(error);
                     
                     // Cerrar loading si está abierto
                     if (typeof Swal !== 'undefined') {
