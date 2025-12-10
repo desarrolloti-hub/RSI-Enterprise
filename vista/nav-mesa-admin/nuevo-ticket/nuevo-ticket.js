@@ -482,40 +482,25 @@
 
     async function sendPushNotification(colaboradorIds, ticketData) {
         try {
-            console.log('📤 Enviando notificaciones...');
+            console.log('📤 Enviando notificación REAL via Cloud Functions...');
 
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'SHOW_NOTIFICATION',
-                    notification: {
-                        title: '🎫 Nuevo Ticket - RSI',
-                        body: `Ticket: ${ticketData.titulo}`,
-                        icon: '/vista/css/img/logoApp-192.png',
-                        badge: '/vista/css/img/logoApp-192.png',
-                        data: { 
-                            ticketId: ticketData.idTicket,
-                            type: 'new_ticket'
-                        },
-                        actions: [
-                            {
-                                action: 'open',
-                                title: 'Abrir Ticket'
-                            }
-                        ]
-                    }
-                });
-                console.log('✅ Notificación enviada al Service Worker');
-            } else {
-                new Notification('🎫 Nuevo Ticket', {
-                    body: `Ticket ${ticketData.idTicket} creado: ${ticketData.titulo}`,
-                    icon: '/vista/css/img/logoApp-192.png'
-                });
-            }
+            const callable = firebase.functions().httpsCallable("sendTicketNotification");
 
+            // Solo primer colaborador es responsable
+            const colaboradorId = colaboradorIds[0];
+
+            await callable({
+                colaboradorId,
+                titulo: ticketData.titulo,
+                ticketId: ticketData.idTicket
+            });
+
+            console.log("✅ Notificación enviada al backend");
         } catch (error) {
-            console.error('❌ Error enviando notificación:', error);
+            console.error("❌ Error enviando notificación push real:", error);
         }
     }
+
 
     async function saveAdminTicket() {
         if (!validateAdminForm()) {
@@ -583,7 +568,9 @@
             }
         }
         
-
+        if (selectedCollaboratorsIds.length > 0) {
+            await sendPushNotification(selectedCollaboratorsIds, ticketData);
+        }
 
         return idTicket;
     }

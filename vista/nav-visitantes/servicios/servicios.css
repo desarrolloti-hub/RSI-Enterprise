@@ -9,12 +9,27 @@
       --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    body {
-      margin-top: 70px;
-      padding: 0;
-      font-family: 'Montserrat', sans-serif;
-      background-color: var(--gray);
-    }
+    /* Eliminar márgenes y padding por defecto */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    height: 100%;
+}
+
+/* Luego tu body actual */
+body {
+    margin-top: 0; /* Ya lo cambiaste a 0 */
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--gray);
+    box-sizing: border-box;
+}
+
+/* Asegurar que todos los elementos usen box-sizing border-box */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
 
     /* Títulos y textos con estilos de contacto */
     .cert-title {
