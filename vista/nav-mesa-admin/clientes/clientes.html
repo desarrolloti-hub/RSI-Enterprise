@@ -4,207 +4,521 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Clientes</title>
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="./clientes.css">
+    <link rel="stylesheet" href="clientes.css"> 
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
-<body>
+<body style="background-color: #f3f4f6;">
 
-    <br><br><br>
-
-    <div class="container container-custom mt-5">
-        
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-            <h2 class="titulo-pagina mb-0"><i class="fas fa-users"></i> Lista de Clientes</h2>
+    <div class="container">
+        <div class="header">
+            <h2>👤 Gestión de Clientes</h2>
             
-            <div class="d-flex gap-2 w-100 w-md-auto search-container">
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-end-0">
-                        <i class="fas fa-search text-muted"></i>
-                    </span>
-                    <input type="text" id="search-input" class="form-control border-start-0" placeholder="Buscar por nombre, RFC...">
-                </div>
-                <button class="btn btn-primary text-nowrap" id="btn-add-cliente">
-                    <i class="fas fa-plus"></i> Nuevo
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Buscar por Nombre, RFC o Teléfono..." class="search-input">
+                <button id="searchBtn" class="btn btn-secondary btn-small" title="Buscar">
+                    <i class="fas fa-search"></i>
                 </button>
             </div>
+            <button id="abrirModalBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Cliente
+            </button>
         </div>
 
-        <div class="table-responsive card p-0 mb-3">
-            <table class="table table-hover mb-0" id="clientes-table">
+        <div class="table-container">
+            <table id="clientesTable" class="clientes-table">
                 <thead>
                     <tr>
-                        <th><i class="fas fa-hashtag"></i> ID</th>
-                        <th><i class="fas fa-building"></i> Razón Social</th>
-                        <th><i class="fas fa-id-card"></i> RFC</th>
-                        <th><i class="fas fa-phone"></i> Contacto</th>
-                        <th><i class="fas fa-envelope"></i> Correo</th>
-                        <th><i class="fas fa-info-circle"></i> Estatus</th>
-                        <th><i class="fas fa-cog"></i> Acciones</th>
+                        <th>Nombre / Razón Social</th>
+                        <th>RFC</th>
+                        <th>Dirección</th>
+                        <th>Teléfono</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="clientes-body">
-                    <tr><td colspan="7" class="text-center p-4">Cargando...</td></tr>
+                <tbody id="clientesTableBody">
+                    <tr><td colspan="5" style="text-align: center;">Cargando clientes...</td></tr>
                 </tbody>
             </table>
         </div>
+        
+        <div class="pagination-controls">
+            <button id="prevPageBtn" class="btn btn-secondary" disabled>
+                <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <button id="nextPageBtn" class="btn btn-primary">
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
 
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pagination-container">
-            <div class="pagination-info mb-2 mb-md-0" id="pagination-info">Mostrando 0 de 0</div>
-            <div class="btn-group">
-                <button id="first-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-double-left"></i></button>
-                <button id="prev-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-left"></i></button>
-                <div id="page-numbers" class="d-flex"></div>
-                <button id="next-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-right"></i></button>
-                <button id="last-page" class="btn btn-outline-secondary btn-sm" disabled><i class="fas fa-angle-double-right"></i></button>
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Cliente</h2>
+                <button id="cerrarModalBtn" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="clienteForm">
+                    <input type="hidden" id="clienteId">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="clienteNombre">Nombre o Razón Social</label>
+                            <input type="text" id="clienteNombre" name="Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteRFC">RFC</label>
+                            <input type="text" id="clienteRFC" name="RFC" placeholder="Opcional, ej: XAXX010101000">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteTelefono">Teléfono (Principal)</label>
+                            <input type="tel" id="clienteTelefono" name="Telefono" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="clienteDireccion">Dirección Completa</label>
+                            <input type="text" id="clienteDireccion" name="DireccionCompleta" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteEmail">Email</label>
+                            <input type="email" id="clienteEmail" name="Email" placeholder="Opcional">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteMovil">Móvil</label>
+                            <input type="tel" id="clienteMovil" name="Movil" placeholder="Opcional">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="cancelarClienteBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" id="guardarClienteBtn" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cliente
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="cliente-modal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content card"> <div class="modal-header border-bottom-0">
-                    <h5 class="modal-title" id="form-title"><i class="fas fa-user-edit"></i> Gestión de Cliente</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="cliente-form">
-                        <input type="hidden" id="cliente-id">
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>⏳ Procesando...</p>
+    </div>
+
+    <script type="module">
+        // Importaciones de Firebase 
+        import { 
+            initializeApp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, collection, addDoc, doc, updateDoc, 
+            getDocs, query, deleteDoc, getDoc, limit, startAfter, orderBy
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // === CONFIGURACIÓN Y ESTADO ===
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const CLIENTES_COLLECTION = 'clientes'; 
+        const PAGE_SIZE = 25; 
+        const SEARCH_LIMIT = 500; // Límite de documentos a cargar para la búsqueda local
+
+        // Variables de estado
+        let isEditing = false;
+        let editingId = null;
+        let lastVisible = null; 
+        let firstVisible = null; 
+        let hasNextPage = false; 
+        let hasPrevPage = false; 
+        const pageHistory = []; 
+        let currentSearchTerm = ''; // Estado para el término de búsqueda
+
+        // Elementos del DOM
+        const clientesTableBody = document.getElementById('clientesTableBody');
+        const clienteModal = document.getElementById('clienteModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const clienteForm = document.getElementById('clienteForm');
+        const guardarClienteBtn = document.getElementById('guardarClienteBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        // Elementos de Paginación y Búsqueda
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const searchInput = document.getElementById('searchInput'); 
+        const searchBtn = document.getElementById('searchBtn'); 
+
+
+        // === UTILIDADES ===
+
+        function mostrarLoading(mostrar) { 
+            loadingSpinner.style.display = mostrar ? 'flex' : 'none'; 
+        }
+        
+        function mostrarAlerta(mensaje, tipo = 'info') { 
+            Swal.mixin({ 
+                toast: true, 
+                position: 'top-end', 
+                showConfirmButton: false, 
+                timer: 3000, 
+                timerProgressBar: true 
+            }).fire({ icon: tipo, title: mensaje });
+        }
+        
+        function limpiarModal() {
+            clienteForm.reset();
+            isEditing = false;
+            editingId = null;
+            modalTitle.textContent = 'Nuevo Cliente';
+            guardarClienteBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cliente';
+            clienteModal.classList.remove('show');
+        }
+
+        // === FUNCIÓN DE BÚSQUEDA MEJORADA (Dispara la carga de datos) ===
+
+        function iniciarBusqueda() {
+            const newSearchTerm = searchInput.value.trim();
+
+            if (newSearchTerm !== currentSearchTerm || (newSearchTerm === '' && currentSearchTerm !== '')) {
+                currentSearchTerm = newSearchTerm;
+                
+                // Reiniciar la paginación al iniciar/cambiar la búsqueda
+                lastVisible = null;
+                firstVisible = null;
+                pageHistory.length = 0; 
+                
+                cargarClientes('init'); 
+            }
+        }
+
+        // === CRUD: Cargar (Read) Clientes con Paginado y Búsqueda Global (Modificada) ===
+
+        async function cargarClientes(direction = 'init') {
+            mostrarLoading(true);
+            const searchTerm = currentSearchTerm.trim().toLowerCase();
+            const isSearching = searchTerm.length > 0;
+            
+            try {
+                let finalQuery;
+                
+                if (isSearching) {
+                    // --- MODO BÚSQUEDA (Cargar hasta SEARCH_LIMIT, filtrar localmente) ---
+                    finalQuery = query(
+                        collection(db, CLIENTES_COLLECTION),
+                        orderBy('Nombre'), 
+                        limit(SEARCH_LIMIT) 
+                    );
+
+                    prevPageBtn.disabled = true; 
+                    nextPageBtn.disabled = true; 
+
+                } else {
+                    // --- MODO PAGINACIÓN NORMAL (25 por página) ---
+                    let baseQuery = query(collection(db, CLIENTES_COLLECTION), orderBy('Nombre'));
+
+                    if (direction === 'next' && lastVisible) {
+                        finalQuery = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
+                    } else if (direction === 'prev' && pageHistory.length > 1) {
+                        // Lógica para retroceder en la paginación
+                        pageHistory.pop(); 
+                        const prevDocId = pageHistory.pop(); 
                         
-                        <h6 class="text-primary mb-3 border-bottom pb-2">Información General</h6>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Número de Cliente</label>
-                                <input type="text" class="form-control" id="numeroCliente" placeholder="Opcional">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Razón Social / Nombre <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="razonSocialNombre" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">RFC</label>
-                                <input type="text" class="form-control" id="RFC">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Nombre Comercial</label>
-                                <input type="text" class="form-control" id="nombreComercial">
-                            </div>
-                        </div>
+                        const docRef = doc(db, CLIENTES_COLLECTION, prevDocId);
+                        const docSnap = await getDoc(docRef);
+                        
+                        if (docSnap.exists()) {
+                            finalQuery = query(baseQuery, startAfter(docSnap), limit(PAGE_SIZE));
+                            pageHistory.push(prevDocId); 
+                        } else {
+                            finalQuery = query(baseQuery, limit(PAGE_SIZE)); 
+                            pageHistory.length = 0;
+                        }
+                    } else {
+                        // Inicio o primera página
+                        finalQuery = query(baseQuery, limit(PAGE_SIZE));
+                        pageHistory.length = 0;
+                    }
+                }
+                
+                const querySnapshot = await getDocs(finalQuery);
+                let docs = querySnapshot.docs;
 
-                        <h6 class="text-primary mb-3 border-bottom pb-2 mt-4">Contacto</h6>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Teléfono</label>
-                                <input type="tel" class="form-control" id="Telefono">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Móvil</label>
-                                <input type="tel" class="form-control" id="Movil">
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="Correo">
-                            </div>
-                        </div>
+                // --- Filtrado Adicional en Cliente para Búsqueda Global (CORREGIDO) ---
+                if (isSearching) {
+                    docs = docs.filter(docu => {
+                        const cliente = docu.data();
+                        
+                        // CORRECCIÓN APLICADA: Usamos String() para asegurar que la conversión a minúsculas funciona
+                        const fields = [
+                            cliente.Nombre, 
+                            cliente.RFC, 
+                            cliente.Telefono, 
+                            cliente.DireccionCompleta, 
+                            cliente.Email, 
+                            cliente.Movil
+                        ].map(f => String(f || '').toLowerCase());
+                        
+                        // Busca el término como subcadena en CUALQUIER campo
+                        return fields.some(field => field.includes(searchTerm));
+                    });
+                }
+                
+                // --- Manejo del estado de Paginación y Botones (Solo si NO está buscando) ---
+                
+                if (!isSearching) { 
+                    firstVisible = docs.length > 0 ? docs[0] : null;
+                    lastVisible = docs.length > 0 ? docs[docs.length - 1] : null;
 
-                        <h6 class="text-primary mb-3 border-bottom pb-2 mt-4">Dirección Fiscal</h6>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label">Calle</label>
-                                <input type="text" class="form-control" id="Calle">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">No. Exterior</label>
-                                <input type="text" class="form-control" id="noExterior">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">No. Interior</label>
-                                <input type="text" class="form-control" id="noInterior">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">C.P.</label>
-                                <input type="text" class="form-control" id="codigoPostal">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Colonia</label>
-                                <input type="text" class="form-control" id="Colonia">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Municipio/Alcaldía</label>
-                                <input type="text" class="form-control" id="Municipio">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Estado</label>
-                                <input type="text" class="form-control" id="Estado">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">País</label>
-                                <input type="text" class="form-control" id="Pais" value="MEX">
-                            </div>
-                        </div>
+                    if (direction === 'next' && firstVisible) {
+                        pageHistory.push(firstVisible.id);
+                    } else if (direction === 'init' && docs.length > 0 && pageHistory.length === 0) {
+                        pageHistory.push(firstVisible.id);
+                    }
 
-                        <h6 class="text-primary mb-3 border-bottom pb-2 mt-4">Datos Comerciales</h6>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Estatus</label>
-                                <select class="form-select" id="Estatus">
-                                    <option value="Activo">Activo</option>
-                                    <option value="Inactivo">Inactivo</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Tipo Persona</label>
-                                <select class="form-select" id="tipoPersona">
-                                    <option value="Física">Física</option>
-                                    <option value="Moral">Moral</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Régimen Fiscal</label>
-                                <input type="text" class="form-control" id="regimenFiscal">
-                            </div>
-                            
-                            <div class="col-12 mt-3">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="vendeACredito">
-                                    <label class="form-check-label" for="vendeACredito">Vende a Crédito</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="permiteFactoraje">
-                                    <label class="form-check-label" for="permiteFactoraje">Factoraje Financiero</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="esTercero">
-                                    <label class="form-check-label" for="esTercero">Es Tercero</label>
-                                </div>
-                            </div>
-                        </div>
+                    if (lastVisible) {
+                        // Chequea si hay un siguiente documento para saber si habilitar 'Siguiente'
+                        const nextQueryCheck = query(
+                            collection(db, CLIENTES_COLLECTION),
+                            orderBy('Nombre'), 
+                            startAfter(lastVisible), 
+                            limit(1)
+                        );
+                        const nextSnapshot = await getDocs(nextQueryCheck);
+                        hasNextPage = !nextSnapshot.empty;
+                    } else {
+                        hasNextPage = false;
+                    }
+                    
+                    hasPrevPage = pageHistory.length > 1; 
+                } 
 
-                    </form>
-                </div>
-                <div class="modal-footer border-top-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-btn">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="submit-btn">Guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                prevPageBtn.disabled = !hasPrevPage || isSearching; 
+                nextPageBtn.disabled = !hasNextPage || isSearching; 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-    <script src="../js/firebase-init.js"></script>
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-    
-    <script src="./clientes.js"></script>
+                // --- Renderizado de la Tabla ---
+                clientesTableBody.innerHTML = ''; 
+
+                if (docs.length === 0) {
+                    const message = isSearching ? `No se encontraron clientes para "${currentSearchTerm}".` : 'No hay clientes registrados.';
+                    clientesTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #6b7280;">${message}</td></tr>`;
+                    return;
+                }
+
+                docs.forEach((docu) => {
+                    const cliente = docu.data();
+                    const row = clientesTableBody.insertRow();
+                    
+                    const nombre = cliente.Nombre || 'N/E';
+                    const rfc = cliente.RFC || 'N/E';
+                    const direccion = cliente.DireccionCompleta || 'Dirección no disponible';
+                    const telefono = cliente.Telefono || cliente.Movil || 'N/E';
+
+                    // Nombre / Razón Social
+                    row.insertCell().setAttribute('data-label', 'Nombre / Razón Social');
+                    row.cells[0].textContent = nombre;
+                    
+                    // RFC
+                    row.insertCell().setAttribute('data-label', 'RFC');
+                    row.cells[1].textContent = rfc;
+                    
+                    // Dirección
+                    row.insertCell().setAttribute('data-label', 'Dirección');
+                    row.cells[2].textContent = direccion;
+                    
+                    // Teléfono
+                    row.insertCell().setAttribute('data-label', 'Teléfono');
+                    row.cells[3].textContent = telefono;
+                    
+                    // Acciones
+                    const actionsCell = row.insertCell();
+                    actionsCell.setAttribute('data-label', 'Acciones'); 
+                    actionsCell.innerHTML = `
+                        <button data-id="${docu.id}" class="btn btn-edit btn-small editar-cliente" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button data-id="${docu.id}" class="btn btn-danger btn-small eliminar-cliente" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                });
+
+                // Agregar listeners a los nuevos botones
+                document.querySelectorAll('.editar-cliente').forEach(btn => {
+                    btn.addEventListener('click', (e) => cargarClienteParaEdicion(e.currentTarget.dataset.id));
+                });
+                
+                document.querySelectorAll('.eliminar-cliente').forEach(btn => {
+                    btn.addEventListener('click', (e) => eliminarCliente(e.currentTarget.dataset.id));
+                });
+
+            } catch (error) {
+                console.error("Error al cargar clientes:", error);
+                clientesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #ef4444;">Error al cargar clientes. Ver consola.</td></tr>';
+                mostrarAlerta('Error al cargar clientes.', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // --- Resto de Funciones CRUD (Manejar Submit, Editar, Eliminar) ---
+
+        async function manejarSubmitCliente(e) {
+            e.preventDefault();
+            mostrarLoading(true);
+
+            const datosFormulario = new FormData(clienteForm);
+            const clienteData = Object.fromEntries(datosFormulario.entries());
+            
+            // Normalización de datos
+            clienteData.Nombre = clienteData.Nombre.trim();
+            clienteData.RFC = clienteData.RFC.trim().toUpperCase();
+            clienteData.Telefono = clienteData.Telefono.trim();
+            clienteData.DireccionCompleta = clienteData.DireccionCompleta.trim();
+            clienteData.Email = clienteData.Email ? clienteData.Email.trim() : '';
+            clienteData.Movil = clienteData.Movil ? clienteData.Movil.trim() : '';
+
+            try {
+                if (isEditing && editingId) {
+                    const clienteRef = doc(db, CLIENTES_COLLECTION, editingId);
+                    await updateDoc(clienteRef, clienteData);
+                    mostrarAlerta('✅ Cliente actualizado con éxito', 'success');
+                } else {
+                    await addDoc(collection(db, CLIENTES_COLLECTION), clienteData);
+                    mostrarAlerta('✅ Cliente creado con éxito', 'success');
+                }
+                
+                limpiarModal();
+                currentSearchTerm = '';
+                searchInput.value = '';
+                cargarClientes('init'); 
+            } catch (error) {
+                console.error("Error al guardar cliente:", error);
+                mostrarAlerta('❌ Error al guardar el cliente: ' + error.message, 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        async function cargarClienteParaEdicion(id) {
+            mostrarLoading(true);
+            try {
+                const docRef = doc(db, CLIENTES_COLLECTION, id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const cliente = docSnap.data();
+                    isEditing = true;
+                    editingId = id;
+                    
+                    document.getElementById('clienteId').value = id;
+                    document.getElementById('clienteNombre').value = cliente.Nombre || '';
+                    document.getElementById('clienteRFC').value = cliente.RFC || '';
+                    document.getElementById('clienteTelefono').value = cliente.Telefono || '';
+                    document.getElementById('clienteDireccion').value = cliente.DireccionCompleta || '';
+                    document.getElementById('clienteEmail').value = cliente.Email || '';
+                    document.getElementById('clienteMovil').value = cliente.Movil || '';
+                    
+                    modalTitle.textContent = '✏️ Editar Cliente';
+                    guardarClienteBtn.innerHTML = '<i class="fas fa-save"></i> Actualizar Cliente';
+                    clienteModal.classList.add('show');
+                } else {
+                    mostrarAlerta('Cliente no encontrado.', 'error');
+                }
+            } catch (error) {
+                console.error("Error al cargar cliente para edición:", error);
+                mostrarAlerta('Error al cargar datos del cliente.', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        async function eliminarCliente(id) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer. ¡El cliente se eliminará permanentemente!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    mostrarLoading(true);
+                    try {
+                        await deleteDoc(doc(db, CLIENTES_COLLECTION, id));
+                        mostrarAlerta('🗑️ Cliente eliminado con éxito', 'success');
+                        cargarClientes('init'); 
+                    } catch (error) {
+                        console.error("Error al eliminar cliente:", error);
+                        mostrarAlerta('❌ Error al eliminar el cliente: ' + error.message, 'error');
+                    } finally {
+                        mostrarLoading(false);
+                    }
+                }
+            });
+        }
+
+
+        // === EVENT LISTENERS ===
+
+        document.addEventListener('DOMContentLoaded', () => cargarClientes('init'));
+        clienteForm.addEventListener('submit', manejarSubmitCliente);
+        
+        // Listeners de Búsqueda
+        searchBtn.addEventListener('click', iniciarBusqueda);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                iniciarBusqueda();
+            }
+        });
+
+        // Abrir Modal (para crear)
+        document.getElementById('abrirModalBtn').addEventListener('click', () => {
+            limpiarModal(); 
+            clienteModal.classList.add('show');
+            document.getElementById('clienteNombre').focus();
+        });
+        
+        // Cerrar Modal
+        document.getElementById('cerrarModalBtn').addEventListener('click', limpiarModal);
+        document.getElementById('cancelarClienteBtn').addEventListener('click', limpiarModal);
+        
+        // Cerrar modal al hacer click fuera
+        clienteModal.addEventListener('click', (e) => {
+            if (e.target === clienteModal) {
+                limpiarModal();
+            }
+        });
+
+        // Listeners de Paginación
+        nextPageBtn.addEventListener('click', () => {
+            if (!nextPageBtn.disabled) {
+                cargarClientes('next');
+            }
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (!prevPageBtn.disabled) {
+                cargarClientes('prev');
+            }
+        });
+
+    </script>
     <script src="../js/particulas.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
 
 </body>
 </html>

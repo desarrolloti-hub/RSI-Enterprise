@@ -934,8 +934,8 @@
                         <a href="../cotizaciones/coti.html" class="menu-nav-btn">
                             <i class="fas fa-file-invoice-dollar"></i> Cotizar
                         </a>
-                        <a href="/404.html" class="menu-nav-btn">
-                            <i class="fas fa-file-invoice-dollar"></i> Reportes Financieros
+                        <a href="../clientes/clientes.html" class="menu-nav-btn">
+                            <i class="fas fa-users"></i> Clientes
                         </a>
                         <a href="/404.html" class="menu-nav-btn">
                             <i class="fas fa-calculator"></i> Presupuestos
