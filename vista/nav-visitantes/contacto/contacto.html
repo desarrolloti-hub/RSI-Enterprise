@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-     <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <!-- Meta Tags SEO para Contacto -->
     <meta name="description" content="Contacta a RSI Enterprise - Expertos en seguridad electrónica en México. Oficinas en Nezahualcóyotl, Ixtapaluca y California. Formulario de contacto directo.">
     <meta name="keywords" content="contacto seguridad electrónica, ubicación RSI Enterprise, soporte técnico cámaras, teléfono alarmas México, direcciones sucursales">
@@ -27,141 +28,282 @@
     <!-- Schema Markup para LocalBusiness -->
     <script type="application/ld+json">
     {
-    "@context": "https://schema.org",
-    "@type": "ContactPage",
-    "name": "Contacto RSI Enterprise",
-    "description": "Página de contacto para soporte técnico y ubicación de sucursales",
-    "url": "https://rsienterprise.com/contacto-&-comentarios",
-    "breadcrumb": {
-        "@type": "BreadcrumbList",
-        "itemListElement": [{
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Inicio",
-        "item": "https://rsienterprise.com"
-        },{
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Contacto",
-        "item": "https://rsienterprise.com/contacto-&-comentarios"
-        }]
-    },
-    "mainEntity": {
-        "@type": "Organization",
-        "name": "RSI Enterprise",
-        "address": [
-        {
-            "@type": "PostalAddress",
-            "streetAddress": "Empresa Seguridad electronica Rafha Solución Integrales",
-            "addressLocality": "Nezahualcóyotl",
-            "addressRegion": "Estado de México",
-            "addressCountry": "MX"
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        "name": "Contacto RSI Enterprise",
+        "description": "Página de contacto para soporte técnico y ubicación de sucursales",
+        "url": "https://rsienterprise.com/contacto-&-comentarios",
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Inicio",
+                "item": "https://rsienterprise.com"
+            },{
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Contacto",
+                "item": "https://rsienterprise.com/contacto-&-comentarios"
+            }]
         },
-        {
-            "@type": "PostalAddress",
-            "addressLocality": "Ixtapaluca",
-            "addressRegion": "Estado de México",
-            "addressCountry": "MX"
-        },
-        {
-            "@type": "PostalAddress",
-            "streetAddress": "2547 S Euclid Ave",
-            "addressLocality": "Ontario",
-            "addressRegion": "California",
-            "postalCode": "91762",
-            "addressCountry": "US"
+        "mainEntity": {
+            "@type": "Organization",
+            "name": "RSI Enterprise",
+            "address": [
+                {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Empresa Seguridad electronica Rafha Solución Integrales",
+                    "addressLocality": "Nezahualcóyotl",
+                    "addressRegion": "Estado de México",
+                    "addressCountry": "MX"
+                },
+                {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Ixtapaluca",
+                    "addressRegion": "Estado de México",
+                    "addressCountry": "MX"
+                },
+                {
+                    "@type": "PostalAddress",
+                    "streetAddress": "2547 S Euclid Ave",
+                    "addressLocality": "Ontario",
+                    "addressRegion": "California",
+                    "postalCode": "91762",
+                    "addressCountry": "US"
+                }
+            ],
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+525576908248",
+                "contactType": "customer service",
+                "email": "mitiendaenlinea@rhafasoluciones.com",
+                "areaServed": ["MX","US"],
+                "availableLanguage": ["es","en"]
+            }
         }
-        ],
-        "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "+525576908248",
-        "contactType": "customer service",
-        "email": "mitiendaenlinea@rhafasoluciones.com",
-        "areaServed": ["MX","US"],
-        "availableLanguage": ["es","en"]
-        }
-    }
     }
     </script>
+    
     <title>Contacto y Ubicaciones | RSI Enterprise - Sucursales en México y EE.UU.</title>
+    
+    <!-- Librerías CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Estilos propios del documento -->
+    
+    <!-- Estilos propios -->
     <link rel="stylesheet" href="contacto.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
 </head>
 <body>
-     <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-38F2DBG9HE');
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-38F2DBG9HE');
     </script>
-     <!-- Carga dinámica del navbar -->
+    
+    <!-- Carga dinámica del navbar -->
     <script src="../recursosDinamicos/nav.js"></script>
+    
     <!-- Carga dinámica de botones flotantes -->
     <script src="../recursosDinamicos/botones.js"></script>
-    <br><br>
-    <center>
-    <h2 class="cert-title">
-        Puedes encontrarnos en distintos puntos dentro de la república mexicana y en el extranjero.
-    </h2>
-    <h2></h2>
     
-    <div class="buttons-container">
-        
-            <button class="buttonP" onclick="showAddresses('mexico')">
-                <img src="https://flagcdn.com/w40/mx.png" width="20" height="15" style="margin-right: 5px;">México
-            </button>
-            <button class="buttonP" onclick="showAddresses('usa')">
-                <img src="https://flagcdn.com/w40/us.png" width="20" height="15" style="margin-right: 5px;">Estados Unidos
-            </button>
-        
-    </div>
+    <section class="contacto">
+        <div class="container">
+            <br><br>
+            
+            <!-- Título principal -->
+            <h2 class="cert-title">
+                Puedes encontrarnos en distintos puntos dentro de la república mexicana y en el extranjero.
+            </h2>
+            
+            <!-- Botones de selección de país -->
+            <div class="buttons-container location-buttons">
+                <button class="buttonP" onclick="showAddresses('mexico')">
+                    <img src="https://flagcdn.com/w40/mx.png" width="24" height="18" alt="Bandera México">México
+                </button>
+                <button class="buttonP" onclick="showAddresses('usa')">
+                    <img src="https://flagcdn.com/w40/us.png" width="24" height="18" alt="Bandera USA">Estados Unidos
+                </button>
+            </div>
+            
+            <!-- Contenedor para botones de ciudad -->
+            <div class="addresses-container" id="addresses"></div>
+            
+            <!-- Contenedor para mapa -->
+            <div id="map"></div>
+            
+            <br>
+            
+            <!-- Sección del formulario -->
+            <h2 class="cert-title">
+                ¡Para nosotros, tu opinión es muy importante!
+            </h2>
+            <p class="cert-description">
+                Por favor, llena el siguiente formulario<br>
+                <strong>Nos pondremos en contacto contigo.</strong>
+            </p>
+            
+            <!-- Formulario de Contacto -->
+            <div id="loginForm" class="containerFormC active">
+                <div class="form-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h2>Contáctanos</h2>
+                <form id="contactForm">
+                    <div class="input-container">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="nombre" placeholder="Nombre completo" required>
+                    </div>
+                    <div class="input-container">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="Correo electrónico" required>
+                    </div>
+                    <div class="input-container">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="telefono" placeholder="Teléfono" required>
+                    </div>
+                    <div class="input-container">
+                        <i class="fas fa-comment-dots"></i>
+                        <textarea id="mensaje" placeholder="Escribe tu mensaje" required></textarea>
+                    </div>
+                    <button type="submit" class="buttonF contact-btn">
+                        <i class="fas fa-paper-plane"></i> Enviar Mensaje
+                    </button>
+                </form>
+            </div>
+            
+            <br><br>
+            
+            <!-- Información de contacto -->
+            <h2 class="cert-title">
+                Nos encontramos a tus órdenes
+            </h2>
+            <p class="cert-description">
+                <strong>En los siguientes medios:</strong>
+            </p>
+            
+            <div class="contact-container">
+                <!-- Teléfono -->
+                <div class="contact-block">
+                    <h3><i class="fas fa-phone-alt"></i> Teléfono:</h3>
+                    <p><a href="tel:+525576908248">+52 55 7690 8248</a></p>
+                    <br>
+                </div>
+
+                <!-- Correo -->
+                <div class="contact-block">
+                    <h3><i class="fas fa-envelope"></i> Correo Electrónico:</h3>
+                    <p><a href="mailto:mitiendaenlinea@rhafasoluciones.com">mitiendaenlinea@rhafasoluciones.com</a></p>
+                    <br>
+                </div>
+                
+                <!-- Horario -->
+                <div class="contact-block">
+                    <h3><i class="fas fa-clock"></i> Horario de Atención:</h3>
+                    <p>Lunes a Viernes: 9:00 AM - 6:00 PM</p>
+                    <p>Sábados: 10:00 AM - 2:00 PM</p>
+                </div>
+            </div>
+        </div>
+    </section>
     
-    <div class="addresses-container" id="addresses"></div>
-    <div id="map"></div>
-    <br>
-    <h2 class="cert-title">
-        ¡Para nosotros, tu opinión es muy importante!
-    </h2>
-    <p class="cert-description">
-        Por favor, llena el siguiente formulario<br>
-        <strong>Nos pondremos en contacto contigo. </strong>
-    </p>
+    <!-- Scripts de Firebase y SweetAlert2 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Scripts personalizados -->
     <script>
+        // Inicializar Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Manejar el envío del formulario con SweetAlert2
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+            const telefono = document.getElementById('telefono').value;
+            const mensaje = document.getElementById('mensaje').value;
+
+            try {
+                await db.collection('contactanos').add({
+                    nombre: nombre,
+                    email: email,
+                    telefono: telefono,
+                    mensaje: mensaje,
+                    fecha: new Date(),
+                    origen: 'Página de contacto web'
+                });
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Mensaje enviado!',
+                    text: 'Tu mensaje ha sido recibido correctamente. Nos pondremos en contacto contigo pronto.',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#1c1948',
+                    background: '#f5f5f5',
+                    color: '#333'
+                }).then(() => {
+                    document.getElementById('contactForm').reset();
+                });
+                
+            } catch (error) {
+                console.error("Error al enviar el mensaje: ", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al enviar el mensaje. Por favor, intenta nuevamente.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#d33',
+                    background: '#f5f5f5',
+                    color: '#333'
+                });
+            }
+        });
+
+        // Funciones para mostrar direcciones y mapas
         function showAddresses(country) {
             const addressesDiv = document.getElementById('addresses');
             const mapDiv = document.getElementById('map');
-            addressesDiv.innerHTML = ''; // Limpiar direcciones anteriores
-            mapDiv.innerHTML = ''; // Limpiar mapa anterior
+            addressesDiv.innerHTML = '';
+            mapDiv.innerHTML = '';
             
             if (country === 'mexico') {
                 addressesDiv.innerHTML = `
-                    <div class='buttons-container'>
-                        <center>
-                            <button class="buttonP" onclick="showMapNeza()">
-                                <i class="fas fa-map-marker-alt"></i>  Nezahualcóyotl
-                            </button>
-                            <button class="buttonP" onclick="showMapIxta()">
-                                <i class="fas fa-map-marker-alt"></i>  Ixtapaluca
-                            </button>
-                        </center>
+                    <div class='buttons-container city-buttons'>
+                        <button onclick="showMapNeza()">
+                            <i class="fas fa-map-marker-alt"></i> Nezahualcóyotl
+                        </button>
+                        <button onclick="showMapIxta()">
+                            <i class="fas fa-map-marker-alt"></i> Ixtapaluca
+                        </button>
                     </div>
                 `;
             } else if (country === 'usa') {
                 addressesDiv.innerHTML = `
-                    <div class='buttons-container'>
-                        <center><button class="buttonP" onclick="showMapCali()">
-                            <i class="fas fa-map-marker-alt"></i>
-                            California
-                            </button>
+                    <div class='buttons-container city-buttons'>
+                        <button onclick="showMapCali()">
+                            <i class="fas fa-map-marker-alt"></i> California, USA
+                        </button>
                     </div>
                 `;
             }
@@ -170,137 +312,71 @@
         function showMapCali() {
             const mapDiv = document.getElementById('map');
             mapDiv.innerHTML = `
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d826.6655571293998!2d-117.65017095119431!3d34.026880121232644!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c3335dc8638e41%3A0x5418e48831e4eee6!2s2547%20S%20Euclid%20Ave%2C%20Ontario%2C%20CA%2091762%2C%20EE.%20UU.!5e0!3m2!1ses-419!2smx!4v1738704739480!5m2!1ses-419!2smx" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>    
+                <div class="map-container">
+                    <h3 style="color: var(--primary); margin-bottom: 15px; text-align: center;">
+                        <i class="fas fa-map-marker-alt"></i> Ontario, California, EE.UU.
+                    </h3>
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3305.0525623858536!2d-117.65272562365122!3d34.026880121232644!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c3335dc8638e41%3A0x5418e48831e4eee6!2s2547%20S%20Euclid%20Ave%2C%20Ontario%2C%20CA%2091762%2C%20EE.%20UU.!5e0!3m2!1ses-419!2smx!4v1738704739480!5m2!1ses-419!2smx" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade"
+                        title="Ubicación Ontario, California">
+                    </iframe>
+                    <p style="text-align: center; margin-top: 15px; color: var(--text); font-size: 16px;">
+                        <i class="fas fa-location-dot"></i> 2547 S Euclid Ave, Ontario, CA 91762, EE.UU.
+                    </p>
+                </div>
             `;
         }
 
         function showMapIxta() {
             const mapDiv = document.getElementById('map');
             mapDiv.innerHTML = `
-                <iframe src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d470.59298786665846!2d-98.86472216476758!3d19.33691607920196!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDIwJzEzLjAiTiA5OMKwNTEnNTIuOSJX!5e0!3m2!1ses-419!2smx!4v1738704522442!5m2!1ses-419!2smx" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>   
+                <div class="map-container">
+                    <h3 style="color: var(--primary); margin-bottom: 15px; text-align: center;">
+                        <i class="fas fa-map-marker-alt"></i> Ixtapaluca, Estado de México
+                    </h3>
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d470.59298786665846!2d-98.86472216476758!3d19.33691607920196!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDIwJzEzLjAiTiA5OMKwNTEnNTIuOSJX!5e0!3m2!1ses-419!2smx!4v1738704522442!5m2!1ses-419!2smx" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade"
+                        title="Ubicación Ixtapaluca">
+                    </iframe>
+                    <p style="text-align: center; margin-top: 15px; color: var(--text); font-size: 16px;">
+                        <i class="fas fa-location-dot"></i> Ixtapaluca, Estado de México, México
+                    </p>
+                </div>
             `;
         }
         
         function showMapNeza() {
             const mapDiv = document.getElementById('map');
             mapDiv.innerHTML = `
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3762.5548259828897!2d-99.03653052416406!3d19.431631440710646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1fdd7ad7619c9%3A0xe45ea2f6c85d2835!2sEmpresa%20Seguridad%20electronica%20Rafha%20Soluci%C3%B3n%20Integrales!5e0!3m2!1ses-419!2smx!4v1738702333415!5m2!1ses-419!2smx" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>  
+                <div class="map-container">
+                    <h3 style="color: var(--primary); margin-bottom: 15px; text-align: center;">
+                        <i class="fas fa-map-marker-alt"></i> Nezahualcóyotl, Estado de México
+                    </h3>
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3762.5548259828897!2d-99.03653052416406!3d19.431631440710646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1fdd7ad7619c9%3A0xe45ea2f6c85d2835!2sEmpresa%20Seguridad%20electronica%20Rafha%20Soluci%C3%B3n%20Integrales!5e0!3m2!1ses-419!2smx!4v1738702333415!5m2!1ses-419!2smx" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade"
+                        title="Ubicación Nezahualcóyotl">
+                    </iframe>
+                    <p style="text-align: center; margin-top: 15px; color: var(--text); font-size: 16px;">
+                        <i class="fas fa-location-dot"></i> Empresa Seguridad electronica Rafha Solución Integrales
+                    </p>
+                </div>
             `;
         }
+        
+        // Mostrar México por defecto al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            showAddresses('mexico');
+            showMapNeza(); // Mostrar mapa de Neza por defecto
+        });
     </script>
-
-    <!-- Añade estos scripts al inicio de tu HTML -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<!-- Formulario de Contacto -->
-<center><div id="loginForm" class="containerFormC active">
-    <div class="form-icon">
-        <i class="fas fa-comments"></i>
-    </div>
-    <h2>Contáctanos</h2>
-    <form id="contactForm">
-        <div class="input-container">
-            <i class="fas fa-user"></i>
-            <input type="text" id="nombre" placeholder="Nombre completo" required>
-        </div>
-        <div class="input-container">
-            <i class="fas fa-envelope"></i>
-            <input type="email" id="email" placeholder="Correo electrónico" required>
-        </div>
-        <div class="input-container">
-            <i class="fas fa-phone"></i>
-            <input type="tel" id="telefono" placeholder="Telefono" required>
-        </div>
-        <div class="input-container">
-            <textarea id="mensaje" placeholder="Escribe tu mensaje" required 
-                     style="width: 100%; padding: 12px; border: 1px solid #e0dfda; 
-                     border-radius: 4px; font-size: 16px; box-sizing: border-box; 
-                     height: 100px;"></textarea>
-        </div>
-        <button type="submit" class="buttonF contact-btn">Enviar Mensaje</button>
-    </form>
-</div></center>
-
-<script>
-  // Inicializar Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-    authDomain: "rsienterprise.firebaseapp.com",
-    projectId: "rsienterprise",
-    storageBucket: "rsienterprise.appspot.com",
-    messagingSenderId: "1063117165770",
-    appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // Manejar el envío del formulario con SweetAlert2
-  document.getElementById('contactForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
     
-    const nombre = document.getElementById('nombre').value;
-    const email = document.getElementById('email').value;
-    const telefono = document.getElementById('telefono').value;
-    const mensaje = document.getElementById('mensaje').value;
-
-    try {
-      await db.collection('contactanos').add({
-        nombre: nombre,
-        email: email,
-        telefono: telefono,
-        mensaje: mensaje,
-        fecha: new Date()
-      });
-      
-      Swal.fire({
-        icon: 'success',
-        title: '¡Mensaje enviado!',
-        text: 'Tu mensaje ha sido recibido correctamente',
-        confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#3085d6'
-      }).then(() => {
-        document.getElementById('contactForm').reset();
-      });
-      
-    } catch (error) {
-      console.error("Error al enviar el mensaje: ", error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Ocurrió un error al enviar el mensaje',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#d33'
-      });
-    }
-  });
-</script>
-    <br><br>
-    <h2 class="cert-title">
-        Nos encontramos a tus ordenes
-    </h2>
-    <p class="cert-description">
-        <strong>En los siguientes medios: </strong>
-    </p>
-    <center><div class="contact-container">
-        <!-- Teléfono -->
-        <div class="contact-block">
-            <h3>Teléfono:</h3>
-            <p><a href="tel:+5576908248">55 76 90 82 48</a></p>
-            <br>
-        </div>
-
-        <!-- Correo -->
-        <div class="contact-block">
-            <h3>Correo Electrónico:</h3>
-            <p><a href="mailto:mitiendaenlinea@rhafasoluciones.com">mitiendaenlinea@rhafasoluciones.com</a></p>
-            <br>
-        </div>
-    </div></center>
-    </section>
-    <br>
+    <!-- Carga dinámica del footer -->
+    <script src="../recursosDinamicos/footer.js"></script>
 </body>
-<script src="../recursosDinamicos/footer.js"></script>
-</html> 
+</html>
