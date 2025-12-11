@@ -64,8 +64,7 @@
                 asignarEventos();
 
             } catch (error) {
-                console.error("Error cargando papelera:", error);
-                listaPapelera.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error al cargar datos.</td></tr>`;
+                window.manejarErrorGlobal(error);
             }
         }
 
@@ -110,9 +109,7 @@
                     cargarPapelera();
                 }
             } catch (error) {
-                console.error(error);
-                const errorFn = window.showCustomError || Swal.fire;
-                errorFn("Error", "No se pudo restaurar la categoría.");
+                window.manejarErrorGlobal(error);
             }
         }
 
@@ -134,9 +131,7 @@
                 cargarPapelera();
 
             } catch (error) {
-                console.error(error);
-                const errorFn = window.showCustomError || Swal.fire;
-                errorFn("Error", "No se pudo eliminar la categoría.");
+                window.manejarErrorGlobal(error);
             }
         }
 

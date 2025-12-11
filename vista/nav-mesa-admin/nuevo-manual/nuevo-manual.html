@@ -111,7 +111,7 @@
                 await loadUserProfile();
                 setupEventListeners();
             } catch (error) {
-                console.error("Error en la carga inicial:", error);
+                window.manejarErrorGlobal(error);
                 showError('No se pudieron cargar los datos iniciales.');
             }
         }
@@ -141,7 +141,7 @@
                     sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
                 }
             } catch (error) {
-                console.error("Error al cargar perfil:", error);
+                window.manejarErrorGlobal(error);
             }
         }
 
@@ -286,7 +286,7 @@
                 resetForm();
                 
             } catch (error) {
-                console.error('Error al guardar el manual:', error);
+                window.manejarErrorGlobal(error);
                 showError('No se pudo guardar el manual. Por favor, intenta nuevamente.');
             } finally {
                 // Restaurar botón
@@ -349,6 +349,7 @@
             });
         });
     </script>
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
      <script src="../js/particulas.js"></script>

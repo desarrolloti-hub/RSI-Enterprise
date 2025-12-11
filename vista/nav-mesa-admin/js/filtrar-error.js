@@ -1,36 +1,109 @@
-// filtrar-error.js - Versión Amigable para Usuarios Reales
+// filtrar-error.js
 (function() {
   'use strict';
+
+  let isRedirecting = false;
+
+  // --- DEPENDENCIA: Cargar html2canvas dinámicamente si no existe ---
+  function loadHtml2Canvas(callback) {
+      if (window.html2canvas) {
+          callback();
+          return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.onload = callback;
+      script.onerror = () => {
+          console.error('Error cargando html2canvas para reporte automático');
+          callback(); // Continuamos aunque falle la carga (sin foto)
+      };
+      document.head.appendChild(script);
+  }
 
   // -----------------------------------------
   // 1. MANEJADOR GLOBAL DE ERRORES (Tu lógica original intacta)
   // -----------------------------------------
   function manejarErrorGlobal(error) {
+    if (isRedirecting) return;
     // Si es un error controlado (validación de usuario, etc.)
     if (error && error.isUserError === true) {
+        if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: error.message,
+            confirmButtonColor: '#4e54c8'
+        });
+    } else {
         alert(error.message);
+    }
         return;
     }
 
+
+    isRedirecting = true; // Evitar múltiples redirecciones
     console.error("Error crítico capturado:", error);
 
     // Preparamos el objeto de error de forma segura
     const errorData = {
+        isAutoReport: true, // Bandera para saber que es automático
         mensaje: error.message || (typeof error === 'string' ? error : 'Error desconocido'),
-        stack: error.stack || "Sin detalles técnicos",
+        stack: error.stack || "Sin detalles técnicos (Stack trace no disponible)",
+        tipo: 'Bug Critico', // Clasificación automática
+        prioridad: 'Alta',   // Prioridad automática
         fecha: new Date().toISOString(),
-        modulo: window.location.pathname
+        origen: window.location.pathname,
+        navegador: navigator.userAgent
     };
 
-    try {
-        localStorage.setItem("errorReport", JSON.stringify(errorData));
-        // Redirigimos a la página de reporte
-        // Asegúrate de que la ruta sea relativa correcta desde donde estés
-        window.location.href = "../sistema-reportes/crear-reporte.html"; 
+    // 2. Intentamos tomar la captura AUTOMÁTICAMENTE
+    // Mostramos un aviso sutil al usuario mientras capturamos
+    const aviso = document.createElement('div');
+    aviso.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; display:flex; align-items:center; justify-content:center; z-index:99999; font-family:sans-serif; font-size:1.5rem; flex-direction:column;";
+    aviso.innerHTML = '<i class="fas fa-camera" style="margin-bottom:15px; font-size:3rem;"></i><div>Detectamos un problema...<br><small style="font-size:1rem">Generando reporte automático</small></div>';
+    
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = "@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }";
+    document.head.appendChild(styleSheet);
+    
+    document.body.appendChild(aviso);
+
+    loadHtml2Canvas(async () =>{
+      try {
+        let screenshotBase64 = null;
+        if(window.html2canvas) {
+          const canvas = await html2canvas(document.body, {
+            useCORS: true,
+            logging: false,
+            scale:1,
+
+            //1. coordenadas
+            x: window.scrollX,
+            y: window.scrollY,
+            width: window.innerWidth,
+            height: window.innerHeight,
+
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+            ignoreElements: (el) => el === aviso // Ignoramos el aviso
+          });
+          screenshotBase64 = canvas.toDataURL('image/jpeg', 0.5); // Calidad 70%
+        }
+            // 3. Guardar en SessionStorage (más seguro que LocalStorage para datos grandes temporales)
+            // Guardamos la imagen por separado para no saturar el objeto JSON si es muy grande
+            if (screenshotBase64) {
+                sessionStorage.setItem('tempReportScreenshot', screenshotBase64);
+            }
+            sessionStorage.setItem('autoErrorReportData', JSON.stringify(errorData));
+
+        // 4. Redirigir a la página de reporte con indicador de automático
+        window.location.href="../crear-reporte/crear-reporte.html?autoReport=1";
     } catch (e) {
-        console.error("No se pudo guardar el reporte automático:", e);
-        alert("Ocurrió un error crítico y no pudimos generar el reporte automático.\n\n" + errorData.mensaje);
+ console.error("Fallo al generar captura automática:", e);
+            // Si falla la captura, guardamos solo los datos y redirigimos igual
+            sessionStorage.setItem('autoErrorReportData', JSON.stringify(errorData));
     }
+    });
   }
 
   // -----------------------------------------
@@ -91,45 +164,42 @@
 
     // --- VALIDADOR PRINCIPAL (MODIFICADO) ---
     static async validateManualReport(data = {}) {
+      if (!data || typeof data !== 'object') return { isValid: false, message: 'Datos vacíos.' };
       
-      // 1. Validación básica de existencia
-      if (!data || typeof data !== 'object') {
-        return { isValid: false, message: 'Error interno: Datos del reporte vacíos.' };
-      }
-
-      // 2. Campos mínimos vitales
       const desc = (data.description || '').trim();
-      const type = (data.type || 'Bug').trim();
+      if (!desc) return { isValid: false, message: 'Falta descripción.' };
+      if (desc.length < ErrorFilter.config.minDescriptionLength) return { isValid: false, message: `Descripción muy corta.` };
 
-      if (!desc) {
-        return { isValid: false, message: 'Por favor, escribe una breve descripción del problema.' };
-      }
-
-      // 3. Longitud mínima relajada
-      if (desc.length < ErrorFilter.config.minDescriptionLength) {
-        return { isValid: false, message: `La descripción es muy corta. Por favor detalla un poco más.` };
-      }
-
-      // 4. Validación de adjuntos (si existen)
       const attachCheck = ErrorFilter._validateAttachments(data.attachments);
-      if (!attachCheck.ok) {
-        return { isValid: false, message: attachCheck.message };
-      }
+      if (!attachCheck.ok) return { isValid: false, message: attachCheck.message };
 
-      // 5. (Opcional) Detección básica de "texto basura"
-      // Evita reportes como "asdfghjkl" o "..."
-      const uniqueChars = new Set(desc).size;
-      if (uniqueChars < 3 && desc.length > 5) {
-         return { isValid: false, message: 'La descripción no parece válida. Por favor sé más específico.' };
-      }
-
-      // Si pasa todo, es válido
-      return { isValid: true, code: 'OK', message: 'Reporte válido.' };
+      return { isValid: true, code: 'OK', message: 'Válido.' };
     }
+  
   }
 
   // Exportar globalmente
   window.ErrorFilter = ErrorFilter;
   window.manejarErrorGlobal = manejarErrorGlobal;
+
+  // --- AUTO-CAPTURA DE ERRORES DE JAVASCRIPT ---
+  // Esto hace que cualquier "crash" real active tu función
+  window.onerror = function(message, source, lineno, colno, error) {
+      manejarErrorGlobal({
+          message: message,
+          stack: error ? error.stack : `${source}:${lineno}:${colno}`,
+          isUserError: false // Es un error real del sistema
+      });
+      return true; // Evita que el error salga en la consola estándar del navegador
+  };
+
+  // Captura también promesas fallidas (fetch, async/await)
+  window.addEventListener('unhandledrejection', function(event) {
+      manejarErrorGlobal({
+          message: 'Promesa rechazada (Posible fallo de red o BD): ' + event.reason,
+          stack: event.reason ? event.reason.stack : 'Sin stack',
+          isUserError: false
+      });
+  });
 
 })();

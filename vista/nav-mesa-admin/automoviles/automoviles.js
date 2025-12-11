@@ -51,8 +51,8 @@ async function loadVehicles() {
         }));
         displayVehicles(vehicles);
     } catch (error) {
-        console.error('Error al cargar vehículos:', error);
-        showFeedback('error', 'Error', 'No se pudieron cargar los vehículos' + error.message);
+    window.manejarErrorGlobal(error);
+
     }
 }
 
@@ -390,8 +390,7 @@ async function showEditVehicleForm(vehicleId, vehicleData) {
             showFeedback('success', '¡Éxito!', 'Vehículo actualizado correctamente');
             loadVehicles();
         } catch (error) {
-            console.error('Error al actualizar vehículo:', error);
-            showFeedback('error', 'Error', 'No se pudo actualizar el vehículo: ' + error.message);
+            window.manejarErrorGlobal(error);
         }
     }
 }
@@ -444,9 +443,7 @@ async function deleteVehicle(vehicleId)
             await loadVehicles();//Recargar la lista de vehiculos
         } catch(error)
         {
-            console.error('Error al eliminar vehiculo: ', error);
-            Swal.close();
-            showFeedback('error','Error','No se pudo eliminar el vehiculo'+ error.message);
+            window.manejarErrorGlobal(error);
         }
     }
 }
@@ -677,8 +674,7 @@ async function showAddVehicleForm() {
             showFeedback('success', '¡Éxito!', 'Vehículo agregado correctamente', );
             loadVehicles();
         } catch (error) {
-            console.error('Error al agregar vehículo:', error);
-            showFeedback('error', 'Error', 'No se pudo agregar el vehículo'+ error.message);
+            window.manejarErrorGlobal(error);
         }
     }
 }
@@ -943,8 +939,7 @@ async function showAddVehicleForm() {
             showFeedback('success', '¡Éxito!', 'Vehículo agregado correctamente');
             loadVehicles();
         } catch (error) {
-            console.error('Error al agregar vehículo:', error);
-            showFeedback('error', 'Error', 'No se pudo agregar el vehículo'+ error.message);
+            window.manejarErrorGlobal(error);
         }
     }
 }

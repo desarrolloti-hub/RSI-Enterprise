@@ -44,7 +44,7 @@
                     });
                 }
             } catch (error) {
-                console.error("Error cargando categorías:", error);
+                window.manejarErrorGlobal(error);
             }
         }
 
@@ -163,7 +163,7 @@
                 });
 
             } catch (error) {
-                console.error("Error:", error);
+                window.manejarErrorGlobal(error);
                 Swal.fire("Error", "No se pudo registrar el producto", "error");
             } finally {
                 btnGuardar.disabled = false;

@@ -180,7 +180,7 @@
                 const names = await Promise.all(promises);
                 return names.join(', ');
             } catch (error) {
-                console.error("Error obteniendo nombres de colaboradores:", error);
+                window.manejarErrorGlobal(error);
                 return 'Error de carga';
             }
         }
@@ -336,7 +336,7 @@
                     }
                 }
             } catch (error) {
-                console.error("Error cargando evidencias existentes:", error);
+                window.manejarErrorGlobal(error);
             }
         }
 
@@ -390,7 +390,7 @@
                 hideLoading();
                 
             } catch (error) {
-                console.error("Error cargando información del ticket:", error);
+                window.manejarErrorGlobal(error);
                 hideLoading();
                 showError('No se pudo cargar la información del ticket');
             }
@@ -414,7 +414,7 @@
                 });
                 return true;
             } catch (error) {
-                console.error("Error cargando datos de colaborador:", error);
+                window.manejarErrorGlobal(error);
                 showError('Error al cargar tus datos de colaborador.');
                 return false;
             }
@@ -510,7 +510,7 @@
                 window.location.href = '../gestion-tickets/gestion-tickets.html';
                 
             } catch (error) {
-                console.error("Error guardando evidencias:", error);
+                window.manejarErrorGlobal(error);
                 showError(error.message || 'No se pudieron guardar las evidencias');
             } finally {
                 submitBtn.disabled = false;
@@ -550,7 +550,7 @@
                 window.location.href = '../gestion-tickets/gestion-tickets.html';
                 
             } catch (error) {
-                console.error("Error al pausar ticket:", error);
+               window.manejarErrorGlobal(error);
                 showError(error.message || 'No se pudo pausar el ticket.');
             } finally {
                 hideLoading();
@@ -572,7 +572,7 @@
                 await db.collection('historialTicket').add(historyData);
                 console.log('Historial de ticket registrado exitosamente.');
             } catch (error) {
-                console.error('Error registrando historial:', error);
+                window.manejarErrorGlobal(error);
             }
         }
         
@@ -688,6 +688,7 @@
                              validatePauseForm(reason);
                              return reason; // Devolver la razón validada
                         } catch (error) {
+                            window.manejarErrorGlobal(error);
                             Swal.showValidationMessage(error.message);
                             return false;
                         }
@@ -762,8 +763,9 @@
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegación-operador.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
     <script src="../js/particulas.js"></script>
 </body>
 </html>

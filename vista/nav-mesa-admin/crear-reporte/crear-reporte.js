@@ -14,6 +14,8 @@
     let currentUser = null;
     let currentUserName = 'Anónimo'; 
 
+    let isAutoReport = false;
+
     // ==========================================
     // FUNCIONES AUXILIARES
     // ==========================================
@@ -41,7 +43,8 @@
             sessionStorage.removeItem('tempReportScreenshot');
             sessionStorage.removeItem('tempReportSource');
 
-            Swal.fire({
+            if(!isAutoReport){
+                Swal.fire({
                 toast: true,
                 position: 'top-end',
                 icon: 'info',
@@ -49,6 +52,8 @@
                 showConfirmButton: false,
                 timer: 3000
             });
+            }
+            
         }
     };
 
@@ -79,6 +84,50 @@
     // INICIALIZACIÓN
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- CORRECCIÓN 3: Detectar el reporte automático PRIMERO ---
+        const autoErrorData = sessionStorage.getItem('autoErrorReportData');
+        if (autoErrorData) {
+            isAutoReport = true; // Activamos la bandera para bloquear otras alertas
+            try {
+                const errorInfo = JSON.parse(autoErrorData);
+                console.log("🚨 Cargando reporte automático:", errorInfo);
+
+                // Rellenar campos automáticamente
+                if(document.getElementById('tipo')) document.getElementById('tipo').value = 'Bug';
+                if(document.getElementById('prioridad')) document.getElementById('prioridad').value = 'Alta';
+                
+                const descField = document.getElementById('descripcion');
+                if(descField) {
+                    descField.value = `[REPORTE AUTOMÁTICO DE SISTEMA]\n\n` +
+                                      `🛑 Mensaje: ${errorInfo.mensaje}\n` +
+                                      `📍 Origen: ${errorInfo.origen}\n` +
+                                      `⏰ Fecha: ${new Date(errorInfo.fecha).toLocaleString()}\n\n` +
+                                      `--- Detalles Técnicos (Stack) ---\n${errorInfo.stack}`;
+                    descField.style.backgroundColor = '#fff0f0';
+                }
+
+                if(document.getElementById('modulo')) {
+                    document.getElementById('modulo').value = errorInfo.origen || 'Sistema';
+                }
+
+                // Mostrar alerta IMPORTANTE (Esta es la que se cerraba)
+                Swal.fire({
+                    icon: 'error',
+                    title: '¡Ups! Algo salió mal',
+                    text: 'El sistema detectó un error y ha preparado este reporte automáticamente. Por favor, revísalo y dale "Enviar".',
+                    confirmButtonColor: '#d33',
+                    // allowOutsideClick: false // Opcional: Obligar a dar OK
+                });
+
+                sessionStorage.removeItem('autoErrorReportData');
+
+            } catch (e) {
+                console.error("Error al procesar reporte automático:", e);
+            }
+        }
+        
+
         firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -120,7 +169,8 @@
             }
         } else if (origenInput) {
             origenInput.value = 'Desconocido / Directo';
-        }
+        }        
+
     });
 
    // ==========================================

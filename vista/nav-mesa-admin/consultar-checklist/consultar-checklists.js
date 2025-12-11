@@ -87,7 +87,7 @@ async function loadChecklistsFromFirebase() {
         }
 
     } catch (error) {
-        console.error("Error CRÍTICO:", error);
+        window.manejarErrorGlobal(error);
         container.innerHTML = `<div class="error-message" style="grid-column: 1/-1; text-align: center;">Error: ${error.message}</div>`;
     }
 }
@@ -285,8 +285,8 @@ window.openAddIncidentModal = async (id) => {
                             evidencePhotoBase64 = compressed; // Guardar en variable
                             imgPreview.src = compressed;
                             previewContainer.style.display = 'block';
-                        } catch (err) {
-                            console.error("Error compresión", err);
+                        } catch (error) {
+                            window.manejarErrorGlobal(error);
                         }
                     };
                     reader.readAsDataURL(file);
@@ -346,7 +346,7 @@ window.openAddIncidentModal = async (id) => {
             checklist.incidents.push(formValues);
 
         } catch (error) {
-            console.error("Error:", error);
+            window.manejarErrorGlobal(error);
             Swal.fire('Error', 'No se pudo guardar.', 'error');
         }
     }
