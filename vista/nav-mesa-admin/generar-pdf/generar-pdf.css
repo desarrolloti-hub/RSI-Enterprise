@@ -419,7 +419,7 @@ textarea.form-control {
     align-items: center;
     gap: 5px;
     padding: 8px 12px;
-    background: #f8f9fa;
+    background: #f8f9fa; /* posible error en un futuro, fondo negro */
     border-radius: 5px;
     border: 1px solid var(--border-color);
 }
