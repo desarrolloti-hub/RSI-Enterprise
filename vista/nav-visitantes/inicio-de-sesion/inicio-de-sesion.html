@@ -493,6 +493,20 @@
                     
                     const rol = await handleLogin(email, password);
                     
+                     try {
+                        const { subscribeUser } = await import("/push-subscribe.js");
+
+                        // Obtenemos UID del usuario logueado
+                        const user = firebase.auth().currentUser;
+                        if (user) {
+                            await subscribeUser(user.uid);
+                            console.log("🔔 Push subscribe completado para:", user.uid);
+                        }
+                    } catch (err) {
+                        console.error("❌ Error en push subscribe:", err);
+                    }
+
+
                     Swal.fire({
                         title: '¡Bienvenido!',
                         text: 'Redirigiendo...',
@@ -527,15 +541,7 @@
             });
         });
 
-        // Después de iniciar sesión exitosamente, agregar:
-        setTimeout(async () => {
-            try {
-                const fcmModule = await import('/fcm-manager.js');
-                await fcmModule.default.initialize();
-            } catch (error) {
-                console.log('FCM no disponible:', error);
-            }
-        }, 1000);
+        
     </script>
 
     

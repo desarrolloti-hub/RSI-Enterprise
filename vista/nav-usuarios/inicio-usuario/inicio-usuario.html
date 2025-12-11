@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise Usuario</title>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="inicio-usuario.css">
+</head>
+<body class="nan_reset">
+    <br><br><br>
+    <!-- Contenido principal -->
+    <div class="main-container">
+        <!-- Mensaje de bienvenida -->
+        <div id="welcome-message" class="welcome-message">
+            <div class="user-profile-container">
+                <div class="user-profile-image" id="user-profile-image">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+            <div class="welcome-text">
+                <h1>
+                    <span>¡Bienvenido,</span>
+                    <span id="user-name">Usuario</span>
+                    <span>!</span>
+                </h1>
+                <p>Gestiona tus compras y productos favoritos desde aquí</p>
+                <a href="perfil.html" class="edit-profile-link">
+                    <i class="fas fa-edit"></i> Editar perfil
+                </a>
+            </div>
+        </div>
+
+        <!-- Grid de tarjetas -->
+        <div class="card-grid">
+            <!-- Tarjeta de Lista de deseos -->
+            <a href="lista-de-deseos.html" class="card-item">
+                <div class="icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h2>Lista de deseos</h2>
+                <p>Revisa y gestiona tus productos favoritos.</p>
+            </a>
+
+            <!-- Tarjeta de Historial de compras -->
+            <a href="historial-de-compras.html" class="card-item">
+                <div class="icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h2>Historial de compras</h2>
+                <p>Consulta tus compras anteriores.</p>
+            </a>
+
+            <!-- Tarjeta de Productos -->
+            <a href="productos-usuario.html" class="card-item">
+                <div class="icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h2>Productos</h2>
+                <p>Explora nuestro catálogo de productos.</p>
+            </a>
+
+            <!-- Tarjeta de Soporte -->
+            <a href="soporte.html" class="card-item">
+                <div class="icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h2>Soporte</h2>
+                <p>¿Necesitas ayuda? Contáctanos aquí.</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Script para verificación de usuario -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Configuración de Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+            };
+
+            // Inicializar Firebase si no está inicializado
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // Bandera para controlar el cierre de sesión
+            let isLoggingOut = false;
+
+            // Evitar que el usuario retroceda con las flechas del navegador
+            window.history.pushState(null, document.title, window.location.href);
+            window.addEventListener('popstate', function (event) {
+                window.history.pushState(null, document.title, window.location.href);
+            });
+
+            // Función para cargar la imagen de perfil
+            function loadProfileImage(fotoPerfil) {
+                const profileImageContainer = document.getElementById('user-profile-image');
+                if (fotoPerfil) {
+                    profileImageContainer.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = fotoPerfil;
+                    img.alt = 'Foto de perfil';
+                    profileImageContainer.appendChild(img);
+                } else {
+                    // Si no hay imagen, mostrar el ícono por defecto
+                    profileImageContainer.innerHTML = '<i class="fas fa-user"></i>';
+                }
+            }
+
+            // Verificación de autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (isLoggingOut) {
+                    return;
+                }
+
+                if (!user) {
+                    Swal.fire({
+                        title: "Acceso denegado",
+                        text: "Para continuar aquí, debes iniciar sesión.",
+                        icon: "warning",
+                        timer: 3000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 3000);
+                    return;
+                }
+
+                try {
+                    const userRef = db.collection("usuarios").doc(user.uid);
+                    const doc = await userRef.get();
+
+                    if (!doc.exists) {
+                        Swal.fire({
+                            title: "Usuario no encontrado",
+                            text: "No se encontró tu información en la base de datos.",
+                            icon: "error",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                        return;
+                    }
+
+                    const userData = doc.data();
+                    if (userData.rol !== "user") {
+                        Swal.fire({
+                            title: "Acceso denegado",
+                            text: "No tienes permisos para acceder a esta página.",
+                            icon: "warning",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                    } else {
+                        // Mostrar nombre del usuario
+                        const userNameElement = document.getElementById("user-name");
+                        if (userNameElement) {
+                            userNameElement.textContent = userData.nombreCompleto || "Usuario";
+                        }
+
+                        // Cargar imagen de perfil
+                        loadProfileImage(userData.fotoPerfil);
+                    }
+                } catch (error) {
+                    console.error("Error al verificar usuario:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "Ocurrió un problema al verificar el usuario.",
+                        icon: "error",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 2000);
+                }
+            });
+        });
+    </script>
+
+    <!-- Scripts modulares -->
+     <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/navScript.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>
