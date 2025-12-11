@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Compras | RSI Enterprise</title>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../inicio-usuario/inicio-usuario.css">
+    <link rel="stylesheet" href="historial-compras.css">
+</head>
+<body class="nan_reset">
+    <br><br><br>
+    
+    <!-- Contenido principal -->
+    <div class="history-main-container">
+        <!-- Encabezado -->
+        <div class="history-header-container">
+            <h1 class="history-header-title">
+                <i class="fas fa-history"></i>
+                <span>Historial de Compras</span>
+            </h1>
+            <p>Consulta todas tus compras y entregas realizadas</p>
+        </div>
+
+        <!-- Spinner de carga -->
+        <div id="loading-spinner" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando historial de compras...</p>
+        </div>
+
+        <!-- Sección de Órdenes -->
+        <div id="orders-section" class="history-section" style="display: none;">
+            <h2 class="section-title">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Tus Órdenes</span>
+            </h2>
+            <div id="orders-list-container"></div>
+        </div>
+
+        <!-- Sección de Entregas -->
+        <div id="deliveries-section" class="history-section" style="display: none;">
+            <h2 class="section-title">
+                <i class="fas fa-truck"></i>
+                <span>Tus Entregas</span>
+            </h2>
+            <div id="deliveries-list-container"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Script principal -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Configuración de Firebase (usando la misma que inicio-usuario)
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+            };
+
+            // Inicializar Firebase si no está inicializado
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // Bandera para controlar el cierre de sesión
+            let isLoggingOut = false;
+
+            // Evitar que el usuario retroceda con las flechas del navegador
+            window.history.pushState(null, document.title, window.location.href);
+            window.addEventListener('popstate', function (event) {
+                window.history.pushState(null, document.title, window.location.href);
+            });
+
+            // Mostrar spinner de carga
+            function showLoading(show) {
+                document.getElementById('loading-spinner').style.display = show ? 'flex' : 'none';
+            }
+
+            // Verificación de autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (isLoggingOut) {
+                    return;
+                }
+
+                if (!user) {
+                    Swal.fire({
+                        title: "Acceso denegado",
+                        text: "Para continuar aquí, debes iniciar sesión.",
+                        icon: "warning",
+                        timer: 3000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 3000);
+                    return;
+                }
+
+                try {
+                    const userRef = db.collection("usuarios").doc(user.uid);
+                    const doc = await userRef.get();
+
+                    if (!doc.exists) {
+                        Swal.fire({
+                            title: "Usuario no encontrado",
+                            text: "No se encontró tu información en la base de datos.",
+                            icon: "error",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                        return;
+                    }
+
+                    const userData = doc.data();
+                    if (userData.rol !== "user") {
+                        Swal.fire({
+                            title: "Acceso denegado",
+                            text: "No tienes permisos para acceder a esta página.",
+                            icon: "warning",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                    } else {
+                        // Cargar historial de compras
+                        loadPurchaseHistory(user.uid);
+                    }
+                } catch (error) {
+                    console.error("Error al verificar usuario:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "Ocurrió un problema al verificar el usuario.",
+                        icon: "error",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 2000);
+                }
+            });
+
+            // Función principal para cargar el historial
+            async function loadPurchaseHistory(userId) {
+                showLoading(true);
+                
+                try {
+                    // Consultar ambas colecciones en paralelo
+                    const [ordersSnapshot, deliveriesSnapshot] = await Promise.all([
+                        db.collection('orders').where('user_id', '==', userId).get(),
+                        db.collection('entregas').where('user_id', '==', userId).get()
+                    ]);
+
+                    // Procesar y mostrar órdenes
+                    const ordersListContainer = document.getElementById('orders-list-container');
+                    const ordersSection = document.getElementById('orders-section');
+                    
+                    if (!ordersSnapshot.empty) {
+                        const orders = ordersSnapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data(),
+                            fecha: doc.data().created_at?.toDate() || null
+                        })).sort((a, b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
+                        
+                        ordersListContainer.innerHTML = orders.map(order => createOrderCard(order)).join('');
+                        ordersSection.style.display = 'block';
+                    } else {
+                        ordersListContainer.innerHTML = `
+                            <div class="no-orders">
+                                <i class="fas fa-shopping-bag"></i>
+                                <h3>No hay órdenes registradas</h3>
+                                <p>Aún no has realizado ninguna compra.</p>
+                                <a href="productos-usuario.html" class="btn-continue">Ir a productos</a>
+                            </div>
+                        `;
+                        ordersSection.style.display = 'block';
+                    }
+
+                    // Procesar y mostrar entregas
+                    const deliveriesListContainer = document.getElementById('deliveries-list-container');
+                    const deliveriesSection = document.getElementById('deliveries-section');
+                    
+                    if (!deliveriesSnapshot.empty) {
+                        const deliveries = deliveriesSnapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data(),
+                            fecha: doc.data().fecha_entrega?.toDate() || null
+                        })).sort((a, b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
+                        
+                        deliveriesListContainer.innerHTML = deliveries.map(delivery => createDeliveryCard(delivery)).join('');
+                        deliveriesSection.style.display = 'block';
+                    } else {
+                        deliveriesListContainer.innerHTML = `
+                            <div class="no-orders">
+                                <i class="fas fa-truck"></i>
+                                <h3>No hay entregas registradas</h3>
+                                <p>No se encontraron entregas para tus órdenes.</p>
+                            </div>
+                        `;
+                        deliveriesSection.style.display = 'block';
+                    }
+
+                } catch (error) {
+                    console.error("Error al cargar historial:", error);
+                    document.getElementById('orders-list-container').innerHTML = `
+                        <div class="no-orders">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error al cargar el historial</h3>
+                            <p>${error.message || 'Ocurrió un problema al cargar tus compras'}</p>
+                            <button onclick="window.location.reload()" class="btn-continue">Reintentar</button>
+                        </div>
+                    `;
+                    document.getElementById('orders-section').style.display = 'block';
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Crear tarjeta de orden
+            function createOrderCard(order) {
+                const total = order.amount || (order.items?.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0) || 0);
+                const status = order.payment_status || 'pending';
+                
+                return `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <span class="order-id">Orden: ${order.id}</span>
+                                ${order.fecha ? `
+                                <span class="order-date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    ${order.fecha.toLocaleDateString('es-MX', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                                ` : ''}
+                            </div>
+                            <span class="order-status ${getStatusClass(status)}">
+                                ${status.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="order-details">
+                            <div class="order-summary">
+                                ${order.branch ? `
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-store"></i> Sucursal:</span>
+                                    <span class="order-summary-value">${order.branch}</span>
+                                </div>
+                                ` : ''}
+                                
+                                ${order.payment_method ? `
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-credit-card"></i> Método de pago:</span>
+                                    <span class="order-summary-value">${order.payment_method}</span>
+                                </div>
+                                ` : ''}
+                                
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-money-bill-wave"></i> Total:</span>
+                                    <span class="order-summary-value">$${total.toFixed(2)} MXN</span>
+                                </div>
+                            </div>
+                            
+                            ${order.openpay_id ? `
+                            <div class="order-info">
+                                <div class="info-title"><i class="fas fa-receipt"></i> Información de transacción:</div>
+                                <div class="info-content">
+                                    <strong>ID de transacción:</strong> 
+                                    <span class="transaction-id">${order.openpay_id}</span>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${order.items?.length > 0 ? `
+                            <div class="order-items">
+                                <h4><i class="fas fa-box-open"></i> Productos:</h4>
+                                ${order.items.map(item => `
+                                    <div class="order-item">
+                                        <div class="item-info">
+                                            ${item.image ? `<img src="${item.image}" alt="${item.name}" class="item-image">` : ''}
+                                            <div>
+                                                <span class="item-name">${item.name || 'Producto'}</span>
+                                                <div class="item-quantity">Cantidad: ${item.quantity || 1}</div>
+                                            </div>
+                                        </div>
+                                        <span class="item-price">$${(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Crear tarjeta de entrega
+            function createDeliveryCard(delivery) {
+                const total = delivery.items?.reduce(
+                    (sum, item) => sum + (parseFloat(item.price || 0) * (item.quantity || 1)),
+                    0
+                ) || 0;
+                
+                return `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <span class="order-id">Entrega: ${delivery.id}</span>
+                                ${delivery.fecha ? `
+                                <span class="order-date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    ${delivery.fecha.toLocaleDateString('es-MX', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                                ` : ''}
+                            </div>
+                            ${delivery.estado ? `
+                            <span class="order-status ${getStatusClass(delivery.estado)}">
+                                ${delivery.estado.toUpperCase()}
+                            </span>
+                            ` : ''}
+                        </div>
+                        <div class="order-details">
+                            <div class="order-summary">
+                                ${delivery.order_id ? `
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-shopping-bag"></i> Orden asociada:</span>
+                                    <span class="order-summary-value">${delivery.order_id}</span>
+                                </div>
+                                ` : ''}
+                                
+                                ${delivery.metodo_entrega ? `
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-truck"></i> Método de entrega:</span>
+                                    <span class="order-summary-value">${delivery.metodo_entrega}</span>
+                                </div>
+                                ` : ''}
+                                
+                                ${delivery.direccion ? `
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-map-marker-alt"></i> Dirección:</span>
+                                    <span class="order-summary-value">${delivery.direccion}</span>
+                                </div>
+                                ` : ''}
+                                
+                                <div class="order-summary-item">
+                                    <span class="order-summary-label"><i class="fas fa-money-bill-wave"></i> Total:</span>
+                                    <span class="order-summary-value">$${total.toFixed(2)} MXN</span>
+                                </div>
+                            </div>
+                            
+                            ${delivery.items?.length > 0 ? `
+                            <div class="order-items">
+                                <h4><i class="fas fa-box-open"></i> Productos entregados:</h4>
+                                ${delivery.items.map(item => `
+                                    <div class="order-item">
+                                        <div class="item-info">
+                                            ${item.image ? `<img src="${item.image}" alt="${item.name}" class="item-image">` : ''}
+                                            <div>
+                                                <span class="item-name">${item.name || 'Producto'}</span>
+                                                <div class="item-quantity">Cantidad: ${item.quantity || 1}</div>
+                                            </div>
+                                        </div>
+                                        <span class="item-price">$${(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+                            
+                            ${delivery.comentarios ? `
+                            <div class="order-info">
+                                <div class="info-title"><i class="fas fa-comment"></i> Comentarios:</div>
+                                <div class="info-content">${delivery.comentarios}</div>
+                            </div>
+                            ` : ''}
+                            
+                            ${delivery.ubicacion_entrega ? `
+                            <div class="order-info">
+                                <div class="info-title"><i class="fas fa-map-pin"></i> Ubicación de entrega:</div>
+                                <div class="info-content">${delivery.ubicacion_entrega}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Clases CSS para estados
+            function getStatusClass(status) {
+                if (!status) return '';
+                const statusLower = status.toLowerCase();
+                if (statusLower.includes('complet') || statusLower.includes('entreg')) return 'status-completed';
+                if (statusLower.includes('pendiente') || statusLower.includes('proceso')) return 'status-pending';
+                if (statusLower.includes('cancel') || statusLower.includes('fall')) return 'status-failed';
+                return '';
+            }
+
+        });
+    </script>
+
+    <!-- Scripts modulares (igual que inicio-usuario) -->
+    <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/navScript.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>

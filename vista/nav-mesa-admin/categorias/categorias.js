@@ -57,8 +57,7 @@
                 asignarEventos();
 
             } catch (error) {
-                console.error("Error cargando categorías:", error);
-                categoriasLista.innerHTML = `<tr><td colspan="4" class="text-danger text-center">Error al cargar datos.</td></tr>`;
+                window.manejarErrorGlobal(error); // Usar manejador global
             }
         }
 
@@ -109,9 +108,7 @@
                 }
 
             } catch (error) {
-                console.error("Error en proceso de eliminación:", error);
-                const alertFn = window.showCustomError || Swal.fire;
-                alertFn("Error", "Hubo un problema al procesar la solicitud.", "error");
+                window.manejarErrorGlobal(error); // Usar manejador global
             }
         }
 
@@ -138,8 +135,7 @@
                     Swal.fire("Error", "La categoría no existe.", "error");
                 }
             } catch (error) {
-                console.error("Error moviendo a papelera:", error);
-                Swal.fire("Error", "Fallo al mover a papelera.", "error");
+                window.manejarErrorGlobal(error); // Usar manejador global
             }
         }
 

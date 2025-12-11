@@ -40,10 +40,13 @@ const photoTypes = {
 // 3. INICIALIZACIÓN DEL DOM
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    initYearSelect();
+    try{ initYearSelect();
     loadChecklists(true); // Carga inicial
     setupEventListeners();
-    applyChecklistCustomizations();
+    }catch (error){
+        console.error("Error crítico al iniciar dashboard:", error);
+        if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+    }
 });
 
 // Función para llenar el select de Años
@@ -240,8 +243,7 @@ async function loadChecklists(isReset = false) {
             container.innerHTML = `<p class="error" style="grid-column: 1/-1; text-align: center;">Error: ${error.message}</p>`;
         } else {
             if(btnLoadMore) {
-                btnLoadMore.innerHTML = "Error al cargar";
-                alert("Error: " + error.message);
+                window.manejarErrorGlobal(error);
             }
         }
     }
@@ -460,9 +462,3 @@ function formatDate(dateString) {
     return dateString;
 }
 
-function applyChecklistCustomizations() {
-    try {
-        if (typeof actualizarColoresPersonalizados === 'function') actualizarColoresPersonalizados();
-        if (typeof updateMenuStyles === 'function') setTimeout(() => updateMenuStyles(), 100);
-    } catch (e) { console.warn("Estilos no aplicados:", e); }
-}

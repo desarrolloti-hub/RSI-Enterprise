@@ -382,7 +382,7 @@
                 setupDefaultHeaderData();
                 updatePreview();
             } catch (error) {
-                console.error("Error en la carga inicial:", error);
+                window.manejarErrorGlobal(error);
                 showError('No se pudieron cargar los datos iniciales.');
             }
         }
@@ -429,7 +429,7 @@
                 updateTicketInfoUI();
                 
             } catch (error) {
-                console.error("Error al cargar datos del ticket:", error);
+                window.manejarErrorGlobal(error);
                 showError('No se pudieron cargar los datos del ticket.');
             }
         }
@@ -493,7 +493,7 @@
                 updateJefesOperativosSelect();
                 
             } catch (error) {
-                console.error("Error al cargar jefes operativos:", error);
+                window.manejarErrorGlobal(error);
                 // En caso de error, mantener el valor por defecto
             }
         }
@@ -558,7 +558,7 @@
         updateImagesUI();
         
     } catch (error) {
-        console.error("Error al cargar actividades:", error);
+        window.manejarErrorGlobal(error);
         showError('No se pudieron cargar las actividades.');
     }
 }
@@ -1438,7 +1438,7 @@
         await pdfManager.createAndSavePdfWithDescriptions(imageDescriptions);
         
     } catch (error) {
-        console.error('Error generando PDF final:', error);
+       window.manejarErrorGlobal(error);
         Swal.fire({
             title: 'Error', 
             text: 'Ocurrió un error al generar el PDF: ' + error.message, 
@@ -1523,6 +1523,7 @@
     <script src="pdf-generator.js"></script>
     
     <!-- Incluir la personalización de colores -->
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
     <script>

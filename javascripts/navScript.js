@@ -1,5 +1,21 @@
-// nav.js - Componente de navegación autónomo para usuario
+// navScript.js - Componente de navegación autónomo para usuario con cierre de sesión Firebase
 (function() {
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+        authDomain: "rsienterprise.firebaseapp.com",
+        projectId: "rsienterprise",
+        storageBucket: "rsienterprise.appspot.com",
+        messagingSenderId: "1063117165770",
+        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+    };
+
+    // Inicializar Firebase si no está inicializado
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+
     // Inyectar el HTML del navbar actualizado
     const navHTML = /*html*/ `
     <header class="nan_header">
@@ -21,12 +37,6 @@
                 <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>
                 <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>
                 <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
-                <li class="nan_language">
-                    <select id="languageSelect" class="language-select">
-                        <option value="es" data-flag="../css/img/flag-mexico.png">🇲🇽 Español</option>
-                        <option value="en" data-flag="../css/img/flag-usa.png">🇺🇸 English</option>
-                    </select>
-                </li>
             </ul>
         </nav>
     </header>
@@ -63,10 +73,6 @@
             languageSelect.addEventListener('change', function() {
                 const selectedLang = this.value;
                 console.log('Idioma seleccionado:', selectedLang);
-                
-                // Aquí puedes agregar lógica para cambiar el idioma
-                // Por ejemplo, redirigir a versiones en diferentes idiomas
-                // o usar un sistema de internacionalización
             });
         }
 
@@ -90,24 +96,28 @@
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Aquí va la lógica real de cierre de sesión
-                        console.log('Cerrando sesión...');
-                        
-                        // Mostrar mensaje de confirmación
-                        Swal.fire({
-                            title: '¡Sesión cerrada!',
-                            text: 'Tu sesión ha sido cerrada exitosamente.',
-                            icon: 'success',
-                            confirmButtonColor: '#4e54c8',
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            // Redirigir al inicio de sesión
-                            window.location.href = '/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html';
+                        // Cierre de sesión con Firebase
+                        auth.signOut().then(() => {
+                            Swal.fire({
+                                title: '¡Sesión cerrada!',
+                                text: 'Tu sesión ha sido cerrada exitosamente.',
+                                icon: 'success',
+                                confirmButtonColor: '#4e54c8',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Redirigir al inicio de sesión
+                                window.location.href = '/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html';
+                            });
+                        }).catch((error) => {
+                            console.error('Error al cerrar sesión:', error);
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Ocurrió un problema al cerrar sesión.',
+                                icon: 'error',
+                                timer: 2000
+                            });
                         });
-                        
-                        // Si usas Firebase o otro sistema de autenticación:
-                        // firebase.auth().signOut().then(() => { ... });
                     }
                 });
             });
@@ -149,7 +159,7 @@
         }
     });
 
-    // Estilos dinámicos actualizados
+    // Estilos dinámicos actualizados (se mantienen igual)
     const style = document.createElement('style');
     style.textContent = /* css */ `
     .nan_header {

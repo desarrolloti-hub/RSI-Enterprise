@@ -238,12 +238,14 @@ if (backgroundImage && backgroundImage.startsWith('data:image/')) {
             }
             
               
-            /* Estados de elementos */
-            .active,
-            .selected {
+            /* Estados de elementos */ 
             /* en caso de necesitar quitar el comentario  background-color: var(--secondary-color) !important; */
+            /* .active,
+            .selected {
+           
                 color: white !important;
-            }
+            } */ 
+            
             
             /* Mensajes y alertas */
             .alert-info,
