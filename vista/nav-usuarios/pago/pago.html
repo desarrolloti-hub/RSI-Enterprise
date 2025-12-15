@@ -227,8 +227,8 @@
 
         // Configuración de OpenPay
         OpenPay.setId('mfxzk8dtsjsaqscngyxp');
-        OpenPay.setApiKey('pk_92a7dde47c53491a828e3edba6e2704c');
-        OpenPay.setSandboxMode(true);
+        OpenPay.setApiKey('pk_16fd30f8bb64476db6568ba41139afd7');
+        OpenPay.setSandboxMode(false);
 
         // Variable para almacenar datos del usuario
         let userData = {};
@@ -545,7 +545,7 @@
                     "description": `Compra en RSI Enterprise - ${branch}`,
                     "order_id": orderId,
                     "send_email": true,
-                    "redirect_url": "https://rsienterprise.com/vista/nav-usuarios/operacion-exitosa/operacion-exitosa.html",
+                    "redirect_url": "https://rsienterprise.web.app/vista/nav-usuarios/operacion-exitosa/operacion-exitosa.html",
                     "customer": {
                         "name": firstName,
                         "last_name": lastName,

@@ -43,20 +43,21 @@
             </div>
             <!-- Botones -->
             <div class="button-group">
-                <a href="../inicio-usuario/inicio-usuario.html" class="btn">
+                <!-- Mantengo como botones para consistencia con tu ejemplo -->
+                <button id="btn-continue" class="btn">
                     <i class="fas fa-home"></i> Volver al inicio
-                </a>
-                <a href="../historial-compras/historial-compras.html" class="btn btn-outline">
+                </button>
+                <button id="btn-historial" class="btn btn-outline">
                     <i class="fas fa-history"></i> Historial de compras
-                </a>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts (mantener toda la funcionalidad) -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Configuración Firebase
+        // Configuración Firebase - SOLO si no está ya inicializado
         const firebaseConfig = {
             apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
             authDomain: "rsienterprise.firebaseapp.com",
@@ -66,10 +67,28 @@
             appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
         };
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Inicializar Firebase SOLO si no está inicializado
+        let app, auth, db;
+        
+        try {
+            // Intentar obtener la app existente
+            app = firebase.app();
+            console.log('✅ Firebase ya estaba inicializado, usando instancia existente');
+        } catch (error) {
+            // Si no existe, inicializarla
+            console.log('🔄 Inicializando Firebase...');
+            app = firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Obtener auth y db de la app (ya sea nueva o existente)
+        auth = firebase.auth();
+        db = firebase.firestore();
+        
+        console.log('🔥 Firebase listo:', {
+            appName: app.name,
+            auth: auth ? '✅' : '❌',
+            db: db ? '✅' : '❌'
+        });
 
         // Formatear fecha
         function formatDate(timestamp) {
@@ -93,9 +112,16 @@
             const orderId = urlParams.get('order_id');
             const status = urlParams.get('status');
             
-            if (!orderId || !status) return null;
+            console.log('🔍 Parámetros URL:', { openpayId, orderId, status });
+            
+            if (!orderId || !status) {
+                console.log('⚠️ No hay order_id o status en URL, devolviendo null');
+                return null;
+            }
 
             try {
+                console.log('🔄 Actualizando orden en Firestore con datos de OpenPay:', orderId);
+                
                 const updateData = {
                     payment_status: status.toLowerCase(),
                     openpay_id: openpayId,
@@ -112,95 +138,151 @@
                 }
 
                 await db.collection('orders').doc(orderId).update(updateData);
+                console.log('✅ Orden actualizada exitosamente');
+                
                 return orderId;
             } catch (error) {
-                console.error('Error al actualizar con datos de OpenPay:', error);
+                console.error('❌ Error al actualizar con datos de OpenPay:', error);
                 return orderId;
             }
         }
 
-        // Mostrar detalles principales
+        // Mostrar detalles principales - CON MÁS DEBUG
         async function displayOrderDetails() {
+            console.log('=== 🚀 INICIANDO displayOrderDetails ===');
+            
+            // Mostrar localStorage actual
+            console.log('📋 Estado del localStorage:');
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                console.log(`  ${key}:`, localStorage.getItem(key));
+            }
+            
             try {
+                // Procesar primero la respuesta de OpenPay si existe
                 const updatedOrderId = await processOpenPayResponse();
+                console.log('🆔 updatedOrderId:', updatedOrderId);
+                
+                // Obtener orderId de múltiples fuentes
                 const urlParams = new URLSearchParams(window.location.search);
                 let orderId = updatedOrderId || urlParams.get('order_id') || localStorage.getItem('currentOrderId');
                 
+                console.log('🔍 Buscando orderId en:', {
+                    updatedOrderId,
+                    urlOrderId: urlParams.get('order_id'),
+                    localStorageCurrentOrderId: localStorage.getItem('currentOrderId'),
+                    result: orderId
+                });
+                
                 if (!orderId) {
-                    const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+                    const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || 'null');
+                    console.log('🔍 Buscando en currentOrder:', currentOrder);
                     orderId = currentOrder?.orderId;
+                    console.log('🆔 orderId de currentOrder:', orderId);
                 }
                 
-                if (!orderId) throw new Error('No se encontró ID de pedido');
+                if (!orderId) {
+                    console.error('❌ No se encontró ID de pedido en ninguna fuente');
+                    throw new Error('No se encontró ID de pedido');
+                }
                 
+                console.log('✅ ID de pedido encontrado:', orderId);
                 document.getElementById('order-id-display').textContent = `ID de tu pedido: ${orderId}`;
                 
+                // Obtener detalles de Firestore
+                console.log('📋 Obteniendo detalles de Firestore para:', orderId);
                 const orderDoc = await db.collection('orders').doc(orderId).get();
                 
                 if (!orderDoc.exists) {
+                    console.log('⚠️ Orden no encontrada en Firestore, mostrando datos de localStorage');
                     return displayLocalStorageData(orderId);
                 }
                 
                 const orderData = orderDoc.data();
+                console.log('✅ Datos obtenidos de Firestore:', orderData);
+                
                 renderOrderDetails(orderData);
                 
+                // Registrar visualización
                 if (auth.currentUser) {
+                    console.log('👤 Usuario autenticado, registrando visualización');
                     await db.collection('orders').doc(orderId).update({
                         confirmation_viewed: true,
                         confirmation_viewed_at: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                } else {
+                    console.log('👤 Usuario no autenticado');
                 }
                 
+                // Limpiar localStorage solo después de confirmar que todo está bien
                 cleanLocalStorage();
                 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('❌ Error en displayOrderDetails:', error);
                 displayLocalStorageData();
             }
         }
 
         // Limpiar localStorage de forma segura
         function cleanLocalStorage() {
+            console.log('=== 🧹 INICIANDO cleanLocalStorage ===');
+            
             try {
-                const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+                console.log('📋 Estado ANTES de limpiar:');
+                console.log('- cart:', localStorage.getItem('cart') ? 'EXISTE' : 'NO EXISTE');
+                console.log('- cartTotal:', localStorage.getItem('cartTotal'));
+                console.log('- currentOrder:', localStorage.getItem('currentOrder') ? 'EXISTE' : 'NO EXISTE');
+                console.log('- currentOrderId:', localStorage.getItem('currentOrderId'));
+                
+                // Guardar el orderId por si se necesita para futuras referencias
+                const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || 'null');
                 if (currentOrder?.orderId) {
                     localStorage.setItem('lastOrderId', currentOrder.orderId);
+                    console.log('💾 Guardado lastOrderId:', currentOrder.orderId);
                 }
                 
+                // Eliminar solo los datos que ya no se necesitan
                 localStorage.removeItem('cart');
                 localStorage.removeItem('cartTotal');
                 localStorage.removeItem('currentOrder');
+                
+                console.log('📋 Estado DESPUÉS de limpiar:');
+                console.log('- cart:', localStorage.getItem('cart') ? 'NO SE LIMPIÓ' : '✅ LIMPIADO');
+                console.log('- cartTotal:', localStorage.getItem('cartTotal') ? 'NO SE LIMPIÓ' : '✅ LIMPIADO');
+                console.log('- currentOrder:', localStorage.getItem('currentOrder') ? 'NO SE LIMPIÓ' : '✅ LIMPIADO');
+                console.log('- currentOrderId:', localStorage.getItem('currentOrderId'));
+                console.log('- lastOrderId:', localStorage.getItem('lastOrderId'));
+                
             } catch (e) {
-                console.error('Error limpiando localStorage:', e);
+                console.error('❌ Error limpiando localStorage:', e);
             }
         }
 
-        // Renderizar detalles de Firestore (actualizado con nuevos estilos)
+        // Renderizar detalles de Firestore
         function renderOrderDetails(orderData) {
+            console.log('🎨 Renderizando detalles...', orderData);
             const orderDetails = document.getElementById('order-details');
             
             let detailsHTML = `
                 <div class="detail-item">
                     <span class="detail-label">Estado:</span>
-                    <span style="color: ${orderData.status === 'completed' ? 'var(--success)' : 'var(--primary)'}; font-weight: 600">
+                    <span style="color: ${orderData.status === 'completed' ? 'var(--success)' : 'var(--primary)'}">
                         ${(orderData.status || 'pendiente').toUpperCase()}
                     </span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Estado de pago:</span>
-                    <span style="color: ${orderData.payment_status === 'completed' ? 'var(--success)' : '#FF9800'}; font-weight: 600">
+                    <span style="color: ${orderData.payment_status === 'completed' ? 'var(--success)' : '#FF9800'}">
                         ${(orderData.payment_status || 'pendiente').toUpperCase()}
                     </span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Fecha:</span>
-                    <span>${formatDate(orderData.created_at)}</span>
+                    <span>${formatDate(orderData.created_at || new Date())}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Total:</span>
-                    <span style="color: var(--primary); font-weight: 600">
-                        $${orderData.amount?.toFixed(2) || '0.00'} MXN
-                    </span>
+                    <span>$${(orderData.amount || 0).toFixed(2)} MXN</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Sucursal:</span>
@@ -210,21 +292,35 @@
             
             // Sección de productos
             if (orderData.items && orderData.items.length > 0) {
+                console.log(`🛍️ Encontrados ${orderData.items.length} productos`);
                 detailsHTML += `
                     <div class="products-section">
-                        <h4>Productos</h4>
+                        <h4>Productos (${orderData.items.length})</h4>
                 `;
                 
-                orderData.items.forEach(item => {
+                orderData.items.forEach((item, index) => {
+                    const quantity = item.quantity || 1;
+                    const price = item.price || 0;
+                    const total = price * quantity;
+                    const productName = item.name || `Producto ${index + 1}`;
+                    
                     detailsHTML += `
                         <div class="product-item">
-                            <span class="product-name">${item.quantity || 1} × ${item.name}</span>
-                            <span class="product-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                            <span class="product-name">${quantity} × ${productName}</span>
+                            <span class="product-price">$${total.toFixed(2)}</span>
                         </div>
                     `;
                 });
                 
                 detailsHTML += `</div>`;
+            } else {
+                console.log('⚠️ No se encontraron productos en la orden');
+                detailsHTML += `
+                    <div class="products-section">
+                        <h4>Productos</h4>
+                        <p style="color: #666; text-align: center;">No se encontraron productos en esta orden</p>
+                    </div>
+                `;
             }
             
             // ID de OpenPay si existe
@@ -232,42 +328,47 @@
                 detailsHTML += `
                     <div class="detail-item" style="margin-top: 20px;">
                         <span class="detail-label">ID de transacción:</span>
-                        <span style="font-family: monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">
-                            ${orderData.openpay_id}
-                        </span>
+                        <span>${orderData.openpay_id}</span>
                     </div>
                 `;
             }
             
             orderDetails.innerHTML = detailsHTML;
+            console.log('✅ Detalles renderizados correctamente');
         }
 
         // Mostrar datos de localStorage
         function displayLocalStorageData(orderId = null) {
-            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            console.log('🔄 Mostrando datos de localStorage como respaldo...');
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || 'null');
             const orderDetails = document.getElementById('order-details');
             
-            if (!currentOrder) {
-                orderDetails.innerHTML = `<p style="text-align: center; color: #666; padding: 20px;">No se encontraron detalles del pedido.</p>`;
-                return;
-            }
+            console.log('📋 currentOrder:', currentOrder);
             
             if (orderId) {
                 document.getElementById('order-id-display').textContent = `ID de tu pedido: ${orderId}`;
+            } else if (currentOrder?.orderId) {
+                document.getElementById('order-id-display').textContent = `ID de tu pedido: ${currentOrder.orderId}`;
             }
             
-            orderDetails.innerHTML = `
+            if (!currentOrder) {
+                orderDetails.innerHTML = `
+                    <p style="text-align: center; color: #666; padding: 20px;">
+                        No se encontraron detalles del pedido. Por favor, revisa tu historial de compras.
+                    </p>
+                `;
+                cleanLocalStorage();
+                return;
+            }
+            
+            let detailsHTML = `
                 <div class="detail-item">
                     <span class="detail-label">Estado:</span>
-                    <span style="color: var(--primary); font-weight: 600">
-                        ${currentOrder.status?.toUpperCase() || 'PENDIENTE'}
-                    </span>
+                    <span>${currentOrder.status?.toUpperCase() || 'PENDIENTE'}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Total:</span>
-                    <span style="color: var(--primary); font-weight: 600">
-                        $${currentOrder.amount?.toFixed(2) || '0.00'} MXN
-                    </span>
+                    <span>$${(currentOrder.amount || 0).toFixed(2)} MXN</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Sucursal:</span>
@@ -280,50 +381,69 @@
                     </span>
                 </div>
             `;
+            
+            // Mostrar productos si existen
+            if (currentOrder.items && currentOrder.items.length > 0) {
+                console.log(`🛍️ Encontrados ${currentOrder.items.length} productos en currentOrder`);
+                detailsHTML += `
+                    <div class="products-section">
+                        <h4>Productos (${currentOrder.items.length})</h4>
+                `;
+                
+                currentOrder.items.forEach((item, index) => {
+                    const quantity = item.quantity || 1;
+                    const price = item.price || 0;
+                    const total = price * quantity;
+                    const productName = item.name || `Producto ${index + 1}`;
+                    
+                    detailsHTML += `
+                        <div class="product-item">
+                            <span class="product-name">${quantity} × ${productName}</span>
+                            <span class="product-price">$${total.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+                
+                detailsHTML += `</div>`;
+            }
+            
+            orderDetails.innerHTML = detailsHTML;
+            
+            cleanLocalStorage();
         }
 
         // Inicialización
-                // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM cargado - Configurando botones...');
+            console.log('=== 📄 DOM CARGADO ===');
             
-            // Obtener referencias a los botones
+            // Configurar botones
             const btnContinue = document.getElementById('btn-continue');
             const btnHistorial = document.getElementById('btn-historial');
             
-            if (!btnContinue) {
-                console.error('ERROR: No se encontró el botón btn-continue');
-                return;
+            if (btnContinue) {
+                btnContinue.addEventListener('click', () => {
+                    console.log('🏠 Redirigiendo a inicio');
+                    window.location.href = '../inicio-usuario/inicio-usuario.html';
+                });
+            } else {
+                console.error('❌ No se encontró btn-continue');
             }
             
-            if (!btnHistorial) {
-                console.error('ERROR: No se encontró el botón btn-historial');
-                return;
+            if (btnHistorial) {
+                btnHistorial.addEventListener('click', () => {
+                    console.log('📜 Redirigiendo a historial');
+                    window.location.href = '../historial-compras/historial-compras.html';
+                });
+            } else {
+                console.error('❌ No se encontró btn-historial');
             }
-            
-            console.log('Botones encontrados:', btnContinue, btnHistorial);
-            
-            // Configurar botón "Volver al inicio"
-            btnContinue.addEventListener('click', () => {
-                console.log('Botón "Volver al inicio" clickeado');
-                console.log('Redirigiendo a: ../inicio-usuario/inicio-usuario.html');
-                window.location.href = '../inicio-usuario/inicio-usuario.html';
-            });
-            
-            // Configurar botón "Historial de compras"
-            btnHistorial.addEventListener('click', () => {
-                console.log('Botón "Historial de compras" clickeado');
-                console.log('Redirigiendo a: ../historial-compras/historial-compras.html');
-                window.location.href = '../historial-compras/historial-compras.html';
-            });
-            
-            console.log('Botones configurados correctamente');
             
             // Mostrar detalles de la orden
+            console.log('🔄 Llamando a displayOrderDetails...');
             displayOrderDetails();
         });
     </script>
+    <!-- NO cargar carritoUserLogin.js aquí -->
     <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
-    <script src="/javascripts/user/carritoUserLogin.js"></script>
 </body>
 </html>
