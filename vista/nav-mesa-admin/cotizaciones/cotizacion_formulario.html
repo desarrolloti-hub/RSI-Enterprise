@@ -23,6 +23,9 @@
             </div>
             <div class="modal-body">
                 <form id="cotizacionForm" class="form-section">
+                    <!-- Campo oculto para ID del cliente -->
+                    <input type="hidden" id="clienteId" name="clienteId">
+                    
                     <div class="section-card empresa">
                         <h3>🏢 Datos de la Empresa</h3>
                         <div class="form-grid">
@@ -280,7 +283,7 @@
         const creditOptions = document.getElementById('creditOptions');
         const diasCredito = document.getElementById('diasCredito');
         const loadingSpinner = document.getElementById('loadingSpinner');
-
+        const clienteId = document.getElementById('clienteId');
 
         // === UTILIDADES ===
         function mostrarLoading(mostrar) { 
@@ -356,6 +359,46 @@
             });
         }
 
+        // === FUNCIÓN PARA GUARDAR CLIENTE NUEVO ===
+        async function verificarYGuardarCliente(nombre, rfc, direccion, telefono) {
+            try {
+                // Verificar por RFC si existe
+                let q;
+                if (rfc && rfc.trim() !== '') {
+                    q = query(collection(db, 'clientes'), where("RFC", "==", rfc.trim()));
+                } else {
+                    // Si no hay RFC, verificar por nombre
+                    q = query(collection(db, 'clientes'), where("Nombre", "==", nombre.trim()));
+                }
+                
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    // Cliente no existe, crearlo
+                    const nuevoCliente = {
+                        Nombre: nombre.trim(),
+                        RFC: rfc || '',
+                        DireccionCompleta: direccion || '',
+                        Telefono: telefono || '',
+                        Movil: '',
+                        Correo: '',
+                        'Nombre Comercial': nombre.trim(),
+                        fechaRegistro: new Date().toISOString()
+                    };
+                    
+                    const docRef = await addDoc(collection(db, 'clientes'), nuevoCliente);
+                    return { id: docRef.id, nuevo: true };
+                } else {
+                    // Cliente ya existe
+                    const clienteExistente = querySnapshot.docs[0];
+                    return { id: clienteExistente.id, nuevo: false };
+                }
+            } catch (error) {
+                console.error('Error al verificar/guardar cliente:', error);
+                return null;
+            }
+        }
+
         // --- FUNCIONES DE DATOS Y FIREBASE ---
         async function cargarInformacionUsuario(email) {
             try {
@@ -384,26 +427,31 @@
             }
         }
 
+        // --- FUNCIÓN PARA CARGAR CLIENTES ---
         async function cargarClientes() { 
             try {
                 const querySnapshot = await getDocs(collection(db, 'clientes'));
                 clientes = [];
                 querySnapshot.forEach((doc) => {
                     const clienteData = doc.data();
-                    const limpiarValor = (valor) => (!valor || ['N/A', 'undefined', 'null'].includes(valor)) ? '' : String(valor).trim();
-                    const direccionPartes = [limpiarValor(clienteData.Calle), limpiarValor(clienteData.Colonia), limpiarValor(clienteData['Codigo Postal'])].filter(Boolean);
+                    // Función para limpiar y validar valores, aceptando el nuevo campo DireccionCompleta
+                    const limpiarValor = (valor) => (!valor || ['N/A', 'undefined', 'null'].includes(String(valor).trim().toLowerCase())) ? '' : String(valor).trim();
+                    
+                    const direccionCompleta = limpiarValor(clienteData.DireccionCompleta);
+                    
                     const telefonoPartes = [limpiarValor(clienteData.Telefono), limpiarValor(clienteData.Movil)].filter(Boolean);
+                    
                     clientes.push({
                         id: doc.id,
                         nombre: limpiarValor(clienteData.Nombre) || 'Cliente sin nombre',
-                        nombreComercial: limpiarValor(clienteData['Nombre Comercial']),
+                        nombreComercial: limpiarValor(clienteData['Nombre Comercial']) || limpiarValor(clienteData.Nombre),
                         rfc: limpiarValor(clienteData.RFC),
-                        contacto1: direccionPartes.length > 0 ? direccionPartes.join(', ') : 'Dirección no disponible',
+                        contacto1: direccionCompleta || 'Dirección no disponible', 
                         telefono1: telefonoPartes.length > 0 ? telefonoPartes.join(' / ') : 'Teléfono no disponible'
                     });
                 });
 
-                // Clientes específicos
+                // Clientes específicos (Se mantienen para asegurar la funcionalidad previa)
                 const clientesEspecificos = [
                     { nombre: 'LATAMGYM S.A.P.I. DE C.V.', rfc: 'LAT110824BJ4', contacto1: 'AV PASEO DE LA REFORMA 296 PISO 16 CUAUHTÉMOC, C.D.MX. CP: 06600' },
                     { nombre: 'TIENDAS CHEDRAUI S.A.B. DE C.V.', rfc: 'TCH850701RM1', contacto1: 'AV. CONSTITUYENTES 1150 MIGUEL HIDALGO, C.D.MX. CP: 11950' },
@@ -680,6 +728,14 @@
             clienteRFC.value = cliente.rfc;
             clienteDireccion.value = cliente.contacto1;
             clienteTelefono.value = cliente.telefono1;
+            
+            // Si el cliente tiene ID, guardarlo
+            if (cliente.id && !cliente.id.startsWith('temp-')) {
+                clienteId.value = cliente.id;
+            } else {
+                clienteId.value = '';
+            }
+            
             [clienteNombre, clienteRFC, clienteDireccion, clienteTelefono].forEach(field => {
                 field.readOnly = true;
                 field.style.backgroundColor = '#f0f9ff'; 
@@ -690,6 +746,8 @@
         function activarEntradaManual() {
             isManualEntry = true;
             clienteSearch.value = '';
+            clienteId.value = ''; // Limpiar ID del cliente
+            
             [clienteNombre, clienteRFC, clienteDireccion, clienteTelefono].forEach(field => {
                 field.value = '';
                 field.readOnly = false;
@@ -1043,6 +1101,9 @@
                     clienteDireccion.value = cotizacion.clienteDireccion || '';
                     clienteTelefono.value = cotizacion.clienteTelefono || '';
                     clienteSearch.value = cotizacion.clienteNombre || '';
+                    
+                    // Cargar ID del cliente si existe
+                    clienteId.value = cotizacion.clienteId || '';
 
                     // Tipo de Pago y Crédito
                     tipoCredito.value = cotizacion.tipoCredito || '';
@@ -1132,6 +1193,30 @@
                 cotizacionData.descuentoMonto = descuentoMonto;
                 cotizacionData.impuestoMonto = impuestoMonto;
                 cotizacionData.totalFinal = subtotalConDescuento + impuestoMonto;
+
+                // === GUARDAR CLIENTE SI NO EXISTE ===
+                if (isManualEntry && cotizacionData.clienteNombre && cotizacionData.clienteNombre.trim()) {
+                    // Verificar y guardar el cliente si no existe
+                    const resultadoCliente = await verificarYGuardarCliente(
+                        cotizacionData.clienteNombre,
+                        cotizacionData.clienteRFC,
+                        cotizacionData.clienteDireccion,
+                        cotizacionData.clienteTelefono
+                    );
+                    
+                    if (resultadoCliente) {
+                        if (resultadoCliente.nuevo) {
+                            mostrarAlerta('✅ Cliente guardado automáticamente en la base de datos', 'success');
+                        }
+                        // Guardar el ID del cliente en los datos de la cotización
+                        cotizacionData.clienteId = resultadoCliente.id;
+                        // Actualizar la lista local de clientes
+                        await cargarClientes();
+                    }
+                } else if (!isManualEntry && clienteId.value) {
+                    // Si el cliente fue seleccionado de la lista, guardar su ID
+                    cotizacionData.clienteId = clienteId.value;
+                }
                 
                 if (isEditing && editingId) { // Modo Edición
                     const cotizacionOriginal = (await getDoc(doc(db, 'cotizacionPdf', editingId))).data();
@@ -1176,7 +1261,6 @@
                 mostrarLoading(false);
             }
         }
-
 
         // === EVENT LISTENERS PRINCIPALES DEL FORMULARIO ===
         document.addEventListener('DOMContentLoaded', inicializarFormulario);
