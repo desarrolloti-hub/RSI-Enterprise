@@ -496,11 +496,11 @@
 
             console.log("✅ Notificación enviada al backend");
         } catch (error) {
-<<<<<<< HEAD
+
             console.error("❌ Error enviando notificación push real:", error);
-=======
+
             window.manejarErrorGlobal(error);
->>>>>>> a92e7d061a7c19f3186211b8677828b04eb962f5
+
         }
     }
 
