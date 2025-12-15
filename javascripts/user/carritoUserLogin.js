@@ -619,7 +619,7 @@
                         updateCartCount();
                         updateCartPanel();
                         Swal.fire(
-                            '¡Carrito vaciado!',
+                            '¡Carrito Vacio!',
                             'Tu carrito ha sido vaciado.',
                             'success'
                         );
@@ -653,7 +653,7 @@
     }
 
     function redirectToPay() {
-        window.location.href = "/index.html";
+        window.location.href = "../pago/pago.html";
     }
 
     // Función para agregar productos al carrito (expuesta globalmente)

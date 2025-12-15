@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
  // Agregar el event listener para el botón de editar
             document.getElementById('btn-edit-info').addEventListener('click', function() {
-                window.location.href = 'perfil.html';
+                window.location.href = '../perfil/perfil.html';
             });
 // Cargar datos del usuario
 async function loadUserData(userId) {
@@ -499,7 +499,7 @@ async function processPayment() {
             "description": `Compra en RSI Enterprise - ${branch}`,
             "order_id": orderId,
             "send_email": true,
-            "redirect_url": "https://rsienterprise.com/vista/nav-usuarios/operacion-exitosa.html",
+            "redirect_url": "https://rsienterprise.com/vista/nav-usuarios/operacion-exitosa/operacion-exitosa.html",
             "customer": {
                 "name": firstName,
                 "last_name": lastName,

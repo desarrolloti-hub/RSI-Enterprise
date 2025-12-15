@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte - RSI Enterprise</title>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../inicio-usuario/inicio-usuario.css">
+    <link rel="stylesheet" href="soporte.css">
+</head>
+<body class="nan_reset">
+    <br><br><br>
+    
+    <!-- Contenido principal -->
+    <div class="support-main-container">
+        <!-- Encabezado -->
+        <div class="support-header-container">
+            <h1 class="support-header-title">
+                <i class="fas fa-headset"></i>
+                <span>Soporte Técnico</span>
+            </h1>
+            <p class="support-subtitle">
+                ¿Necesitas ayuda? Nuestro equipo está aquí para asistirte. Contacta al departamento adecuado o envíanos un mensaje directo.
+            </p>
+        </div>
+
+        <!-- Grid de contactos -->
+        <div class="contacts-grid">
+            <!-- Ventas -->
+            <div class="contact-card contact-card-ventas">
+                <div class="contact-header contact-ventas">
+                    <div class="contact-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3 class="contact-title">Ventas</h3>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <i class="fas fa-user"></i>
+                        <span>Ismael Rodriguez Murillo</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-envelope"></i>
+                        <span>ventas@rafhasoluciones.com</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>555 954 998</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soporte Técnico -->
+            <div class="contact-card contact-card-soporte">
+                <div class="contact-header contact-soporte">
+                    <div class="contact-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3 class="contact-title">Soporte Técnico</h3>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <i class="fas fa-user"></i>
+                        <span>Equipo de Soporte RSI</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-envelope"></i>
+                        <span>soporte@rafhasoluciones.com</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>555 123 4567</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desarrollo -->
+            <div class="contact-card contact-card-desarrollo">
+                <div class="contact-header contact-desarrollo">
+                    <div class="contact-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <h3 class="contact-title">Desarrollo</h3>
+                </div>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <i class="fas fa-user"></i>
+                        <span>Departamento de Desarrollo</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-envelope"></i>
+                        <span>desarrollo@rafhasoluciones.com</span>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fas fa-phone"></i>
+                        <span>555 765 4321</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de contacto -->
+        <div class="contact-form-container">
+            <h2 class="form-title">
+                <i class="fas fa-paper-plane"></i>
+                <span>Formulario de Contacto</span>
+            </h2>
+            
+            <form id="supportForm" class="support-form">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-user"></i>
+                        <span>Nombre completo:</span>
+                    </label>
+                    <input type="text" id="name" class="form-input" placeholder="Ingresa tu nombre completo" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-envelope"></i>
+                        <span>Correo electrónico:</span>
+                    </label>
+                    <input type="email" id="email" class="form-input" placeholder="Ingresa tu correo electrónico" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-phone"></i>
+                        <span>Número telefónico:</span>
+                    </label>
+                    <input type="tel" id="phone" class="form-input" placeholder="Ingresa tu número telefónico" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Describe tu problema o consulta:</span>
+                    </label>
+                    <textarea id="message" class="form-textarea" placeholder="Describe detalladamente tu problema o consulta..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Enviar solicitud</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Información importante -->
+        <div class="info-container">
+            <div class="info-header">
+                <i class="fas fa-info-circle"></i>
+                <h3 class="info-title">Información importante</h3>
+            </div>
+            <div class="info-content">
+                <p>Nuestro equipo de soporte revisará tu solicitud y te contactará en un plazo máximo de <strong>24 horas hábiles</strong>.</p>
+                <p>Para emergencias técnicas, por favor llama a nuestro número directo:</p>
+                <p><strong><i class="fas fa-phone"></i> 55 1234 5678</strong></p>
+                <p>Horario de atención: Lunes a Viernes de 9:00 AM a 6:00 PM</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Script principal -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Configuración de Firebase (usando la misma que inicio-usuario)
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+            };
+
+            // Inicializar Firebase si no está inicializado
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // Bandera para controlar el cierre de sesión
+            let isLoggingOut = false;
+
+            // Evitar que el usuario retroceda con las flechas del navegador
+            window.history.pushState(null, document.title, window.location.href);
+            window.addEventListener('popstate', function (event) {
+                window.history.pushState(null, document.title, window.location.href);
+            });
+
+            // Verificación de autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (isLoggingOut) {
+                    return;
+                }
+
+                if (!user) {
+                    Swal.fire({
+                        title: "Acceso denegado",
+                        text: "Para continuar aquí, debes iniciar sesión.",
+                        icon: "warning",
+                        timer: 3000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 3000);
+                    return;
+                }
+
+                try {
+                    const userRef = db.collection("usuarios").doc(user.uid);
+                    const doc = await userRef.get();
+
+                    if (!doc.exists) {
+                        Swal.fire({
+                            title: "Usuario no encontrado",
+                            text: "No se encontró tu información en la base de datos.",
+                            icon: "error",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                        return;
+                    }
+
+                    const userData = doc.data();
+                    if (userData.rol !== "user") {
+                        Swal.fire({
+                            title: "Acceso denegado",
+                            text: "No tienes permisos para acceder a esta página.",
+                            icon: "warning",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                    } else {
+                        // Cargar datos del usuario en el formulario
+                        document.getElementById("name").value = userData.nombreCompleto || user.displayName || "Usuario RSI";
+                        document.getElementById("email").value = user.email || "";
+                        
+                        // Obtener número de teléfono si está disponible
+                        if (user.phoneNumber) {
+                            document.getElementById("phone").value = user.phoneNumber;
+                        } else if (userData.telefono) {
+                            document.getElementById("phone").value = userData.telefono;
+                        } else {
+                            document.getElementById("phone").placeholder = "Actualiza tu número en tu perfil";
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error al verificar usuario:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "Ocurrió un problema al verificar el usuario.",
+                        icon: "error",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 2000);
+                }
+            });
+
+            // Manejar envío del formulario de soporte
+            document.getElementById('supportForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Obtener los valores del formulario
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const message = document.getElementById('message').value;
+                
+                // Validar que el mensaje no esté vacío
+                if (!message.trim()) {
+                    Swal.fire({
+                        title: "Campo requerido",
+                        text: "Por favor describe tu problema o consulta.",
+                        icon: "warning",
+                        confirmButtonColor: '#1c1948'
+                    });
+                    return;
+                }
+
+                try {
+                    // Guardar la solicitud de soporte en Firestore
+                    const user = auth.currentUser;
+                    if (user) {
+                        await db.collection("solicitudes_soporte").add({
+                            userId: user.uid,
+                            nombre: name,
+                            email: email,
+                            telefono: phone || "No proporcionado",
+                            mensaje: message,
+                            fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                            estado: "pendiente"
+                        });
+
+                        // Mostrar confirmación con SweetAlert2
+                        Swal.fire({
+                            title: '¡Solicitud enviada!',
+                            html: `
+                                <p>Hemos recibido tu solicitud de soporte correctamente.</p>
+                                <div style="text-align: left; margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                                    <p><strong>Nombre:</strong> ${name}</p>
+                                    <p><strong>Correo:</strong> ${email}</p>
+                                    <p><strong>Teléfono:</strong> ${phone || 'No proporcionado'}</p>
+                                    <p><strong>Consulta:</strong> ${message}</p>
+                                </div>
+                            `,
+                            icon: 'success',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#1c1948'
+                        }).then(() => {
+                            // Limpiar el campo de mensaje después de enviar
+                            document.getElementById('message').value = '';
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error al guardar solicitud de soporte:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se pudo enviar tu solicitud. Por favor intenta nuevamente.",
+                        icon: "error",
+                        confirmButtonColor: '#1c1948'
+                    });
+                }
+            });
+        });
+    </script>
+
+    <!-- Scripts modulares (igual que inicio-usuario) -->
+    <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/navScript.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>

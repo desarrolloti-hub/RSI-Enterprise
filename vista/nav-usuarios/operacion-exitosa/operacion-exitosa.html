@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compra Exitosa | RSI Enterprise</title>
+    <link rel="stylesheet" href="operacion-exitosa.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body class="nan_reset">
+
+    <script src="/javascripts/navScript.js"></script>
+    <br><br>
+    <!-- Contenido principal rediseñado -->
+    <div class="main-content">
+        <div class="success-container">
+            <!-- Icono de éxito -->
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+
+            <!-- Mensaje principal -->
+            <h1>¡Operación Completada Exitosamente!</h1>
+            <p>Gracias por tu compra. Hemos recibido tu operación y estamos procesando tu pedido.</p>
+            <p>Recibirás un correo electrónico con los detalles de tu compra.</p>
+
+            <!-- ID del pedido -->
+            <div class="order-id" id="order-id-display">
+                ID de tu pedido: Cargando...
+            </div>
+
+            <!-- Detalles de la compra -->
+            <div class="order-details" id="order-details">
+                <h3>Detalles de tu compra</h3>
+                <!-- Los detalles se cargarán aquí dinámicamente -->
+            </div>
+            <!-- Botones -->
+            <div class="button-group">
+                <a href="../inicio-usuario/inicio-usuario.html" class="btn">
+                    <i class="fas fa-home"></i> Volver al inicio
+                </a>
+                <a href="../historial-compras/historial-compras.html" class="btn btn-outline">
+                    <i class="fas fa-history"></i> Historial de compras
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (mantener toda la funcionalidad) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Formatear fecha
+        function formatDate(timestamp) {
+            try {
+                return timestamp.toDate().toLocaleDateString('es-MX', {
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return new Date().toLocaleDateString('es-MX');
+            }
+        }
+
+        // Procesar parámetros de OpenPay
+        async function processOpenPayResponse() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const openpayId = urlParams.get('id');
+            const orderId = urlParams.get('order_id');
+            const status = urlParams.get('status');
+            
+            if (!orderId || !status) return null;
+
+            try {
+                const updateData = {
+                    payment_status: status.toLowerCase(),
+                    openpay_id: openpayId,
+                    updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    payment_details: {
+                        status: status,
+                        transaction_id: openpayId,
+                        processed_at: new Date().toISOString()
+                    }
+                };
+
+                if (status.toLowerCase() === 'completed') {
+                    updateData.status = 'completed';
+                }
+
+                await db.collection('orders').doc(orderId).update(updateData);
+                return orderId;
+            } catch (error) {
+                console.error('Error al actualizar con datos de OpenPay:', error);
+                return orderId;
+            }
+        }
+
+        // Mostrar detalles principales
+        async function displayOrderDetails() {
+            try {
+                const updatedOrderId = await processOpenPayResponse();
+                const urlParams = new URLSearchParams(window.location.search);
+                let orderId = updatedOrderId || urlParams.get('order_id') || localStorage.getItem('currentOrderId');
+                
+                if (!orderId) {
+                    const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+                    orderId = currentOrder?.orderId;
+                }
+                
+                if (!orderId) throw new Error('No se encontró ID de pedido');
+                
+                document.getElementById('order-id-display').textContent = `ID de tu pedido: ${orderId}`;
+                
+                const orderDoc = await db.collection('orders').doc(orderId).get();
+                
+                if (!orderDoc.exists) {
+                    return displayLocalStorageData(orderId);
+                }
+                
+                const orderData = orderDoc.data();
+                renderOrderDetails(orderData);
+                
+                if (auth.currentUser) {
+                    await db.collection('orders').doc(orderId).update({
+                        confirmation_viewed: true,
+                        confirmation_viewed_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                cleanLocalStorage();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                displayLocalStorageData();
+            }
+        }
+
+        // Limpiar localStorage de forma segura
+        function cleanLocalStorage() {
+            try {
+                const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+                if (currentOrder?.orderId) {
+                    localStorage.setItem('lastOrderId', currentOrder.orderId);
+                }
+                
+                localStorage.removeItem('cart');
+                localStorage.removeItem('cartTotal');
+                localStorage.removeItem('currentOrder');
+            } catch (e) {
+                console.error('Error limpiando localStorage:', e);
+            }
+        }
+
+        // Renderizar detalles de Firestore (actualizado con nuevos estilos)
+        function renderOrderDetails(orderData) {
+            const orderDetails = document.getElementById('order-details');
+            
+            let detailsHTML = `
+                <div class="detail-item">
+                    <span class="detail-label">Estado:</span>
+                    <span style="color: ${orderData.status === 'completed' ? 'var(--success)' : 'var(--primary)'}; font-weight: 600">
+                        ${(orderData.status || 'pendiente').toUpperCase()}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Estado de pago:</span>
+                    <span style="color: ${orderData.payment_status === 'completed' ? 'var(--success)' : '#FF9800'}; font-weight: 600">
+                        ${(orderData.payment_status || 'pendiente').toUpperCase()}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Fecha:</span>
+                    <span>${formatDate(orderData.created_at)}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Total:</span>
+                    <span style="color: var(--primary); font-weight: 600">
+                        $${orderData.amount?.toFixed(2) || '0.00'} MXN
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Sucursal:</span>
+                    <span>${orderData.branch || 'No especificada'}</span>
+                </div>
+            `;
+            
+            // Sección de productos
+            if (orderData.items && orderData.items.length > 0) {
+                detailsHTML += `
+                    <div class="products-section">
+                        <h4>Productos</h4>
+                `;
+                
+                orderData.items.forEach(item => {
+                    detailsHTML += `
+                        <div class="product-item">
+                            <span class="product-name">${item.quantity || 1} × ${item.name}</span>
+                            <span class="product-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+                
+                detailsHTML += `</div>`;
+            }
+            
+            // ID de OpenPay si existe
+            if (orderData.openpay_id) {
+                detailsHTML += `
+                    <div class="detail-item" style="margin-top: 20px;">
+                        <span class="detail-label">ID de transacción:</span>
+                        <span style="font-family: monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">
+                            ${orderData.openpay_id}
+                        </span>
+                    </div>
+                `;
+            }
+            
+            orderDetails.innerHTML = detailsHTML;
+        }
+
+        // Mostrar datos de localStorage
+        function displayLocalStorageData(orderId = null) {
+            const currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
+            const orderDetails = document.getElementById('order-details');
+            
+            if (!currentOrder) {
+                orderDetails.innerHTML = `<p style="text-align: center; color: #666; padding: 20px;">No se encontraron detalles del pedido.</p>`;
+                return;
+            }
+            
+            if (orderId) {
+                document.getElementById('order-id-display').textContent = `ID de tu pedido: ${orderId}`;
+            }
+            
+            orderDetails.innerHTML = `
+                <div class="detail-item">
+                    <span class="detail-label">Estado:</span>
+                    <span style="color: var(--primary); font-weight: 600">
+                        ${currentOrder.status?.toUpperCase() || 'PENDIENTE'}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Total:</span>
+                    <span style="color: var(--primary); font-weight: 600">
+                        $${currentOrder.amount?.toFixed(2) || '0.00'} MXN
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Sucursal:</span>
+                    <span>${currentOrder.branch || 'No especificada'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Nota:</span>
+                    <span style="color: #666; font-style: italic">
+                        Los detalles completos se actualizarán cuando el pago se confirme.
+                    </span>
+                </div>
+            `;
+        }
+
+        // Inicialización
+                // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM cargado - Configurando botones...');
+            
+            // Obtener referencias a los botones
+            const btnContinue = document.getElementById('btn-continue');
+            const btnHistorial = document.getElementById('btn-historial');
+            
+            if (!btnContinue) {
+                console.error('ERROR: No se encontró el botón btn-continue');
+                return;
+            }
+            
+            if (!btnHistorial) {
+                console.error('ERROR: No se encontró el botón btn-historial');
+                return;
+            }
+            
+            console.log('Botones encontrados:', btnContinue, btnHistorial);
+            
+            // Configurar botón "Volver al inicio"
+            btnContinue.addEventListener('click', () => {
+                console.log('Botón "Volver al inicio" clickeado');
+                console.log('Redirigiendo a: ../inicio-usuario/inicio-usuario.html');
+                window.location.href = '../inicio-usuario/inicio-usuario.html';
+            });
+            
+            // Configurar botón "Historial de compras"
+            btnHistorial.addEventListener('click', () => {
+                console.log('Botón "Historial de compras" clickeado');
+                console.log('Redirigiendo a: ../historial-compras/historial-compras.html');
+                window.location.href = '../historial-compras/historial-compras.html';
+            });
+            
+            console.log('Botones configurados correctamente');
+            
+            // Mostrar detalles de la orden
+            displayOrderDetails();
+        });
+    </script>
+    <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>

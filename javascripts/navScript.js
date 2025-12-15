@@ -21,7 +21,7 @@
     <header class="nan_header">
         <nav class="nan_navbar">
             <div class="nan_logo">
-                <a href="dashUser.html">
+                <a href="../inicio-usuario/inicio-usuario.html">
                     <img src="https://rsienterprise.web.app/vista/css/img/Logo-RSI-OFICIAL.png" alt="RSI Enterprise Logo">
                 </a>
             </div>
@@ -31,11 +31,11 @@
             <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
     
             <ul class="nan_menu">
-                <li><a href="productos-usuario.html"><i class="fas fa-box"></i> Productos</a></li>
-                <li><a href="historial-de-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>
-                <li><a href="lista-de-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>
-                <li><a href="soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>
-                <li><a href="perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>
+                <li><a href="../productos/productos.html"><i class="fas fa-box"></i> Productos</a></li>
+                <li><a href="../historial-compras/historial-compras.html"><i class="fas fa-history"></i> Historial de compras</a></li>
+                <li><a href="../lista-deseos/lista-deseos.html"><i class="fas fa-heart"></i> Lista de deseos</a></li>
+                <li><a href="../soporte/soporte.html"><i class="fas fa-headset"></i> Soporte</a></li>
+                <li><a href="../perfil/perfil.html"><i class="fas fa-user"></i> Mi perfil</a></li>
                 <li><a href="#" id="cerrarSesion"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
             </ul>
         </nav>

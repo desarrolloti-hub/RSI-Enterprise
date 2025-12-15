@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Producto | RSI Enterprise</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="detalleProducto.css">
+</head>
+<body>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-38F2DBG9HE');
+    </script>
+
+    <!-- Contenedores para componentes dinámicos -->
+    <!-- Navbar se cargará aquí -->
+    <!-- Footer se cargará aquí -->
+    <!-- Botones flotantes se cargarán aquí -->
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="/">Inicio</a>
+            <span>/</span>
+            <a href="/vista/nav-visitantes/productos/productos.html">Productos</a>
+            <span>/</span>
+            <span id="breadcrumb-category">Categoría</span>
+            <span>/</span>
+            <span id="breadcrumb-product">Producto</span>
+        </div>
+
+        <!-- Product Detail -->
+        <div class="product-detail">
+            <div class="product-gallery">
+                <div class="main-image" id="main-image">
+                    <img src="" alt="" id="product-main-image">
+                </div>
+                <div class="thumbnail-container" id="thumbnail-container">
+                    <!-- Thumbnails se cargarán aquí -->
+                </div>
+            </div>
+            
+            <div class="product-info">
+                <h1 class="product-title" id="product-title"></h1>
+                <div class="product-brand" id="product-brand"></div>
+                <div class="product-sku">SKU: <span id="product-sku"></span></div>
+                
+                <div class="product-price-container">
+                    <span class="product-price" id="product-price"></span>
+                    <span class="product-original-price" id="product-original-price"></span>
+                    <span class="product-discount" id="product-discount"></span>
+                </div>
+                
+                <div class="product-stock">
+                    Disponibilidad: <span class="stock-available" id="product-stock">En stock</span>
+                </div>
+                
+                <div class="product-actions">
+                    <div class="quantity-selector">
+                        <button class="quantity-btn" id="decrease-qty">-</button>
+                        <input type="number" class="quantity-input" id="quantity" value="1" min="1">
+                        <button class="quantity-btn" id="increase-qty">+</button>
+                    </div>
+                    <button class="add-to-cart-btn" id="add-to-cart">
+                        <i class="fas fa-shopping-cart"></i> Añadir al carrito
+                    </button>
+                </div>
+                
+                <div class="product-tabs">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="description">Descripción</button>
+                        <button class="tab-btn" data-tab="features">Características</button>
+                        <button class="tab-btn" data-tab="specs">Especificaciones</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="description-tab">
+                        <div class="product-description" id="product-description"></div>
+                    </div>
+                    
+                    <div class="tab-content" id="features-tab">
+                        <ul class="product-features" id="product-features">
+                            <!-- Características se cargarán aquí -->
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="specs-tab">
+                        <table id="product-specs">
+                            <!-- Especificaciones se cargarán aquí -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Products -->
+        <div class="related-products">
+            <h2 class="section-title">Productos relacionados</h2>
+            <div class="products-grid" id="related-products">
+                <!-- Productos relacionados se cargarán aquí -->
+                <div class="loader-container" style="grid-column: 1 / -1;">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase SDK (DEBE IR ANTES de navScript.js) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Script de navegación (DESPUÉS de Firebase) -->
+    <script src="/javascripts/navScript.js"></script>
+    
+    <!-- Script principal del detalle del producto (usando Firebase v8 compatible) -->
+    <script>
+        // Esperar a que cargue el DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de detalle del producto cargando...');
+            
+            // Variables globales
+            const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+            let currentProductData = null;
+            
+            // Obtener parámetros de la URL con DEBUG
+            console.log('=== DEBUG: ANALIZANDO URL ===');
+            console.log('URL completa:', window.location.href);
+            console.log('Query string:', window.location.search);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            let collectionName = urlParams.get('collection');
+            let productId = urlParams.get('id');
+            
+            // Mostrar todos los parámetros disponibles
+            console.log('Todos los parámetros encontrados:');
+            urlParams.forEach((value, key) => {
+                console.log(`  "${key}" = "${value}"`);
+            });
+            
+            console.log('Parámetros finales:');
+            console.log('collectionName:', collectionName);
+            console.log('productId:', productId);
+            console.log('=== FIN DEBUG ===');
+            
+            // Verificar parámetros
+            if (!collectionName || !productId) {
+                console.error('Parámetros de URL inválidos o faltantes');
+                
+                Swal.fire({
+                    title: 'Error',
+                    html: `
+                        <div style="text-align: left;">
+                            <p>No se pudieron obtener los parámetros del producto.</p>
+                            <p><strong>URL:</strong> ${window.location.href}</p>
+                            <p><strong>Parámetros detectados:</strong></p>
+                            <ul>
+                                ${Array.from(urlParams.entries()).map(([k, v]) => `<li>${k}: ${v}</li>`).join('')}
+                            </ul>
+                            <p>Por favor, regresa a la página de productos e intenta nuevamente.</p>
+                        </div>
+                    `,
+                    icon: 'error',
+                    confirmButtonText: 'Volver a productos',
+                    confirmButtonColor: '#1c1948'
+                }).then(() => {
+                    window.location.href = '/vista/nav-visitantes/productos/productos.html';
+                });
+                return;
+            }
+            
+            console.log('Parámetros válidos encontrados:', { collectionName, productId });
+            
+            // ========== FUNCIONES DEL PRODUCTO ==========
+            
+            // Cargar detalles del producto
+            async function loadProductDetails() {
+                try {
+                    console.log('Iniciando carga de detalles del producto...');
+                    
+                    // Esperar a que navScript.js cargue Firebase
+                    await waitForFirebase();
+                    
+                    // Verificar que Firebase esté disponible
+                    if (typeof firebase === 'undefined') {
+                        throw new Error('Firebase SDK no cargado');
+                    }
+                    
+                    if (!firebase.firestore) {
+                        throw new Error('Firestore no disponible');
+                    }
+                    
+                    console.log('Firebase disponible, obteniendo Firestore...');
+                    
+                    // Obtener referencia a Firestore (Firebase v8)
+                    const db = firebase.firestore();
+                    
+                    console.log('Buscando producto en colección:', collectionName, 'ID:', productId);
+                    
+                    // Obtener documento del producto (Firebase v8 syntax)
+                    const docRef = db.collection(collectionName).doc(productId);
+                    const docSnap = await docRef.get();
+                    
+                    if (!docSnap.exists) { // En Firebase v8 es una propiedad, no un método
+                        console.error('Documento no encontrado en Firestore');
+                        throw new Error(`Producto no encontrado en colección ${collectionName} con ID ${productId}`);
+                    }
+                    
+                    const product = docSnap.data();
+                    product.id = docSnap.id;
+                    product.collection = collectionName;
+                    currentProductData = product;
+                    
+                    console.log('Producto encontrado:', product['Nombre Producto']);
+                    
+                    // Mostrar detalles
+                    displayProductDetails(product);
+                    
+                    // Cargar productos relacionados
+                    loadRelatedProducts(product);
+                    
+                } catch (error) {
+                    console.error('Error cargando detalles del producto:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        html: `
+                            <div style="text-align: left;">
+                                <p>No se pudo cargar el producto.</p>
+                                <p><strong>Error:</strong> ${error.message}</p>
+                                <p><strong>Colección:</strong> ${collectionName}</p>
+                                <p><strong>ID del producto:</strong> ${productId}</p>
+                                <p>Por favor intenta nuevamente.</p>
+                            </div>
+                        `,
+                        icon: 'error',
+                        confirmButtonText: 'Volver a productos',
+                        confirmButtonColor: '#1c1948'
+                    }).then(() => {
+                        window.location.href = '/vista/nav-visitantes/productos/productos.html';
+                    });
+                }
+            }
+            
+            // Función auxiliar para esperar a que Firebase esté listo
+            function waitForFirebase() {
+                return new Promise((resolve, reject) => {
+                    let attempts = 0;
+                    const maxAttempts = 50;
+                    
+                    const checkFirebase = () => {
+                        attempts++;
+                        
+                        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+                            console.log('Firebase listo después de', attempts, 'intentos');
+                            resolve();
+                            return;
+                        }
+                        
+                        if (attempts >= maxAttempts) {
+                            reject(new Error('Timeout esperando Firebase'));
+                            return;
+                        }
+                        
+                        setTimeout(checkFirebase, 100);
+                    };
+                    
+                    checkFirebase();
+                });
+            }
+            
+            // Mostrar detalles del producto
+            function displayProductDetails(product) {
+                // Extraer información del producto
+                const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                const descuento = Number(product.Descuento) || 0;
+                const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                const imagenes = product.Imagenes || [defaultImage];
+                const categoria = collectionName.replace('productos', '').replace(/([A-Z])/g, ' $1').trim();
+                
+                // Actualizar breadcrumb
+                document.getElementById('breadcrumb-category').textContent = categoria;
+                document.getElementById('breadcrumb-product').textContent = product['Nombre Producto'] || 'Producto';
+                
+                // Actualizar información del producto
+                document.getElementById('product-title').textContent = product['Nombre Producto'] || 'Producto sin nombre';
+                document.getElementById('product-brand').textContent = product.Marca || 'Marca no especificada';
+                document.getElementById('product-sku').textContent = product.SKU || 'N/A';
+                
+                // Precios
+                document.getElementById('product-price').textContent = `$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                
+                if (descuento > 0) {
+                    document.getElementById('product-original-price').textContent = `$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                    document.getElementById('product-discount').textContent = `${descuento}% OFF`;
+                } else {
+                    document.getElementById('product-original-price').style.display = 'none';
+                    document.getElementById('product-discount').style.display = 'none';
+                }
+                
+                // Stock
+                if (product.Stock === 0 || product.Stock === '0') {
+                    document.getElementById('product-stock').textContent = 'Agotado';
+                    document.getElementById('product-stock').className = 'stock-unavailable';
+                    document.getElementById('add-to-cart').disabled = true;
+                }
+                
+                // Imágenes
+                const mainImage = document.getElementById('product-main-image');
+                mainImage.src = imagenes[0] || defaultImage;
+                mainImage.alt = product['Nombre Producto'] || 'Producto';
+                mainImage.onerror = function() { 
+                    console.log('Error cargando imagen principal, usando imagen por defecto');
+                    this.src = defaultImage; 
+                };
+                
+                const thumbnailContainer = document.getElementById('thumbnail-container');
+                thumbnailContainer.innerHTML = '';
+                
+                imagenes.forEach((img, index) => {
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = 'thumbnail' + (index === 0 ? ' active' : '');
+                    thumbnail.innerHTML = `<img src="${img || defaultImage}" alt="Miniatura ${index + 1}">`;
+                    
+                    thumbnail.addEventListener('click', () => {
+                        // Cambiar imagen principal
+                        mainImage.src = img || defaultImage;
+                        
+                        // Actualizar thumbnails activos
+                        document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+                        thumbnail.classList.add('active');
+                    });
+                    
+                    thumbnailContainer.appendChild(thumbnail);
+                });
+                
+                // Descripción
+                document.getElementById('product-description').textContent = product.Descripción || 'No hay descripción disponible.';
+                
+                // Características
+                const featuresList = document.getElementById('product-features');
+                featuresList.innerHTML = '';
+                
+                if (product.Características) {
+                    const features = product.Características.split('\n').filter(f => f.trim() !== '');
+                    features.forEach(feature => {
+                        const li = document.createElement('li');
+                        li.textContent = feature;
+                        featuresList.appendChild(li);
+                    });
+                } else {
+                    featuresList.innerHTML = '<li>No hay características disponibles</li>';
+                }
+                
+                // Especificaciones
+                const specsTable = document.getElementById('product-specs');
+                specsTable.innerHTML = '';
+                
+                if (product.Especificaciones) {
+                    const specs = product.Especificaciones.split('\n').filter(s => s.trim() !== '');
+                    specs.forEach(spec => {
+                        const [key, value] = spec.split(':').map(s => s.trim());
+                        if (key && value) {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td style="padding: 8px; font-weight: 600; border-bottom: 1px solid #eee;">${key}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #eee;">${value}</td>
+                            `;
+                            specsTable.appendChild(row);
+                        }
+                    });
+                } else {
+                    specsTable.innerHTML = '<tr><td>No hay especificaciones disponibles</td></tr>';
+                }
+            }
+            
+            // Cargar productos relacionados
+            async function loadRelatedProducts(currentProduct) {
+                try {
+                    const relatedProductsContainer = document.getElementById('related-products');
+                    
+                    console.log('Cargando productos relacionados...');
+                    
+                    // Obtener referencia a Firestore
+                    const db = firebase.firestore();
+                    
+                    // Obtener productos de la misma categoría
+                    const querySnapshot = await db.collection(collectionName).get();
+                    const allProducts = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        if (doc.id !== productId) { // Excluir el producto actual
+                            const product = doc.data();
+                            product.id = doc.id;
+                            product.collection = collectionName;
+                            allProducts.push(product);
+                        }
+                    });
+                    
+                    // Mostrar hasta 4 productos relacionados
+                    const relatedProducts = allProducts.slice(0, 4);
+                    
+                    if (relatedProducts.length === 0) {
+                        relatedProductsContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay productos relacionados disponibles</p>';
+                        return;
+                    }
+                    
+                    relatedProductsContainer.innerHTML = '';
+                    
+                    console.log(`Encontrados ${relatedProducts.length} productos relacionados`);
+                    
+                    relatedProducts.forEach(product => {
+                        createRelatedProductCard(product);
+                    });
+                    
+                } catch (error) {
+                    console.error('Error cargando productos relacionados:', error);
+                    document.getElementById('related-products').innerHTML = 
+                        '<p style="grid-column: 1 / -1; text-align: center;">Error al cargar productos relacionados</p>';
+                }
+            }
+            
+            // Crear tarjeta de producto relacionado
+            function createRelatedProductCard(product) {
+                const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                const descuento = Number(product.Descuento) || 0;
+                const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                card.innerHTML = `
+                    <div class="product-image-container">
+                        <img src="${product.Imagenes?.[0] || defaultImage}" 
+                             alt="${product['Nombre Producto'] || 'Producto'}" 
+                             class="product-image"
+                             onerror="this.src='${defaultImage}'">
+                    </div>
+                    <div class="product-content">
+                        <h3 class="product-title">${product['Nombre Producto'] || 'Producto sin nombre'}</h3>
+                        
+                        ${descuento > 0 ? `
+                            <div>
+                                <span class="product-original-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                <span class="product-discount">${descuento}% OFF</span>
+                            </div>
+                            <p class="product-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                        ` : `
+                            <p class="product-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                        `}
+                        
+                        <div class="product-actions">
+                            <button class="view-details-btn" data-product-id="${product.id}" data-collection="${product.collection}">
+                                Ver detalles
+                            </button>
+                            <button class="add-to-cart-btn-sm" data-product-id="${product.id}" data-collection="${product.collection}">
+                                <i class="fas fa-shopping-cart"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Evento para ver detalles
+                card.querySelector('.view-details-btn').addEventListener('click', (e) => {
+                    const productId = e.target.getAttribute('data-product-id');
+                    const collection = e.target.getAttribute('data-collection');
+                    window.location.href = `/vista/nav-visitantes/detalleProducto/detalleProducto.html?collection=${encodeURIComponent(collection)}&id=${encodeURIComponent(productId)}`;
+                });
+                
+                // Evento para añadir al carrito
+                card.querySelector('.add-to-cart-btn-sm').addEventListener('click', (e) => {
+                    const productId = e.target.getAttribute('data-product-id');
+                    const collection = e.target.getAttribute('data-collection');
+                    
+                    // Buscar los datos del producto
+                    const relatedProduct = {
+                        id: productId,
+                        collection: collection,
+                        'Nombre Producto': card.querySelector('.product-title').textContent,
+                        'Precio MXN': precioBase,
+                        'Descuento': descuento,
+                        'Imagenes': [card.querySelector('.product-image').src],
+                        'SKU': product.SKU || productId
+                    };
+                    
+                    addToCart(relatedProduct, 1);
+                });
+                
+                document.getElementById('related-products').appendChild(card);
+            }
+            
+            // Función para añadir al carrito
+            function addToCart(product, quantity = 1) {
+                try {
+                    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+                    
+                    // Buscar si el producto ya está en el carrito
+                    const existingIndex = cart.findIndex(item => 
+                        item.id === product.id && item.collection === product.collection
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        cart[existingIndex].cantidad += quantity;
+                    } else {
+                        // Calcular precios
+                        const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                        const descuento = Number(product.Descuento) || 0;
+                        const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                        
+                        // Añadir nuevo producto
+                        cart.push({
+                            id: product.id,
+                            collection: product.collection,
+                            imagen: product.Imagenes?.[0] || defaultImage,
+                            nombre: product['Nombre Producto'] || 'Producto sin nombre',
+                            precio: precioFinal,
+                            precioOriginal: precioBase,
+                            descuento: descuento,
+                            cantidad: quantity,
+                            sku: product.SKU || product.id
+                        });
+                    }
+                    
+                    localStorage.setItem("cart", JSON.stringify(cart));
+                    
+                    // Disparar evento para actualizar contadores
+                    window.dispatchEvent(new Event('cartUpdated'));
+                    
+                    // Mostrar notificación
+                    Swal.fire({
+                        title: '¡Producto agregado!',
+                        text: `${product['Nombre Producto'] || 'El producto'} se ha añadido al carrito`,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        confirmButtonColor: '#1c1948'
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error al agregar al carrito:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo agregar el producto al carrito',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#1c1948'
+                    });
+                    return false;
+                }
+            }
+            
+            // ========== EVENT LISTENERS ==========
+            
+            // Botón de disminuir cantidad
+            document.getElementById('decrease-qty').addEventListener('click', () => {
+                const qtyInput = document.getElementById('quantity');
+                if (parseInt(qtyInput.value) > 1) {
+                    qtyInput.value = parseInt(qtyInput.value) - 1;
+                }
+            });
+            
+            // Botón de aumentar cantidad
+            document.getElementById('increase-qty').addEventListener('click', () => {
+                const qtyInput = document.getElementById('quantity');
+                qtyInput.value = parseInt(qtyInput.value) + 1;
+            });
+            
+            // Botón añadir al carrito
+            document.getElementById('add-to-cart').addEventListener('click', () => {
+                if (!currentProductData) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Producto no disponible',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#1c1948'
+                    });
+                    return;
+                }
+                
+                const quantity = parseInt(document.getElementById('quantity').value);
+                addToCart(currentProductData, quantity);
+            });
+            
+            // Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.getAttribute('data-tab');
+                    
+                    // Actualizar botones de pestaña
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Actualizar contenido de pestaña
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Inicializar
+            console.log('Iniciando carga de detalles del producto...');
+            setTimeout(() => {
+                loadProductDetails();
+            }, 800);
+            
+        });
+    </script>
+    <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>

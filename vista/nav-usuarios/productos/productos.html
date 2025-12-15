@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos de Seguridad Electrónica | RSI Enterprise</title>
+    
+    <!-- Favicon y manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    
+    <!-- Fuentes y iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="../inicio-usuario/inicio-usuario.css">
+    <link rel="stylesheet" href="productos.css"> 
+</head>
+<body>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-38F2DBG9HE');
+    </script>
+
+    <!-- El navbar se cargará mediante navScript.js -->
+    
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="container">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="Buscar productos..." autocomplete="off">
+                    <button id="search-button" class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="search-results" class="search-results-container" style="display: none;">
+                    <!-- Resultados predictivos aparecerán aquí -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section" id="categories-section">
+        <div class="container">
+            <h2 class="section-title">Explora nuestras categorías</h2>
+            <p class="section-subtitle">Selecciona una categoría para ver los productos disponibles</p>
+            
+            <div class="categories-grid" id="categories-container">
+                <!-- Categorías se cargarán aquí -->
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <p>Cargando categorías...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section" id="products-section" style="display: none;">
+        <div class="container">
+            <h2 class="section-title" id="category-title"></h2>
+            
+            <div class="products-grid" id="products-container">
+                <!-- Productos se cargarán aquí -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="back-to-categories" class="view-details-btn">
+                    <i class="fas fa-arrow-left"></i> Volver a categorías
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase SDK (DEBE IR ANTES de navScript.js) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Script de navegación (DESPUÉS de Firebase) -->
+    <script src="/javascripts/navScript.js"></script>
+    
+    <!-- Script principal de productos -->
+    <script>
+        // Esperar a que cargue el DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de productos cargando...');
+            
+            // Configuración de Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+            };
+
+            // Inicializar Firebase SOLO SI navScript.js no lo ha hecho
+            // navScript.js usa firebase.apps.length para verificar
+            if (!firebase.apps.length) {
+                console.log('Inicializando Firebase desde productos.html');
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                console.log('Firebase ya inicializado por navScript.js');
+            }
+            
+            // Obtener referencia a Firestore
+            const db = firebase.firestore();
+            console.log('Firestore disponible:', !!db);
+            
+            // Variables globales
+            let currentCategory = '';
+            const DEFAULT_IMAGE = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+            let searchTimeout = null;
+            let allCategories = [];
+
+            // ========== MANEJO DEL CARRITO ==========
+            function getCart() {
+                try {
+                    return JSON.parse(localStorage.getItem("cart")) || [];
+                } catch (error) {
+                    console.error('Error al obtener carrito:', error);
+                    return [];
+                }
+            }
+
+            function updateCartCount() {
+                try {
+                    const cart = getCart();
+                    const totalItems = cart.reduce((total, item) => total + (item.cantidad || 1), 0);
+                    
+                    // Actualizar contador en la interfaz
+                    const cartCountElements = document.querySelectorAll('.cart-count, #cart-count');
+                    cartCountElements.forEach(element => {
+                        element.textContent = totalItems;
+                        element.style.display = totalItems > 0 ? 'inline-block' : 'none';
+                    });
+                } catch (error) {
+                    console.error('Error actualizando contador del carrito:', error);
+                }
+            }
+
+            // ========== CATEGORÍAS ==========
+            async function loadCategories() {
+                try {
+                    const categoriesContainer = document.getElementById('categories-container');
+                    console.log('Cargando categorías desde Firestore...');
+                    
+                    // Verificar que db esté disponible
+                    if (!db) {
+                        console.error('Firestore no disponible');
+                        categoriesContainer.innerHTML = '<p class="error-message">Error: Firestore no disponible</p>';
+                        return;
+                    }
+                    
+                    const querySnapshot = await db.collection("categorias").get();
+                    
+                    categoriesContainer.innerHTML = '';
+                    allCategories = [];
+                    
+                    if (querySnapshot.empty) {
+                        categoriesContainer.innerHTML = '<p class="no-data">No se encontraron categorías</p>';
+                        console.log('No hay categorías en Firestore');
+                        return;
+                    }
+                    
+                    console.log(`Encontradas ${querySnapshot.size} categorías`);
+                    
+                    querySnapshot.forEach((doc) => {
+                        const category = doc.data();
+                        category.id = doc.id;
+                        allCategories.push(category);
+                        createCategoryCard(category);
+                    });
+                    
+                } catch (error) {
+                    console.error("Error cargando categorías:", error);
+                    document.getElementById('categories-container').innerHTML = 
+                        '<p class="error-message">Error al cargar categorías. Por favor, recarga la página.</p>';
+                }
+            }
+
+            function createCategoryCard(category) {
+                const container = document.createElement('div');
+                container.className = 'category-card';
+                container.style.cursor = 'pointer';
+                
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'category-image-container';
+                
+                const img = document.createElement('img');
+                img.src = category.imagen || DEFAULT_IMAGE;
+                img.alt = category.nombre;
+                img.className = 'category-image';
+                img.onerror = function() { 
+                    console.log('Error cargando imagen de categoría, usando imagen por defecto');
+                    this.src = DEFAULT_IMAGE; 
+                };
+                
+                const title = document.createElement('h3');
+                title.className = 'category-title';
+                title.textContent = category.nombre;
+                
+                imageContainer.appendChild(img);
+                container.appendChild(imageContainer);
+                container.appendChild(title);
+                
+                container.addEventListener('click', () => {
+                    console.log('Categoría seleccionada:', category.nombre);
+                    currentCategory = category.nombre;
+                    loadProducts(category.nombre);
+                });
+                
+                document.getElementById('categories-container').appendChild(container);
+            }
+
+            // ========== PRODUCTOS ==========
+            async function loadProducts(categoryName) {
+                try {
+                    console.log('Cargando productos para:', categoryName);
+                    
+                    // Mostrar loader
+                    document.getElementById('products-container').innerHTML = `
+                        <div class="loader-container full-width">
+                            <div class="loader"></div>
+                            <p>Cargando productos de ${categoryName}...</p>
+                        </div>
+                    `;
+                    
+                    // Cambiar a vista de productos
+                    document.getElementById('categories-section').style.display = 'none';
+                    document.getElementById('products-section').style.display = 'block';
+                    document.getElementById('category-title').textContent = categoryName;
+                    
+                    // Formatear nombre de colección
+                    const collectionName = 'productos' + categoryName.replace(/\s+/g, '');
+                    console.log('Buscando en colección:', collectionName);
+                    
+                    const querySnapshot = await db.collection(collectionName).get();
+                    const productsContainer = document.getElementById('products-container');
+                    
+                    productsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        productsContainer.innerHTML = `
+                            <div class="no-data full-width">
+                                <i class="fas fa-box-open fa-3x"></i>
+                                <p>No se encontraron productos en esta categoría</p>
+                            </div>
+                        `;
+                        console.log('No hay productos en esta categoría');
+                        return;
+                    }
+                    
+                    console.log(`Encontrados ${querySnapshot.size} productos`);
+                    
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        product.id = doc.id;
+                        createProductCard(product, collectionName);
+                    });
+                    
+                    // Scroll suave
+                    document.getElementById('products-section').scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                } catch (error) {
+                    console.error("Error cargando productos:", error);
+                    document.getElementById('products-container').innerHTML = 
+                        '<p class="error-message full-width">Error al cargar productos. Por favor, intenta nuevamente.</p>';
+                }
+            }
+
+            function createProductCard(product, collectionName) {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                const descuento = Number(product.Descuento) || 0;
+                const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                
+                card.innerHTML = `
+                    <div class="product-image-container">
+                        <img src="${product.Imagenes?.[0] || DEFAULT_IMAGE}" 
+                             alt="${product['Nombre Producto'] || 'Producto'}" 
+                             class="product-image"
+                             onerror="this.src='${DEFAULT_IMAGE}'">
+                    </div>
+                    <div class="product-content">
+                        <h3 class="product-title">${product['Nombre Producto'] || 'Producto sin nombre'}</h3>
+                        
+                        ${descuento > 0 ? `
+                            <div>
+                                <span class="product-original-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                <span class="product-discount">${descuento}% OFF</span>
+                            </div>
+                            <p class="product-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                        ` : `
+                            <p class="product-price">$${precioBase.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                        `}
+                        
+                        <div class="product-actions">
+                            <button class="view-details-btn" data-id="${product.id}" data-collection="${collectionName}">
+                                Ver detalles
+                            </button>
+                            <button class="add-to-cart-btn" data-id="${product.id}" data-collection="${collectionName}">
+                                <i class="fas fa-shopping-cart"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Evento para ver detalles
+                card.querySelector('.view-details-btn').addEventListener('click', (e) => {
+                    const productId = e.target.getAttribute('data-id');
+                    const collection = e.target.getAttribute('data-collection');
+                    window.location.href = `/vista/nav-usuarios/detalleProducto/detalleProducto.html?collection=${collection}&id=${productId}`;
+                });
+                
+                // Evento para añadir al carrito
+                card.querySelector('.add-to-cart-btn').addEventListener('click', (e) => {
+                    const productId = e.target.closest('button').getAttribute('data-id');
+                    const collection = e.target.closest('button').getAttribute('data-collection');
+                    
+                    // Obtener datos del producto
+                    const productData = {
+                        id: productId,
+                        'Nombre Producto': card.querySelector('.product-title').textContent,
+                        'Precio MXN': precioBase,
+                        'Precio Base': precioBase,
+                        'Descuento': descuento,
+                        'Imagenes': [card.querySelector('.product-image').src],
+                        'SKU': product.SKU || productId
+                    };
+                    
+                    addToCart(productData, collection);
+                });
+                
+                document.getElementById('products-container').appendChild(card);
+            }
+
+            function addToCart(product, collectionName) {
+                try {
+                    const cart = getCart();
+                    const productId = product.id;
+                    
+                    // Buscar si el producto ya está en el carrito
+                    const existingIndex = cart.findIndex(item => 
+                        item.id === productId && item.collection === collectionName
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        // Incrementar cantidad si ya existe
+                        cart[existingIndex].cantidad += 1;
+                    } else {
+                        // Calcular precios
+                        const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                        const descuento = Number(product.Descuento) || 0;
+                        const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                        
+                        // Añadir nuevo producto
+                        cart.push({
+                            id: productId,
+                            collection: collectionName,
+                            imagen: product.Imagenes?.[0] || DEFAULT_IMAGE,
+                            nombre: product['Nombre Producto'] || 'Producto sin nombre',
+                            precio: precioFinal,
+                            precioOriginal: precioBase,
+                            descuento: descuento,
+                            cantidad: 1,
+                            sku: product.SKU || productId
+                        });
+                    }
+                    
+                    localStorage.setItem("cart", JSON.stringify(cart));
+                    updateCartCount();
+                    
+                    Swal.fire({
+                        title: '¡Producto agregado!',
+                        text: `${product['Nombre Producto'] || 'El producto'} se ha añadido al carrito`,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error al agregar al carrito:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo agregar el producto al carrito',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                    return false;
+                }
+            }
+
+            // ========== EVENT LISTENERS ==========
+            
+            // Botón de volver a categorías
+            document.getElementById('back-to-categories').addEventListener('click', function() {
+                document.getElementById('categories-section').style.display = 'block';
+                document.getElementById('products-section').style.display = 'none';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // Inicializar
+            setTimeout(() => {
+                loadCategories();
+                updateCartCount();
+                console.log('Página de productos inicializada');
+            }, 100);
+            
+        });
+    </script>
+
+    <!-- Scripts adicionales -->
+    <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>

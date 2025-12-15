@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Deseos - RSI Enterprise</title>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../inicio-usuario/inicio-usuario.css">
+    <link rel="stylesheet" href="lista-deseos.css">
+</head>
+<body class="nan_reset">
+    <br><br><br>
+    
+    <!-- Contenido principal -->
+    <div class="wishlist-main-container">
+        <!-- Encabezado -->
+        <div class="wishlist-header-container">
+            <h1 class="wishlist-header-title">
+                <i class="fas fa-heart"></i>
+                <span>Mi Lista de Deseos</span>
+            </h1>
+            <p class="wishlist-count">Tienes <span id="wishlist-count">0</span> productos en tu lista</p>
+        </div>
+
+        <!-- Spinner de carga -->
+        <div id="loading-spinner" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando tu lista de deseos...</p>
+        </div>
+
+        <!-- Contenedor de productos -->
+        <div class="wishlist-products-container">
+            <div id="wishlist-products" class="products-grid">
+                <!-- Los productos se cargarán aquí dinámicamente -->
+            </div>
+
+            <!-- Estado vacío -->
+            <div id="empty-wishlist" class="empty-state hidden">
+                <div class="empty-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h3>Tu lista de deseos está vacía</h3>
+                <p>Agrega productos que te interesen desde el catálogo</p>
+                <a href="productos-usuario.html" class="btn-continue">
+                    <i class="fas fa-box"></i> Ver productos
+                </a>
+            </div>
+
+            <!-- Botón para comprar todo -->
+            <div id="buy-all-container" class="buy-all-container hidden">
+                <button id="checkout-wishlist" class="btn-buy-all">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Comprar todos los productos</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Script principal -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Configuración de Firebase (usando la misma que inicio-usuario)
+            const firebaseConfig = {
+                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+                authDomain: "rsienterprise.firebaseapp.com",
+                projectId: "rsienterprise",
+                storageBucket: "rsienterprise.appspot.com",
+                messagingSenderId: "1063117165770",
+                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+            };
+
+            // Inicializar Firebase si no está inicializado
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            const defaultImage = '/vista/css/img/Logo-RSI-OFICIAL.png';
+
+            // Bandera para controlar el cierre de sesión
+            let isLoggingOut = false;
+            let alertShown = false;
+
+            // Evitar que el usuario retroceda con las flechas del navegador
+            window.history.pushState(null, document.title, window.location.href);
+            window.addEventListener('popstate', function (event) {
+                window.history.pushState(null, document.title, window.location.href);
+            });
+
+            // Mostrar spinner de carga
+            function showLoading(show) {
+                document.getElementById('loading-spinner').style.display = show ? 'flex' : 'none';
+            }
+
+            // Verificación de autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (isLoggingOut) {
+                    return;
+                }
+
+                if (!user) {
+                    Swal.fire({
+                        title: "Acceso denegado",
+                        text: "Para continuar aquí, debes iniciar sesión.",
+                        icon: "warning",
+                        timer: 3000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 3000);
+                    return;
+                }
+
+                try {
+                    const userRef = db.collection("usuarios").doc(user.uid);
+                    const doc = await userRef.get();
+
+                    if (!doc.exists) {
+                        Swal.fire({
+                            title: "Usuario no encontrado",
+                            text: "No se encontró tu información en la base de datos.",
+                            icon: "error",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                        return;
+                    }
+
+                    const userData = doc.data();
+                    if (userData.rol !== "user") {
+                        Swal.fire({
+                            title: "Acceso denegado",
+                            text: "No tienes permisos para acceder a esta página.",
+                            icon: "warning",
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+
+                        setTimeout(() => {
+                            window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                        }, 2000);
+                    } else {
+                        // Cargar lista de deseos
+                        loadWishlist(user.uid);
+                    }
+                } catch (error) {
+                    console.error("Error al verificar usuario:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "Ocurrió un problema al verificar el usuario.",
+                        icon: "error",
+                        timer: 2000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.replace("/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html");
+                    }, 2000);
+                }
+            });
+
+            // Cargar wishlist del usuario
+            async function loadWishlist(userId) {
+                showLoading(true);
+                
+                try {
+                    const wishlistRef = db.collection("wishlists").doc(userId);
+                    const docSnap = await wishlistRef.get();
+                    
+                    const wishlistContainer = document.getElementById("wishlist-products");
+                    const emptyWishlist = document.getElementById("empty-wishlist");
+                    const buyAllContainer = document.getElementById("buy-all-container");
+                    
+                    wishlistContainer.innerHTML = "";
+                    
+                    if (docSnap.exists && docSnap.data().products?.length > 0) {
+                        const products = docSnap.data().products;
+                        
+                        // Actualizar contador
+                        document.getElementById("wishlist-count").textContent = products.length;
+                        
+                        // Ocultar estado vacío y mostrar botón comprar todo
+                        emptyWishlist.classList.add("hidden");
+                        buyAllContainer.classList.remove("hidden");
+                        
+                        // Crear tarjetas de productos
+                        products.forEach((product, index) => {
+                            const productCard = createWishlistProductCard(product, index, userId);
+                            wishlistContainer.appendChild(productCard);
+                        });
+                        
+                        // Configurar evento del botón comprar todo
+                        document.getElementById("checkout-wishlist").onclick = () => checkoutWishlist(userId);
+                    } else {
+                        document.getElementById("wishlist-count").textContent = "0";
+                        emptyWishlist.classList.remove("hidden");
+                        buyAllContainer.classList.add("hidden");
+                        
+                        // Mostrar SweetAlert solo si no está vacío y no lo hemos mostrado antes
+                        if (!alertShown && wishlistContainer.children.length === 0) {
+                            alertShown = true;
+                            Swal.fire({
+                                title: 'Lista de deseos vacía',
+                                text: 'No tienes productos en tu lista de deseos',
+                                icon: 'info',
+                                confirmButtonText: 'Ir a productos',
+                                timer: 5000,
+                                timerProgressBar: true,
+                                confirmButtonColor: '#1c1948'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = "productos-usuario.html";
+                                }
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error al cargar lista de deseos:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se pudo cargar tu lista de deseos.",
+                        icon: "error",
+                        confirmButtonColor: '#1c1948'
+                    });
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Crear tarjeta de producto para la lista de deseos
+            function createWishlistProductCard(product, index, userId) {
+                const price = parseFloat(product.price) || 0;
+                const discount = parseFloat(product.discount) || 0;
+                const finalPrice = discount > 0 ? price * (1 - discount/100) : price;
+                
+                const card = document.createElement("div");
+                card.className = "product-card";
+                card.innerHTML = `
+                    <div class="product-image-container">
+                        <img src="${product.image || defaultImage}" 
+                             alt="${product.name}" 
+                             class="product-image"
+                             onerror="this.src='${defaultImage}'">
+                        <div class="product-badge">
+                            <i class="fas fa-heart"></i> Lista de deseos
+                        </div>
+                    </div>
+                    <div class="product-content">
+                        <h3 class="product-name">${product.name || 'Producto'}</h3>
+                        <div class="product-category">
+                            <i class="fas fa-tag"></i>
+                            <span>${product.category || 'Sin categoría'}</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-final">$${finalPrice.toFixed(2)}</span>
+                            ${discount > 0 ? `
+                                <span class="price-original">$${price.toFixed(2)}</span>
+                                <span class="discount-badge">-${discount}%</span>
+                            ` : ''}
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn btn-success btn-add-cart" data-product='${JSON.stringify(product)}'>
+                                <i class="fas fa-cart-plus"></i> Al carrito
+                            </button>
+                            <button class="btn btn-danger btn-remove-wishlist">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Evento para eliminar de la wishlist
+                card.querySelector(".btn-remove-wishlist").addEventListener("click", async () => {
+                    try {
+                        const { isConfirmed } = await Swal.fire({
+                            title: '¿Eliminar producto?',
+                            text: "¿Estás seguro de que quieres eliminar este producto de tu lista de deseos?",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#1c1948',
+                            confirmButtonText: 'Sí, eliminar',
+                            cancelButtonText: 'Cancelar'
+                        });
+                        
+                        if (isConfirmed) {
+                            const wishlistRef = db.collection("wishlists").doc(userId);
+                            await wishlistRef.update({
+                                products: firebase.firestore.FieldValue.arrayRemove(product),
+                                updatedAt: new Date().toISOString()
+                            });
+                            
+                            // Recargar la lista
+                            await loadWishlist(userId);
+                            Swal.fire({
+                                title: "¡Eliminado!",
+                                text: "Producto removido de tu lista de deseos",
+                                icon: "success",
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error al eliminar de wishlist:", error);
+                        Swal.fire({
+                            title: "Error",
+                            text: "No se pudo eliminar el producto",
+                            icon: "error",
+                            confirmButtonColor: '#1c1948'
+                        });
+                    }
+                });
+                
+                // Evento para añadir al carrito
+                card.querySelector(".btn-add-cart").addEventListener("click", async (e) => {
+                    const productData = JSON.parse(e.target.closest('button').dataset.product);
+                    const wishlistRef = db.collection("wishlists").doc(userId);
+                    
+                    try {
+                        // Añadir al carrito
+                        addToCart(productData);
+                        
+                        // Eliminar de la wishlist
+                        await wishlistRef.update({
+                            products: firebase.firestore.FieldValue.arrayRemove(productData),
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        // Mostrar confirmación
+                        await Swal.fire({
+                            title: "¡Producto agregado!",
+                            text: `${productData.name} se ha añadido al carrito`,
+                            icon: "success",
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        // Recargar la lista
+                        await loadWishlist(userId);
+                        updateCartUI();
+                    } catch (error) {
+                        console.error("Error al mover al carrito:", error);
+                        Swal.fire({
+                            title: "Error",
+                            text: "No se pudo mover el producto al carrito",
+                            icon: "error",
+                            confirmButtonColor: '#1c1948'
+                        });
+                    }
+                });
+                
+                return card;
+            }
+
+            // Función para añadir al carrito (localStorage)
+            function addToCart(product) {
+                const cart = JSON.parse(localStorage.getItem("cart")) || [];
+                const existingProductIndex = cart.findIndex(item => item.id === product.id);
+                
+                const price = parseFloat(product.price) || 0;
+                const discount = parseFloat(product.discount) || 0;
+                const finalPrice = discount > 0 ? price * (1 - discount/100) : price;
+
+                if (existingProductIndex !== -1) {
+                    cart[existingProductIndex].cantidad += 1;
+                } else {
+                    cart.push({
+                        id: product.id,
+                        imagen: product.image || defaultImage,
+                        nombre: product.name,
+                        precio: finalPrice.toFixed(2),
+                        precioOriginal: price.toFixed(2),
+                        descuento: discount,
+                        cantidad: 1,
+                        sku: product.sku || product.id
+                    });
+                }
+
+                localStorage.setItem("cart", JSON.stringify(cart));
+                updateCartUI();
+            }
+
+            // Actualizar la UI del carrito
+            function updateCartUI() {
+                const cart = JSON.parse(localStorage.getItem("cart")) || [];
+                const cartCount = document.getElementById("cart-count");
+                if (cartCount) {
+                    cartCount.textContent = cart.length;
+                }
+            }
+
+            // Función para comprar toda la lista de deseos
+            async function checkoutWishlist(userId) {
+                try {
+                    const wishlistRef = db.collection("wishlists").doc(userId);
+                    const docSnap = await wishlistRef.get();
+                    
+                    if (!docSnap.exists || !docSnap.data().products?.length) {
+                        Swal.fire({
+                            title: "Lista vacía",
+                            text: "No hay productos en tu lista de deseos",
+                            icon: "warning",
+                            confirmButtonColor: '#1c1948'
+                        });
+                        return;
+                    }
+                    
+                    // Confirmar con el usuario
+                    const { isConfirmed } = await Swal.fire({
+                        title: "¿Comprar lista completa?",
+                        text: "Se vaciará tu carrito actual y se agregarán todos los productos de tu lista de deseos",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonColor: '#1c1948',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: "Sí, continuar",
+                        cancelButtonText: "Cancelar"
+                    });
+                    
+                    if (!isConfirmed) return;
+                    
+                    // Vaciar carrito actual
+                    localStorage.setItem("cart", JSON.stringify([]));
+                    
+                    // Agregar todos los productos de la wishlist al carrito
+                    const products = docSnap.data().products;
+                    products.forEach(product => {
+                        addToCart(product);
+                    });
+                    
+                    // Eliminar todos los productos de la wishlist
+                    await wishlistRef.update({
+                        products: [],
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    // Redirigir a pago.html
+                    window.location.href = "pago.html";
+                    
+                } catch (error) {
+                    console.error("Error al procesar lista de deseos:", error);
+                    Swal.fire({
+                        title: "Error",
+                        text: "No se pudo procesar tu lista de deseos",
+                        icon: "error",
+                        confirmButtonColor: '#1c1948'
+                    });
+                }
+            }
+
+            // Inicializar carrito UI
+            updateCartUI();
+        });
+    </script>
+
+    <!-- Scripts modulares (igual que inicio-usuario) -->
+    <script src="/vista/nav-visitantes/recursosDinamicos/footer.js"></script>
+    <script src="/javascripts/navScript.js"></script>
+    <script src="/javascripts/user/carritoUserLogin.js"></script>
+</body>
+</html>
