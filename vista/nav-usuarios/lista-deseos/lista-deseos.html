@@ -46,7 +46,7 @@
                 </div>
                 <h3>Tu lista de deseos está vacía</h3>
                 <p>Agrega productos que te interesen desde el catálogo</p>
-                <a href="productos-usuario.html" class="btn-continue">
+                <a href="../productos/productos.html" class="btn-continue">
                     <i class="fas fa-box"></i> Ver productos
                 </a>
             </div>
@@ -232,7 +232,7 @@
                                 confirmButtonColor: '#1c1948'
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    window.location.href = "productos-usuario.html";
+                                    window.location.href = "../productos/productos.html";
                                 }
                             });
                         }
@@ -458,7 +458,7 @@
                     });
                     
                     // Redirigir a pago.html
-                    window.location.href = "pago.html";
+                    window.location.href = "../pago/pago.html";
                     
                 } catch (error) {
                     console.error("Error al procesar lista de deseos:", error);

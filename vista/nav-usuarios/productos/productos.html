@@ -19,6 +19,9 @@
     <!-- Estilos propios -->
     <link rel="stylesheet" href="../inicio-usuario/inicio-usuario.css">
     <link rel="stylesheet" href="productos.css"> 
+    
+    <!-- Estilos adicionales para lista de deseos -->
+    
 </head>
 <body>
     <!-- Google Analytics -->
@@ -110,7 +113,6 @@
             };
 
             // Inicializar Firebase SOLO SI navScript.js no lo ha hecho
-            // navScript.js usa firebase.apps.length para verificar
             if (!firebase.apps.length) {
                 console.log('Inicializando Firebase desde productos.html');
                 firebase.initializeApp(firebaseConfig);
@@ -120,6 +122,7 @@
             
             // Obtener referencia a Firestore
             const db = firebase.firestore();
+            const auth = firebase.auth();
             console.log('Firestore disponible:', !!db);
             
             // Variables globales
@@ -151,6 +154,132 @@
                     });
                 } catch (error) {
                     console.error('Error actualizando contador del carrito:', error);
+                }
+            }
+
+            // ========== LISTA DE DESEOS (WISHLIST) ==========
+
+            // Función para verificar si un producto está en la wishlist
+            async function isInWishlist(productId, userId) {
+                try {
+                    const wishlistRef = db.collection("wishlists").doc(userId);
+                    const doc = await wishlistRef.get();
+                    
+                    if (doc.exists) {
+                        const wishlist = doc.data();
+                        return wishlist.products?.some(p => p.id === productId) || false;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error verificando wishlist:', error);
+                    return false;
+                }
+            }
+
+            // Función para agregar/quitar de la wishlist
+            async function toggleWishlist(product, collectionName) {
+                try {
+                    // Verificar si el usuario está autenticado
+                    const user = auth.currentUser;
+                    if (!user) {
+                        Swal.fire({
+                            title: 'Inicia sesión',
+                            text: 'Debes iniciar sesión para usar la lista de deseos',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Iniciar sesión',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#1c1948'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html';
+                            }
+                        });
+                        return false;
+                    }
+
+                    const userId = user.uid;
+                    const wishlistRef = db.collection("wishlists").doc(userId);
+                    const doc = await wishlistRef.get();
+                    
+                    // Preparar datos del producto para la wishlist
+                    const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+                    const descuento = Number(product.Descuento) || 0;
+                    const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+                    
+                    const wishlistProduct = {
+                        id: product.id,
+                        collection: collectionName,
+                        image: product.Imagenes?.[0] || DEFAULT_IMAGE,
+                        name: product['Nombre Producto'] || 'Producto sin nombre',
+                        price: precioBase,
+                        finalPrice: precioFinal,
+                        discount: descuento,
+                        category: currentCategory,
+                        sku: product.SKU || product.id,
+                        addedAt: new Date().toISOString()
+                    };
+
+                    let isAdded = false;
+
+                    if (doc.exists) {
+                        // Actualizar wishlist existente
+                        const wishlist = doc.data();
+                        const existingIndex = wishlist.products?.findIndex(p => p.id === product.id) || -1;
+                        
+                        if (existingIndex !== -1) {
+                            // Remover si ya existe
+                            await wishlistRef.update({
+                                products: firebase.firestore.FieldValue.arrayRemove(wishlist.products[existingIndex]),
+                                updatedAt: new Date().toISOString()
+                            });
+                            isAdded = false;
+                        } else {
+                            // Agregar si no existe
+                            await wishlistRef.update({
+                                products: firebase.firestore.FieldValue.arrayUnion(wishlistProduct),
+                                updatedAt: new Date().toISOString()
+                            });
+                            isAdded = true;
+                        }
+                    } else {
+                        // Crear nueva wishlist
+                        await wishlistRef.set({
+                            userId: userId,
+                            products: [wishlistProduct],
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        });
+                        isAdded = true;
+                    }
+
+                    return isAdded;
+                    
+                } catch (error) {
+                    console.error('Error al modificar wishlist:', error);
+                    throw error;
+                }
+            }
+
+            // Función para actualizar el estado visual del botón de wishlist
+            async function updateWishlistButtonState(button, productId) {
+                try {
+                    const user = auth.currentUser;
+                    if (!user) {
+                        button.classList.remove('active');
+                        return;
+                    }
+
+                    const inWishlist = await isInWishlist(productId, user.uid);
+                    if (inWishlist) {
+                        button.classList.add('active');
+                        button.innerHTML = '<i class="fas fa-heart"></i>';
+                    } else {
+                        button.classList.remove('active');
+                        button.innerHTML = '<i class="far fa-heart"></i>';
+                    }
+                } catch (error) {
+                    console.error('Error actualizando estado del botón:', error);
                 }
             }
 
@@ -297,6 +426,9 @@
                 
                 card.innerHTML = `
                     <div class="product-image-container">
+                        <button class="wishlist-btn" data-id="${product.id}" data-collection="${collectionName}">
+                            <i class="far fa-heart"></i>
+                        </button>
                         <img src="${product.Imagenes?.[0] || DEFAULT_IMAGE}" 
                              alt="${product['Nombre Producto'] || 'Producto'}" 
                              class="product-image"
@@ -351,6 +483,64 @@
                     
                     addToCart(productData, collection);
                 });
+                
+                // Evento para wishlist
+                const wishlistBtn = card.querySelector('.wishlist-btn');
+                wishlistBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const button = e.target.closest('button');
+                    const productId = button.getAttribute('data-id');
+                    const collection = button.getAttribute('data-collection');
+                    
+                    try {
+                        // Obtener datos completos del producto
+                        const productData = {
+                            id: productId,
+                            'Nombre Producto': card.querySelector('.product-title').textContent,
+                            'Precio MXN': precioBase,
+                            'Precio Base': precioBase,
+                            'Descuento': descuento,
+                            'Imagenes': [card.querySelector('.product-image').src],
+                            'SKU': product.SKU || productId
+                        };
+                        
+                        const isAdded = await toggleWishlist(productData, collection);
+                        
+                        if (isAdded) {
+                            button.classList.add('active');
+                            button.innerHTML = '<i class="fas fa-heart"></i>';
+                            Swal.fire({
+                                title: '¡Añadido a lista de deseos!',
+                                text: 'El producto se ha agregado a tu lista de deseos',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            button.classList.remove('active');
+                            button.innerHTML = '<i class="far fa-heart"></i>';
+                            Swal.fire({
+                                title: 'Eliminado de lista de deseos',
+                                text: 'El producto se ha eliminado de tu lista de deseos',
+                                icon: 'info',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error al modificar wishlist:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo modificar la lista de deseos',
+                            icon: 'error',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+                
+                // Inicializar estado del botón de wishlist
+                updateWishlistButtonState(wishlistBtn, product.id);
                 
                 document.getElementById('products-container').appendChild(card);
             }
@@ -420,6 +610,122 @@
                 document.getElementById('categories-section').style.display = 'block';
                 document.getElementById('products-section').style.display = 'none';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // Búsqueda de productos
+            document.getElementById('search-input').addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                const searchTerm = e.target.value.trim();
+                
+                if (searchTerm.length < 2) {
+                    document.getElementById('search-results').style.display = 'none';
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    searchProducts(searchTerm);
+                }, 300);
+            });
+            
+            // Botón de búsqueda
+            document.getElementById('search-button').addEventListener('click', function() {
+                const searchTerm = document.getElementById('search-input').value.trim();
+                if (searchTerm) {
+                    searchProducts(searchTerm);
+                }
+            });
+            
+            // Búsqueda con Enter
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const searchTerm = e.target.value.trim();
+                    if (searchTerm) {
+                        searchProducts(searchTerm);
+                    }
+                }
+            });
+            
+            // Función de búsqueda
+            async function searchProducts(searchTerm) {
+                try {
+                    // Mostrar loader en resultados
+                    const resultsContainer = document.getElementById('search-results');
+                    resultsContainer.innerHTML = '<div class="loader-container"><div class="loader"></div><p>Buscando productos...</p></div>';
+                    resultsContainer.style.display = 'block';
+                    
+                    // Buscar en todas las categorías
+                    let allProducts = [];
+                    const categories = ['Camaras', 'Alarmas', 'Accesorios', 'Sensores']; // Ajustar según tus categorías
+                    
+                    for (const category of categories) {
+                        const collectionName = 'productos' + category;
+                        try {
+                            const querySnapshot = await db.collection(collectionName)
+                                .where('Nombre Producto', '>=', searchTerm)
+                                .where('Nombre Producto', '<=', searchTerm + '\uf8ff')
+                                .get();
+                            
+                            querySnapshot.forEach((doc) => {
+                                const product = doc.data();
+                                product.id = doc.id;
+                                product.category = category;
+                                product.collection = collectionName;
+                                allProducts.push(product);
+                            });
+                        } catch (error) {
+                            console.error(`Error buscando en ${category}:`, error);
+                        }
+                    }
+                    
+                    // Mostrar resultados
+                    resultsContainer.innerHTML = '';
+                    
+                    if (allProducts.length === 0) {
+                        resultsContainer.innerHTML = '<div class="no-results">No se encontraron productos</div>';
+                    } else {
+                        allProducts.slice(0, 10).forEach(product => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'search-result-item';
+                            resultItem.innerHTML = `
+                                <img src="${product.Imagenes?.[0] || DEFAULT_IMAGE}" 
+                                     alt="${product['Nombre Producto']}" 
+                                     class="search-result-image"
+                                     onerror="this.src='${DEFAULT_IMAGE}'">
+                                <div class="search-result-info">
+                                    <div class="search-result-name">${product['Nombre Producto']}</div>
+                                    <div class="search-result-category">${product.category}</div>
+                                </div>
+                                <div class="search-result-price">
+                                    $${Number(product['Precio MXN'] || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}
+                                </div>
+                            `;
+                            
+                            resultItem.addEventListener('click', () => {
+                                currentCategory = product.category;
+                                loadProducts(product.category);
+                                document.getElementById('search-results').style.display = 'none';
+                                document.getElementById('search-input').value = '';
+                            });
+                            
+                            resultsContainer.appendChild(resultItem);
+                        });
+                    }
+                    
+                } catch (error) {
+                    console.error('Error en búsqueda:', error);
+                    document.getElementById('search-results').innerHTML = 
+                        '<div class="no-results">Error al realizar la búsqueda</div>';
+                }
+            }
+            
+            // Ocultar resultados al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                const resultsContainer = document.getElementById('search-results');
+                const searchContainer = document.querySelector('.search-container');
+                
+                if (!searchContainer.contains(e.target)) {
+                    resultsContainer.style.display = 'none';
+                }
             });
             
             // Inicializar

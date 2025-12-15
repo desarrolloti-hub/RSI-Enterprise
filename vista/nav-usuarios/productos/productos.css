@@ -514,3 +514,46 @@ body {
     text-align: center;
     color: var(--text);
 }
+
+
+        /* Estilos para botón de wishlist en productos */
+        .wishlist-btn {
+            background-color: transparent;
+            color: #ff4757;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            padding: 8px;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 2;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .wishlist-btn:hover {
+            background-color: rgba(255, 71, 87, 0.1);
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.2);
+        }
+        
+        .wishlist-btn.active {
+            color: #ff4757;
+            background-color: rgba(255, 71, 87, 0.1);
+        }
+        
+        .product-image-container {
+            position: relative;
+        }
+        
+        .wishlist-btn i {
+            font-size: 1.3rem;
+        }
