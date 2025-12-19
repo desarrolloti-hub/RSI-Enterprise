@@ -86,13 +86,15 @@ body {
     gap: 25px;
 }
 
-/* 5. Tarjeta de Información del Ticket */
+/* 5. Tarjeta de Información del Ticket (MODIFICADO PARA EVITAR DESBORDE) */
 .ticket-info-card {
     background-color: var(--card-bg, #ffffff);
     padding: 25px;
     border-radius: 12px;
     box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.1));
     border: 1px solid rgba(108, 67, 224, 0.1);
+    /* Seguridad extra para el contenedor */
+    overflow: hidden; 
 }
 
 .ticket-info-card h3 {
@@ -108,6 +110,10 @@ body {
     margin: 8px 0;
     font-size: 1rem;
     color: var(--text-color, #444);
+    /* Corrección de desborde de texto */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word; 
 }
 
 .ticket-info-card strong {
@@ -314,93 +320,26 @@ body {
     }
 }
 
-@media (max-width: 480px) {
-    .ticket-info-card,
-    .finish-form {
-        padding: 15px;
-    }
-    
-    .header h1 {
-        font-size: 1.3rem;
-    }
-
-    .back-btn {
-        padding: 6px 10px;
-        font-size: 0.85rem;
-    }
-
-    .form-group label {
-        font-size: 0.95rem;
-    }
-
-    .form-control {
-        padding: 10px;
-        font-size: 0.95rem;
-    }
-    
-    .char-counter {
-        font-size: 0.8rem;
-    }
-    
-    .image-preview-item {
-        width: 80px;
-        height: 80px;
-    }
-}
-
-
-/* ======= REGLAS PARA CORREGIR SWEETALERT2 DE PAUSA (Final) ======= */
-
-/* 1. Centra el modal completamente en la pantalla y asegura que el contenedor no cause scroll vertical global */
+/* CORRECCIONES SWEETALERT Y SEGURIDAD FINAL */
 .swal2-container {
     align-items: center !important; 
     justify-content: center !important; 
-    overflow-y: auto !important; 
 }
 
-/* 2. Corrige el desplazamiento del contenido inyectado */
 .swal2-html-container {
-    /* CORRECCIÓN CLAVE para centrar el texto del textarea y el contador: */
     text-align: center !important; 
-    /* Ajustamos el padding para que el contenido use todo el ancho del modal */
-    padding: 1em 1.5em 1em 1.5em !important; 
-    box-sizing: border-box;
+    padding: 1em 1.5em !important; 
     width: 100%;
 }
 
-/* 3. Estilos específicos para los elementos inyectados en el modal de pausa */
-
-/* Alineación forzada para el texto de la etiqueta (Razón para poner en pausa) */
-/* La etiqueta debe ir a la izquierda, incluso si el contenedor HTML está centrado */
-.swal2-popup .swal2-label {
-    text-align: left !important;
-    width: 100%;
-    display: block;
-}
-
-/* El textarea debe ocupar el 100% del ancho, eliminar barras de scroll y centrar su TEXTO */
 .swal2-textarea {
     width: 100% !important; 
-    max-width: 100% !important;
-    box-sizing: border-box;
-    overflow: hidden !important; 
-    resize: none !important;
-    height: auto !important; 
-    /* CORRECCIÓN CLAVE: Centrar el texto dentro del textarea */
     text-align: center !important; 
+    overflow-wrap: break-word; /* Prevención en textareas */
 }
 
-/* 4. El contador de caracteres debe estar centrado debajo del textarea */
-.swal2-html-container .char-counter {
-    /* CORRECCIÓN CLAVE: Centrar el contador */
-    text-align: center !important; 
-    width: 100%;
-    padding: 0;
-    margin-top: 5px; 
-    white-space: nowrap; 
-    overflow: hidden;
-    box-sizing: border-box; 
-    display: block;
+/* REGLA DE ORO PARA CUALQUIER TEXTO LARGO DENTRO DE TARJETAS */
+.ticket-info-card *, .finish-form * {
+    max-width: 100%;
+    overflow-wrap: break-word;
 }
-
-/* ======================================================== */

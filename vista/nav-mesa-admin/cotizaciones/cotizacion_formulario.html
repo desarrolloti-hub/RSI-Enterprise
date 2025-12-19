@@ -256,7 +256,7 @@
         let currentUser = null;
         let isManualEntry = false;
         
-        // Variable CRUCIAL para controlar el cierre
+        // Variable CRUCIAL para controlar el cierre - CORREGIDA
         let formularioGuardadoExitosamente = false;
         
         // Constantes
@@ -352,7 +352,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Desactivar la protección del navegador antes de redirigir
-                    formularioGuardadaExitosamente = true; 
+                    formularioGuardadoExitosamente = true; // ← AQUÍ ESTABA EL ERROR
                     // Redirigir al listado de cotizaciones en lugar de cerrar
                     window.location.href = 'coti.html';
                 }
@@ -1249,7 +1249,7 @@
                 
                 // === PERMITIR CIERRE ===
                 // Aquí marcamos que ya se guardó, para que el beforeunload no moleste
-                formularioGuardadoExitosamente = true;
+                formularioGuardadoExitosamente = true; // ← CORREGIDO
 
                 // Redirigir al listado de cotizaciones
                 window.location.href = 'coti.html';
@@ -1306,7 +1306,7 @@
     </script>
     <script src="../js/navegacion-admin.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
-        <script src="../js/particulas.js"></script>
+    <script src="../js/particulas.js"></script>
 
 </body>
 </html>
