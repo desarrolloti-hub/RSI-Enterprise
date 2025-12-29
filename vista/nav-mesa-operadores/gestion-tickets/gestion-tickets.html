@@ -8,12 +8,19 @@
     <title>Tickets | RSI Enterprise</title>
     <link rel="stylesheet" href="gestion-tickets.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 CSS (AGREGADO) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.js"></script>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- SweetAlert2 JS (MOVIDO ANTES DE LOS SCRIPTS) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
         // Configuración de Firebase global (v8)
@@ -40,7 +47,7 @@
     <div class="main-content">
         <div class="crud-header">
             <center>
-            <h1 class="page-title">Mis Tickets</h1>
+                <h1 class="page-title">Mis Tickets</h1>
             </center>
 
             <button class="filter-btn" id="filterBtn">
@@ -68,8 +75,14 @@
         </div>
     </div>
     
+    <!-- Modal para imágenes (NUEVO) -->
+    <div id="imageModal" class="modal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);">
+        <span class="close-modal" style="position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 10000;">&times;</span>
+        <img class="modal-content" id="modalImage" style="margin: auto; display: block; max-width: 90%; max-height: 90%; position: relative; top: 50%; transform: translateY(-50%);">
+    </div>
+    
     <script type="module">
-        // Esquemas de datos (Se mantienen)
+        // Esquemas de datos
         const DataSchemas = {
             EVIDENCIA: {
                 ticketId: '',
@@ -79,11 +92,11 @@
                 imagenes: [],
                 fechaCreacion: null,
                 fechaActualizacion: null,
-                estado: 'pendiente' // pendiente | completado
+                estado: 'pendiente'
             },
             TICKET: {
-                evidenciasCompletadas: [], // array de colaboradorIds que han completado
-                colaboradoresAceptados: [], // array de colaboradorIds que han aceptado
+                evidenciasCompletadas: [],
+                colaboradoresAceptados: [],
                 todosCompletados: false
             },
             PDF: {
@@ -92,10 +105,9 @@
                 fechaCreacion: null,
                 colaboradorId: '',
                 colaboradorNombre: '',
-                contenido: '', // base64 del PDF
+                contenido: '',
                 tamaño: 0
             },
-            // ESQUEMA HISTORIAL
             HISTORIAL: {
                 ticketId: '',
                 fechaCambio: null,
@@ -107,13 +119,13 @@
             }
         };
 
-        // Clase para manejar el estado del ticket (Se mantienen y se añade filtro de mes)
+        // Clase para manejar el estado del ticket
         class TicketManager {
             constructor() {
                 this.currentTicketId = null;
                 this.currentTicketStatus = null;
-                this.showFinalized = false; // Estado del filtro
-                this.selectedMonth = null; // Mes seleccionado para el filtro de finalizados
+                this.showFinalized = false;
+                this.selectedMonth = null;
             }
 
             setCurrentTicket(ticketId, status) {
@@ -136,10 +148,9 @@
             }
         }
 
-        // Instancia única del manager
         const ticketManager = new TicketManager();
 
-        // Importar módulos necesarios de Firebase v9 (SOLO FIRESTORE)
+        // Importar módulos de Firebase v9
         import { 
             initializeApp 
         } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
@@ -159,8 +170,6 @@
             onSnapshot 
         } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-
-        // Configuración de Firebase (v9 - Mismo que v8)
         const firebaseConfig = {
             apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
             authDomain: "rsienterprise.firebaseapp.com",
@@ -172,25 +181,26 @@
             measurementId: "G-38F2DBG9HE"
         };
 
-        // Inicializar Firebase (Solo Firestore v9)
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Elementos del DOM (Ajustados)
+        // Elementos del DOM
         const DOM = {
             ticketsContainer: document.getElementById('ticketsContainer'),
             filterBtn: document.getElementById('filterBtn'),
             filterText: document.getElementById('filterText'),
-            // NUEVOS DOM:
             finalizedFilters: document.getElementById('finalizedFilters'),
             monthFilter: document.getElementById('monthFilter'),
             applyMonthFilter: document.getElementById('applyMonthFilter'),
+            imageModal: document.getElementById('imageModal'),
+            modalImage: document.getElementById('modalImage'),
+            closeModal: document.querySelector('.close-modal')
         };
 
-        // Estado de la aplicación (Se mantiene)
+        // Estado de la aplicación
         const AppState = {
             userData: null,
-            lastCheckedTicketId : null,
+            lastCheckedTicketId: null,
             ticketCheckInterval: null,
             notificationCheckInterval: 10000,
             allTickets: [],
@@ -198,11 +208,9 @@
         };
 
         window.AppState = AppState;
-        document.dispatchEvent(new Event('AppStateReady'));
 
-        // Generador de PDF (Funcionalidad Completa mantenida)
+        // Generador de PDF (mantenido)
         class PDFGenerator {
-            // ... (MANTENER LA CLASE PDFGenerator COMPLETA) ...
             constructor() {
                 this.jsPDF = window.jspdf.jsPDF;
             }
@@ -293,8 +301,7 @@
                 yPosition += 10;
 
                 const basicInfo = [
-                    // Se mantiene el shortId en el PDF para consistencia, el ID completo se prioriza en la UI del modal
-                    ['ID del Ticket:', `#${shortId.toUpperCase()}`], 
+                    ['ID del Ticket:', `#${shortId.toUpperCase()}`],
                     ['Título:', ticketData.titulo || 'Sin título'],
                     ['Estado:', (ticketData.estado || 'desconocido').replace('_', ' ').toUpperCase()],
                     ['Prioridad:', (ticketData.prioridad || 'media').toUpperCase()],
@@ -382,8 +389,8 @@
                     pdf.text(`Imágenes de evidencia (${evidencia.imagenes.length}):`, 20, yPosition);
                     yPosition += 10;
 
-                    const imageWidth = 73; // 7.3 cm
-                    const imageHeight = 100; // 10 cm
+                    const imageWidth = 73;
+                    const imageHeight = 100;
                     const imagesPerRow = 2;
                     let imageCount = 0;
 
@@ -426,7 +433,7 @@
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d');
                             
-                            canvas.width = width * 4; // Resolución más alta
+                            canvas.width = width * 4;
                             canvas.height = height * 4;
                             
                             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -540,23 +547,25 @@
             }
         }
 
-        // Instancia del generador de PDF
         const pdfGenerator = new PDFGenerator();
 
-        // Funciones de utilidad (Optimizadas y Corregidas)
+        // Funciones de utilidad (CORREGIDAS)
         const Utils = {
             showLoading: (message = 'Cargando...') => {
-                Swal.fire({
+                return Swal.fire({
                     title: message,
                     allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
+                    didOpen: () => Swal.showLoading(),
+                    timer: 0
                 });
             },
             
-            hideLoading: () => Swal.close(),
+            hideLoading: () => {
+                Swal.close();
+            },
             
             showError: (message, title = 'Error') => {
-                Swal.fire({
+                return Swal.fire({
                     icon: 'error',
                     title: title,
                     text: message,
@@ -603,12 +612,11 @@
 
                 const creationTime = creationTimestamp.toDate().getTime(); 
                 const now = Date.now();
-                const maxDuration = 5 * 24 * 60 * 60 * 1000; // 5 días en milisegundos
+                const maxDuration = 5 * 24 * 60 * 60 * 1000;
                 
-                // SI ESTÁ EN PAUSA, AÑADIR 3 DÍAS ADICIONALES
                 let additionalTime = 0;
                 if (currentStatus === 'en_pausa') {
-                    additionalTime = 3 * 24 * 60 * 60 * 1000; // 3 días adicionales
+                    additionalTime = 3 * 24 * 60 * 60 * 1000;
                 }
                 
                 const abandonmentTime = creationTime + maxDuration + additionalTime;
@@ -638,7 +646,7 @@
                         return 'badge-success';
                     case 'abandono_de_actividades': 
                         return 'badge-danger';
-                    case 'en_pausa': // CAMBIADO: de en_proceso a en_pausa
+                    case 'en_pausa':
                         return 'badge-warning';
                     case 'en_camino': 
                         return 'badge-primary'; 
@@ -647,7 +655,7 @@
                         return 'badge-danger';
                     case 'aceptado': 
                         return 'badge-info';
-                    case 'en_proceso': // Estado separado para trabajo activo
+                    case 'en_proceso':
                         return 'badge-primary';
                     default: 
                         return 'badge-info';
@@ -662,7 +670,7 @@
                         return 'fa-check-circle';
                     case 'abandono_de_actividades': 
                         return 'fa-exclamation-triangle';
-                    case 'en_pausa': // CAMBIADO: icono de pausa
+                    case 'en_pausa':
                         return 'fa-pause-circle'; 
                     case 'en_camino': 
                         return 'fa-truck';
@@ -673,7 +681,7 @@
                         return 'fa-check';
                     case 'cancelado': 
                         return 'fa-times-circle'; 
-                    case 'en_proceso': // Icono para trabajo activo
+                    case 'en_proceso':
                         return 'fa-play-circle';
                     default: 
                         return 'fa-question-circle';
@@ -745,7 +753,7 @@
             }
         };
 
-        // Controlador de Tickets 
+        // Controlador de Tickets (CORREGIDO)
         const TicketsController = {
             processTickets: (querySnapshot) => {
                 const tickets = [];
@@ -770,10 +778,8 @@
                 let filteredTickets;
                 
                 if (showFinalized) {
-                    // 1. Filtrar por estados finalizados
                     filteredTickets = tickets.filter(ticket => finalizedStates.includes(ticket.estado));
 
-                    // 2. Filtrar por mes (si está seleccionado)
                     if (selectedMonth) {
                         const [targetYear, targetMonth] = selectedMonth.split('-');
                         filteredTickets = filteredTickets.filter(ticket => {
@@ -787,28 +793,24 @@
                         });
                     }
                     
-                    // 3. Ordenar por fechaFinalizacion (más reciente primero)
                     filteredTickets.sort((a, b) => {
                         const dateA = (a.fechaFinalizacion && typeof a.fechaFinalizacion.toDate === 'function') ? a.fechaFinalizacion.toDate().getTime() : 0;
                         const dateB = (b.fechaFinalizacion && typeof b.fechaFinalizacion.toDate === 'function') ? b.fechaFinalizacion.toDate().getTime() : 0;
-                        return dateB - dateA; // Orden descendente (más reciente primero)
+                        return dateB - dateA;
                     });
 
                 } else {
-                    // Mostrar tickets activos
                     filteredTickets = tickets.filter(ticket => !finalizedStates.includes(ticket.estado));
                 }
 
                 return filteredTickets;
             },
 
-            // CORREGIDO: Usar el ID completo en el encabezado de la tarjeta
             renderTickets: (tickets) => {
                 try {
                     const filteredTickets = TicketsController.filterTickets(tickets, ticketManager.showFinalized, ticketManager.selectedMonth);
                     DOM.ticketsContainer.innerHTML = '';
                     
-                    // Lógica para mostrar/ocultar los filtros de finalizados
                     if (ticketManager.showFinalized) {
                         TicketsController.populateMonthFilter(tickets);
                         DOM.finalizedFilters.style.display = 'block';
@@ -835,7 +837,6 @@
                     filteredTickets.forEach(ticket => {
                         try {
                             const ticketId = ticket.id || 'ID-NO-DISPONIBLE';
-                            // const shortId = ticketId.substring(0, 8); // Ya no se usa para el encabezado
                             const estado = ticket.estado || 'desconocido';
                             const titulo = ticket.titulo || 'Sin título';
                             const descripcion = ticket.descripcionActividades || 'Sin descripción';
@@ -910,7 +911,7 @@
                 finalizedTickets.forEach(ticket => {
                     const date = ticket.fechaFinalizacion.toDate();
                     const year = date.getFullYear();
-                    const month = date.getMonth(); 
+                    const month = date.getMonth();
                     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
                     const monthName = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
 
@@ -919,7 +920,7 @@
                     }
                 });
 
-                const sortedMonths = Array.from(monthsMap.keys()).sort().reverse(); 
+                const sortedMonths = Array.from(monthsMap.keys()).sort().reverse();
 
                 let optionsHTML = '<option value="">Todos los Meses</option>';
                 sortedMonths.forEach(key => {
@@ -934,10 +935,9 @@
                 }
             },
 
-
             async loadUserTickets() {
                 try {
-                    Utils.showLoading('Cargando tickets...');
+                    const loadingSwal = Utils.showLoading('Cargando tickets...');
                     
                     const user = firebase.auth().currentUser;
                     if (!user) {
@@ -956,8 +956,8 @@
                         AppState.userData = doc.data();
                         AppState.userData.colaboradorId = doc.id;
                         AppState.userData.nombreCompleto = doc.data()['NOMBRE'];
-                        AppState.userData.NOMBRE = doc.data()['NOMBRE']; 
-                        AppState.userData.ÁREA = doc.data()['ÁREA']; 
+                        AppState.userData.NOMBRE = doc.data()['NOMBRE'];
+                        AppState.userData.ÁREA = doc.data()['ÁREA'];
                     });
                     
                     const ticketsRef = collection(db, 'ticketsmesa');
@@ -1020,9 +1020,7 @@
                     }
                     
                     const tickets = this.processTickets(querySnapshot);
-                    
                     const updatedTickets = await TicketsController.checkAndFlagAbandonedTickets(tickets);
-
                     const ticketsEnriquecidos = await this.enriquecerTicketsConColaborador(updatedTickets);
                     
                     AppState.allTickets = ticketsEnriquecidos;
@@ -1054,8 +1052,7 @@
                 const now = Date.now();
                 const fiveDaysInMillis = 5 * 24 * 60 * 60 * 1000;
                 const ticketsToUpdate = [];
-                // Se incluye en_pausa aquí para que el contador no se dispare durante la pausa de 3 días.
-                const nonActiveStatuses = ['finalizado', 'cerrado', 'cancelado', 'abandono_de_actividades', 'completado', 'en_pausa']; // CAMBIADO: en_proceso -> en_pausa
+                const nonActiveStatuses = ['finalizado', 'cerrado', 'cancelado', 'abandono_de_actividades', 'completado', 'en_pausa'];
 
                 for (const ticket of tickets) {
                     const status = ticket.estado;
@@ -1078,7 +1075,7 @@
                         await updateDoc(ticketRef, {
                             estado: 'abandono_de_actividades',
                             fechaActualizacion: serverTimestamp(),
-                            fechaFinalizacion: serverTimestamp() 
+                            fechaFinalizacion: serverTimestamp()
                         });
 
                         await TicketsController.recordHistory(
@@ -1091,7 +1088,7 @@
                         );
 
                         ticket.estado = 'abandono_de_actividades';
-                        ticket.fechaFinalizacion = serverTimestamp(); 
+                        ticket.fechaFinalizacion = serverTimestamp();
                     });
 
                     await Promise.all(updatePromises);
@@ -1106,7 +1103,6 @@
 
                 return tickets;
             },
-
 
             async enriquecerTicketsConColaborador(tickets) {
                 if (!tickets || tickets.length === 0 || !AppState.userData) return tickets;
@@ -1124,10 +1120,9 @@
                 }));
             },
 
-            // CORREGIDO: Muestra el ID completo en el modal
             async showTicketDetails(ticketId) {
                 try {
-                    Utils.showLoading('Cargando detalles...');
+                    const loadingSwal = Utils.showLoading('Cargando detalles...');
                     
                     const ticketRef = doc(db, 'ticketsmesa', ticketId);
                     const ticketSnap = await getDoc(ticketRef);
@@ -1137,8 +1132,7 @@
                     }
                     
                     const data = ticketSnap.data();
-                    // Usamos la cadena completa como ticketId y el inicio para shortId si es necesario
-                    const shortId = ticketId.substring(0, 8); 
+                    const shortId = ticketId.substring(0, 8);
                     
                     ticketManager.setCurrentTicket(ticketId, data.estado);
                     
@@ -1175,9 +1169,8 @@
                             }
                         });
                     } catch (error) {
-                        console.warn("Advertencia: No se pudo cargar el historial de aceptación (indice requerido):", error);
+                        console.warn("Advertencia: No se pudo cargar el historial de aceptación:", error);
                     }
-
 
                     const evidenciasRef = collection(db, 'evidenciatickets');
                     const q = query(evidenciasRef, where("ticketId", "==", ticketId));
@@ -1188,54 +1181,37 @@
                         evidencias.push(doc.data());
                     });
                     
-                    // Botones de acción (recreados dinámicamente)
-                    const finishBtn = document.createElement('a');
-                    finishBtn.href = `../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}`;
-                    finishBtn.className = 'action-btn finish-btn';
-                    finishBtn.style.display = 'none';
-                    finishBtn.innerHTML = '<i class="fas fa-check-circle"></i> Finalizar Ticket';
-                    
-                    const editBtn = document.createElement('button');
-                    editBtn.type = 'button';
-                    editBtn.className = 'action-btn edit-btn';
-                    editBtn.style.display = 'none';
-                    editBtn.innerHTML = '<i class="fas fa-edit"></i> Modificar Finalización';
-
-
-                    const userUid = AppState.userData.colaboradorId; 
-                    
-                    const userEvidence = evidencias.find(
-                        ev => ev.colaboradorId === userUid
-                    );
+                    const userUid = AppState.userData.colaboradorId;
+                    const userEvidence = evidencias.find(ev => ev.colaboradorId === userUid);
                     
                     const ticketEstaFinalizado = ['finalizado', 'cerrado', 'cancelado', 'completado', 'abandono_de_actividades'].includes(data.estado);
                     const usuarioYaCompleto = !!userEvidence;
                     const isPendingAcceptance = data.estado === 'pendiente_de_aceptación';
                     const isAccepted = data.colaboradoresAceptados && data.colaboradoresAceptados.includes(userUid);
 
-                    // Lógica para mostrar/ocultar botones de finalización/edición
-                    if (ticketEstaFinalizado || isPendingAcceptance || !isAccepted) {
-                        finishBtn.style.display = 'none'; 
-                        editBtn.style.display = 'none';
-                    } else if (usuarioYaCompleto) {
-                        finishBtn.style.display = 'none';
-                        editBtn.style.display = 'inline-flex';
-                    } else {
-                        finishBtn.style.display = 'inline-flex';
-                        editBtn.style.display = 'none';
-                    }
-                    
-                    if (editBtn && usuarioYaCompleto) {
-                        editBtn.onclick = () => {
-                            window.location.href = `../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}&edit=true`;
-                        };
-                    }
-                    
+                    let finishBtnHTML = '';
+                    let editBtnHTML = '';
                     let acceptBtnHTML = '';
-                    const isColaborator = data.colaboradores && data.colaboradores.includes(userUid);
+
+                    // Lógica para botones
+                    if (ticketEstaFinalizado || isPendingAcceptance || !isAccepted) {
+                        // No mostrar botones
+                    } else if (usuarioYaCompleto) {
+                        editBtnHTML = `
+                            <button class="action-btn edit-btn" id="editTicketBtn" data-id="${ticketId}" style="margin-right: 10px;">
+                                <i class="fas fa-edit"></i> Modificar Finalización
+                            </button>
+                        `;
+                    } else {
+                        finishBtnHTML = `
+                            <a href="../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}" class="action-btn finish-btn" style="margin-right: 10px;">
+                                <i class="fas fa-check-circle"></i> Finalizar Ticket
+                            </a>
+                        `;
+                    }
                     
-                    // Botón de aceptar para colaboradores en tickets pendientes
-                    if (isColaborator) {
+                    // Botón de aceptar para colaboradores
+                    if (data.colaboradores && data.colaboradores.includes(userUid)) {
                         if (isPendingAcceptance || data.estado === 'pendiente') {
                             if (!isAccepted) {
                                 acceptBtnHTML = `
@@ -1252,7 +1228,6 @@
                             }
                         }
                     }
-
                     
                     let collaboratorsAcceptanceHTML = '';
                     if (data.colaboradores && data.colaboradores.length > 0) {
@@ -1283,7 +1258,6 @@
                             `;
                         }).join('');
 
-
                         collaboratorsAcceptanceHTML = `
                             <div class="detail-section">
                                 <strong>Estado de Aceptación Individual (${data.colaboradoresAceptados ? data.colaboradoresAceptados.length : 0}/${data.colaboradores.length})</strong>
@@ -1294,12 +1268,10 @@
                         `;
                     }
                     
-                    // CORREGIDO: Se pasa el estado actual para el cálculo del tiempo de abandono
                     let abandonmentTimerHTML = '';
                     const abandonmentTime = Utils.calculateAbandonmentTime(data.fechaCreacion, data.estado);
 
                     if (data.estado !== 'abandono_de_actividades' && data.estado !== 'cerrado' && data.estado !== 'finalizado' && !abandonmentTime.expired) {
-                        // Indicar si está en pausa con tiempo adicional
                         const pauseText = data.estado === 'en_pausa' ? 
                             '<div style="color: #fd7e14; font-weight: bold; margin-bottom: 10px;"><i class="fas fa-info-circle"></i> TICKET EN PAUSA: Se añadieron 3 días adicionales al tiempo de abandono</div>' : '';
                         
@@ -1327,7 +1299,6 @@
                     }
                     
                     let pauseReasonHTML = '';
-                    // CORREGIDO: Cambiado a 'en_pausa'
                     if (data.estado === 'en_pausa' && data.pauseComment) {
                         pauseReasonHTML = `
                             <div class="detail-section" style="border-left: 5px solid #fd7e14; padding-left: 10px; background-color: rgba(253, 126, 20, 0.1);">
@@ -1355,10 +1326,9 @@
                                                     ${completado ? 'Completado' : 'Pendiente'}
                                                 </span>
                                                 ${completado ? `
-                                                    <button class="view-evidence-btn" onclick="TicketsController.showImageModal('${colab.id}', '${colab.nombre}', '${ticketId}')" data-colab-id="${colab.id}">
+                                                    <button class="view-evidence-btn" data-colab-id="${colab.id}" data-ticket-id="${ticketId}" data-colab-nombre="${colab.nombre}">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    
                                                 ` : ''}
                                             </div>
                                         `;
@@ -1368,15 +1338,13 @@
                         `;
                     }
                     
-                    // --- HTML FINAL DEL MODAL ---
-                    // CORRECCIÓN APLICADA AQUÍ: Se usa el ID de la base de datos completo en el título del modal.
-                    const modalTitle = `Detalles del Ticket #${ticketId}`; 
+                    // HTML del modal
                     const modalHtmlContent = `
-                        <div id="detailContentContainer" style="text-align: left;">
+                        <div id="detailContentContainer" style="text-align: left; max-height: 70vh; overflow-y: auto;">
                             
                             <div class="detail-section">
                                 <strong>Información Básica</strong>
-                                <p style="font-size: 0.8em;"><span class="detail-label" style="font-weight: bold; color: #aaa;">ID Completo (DB):</span> ${ticketId}</p> 
+                                <p style="font-size: 0.8em;"><span class="detail-label" style="font-weight: bold; color: #aaa;">ID Completo (DB):</span> ${ticketId}</p>
                                 <p><span class="detail-label">Título:</span> ${data.titulo}</p>
                                 <p><span class="detail-label">Estado:</span> 
                                     <span class="badge ${Utils.getBadgeClass(data.estado)}">
@@ -1384,7 +1352,7 @@
                                     </span>
                                 </p>
                                 ${abandonmentTimerHTML}
-                                ${pauseReasonHTML} 
+                                ${pauseReasonHTML}
                                 <p><span class="detail-label">Prioridad:</span> 
                                     <span class="badge badge-primary">
                                         <span class="priority-indicator ${Utils.getPriorityClass(data.prioridad)}"></span> 
@@ -1411,13 +1379,12 @@
                                 <div class="description-text">${data.descripcionActividades}</div>
                             </div>
                             
-                            ${data.servicio || data.proyecto || data.ordenServicio || data.descripcionActividades ? `
+                            ${data.servicio || data.proyecto || data.ordenServicio ? `
                                 <div class="detail-section">
                                     <strong>Información Adicional</strong>
                                     ${data.servicio ? `<p><span class="detail-label">Servicio:</span> ${data.servicio}</p>` : ''}
                                     ${data.proyecto ? `<p><span class="detail-label">Proyecto:</span> ${data.proyecto}</p>` : ''}
                                     ${data.ordenServicio ? `<p><span class="detail-label">Orden de Servicio:</span> ${data.ordenServicio}</p>` : ''}
-                                    ${data.descripcionActividades ? `<p><span class="detail-label">Actividades:</span> ${data.descripcionActividades}</p>` : ''}
                                 </div>
                             ` : ''}
 
@@ -1446,117 +1413,179 @@
                                     <strong>Mis Evidencias</strong>
                                     <div class="description-text">${userEvidence.descripcion}</div>
                                     <div class="evidence-grid">
-                                        ${userEvidence.imagenes.map(img => `
-                                            <img src="${img}" class="evidence-img clickable-image" style="cursor: pointer; max-height: 150px;" onclick="TicketsController.showImageModal('${img}')">
+                                        ${userEvidence.imagenes.map((img, index) => `
+                                            <img src="${img}" class="evidence-img clickable-image" 
+                                                 style="cursor: pointer; max-height: 150px; margin: 5px;" 
+                                                 onclick="TicketsController.showImageModal('${img}')">
                                         `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
                             
                             <div class="detail-section" style="text-align: center;">
-                                <button class="action-btn edit-btn" onclick="TicketsController.showTicketHistory('${ticketId}')">
+                                <button class="action-btn history-btn" id="showHistoryBtn" data-ticket-id="${ticketId}" style="margin-top: 15px;">
                                     <i class="fas fa-history"></i> Ver Historial de Cambios
                                 </button>
                             </div>
                         </div>
                     `;
 
-                    // --- CONFIGURACIÓN DE BOTONES DE SWEETALERT ---
-                    const swalButtons = [];
+                    Utils.hideLoading();
                     
-                    // Botón de aceptar/aceptado
-                    if (acceptBtnHTML) {
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = acceptBtnHTML.trim();
-                        swalButtons.push(tempDiv.firstChild);
-                    }
-                    
-                    // Botón de editar/finalizar
-                    if (finishBtn.style.display !== 'none') {
-                        swalButtons.push(finishBtn);
-                    }
-                    if (editBtn.style.display !== 'none') {
-                        swalButtons.push(editBtn);
-                    }
-
-                    // Botón de CERRAR (Global para el modal de detalles)
-                    swalButtons.push(document.createElement('button'));
-                    swalButtons[swalButtons.length - 1].className = 'swal2-cancel swal2-styled';
-                    swalButtons[swalButtons.length - 1].textContent = 'Cerrar';
-                    swalButtons[swalButtons.length - 1].onclick = () => Swal.close();
-
-
-                    
-                    // Mostrar el modal (SweetAlert2)
-                    await Swal.fire({
-                        title: modalTitle,
+                    const detailModal = await Swal.fire({
+                        title: `Detalles del Ticket #${shortId.toUpperCase()}`,
                         html: modalHtmlContent,
                         width: '90%',
                         showCancelButton: false,
                         showConfirmButton: false,
-                        showCloseButton: true, 
-                        footer: swalButtons.map(btn => btn.outerHTML).join(''),
+                        showCloseButton: true,
+                        footer: `
+                            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                                ${acceptBtnHTML}
+                                ${finishBtnHTML}
+                                ${editBtnHTML}
+                                <button class="swal2-cancel swal2-styled" onclick="Swal.close()">Cerrar</button>
+                            </div>
+                        `,
                         didOpen: () => {
-                            const footer = Swal.getFooter();
-
-                            // Re-attach listeners para Aceptar, Finalizar, Editar
-                            if (acceptBtnHTML) {
-                                const acceptElement = footer.querySelector('#acceptTicketBtn');
-                                if (acceptElement) {
-                                    acceptElement.addEventListener('click', () => TicketsController.acceptTicket(ticketId));
-                                }
-                            }
+                            const container = Swal.getHtmlContainer();
                             
-                            const finalizaBtn = footer.querySelector('.finish-btn');
-                            if (finalizaBtn) {
-                                finalizaBtn.addEventListener('click', (e) => {
-                                    e.preventDefault();
-                                    window.location.href = finalizaBtn.href;
+                            // Agregar event listeners a los botones dentro del modal
+                            if (container) {
+                                // Botón de aceptar
+                                const acceptBtn = container.querySelector('#acceptTicketBtn');
+                                if (acceptBtn) {
+                                    acceptBtn.addEventListener('click', () => TicketsController.acceptTicket(ticketId));
+                                }
+                                
+                                // Botón de editar
+                                const editBtn = container.querySelector('#editTicketBtn');
+                                if (editBtn) {
+                                    editBtn.addEventListener('click', () => {
+                                        window.location.href = `../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}&edit=true`;
+                                    });
+                                }
+                                
+                                // Botón de historial
+                                const historyBtn = container.querySelector('#showHistoryBtn');
+                                if (historyBtn) {
+                                    historyBtn.addEventListener('click', () => {
+                                        TicketsController.showTicketHistory(ticketId);
+                                    });
+                                }
+                                
+                                // Botones de ver evidencias
+                                const viewEvidenceBtns = container.querySelectorAll('.view-evidence-btn');
+                                viewEvidenceBtns.forEach(btn => {
+                                    btn.addEventListener('click', (e) => {
+                                        const colabId = btn.getAttribute('data-colab-id');
+                                        const ticketId = btn.getAttribute('data-ticket-id');
+                                        const colabNombre = btn.getAttribute('data-colab-nombre');
+                                        TicketsController.showColabEvidenceModal(colabId, colabNombre, ticketId);
+                                    });
                                 });
-                            }
-                            const editaBtn = footer.querySelector('.edit-btn');
-                            if (editaBtn && editaBtn.tagName === 'BUTTON') {
-                                editaBtn.addEventListener('click', () => {
-                                    window.location.href = `../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}&edit=true`;
+                                
+                                // Imágenes clickeables
+                                const clickableImages = container.querySelectorAll('.clickable-image');
+                                clickableImages.forEach(img => {
+                                    img.addEventListener('click', (e) => {
+                                        TicketsController.showImageModal(e.target.src);
+                                    });
                                 });
-                            }
-
-                            const cerrarBtn = footer.querySelector('.swal2-cancel');
-                            if (cerrarBtn) {
-                                cerrarBtn.addEventListener('click', () => Swal.close());
                             }
                         }
                     });
                     
                 } catch (error) {
                     console.error("Error mostrando detalles:", error);
-                    Utils.showError("No se pudieron cargar los detalles del ticket: " + error.message);
-                } finally {
                     Utils.hideLoading();
+                    Utils.showError("No se pudieron cargar los detalles del ticket: " + error.message);
                 }
             },
 
-            async showImageModal(imageSrc) {
-                Swal.fire({
-                    imageUrl: imageSrc,
-                    imageAlt: 'Evidencia en tamaño completo',
-                    background: '#1e1e1e', 
-                    padding: '1em',
-                    showConfirmButton: false,
-                    showCloseButton: true, 
-                    width: 'auto',
+            // FUNCIÓN CORREGIDA PARA MOSTRAR IMÁGENES
+            showImageModal(imageSrc) {
+                // Usar nuestro modal personalizado en lugar de SweetAlert2 para imágenes
+                DOM.modalImage.src = imageSrc;
+                DOM.imageModal.style.display = 'block';
+                
+                // Cerrar modal al hacer clic en la X
+                DOM.closeModal.onclick = () => {
+                    DOM.imageModal.style.display = 'none';
+                };
+                
+                // Cerrar modal al hacer clic fuera de la imagen
+                DOM.imageModal.onclick = (e) => {
+                    if (e.target === DOM.imageModal) {
+                        DOM.imageModal.style.display = 'none';
+                    }
+                };
+                
+                // Cerrar con tecla ESC
+                document.addEventListener('keydown', function handleEsc(e) {
+                    if (e.key === 'Escape' && DOM.imageModal.style.display === 'block') {
+                        DOM.imageModal.style.display = 'none';
+                        document.removeEventListener('keydown', handleEsc);
+                    }
                 });
             },
-            
+
+            async showColabEvidenceModal(colabId, colabNombre, ticketId) {
+                try {
+                    Utils.showLoading('Cargando evidencias...');
+                    
+                    const evidenciasRef = collection(db, 'evidenciatickets');
+                    const q = query(evidenciasRef, 
+                        where("ticketId", "==", ticketId),
+                        where("colaboradorId", "==", colabId)
+                    );
+                    
+                    const evidenciasSnap = await getDocs(q);
+                    
+                    let evidenciasHTML = '';
+                    if (!evidenciasSnap.empty) {
+                        const evidenciaData = evidenciasSnap.docs[0].data();
+                        
+                        evidenciasHTML = `
+                            <div style="text-align: left;">
+                                <h4>Evidencias de ${colabNombre}</h4>
+                                <p><strong>Descripción:</strong> ${evidenciaData.descripcion || 'Sin descripción'}</p>
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                                    ${evidenciaData.imagenes.map((img, index) => `
+                                        <img src="${img}" 
+                                             style="max-width: 200px; max-height: 150px; cursor: pointer; border-radius: 5px;"
+                                             onclick="TicketsController.showImageModal('${img}')"
+                                             alt="Evidencia ${index + 1}">
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        evidenciasHTML = `<p>No se encontraron evidencias para este colaborador.</p>`;
+                    }
+                    
+                    Utils.hideLoading();
+                    
+                    Swal.fire({
+                        title: `Evidencias de ${colabNombre}`,
+                        html: evidenciasHTML,
+                        width: '80%',
+                        confirmButtonText: 'Cerrar'
+                    });
+                    
+                } catch (error) {
+                    console.error("Error mostrando evidencias:", error);
+                    Utils.hideLoading();
+                    Utils.showError("No se pudieron cargar las evidencias del colaborador.");
+                }
+            },
+
             async showTicketHistory(ticketId) {
                 try {
-                    Utils.showLoading('Cargando historial...');
+                    const loadingSwal = Utils.showLoading('Cargando historial...');
                     
                     const historyRef = collection(db, 'historialTicket');
-                    const q = query(
-                        historyRef,
-                        where("ticketId", "==", ticketId)
-                    );
+                    const q = query(historyRef, where("ticketId", "==", ticketId));
                     const historySnap = await getDocs(q);
                     
                     let historyDataArray = [];
@@ -1568,77 +1597,115 @@
                         try {
                             const dateA = (a.fechaCambio && typeof a.fechaCambio.toMillis === 'function') ? a.fechaCambio.toMillis() : 0;
                             const dateB = (b.fechaCambio && typeof b.fechaCambio.toMillis === 'function') ? b.fechaCambio.toMillis() : 0;
-                            return dateB - dateA; 
+                            return dateB - dateA;
                         } catch (e) {
                             return 0;
                         }
                     });
 
-                    
                     let historyHTML = `
                         <style>
-                            .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-                            .history-table th, .history-table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-                            .history-table th { background-color: #f2f2f2; color: #333; font-weight: bold; }
-                            .status-badge { padding: 4px 8px; border-radius: 12px; font-weight: bold; color: white; white-space: nowrap; }
-                            .status-aceptado, .status-completado { background-color: #17a2b8; }
-                            .status-pendiente_de_aceptación, .status-pendiente { background-color: #ffc107; color: #333; }
-                            .status-en_pausa { background-color: #fd7e14; } <!-- CAMBIADO -->
-                            .status-en_camino { background-color: #007bff; }
-                            .status-abandono_de_actividades { background-color: #dc3545; } 
-                            .status-cerrado, .status-finalizado { background-color: #28a745; }
-                            .status-cancelado { background-color: #dc3545; }
-                            .status-en_proceso { background-color: #17a2b8; } <!-- NUEVO -->
-                            .history-table td:nth-child(2) span,
-                            .history-table td:nth-child(3) span { text-transform: capitalize; }
+                            .history-table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin-top: 15px; 
+                                font-size: 0.9em; 
+                                background: white;
+                            }
+                            .history-table th, .history-table td { 
+                                padding: 12px 8px; 
+                                text-align: left; 
+                                border-bottom: 1px solid #dee2e6; 
+                            }
+                            .history-table th { 
+                                background-color: #343a40; 
+                                color: white; 
+                                font-weight: bold; 
+                                position: sticky;
+                                top: 0;
+                            }
+                            .history-table tr:hover { 
+                                background-color: #f8f9fa; 
+                            }
+                            .status-badge { 
+                                padding: 4px 8px; 
+                                border-radius: 12px; 
+                                font-weight: bold; 
+                                color: white; 
+                                white-space: nowrap; 
+                                display: inline-block;
+                                font-size: 0.85em;
+                            }
+                            .status-aceptado, .status-completado, .status-en_proceso { 
+                                background-color: #17a2b8; 
+                            }
+                            .status-pendiente_de_aceptación, .status-pendiente { 
+                                background-color: #ffc107; 
+                                color: #333; 
+                            }
+                            .status-en_pausa { 
+                                background-color: #fd7e14; 
+                            }
+                            .status-en_camino { 
+                                background-color: #007bff; 
+                            }
+                            .status-abandono_de_actividades { 
+                                background-color: #dc3545; 
+                            }
+                            .status-cerrado, .status-finalizado { 
+                                background-color: #28a745; 
+                            }
+                            .status-cancelado { 
+                                background-color: #dc3545; 
+                            }
                             
-                            /* CSS RESPONSIVE */
+                            .history-container {
+                                max-height: 500px;
+                                overflow-y: auto;
+                                border: 1px solid #dee2e6;
+                                border-radius: 8px;
+                                padding: 10px;
+                                background: #f8f9fa;
+                            }
+                            
+                            /* Responsive */
                             @media screen and (max-width: 768px) {
-                                .history-table thead { display: none; }
-                                .history-table tbody, .history-table tr { display: block; width: 100%; }
-                                .history-table tr { margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px; }
+                                .history-container {
+                                    max-height: 400px;
+                                }
+                                .history-table {
+                                    font-size: 0.8em;
+                                }
                                 .history-table td {
-                                    display: block;
-                                    text-align: right !important;
-                                    padding-left: 50% !important; 
-                                    position: relative;
-                                    border-bottom: none;
+                                    padding: 8px 4px;
                                 }
-                                .history-table td::before {
-                                    content: attr(data-label);
-                                    position: absolute;
-                                    left: 10px;
-                                    width: 45%;
-                                    padding-right: 10px;
-                                    white-space: nowrap;
-                                    font-weight: bold;
-                                    text-align: left;
-                                    color: #e74c3c;
+                                .status-badge {
+                                    font-size: 0.75em;
+                                    padding: 3px 6px;
                                 }
-                                .history-table tr td:nth-of-type(1)::before { content: "Fecha/Hora:"; }
-                                .history-table tr td:nth-of-type(2)::before { content: "Est. Anterior:"; }
-                                .history-table tr td:nth-of-type(3)::before { content: "Est. Nuevo:"; }
-                                .history-table tr td:nth-of-type(4)::before { content: "Colaborador:"; }
-                                .history-table tr td:nth-of-type(5)::before { content: "Motivo:"; }
-                                .history-table td span.status-badge { display: inline-block; white-space: normal; text-align: center; max-width: 100%; }
                             }
                         </style>
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Fecha/Hora</th>
-                                    <th>Estado Anterior</th>
-                                    <th>Estado Nuevo</th>
-                                    <th>Colaborador</th>
-                                    <th>Motivo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <div class="history-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>Estado Anterior</th>
+                                        <th>Estado Nuevo</th>
+                                        <th>Colaborador</th>
+                                        <th>Motivo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                     `;
                     
                     if (historyDataArray.length === 0) {
                         historyHTML += `
-                            <tr><td colspan="5" style="text-align: center;">No hay historial de cambios registrado para este ticket.</td></tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px; color: #6c757d;">
+                                    No hay historial de cambios registrado para este ticket.
+                                </td>
+                            </tr>
                         `;
                     } else {
                         historyDataArray.forEach(data => {
@@ -1647,24 +1714,36 @@
                             historyHTML += `
                                 <tr>
                                     <td>${date}</td>
-                                    <td><span class="status-badge status-${data.estadoAnterior.toLowerCase().replace(/_/g, '-')}">${data.estadoAnterior.replace(/_/g, ' ')}</span></td>
-                                    <td><span class="status-badge status-${data.estadoNuevo.toLowerCase().replace(/_/g, '-')}">${data.estadoNuevo.replace(/_/g, ' ')}</span></td>
+                                    <td>
+                                        <span class="status-badge status-${data.estadoAnterior.toLowerCase().replace(/_/g, '-')}">
+                                            ${data.estadoAnterior.replace(/_/g, ' ')}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-${data.estadoNuevo.toLowerCase().replace(/_/g, '-')}">
+                                            ${data.estadoNuevo.replace(/_/g, ' ')}
+                                        </span>
+                                    </td>
                                     <td>${data.colaboradorNombre}</td>
-                                    <td>${data.motivo}</td>
+                                    <td style="max-width: 300px; word-wrap: break-word;">${data.motivo}</td>
                                 </tr>
                             `;
                         });
                     }
                     
-                    historyHTML += `</tbody></table>`;
+                    historyHTML += `</tbody></table></div>`;
 
                     Utils.hideLoading();
 
-                    Swal.fire({
+                    await Swal.fire({
                         title: 'Historial de Cambios de Estado',
                         html: historyHTML,
                         width: '90%',
                         confirmButtonText: 'Cerrar',
+                        confirmButtonColor: '#3085d6',
+                        customClass: {
+                            popup: 'history-popup'
+                        }
                     });
 
                 } catch (error) {
@@ -1674,10 +1753,9 @@
                 }
             },
             
-            // Función centralizada para ACEPTAR TICKET
             async acceptTicket(ticketId) {
                 try {
-                    Utils.showLoading('Aceptando ticket...');
+                    const loadingSwal = Utils.showLoading('Aceptando ticket...');
 
                     const userUid = AppState.userData.colaboradorId;
                     const ticketRef = doc(db, 'ticketsmesa', ticketId);
@@ -1691,7 +1769,12 @@
                     const currentAccepted = ticketData.colaboradoresAceptados || [];
                     if (currentAccepted.includes(userUid)) {
                         Utils.hideLoading();
-                        Swal.fire({ icon: 'info', title: 'Ya Aceptado', text: 'Ya has aceptado este ticket.', confirmButtonColor: '#3085d6' });
+                        Swal.fire({ 
+                            icon: 'info', 
+                            title: 'Ya Aceptado', 
+                            text: 'Ya has aceptado este ticket.', 
+                            confirmButtonColor: '#3085d6' 
+                        });
                         return;
                     }
                     
@@ -1702,57 +1785,51 @@
                     let newStatus = oldStatus;
                     let historyMotivo = `Colaborador individual aceptó el ticket.`;
 
-                    // Lógica de transición de estado
                     if (oldStatus === 'pendiente_de_aceptación' || oldStatus === 'pendiente') {
                         if (newAccepted.length === totalColaboradores) {
-                            // Si todos aceptaron (o es el único)
                             newStatus = 'aceptado';
                             historyMotivo = 'Ticket aceptado por el último colaborador, cambiando estado a Aceptado.';
                         } else {
-                            // Si no es el último, el estado permanece en pendiente_de_aceptación, solo se registra la aceptación individual
-                            newStatus = oldStatus; // Mantener el estado actual
+                            newStatus = oldStatus;
                             historyMotivo = `Aceptación individual registrada (${newAccepted.length}/${totalColaboradores}).`;
                         }
                     } else if (oldStatus === 'aceptado') {
-                        // Si ya estaba aceptado, solo se registra la aceptación individual.
                         historyMotivo = 'Aceptación individual registrada (el ticket ya estaba Aceptado).';
                     }
 
-                    // 1. Actualizar el documento del ticket
                     await updateDoc(ticketRef, {
                         colaboradoresAceptados: newAccepted,
                         estado: newStatus,
                         fechaActualizacion: serverTimestamp(),
-                        // Limpiar cualquier comentario de pausa residual si se acepta
-                        pauseComment: '' 
+                        pauseComment: ''
                     });
 
-                    // 2. Registrar en el historial de cambios de estado
                     await this.recordHistory(
                         ticketId,
                         oldStatus,
-                        newStatus, 
+                        newStatus,
                         historyMotivo,
                         userUid,
                         AppState.userData.NOMBRE
                     );
                     
                     Utils.hideLoading();
-                    Swal.fire({
+                    
+                    const result = await Swal.fire({
                         icon: 'success',
                         title: '¡Aceptación Registrada!',
                         text: newStatus === 'aceptado' ? 'El ticket ha sido Aceptado globalmente.' : 'Tu aceptación individual ha sido registrada.',
                         confirmButtonColor: '#3085d6'
                     });
+                    
+                    if (result.isConfirmed) {
+                        await this.showTicketDetails(ticketId);
+                    }
 
                 } catch (error) {
                     console.error('Error aceptando ticket:', error);
                     Utils.showError('No se pudo aceptar el ticket: ' + error.message);
                 }
-            },
-
-            async generateTicketPDF(ticketId) {
-                // ... (Mantenido)
             },
 
             async checkForNewTickets() {
@@ -1789,7 +1866,6 @@
                             
                             AppState.lastCheckedTicketId = ticketId;
                             
-                            // REGISTRO EN CONSOLA (Requerimiento de solo consola)
                             console.log(`✅ TICKET NUEVO DETECTADO: ID: ${ticketId.substring(0, 8)}, Título: "${ticketData.titulo}"`);
                             
                             return true;
@@ -1823,7 +1899,7 @@
             
             setupRealtimeListener() {
                 if (AppState.unsubscribe) {
-                    AppState.unsubscribe(); 
+                    AppState.unsubscribe();
                 }
                 
                 if (!AppState.userData || !AppState.userData.colaboradorId) {
@@ -1834,19 +1910,20 @@
                 const ticketsRef = collection(db, 'ticketsmesa');
                 const collaboratorId = AppState.userData.colaboradorId;
                 
-                const q = query(
-                    ticketsRef,
-                    where("colaboradores", "array-contains", collaboratorId)
-                );
+                const q = query(ticketsRef, where("colaboradores", "array-contains", collaboratorId));
 
                 AppState.unsubscribe = onSnapshot(q, (snapshot) => {
                     console.log("🔥 Evento de cambio en tickets detectado. Recargando tickets...");
                     
-                    if (Swal.isVisible() && ticketManager.currentTicketId && Swal.getTitle().textContent.includes(ticketManager.currentTicketId.substring(0, 8))) {
-                        TicketsController.showTicketDetails(ticketManager.currentTicketId);
-                    } else {
-                        TicketsController.loadUserTickets(); 
+                    if (Swal.isVisible() && ticketManager.currentTicketId) {
+                        const title = Swal.getTitle();
+                        if (title && title.textContent.includes(ticketManager.currentTicketId.substring(0, 8))) {
+                            TicketsController.showTicketDetails(ticketManager.currentTicketId);
+                        }
                     }
+                    
+                    TicketsController.loadUserTickets();
+                    
                 }, (error) => {
                     console.error("Error en el listener de tickets en tiempo real:", error);
                 });
@@ -1860,38 +1937,20 @@
                 }
                 AppState.ticketCheckInterval = setInterval(async () => {
                     await this.checkForNewTickets();
-                    
                 }, AppState.notificationCheckInterval);
             }
         };
 
-        // Función de ayuda para obtener el color del estado
-        function getStatusColor(status) {
-            const colors = {
-                'pendiente_de_aceptación': '#ffc107',
-                'aceptado': '#17a2b8',
-                'en_pausa': '#fd7e14', // CAMBIADO
-                'en_camino': '#007bff',
-                'completado': '#28a745',
-                'finalizado': '#28a745', 
-                'cerrado': '#6c757d',
-                'abandono_de_actividades': '#dc3545', 
-                'cancelado': '#dc3545',
-                'en_proceso': '#17a2b8' // NUEVO
-            };
-            return colors[status] || '#6c757d';
-        }
-            
         // ** LÓGICA DE INICIO DE LA APLICACIÓN **
         async function initializeAppLogic() {
             console.log('Inicializando lógica de la aplicación...');
 
             firebase.auth().onAuthStateChanged(async (user) => {
                 if (user) {
-                    console.log('👤 Usuario autenticado detectado en TicketsController:', user.email);
+                    console.log('👤 Usuario autenticado detectado:', user.email);
                     await TicketsController.loadUserTickets();
-                    TicketsController.setupRealtimeListener(); 
-                    TicketsController.setupTicketCheckInterval(); 
+                    TicketsController.setupRealtimeListener();
+                    TicketsController.setupTicketCheckInterval();
                 } else {
                     console.log('🚫 No hay usuario autenticado. Redirigiendo...');
                     document.getElementById('mensajeAcceso').style.display = 'block';
@@ -1903,12 +1962,10 @@
             });
         }
 
-
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM cargado, configurando listeners...');
             
-            // Configurar el filtro de tickets
             if (DOM.filterBtn) {
                 DOM.filterBtn.addEventListener('click', () => {
                     const showFinalized = ticketManager.toggleFilter();
@@ -1916,7 +1973,7 @@
                         DOM.filterText.textContent = showFinalized ? 'Ver Activos' : 'Ver Finalizados';
                     }
                     
-                    ticketManager.setSelectedMonth(null); 
+                    ticketManager.setSelectedMonth(null);
                     if (DOM.monthFilter) {
                         DOM.monthFilter.value = "";
                     }
@@ -1927,7 +1984,6 @@
                 });
             }
 
-            // Listener para el filtro por mes en la vista de finalizados
             if (DOM.applyMonthFilter) {
                 DOM.applyMonthFilter.addEventListener('click', () => {
                     const selectedMonth = DOM.monthFilter.value;
@@ -1938,19 +1994,12 @@
                 });
             }
             
-            document.querySelectorAll('.close, .cancel-btn, #closeDetailBtn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    Swal.close();
-                });
-            });
-            
-            // ** INICIAR LA LÓGICA DE LA APLICACIÓN **
+               // ** INICIAR LA LÓGICA DE LA APLICACIÓN **
             initializeAppLogic();
             
-            // Hacer Swal disponible globalmente
-            window.Swal = Swal;
-            window.TicketsController = TicketsController; 
+            // Hacer funciones disponibles globalmente
+            window.TicketsController = TicketsController;
+            window.Utils = Utils;
 
             // Registrar Service Worker
             if ('serviceWorker' in navigator) {
@@ -1972,7 +2021,6 @@
         });
     </script>
     
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/navegación-operador.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/partuculas.js"></script>

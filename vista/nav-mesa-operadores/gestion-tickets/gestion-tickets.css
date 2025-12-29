@@ -519,3 +519,40 @@ body {
             background-color: transparent;
             display: none; 
         }
+
+
+        /* --- BLOQUE CORREGIDO PARA EVITAR DESBORDAMIENTO --- */
+
+.ticket-desc {
+    font-size: 0.9rem;
+    color: var(--text-color, #aaa)70;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    flex-grow: 1;
+    
+    /* Estas propiedades son las que arreglan el error de la imagen */
+    word-break: break-word;    /* Rompe palabras largas */
+    overflow-wrap: anywhere;   /* Asegura que el texto se mantenga dentro */
+    hyphens: auto;             /* Añade guiones si es necesario (opcional) */
+}
+
+.ticket-card {
+    background-color: var(--card-bg, #2a2a2a);
+    border: 1px solid var(--text-color, #444)30;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--card-shadow, 0 4px 15px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    
+    /* Evita que cualquier elemento hijo "empuje" las paredes de la card */
+    overflow: hidden; 
+}
+
+.ticket-meta {
+    display: flex;
+    flex-wrap: wrap;           /* Si los badges no caben, saltan de línea */
+    gap: 8px;
+    margin-bottom: 10px;
+}
