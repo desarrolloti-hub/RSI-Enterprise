@@ -1,492 +1,104 @@
-/*
- * ===================================================================
- * ARQUITECTURA VISUAL MODERNA Y RESPONSIVA
- * Incluye Card View para modo móvil/tablet
- * ===================================================================
- */
+/* admin-clientes.css */
 
-/* 1. Estilos Globales y Contenedor */
-body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    line-height: 1.6;
-}
+/* El body es manejado por personalizacion-colores.js */
 
-.container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 20px;
-    background-color: var(--card-bg, #ffffff); 
-    border-radius: 12px;
-    box-shadow: var(--card-shadow, 0 6px 15px rgba(0, 0, 0, 0.1));
-    transition: all 0.3s ease;
-}
-
-.header {
-    display: flex; /* Asegura el layout del header */
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px; /* Espacio entre el título, buscador y botón */
-    border-bottom: 2px solid var(--primary-color, #6C43E0);
-    padding-bottom: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap; /* Permite que los elementos bajen en móvil */
-}
-
-.header h2 {
-    font-size: 28px;
+.titulo-pagina {
+    color: var(--primary-color);
     font-weight: 700;
-    margin: 0;
-    color: var(--primary-color, #6C43E0); 
-    order: 1; /* Orden en Desktop */
 }
 
-/* 2. Estilos de Botones */
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px; 
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+/* Buscador */
+.search-container .input-group-text {
+    background-color: var(--card-bg);
+    border-color: rgba(128,128,128,0.3);
 }
 
-.btn-primary { 
-    background-color: var(--primary-color, #3b82f6) !important; 
-    color: white !important; 
-    order: 3; /* Orden en Desktop: Botón Nuevo Cliente */
-}
-.btn-primary:hover { 
-    background-color: var(--secondary-color, #5a35c7) !important; 
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+.search-container .form-control {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: rgba(128,128,128,0.3);
 }
 
-.btn-secondary { 
-    background-color: #6b7280; 
-    color: white; 
-}
-.btn-secondary:hover { 
-    background-color: #4b5563; 
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.btn-danger { 
-    background-color: #ef4444; 
-    color: white; 
-}
-.btn-danger:hover { 
-    background-color: #dc2626; 
-    transform: translateY(-2px);
-}
-
-.btn-edit { 
-    background-color: var(--accent-color, #f59e0b) !important; 
-    color: white !important; 
-    padding: 8px 10px; 
-    margin-right: 5px; 
-    border-radius: 6px;
-}
-.btn-edit:hover {
-    background-color: color-mix(in srgb, var(--accent-color, #f59e0b) 90%, black) !important;
-    transform: scale(1.05);
-}
-
-.btn-small { 
-    padding: 5px 10px; 
-    font-size: 13px; 
-    border-radius: 6px;
-}
-
-/* Botones Deshabilitados (Paginación/Búsqueda) */
-.btn:disabled, .btn[disabled] {
-    background-color: #e5e7eb !important;
-    color: #9ca3af !important;
-    cursor: not-allowed;
-    opacity: 0.6;
+.search-container .form-control:focus {
     box-shadow: none;
-    transform: none;
+    border-color: var(--primary-color);
 }
 
-
-/* 3. Estilos de la Tabla (Desktop View) */
-.table-container {
-    overflow-x: auto;
+/* Tabla */
+.table {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
 }
 
-.clientes-table { 
-    width: 100%; 
-    border-collapse: separate; 
-    border-spacing: 0;
-    margin-top: 20px; 
-    border-radius: 8px; 
-    overflow: hidden; 
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.clientes-table th, .clientes-table td { 
-    padding: 12px 15px; 
-    text-align: left; 
-    border-bottom: 1px solid color-mix(in srgb, var(--card-bg) 20%, #e5e7eb);
-    color: var(--text-color);
-}
-
-.clientes-table th { 
-    background-color: var(--primary-color, #6C43E0) !important; 
-    color: white !important;
-    font-weight: 600; 
-    text-transform: uppercase;
-    font-size: 14px;
-    letter-spacing: 0.8px;
-    border-bottom: 2px solid var(--secondary-color, #5a35c7);
-}
-
-.clientes-table tr {
-    transition: background-color 0.2s ease;
-}
-
-/* Filas impares/pares (Desktop) */
-.clientes-table tr:nth-child(odd) {
-    background-color: var(--card-bg, #ffffff);
-}
-.clientes-table tr:nth-child(even) { 
-    background-color: color-mix(in srgb, var(--card-bg, #ffffff) 95%, #6b7280); 
-}
-
-/* Efecto hover en la tabla (Desktop) */
-.clientes-table tr:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, var(--card-bg, #ffffff)) !important;
-}
-
-.clientes-table td:last-child {
-    white-space: nowrap; 
-}
-
-/* 4. Responsive Card View (Mobile/Tablet) */
-
-/* Oculta los encabezados de la tabla en móvil */
-@media screen and (max-width: 768px) {
-    .clientes-table, 
-    .clientes-table thead, 
-    .clientes-table tbody, 
-    .clientes-table th, 
-    .clientes-table td, 
-    .clientes-table tr { 
-        display: block; 
-    }
-
-    .clientes-table thead {
-        display: none; /* Oculta la cabecera completa */
-    }
-    
-    .clientes-table {
-        border-radius: 0;
-        box-shadow: none;
-        margin-top: 0;
-    }
-
-    /* Estilo de la "Tarjeta" (Fila de Cliente) */
-    .clientes-table tr {
-        border: 1px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
-        margin-bottom: 15px;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        background-color: var(--card-bg) !important;
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-
-    /* Estilo de cada "Campo" (Celda de Dato) */
-    .clientes-table td {
-        border: none;
-        border-bottom: 1px dotted color-mix(in srgb, var(--text-color) 15%, transparent);
-        position: relative;
-        padding-left: 50%; /* Espacio para la etiqueta */
-        text-align: right;
-        font-size: 14px;
-    }
-    
-    /* Etiqueta de la celda (data-label se debe añadir al HTML) */
-    .clientes-table td:before {
-        content: attr(data-label); 
-        position: absolute;
-        left: 0;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: 600;
-        color: var(--primary-color);
-    }
-    
-    /* Configuración especial para la celda de Acciones */
-    .clientes-table td:last-child {
-        text-align: center;
-        padding: 15px 0 0 0;
-        border-bottom: none;
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-    }
-    
-    .clientes-table td:last-child:before {
-        content: "Acciones";
-        display: none; /* Oculta la etiqueta "Acciones" en el modo Card */
-    }
-    
-    .clientes-table tr:hover {
-        background-color: var(--card-bg) !important;
-        transform: scale(1.01);
-    }
-}
-
-
-/* 5. Estilos del Modal */
-.modal { 
-    display: none; /* Se mantiene para compatibilidad con JS original */
-    position: fixed; 
-    z-index: 1000; 
-    left: 0; 
-    top: 0; 
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.6); 
-    justify-content: center; 
-    align-items: center; 
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    opacity: 0;
-    visibility: hidden;
-}
-/* La clase 'show' del JS activa la visibilidad y opacidad */
-.modal.show { 
-    display: flex; 
-    opacity: 1;
-    visibility: visible;
-}
-
-.modal-content { 
-    padding: 30px; 
-    border-radius: 12px; 
-    box-shadow: var(--card-shadow, 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1));
-    animation: slide-down 0.3s ease-out;
-    background-color: var(--card-bg);
-    width: 90%;
-    max-width: 650px;
-}
-
-@keyframes slide-down {
-    from { transform: translateY(-50px) scale(0.9); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-.modal-header { 
-    border-bottom: 2px solid var(--accent-color, #e5e7eb); 
-    padding-bottom: 15px; 
-    margin-bottom: 20px; 
-}
-
-.modal-header h2 {
-    color: var(--primary-color);
-}
-
-.close-btn { 
-    color: var(--text-color);
-    font-size: 32px; 
-    font-weight: 300; 
-    cursor: pointer; 
-    background: none; 
+.table thead th {
+    background-color: var(--primary-color);
+    color: white;
     border: none;
-    line-height: 1;
-    transition: color 0.2s ease;
-}
-.close-btn:hover {
-    color: var(--danger-color, #ef4444);
+    white-space: nowrap;
 }
 
-/* 6. Estilos del Formulario */
-.form-group { 
-    margin-bottom: 20px; 
-}
-
-.form-group label { 
-    font-weight: 600; 
-    color: var(--text-color);
-    margin-bottom: 8px;
-    display: block;
-    transition: color 0.2s;
-}
-
-.form-group input { 
-    padding: 10px; 
-    border: 1px solid color-mix(in srgb, var(--text-color) 20%, transparent);
-    border-radius: 6px; 
-    font-size: 16px;
-    width: 100%;
+.table tbody td {
+    vertical-align: middle;
     background-color: var(--card-bg);
     color: var(--text-color);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border-bottom: 1px solid rgba(128,128,128,0.1);
 }
 
-.form-group input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+/* Modal personalizado */
+.modal-content {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--primary-color);
 }
 
-.form-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 20px; 
+.modal-header .btn-close {
+    /* Invertir color del icono de cerrar si el fondo es oscuro */
+    filter: invert(var(--dark-mode-invert, 0));
 }
 
-@media (max-width: 600px) {
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.full-width { 
-    grid-column: 1 / -1; 
-}
-
-.form-actions { 
-    display: flex; 
-    justify-content: flex-end; 
-    gap: 15px; 
-    margin-top: 30px; 
-}
-
-/* 7. Estilos de Paginación */
-.pagination-controls {
-    display: flex;
-    justify-content: flex-end; 
-    align-items: center;
-    padding: 20px 0 0;
-    gap: 15px;
-}
-
-/* 8. Estilos del Spinner */
-.loading-spinner { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background-color: rgba(255, 255, 255, 0.85); 
-    display: none; 
-    justify-content: center; 
-    align-items: center; 
-    flex-direction: column; 
-    z-index: 2000; 
-    color: #1f2937;
-    font-size: 16px;
-}
-
-.loading-spinner p {
-    color: var(--primary-color);
-    margin-top: 10px;
-    font-weight: 600;
-}
-
-.spinner { 
-    border: 4px solid #f3f3f3; 
-    border-top: 4px solid var(--primary-color, #3b82f6); 
-    border-radius: 50%; 
-    width: 40px; 
-    height: 40px; 
-    animation: spin 1s linear infinite; 
-    margin-bottom: 10px; 
-}
-
-@keyframes spin { 
-    0% { transform: rotate(0deg); } 
-    100% { transform: rotate(360deg); } 
-}
-
-
-/*
- * ===================================================================
- * 9. ESTILOS DEL BUSCADOR (Search Box)
- * ===================================================================
- */
-
-.search-box {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-grow: 1; 
-    max-width: 400px;
-    order: 2; /* Coloca el buscador en segundo lugar en Desktop */
-}
-
-.search-input {
-    padding: 10px 15px;
-    border: 1px solid color-mix(in srgb, var(--text-color) 20%, transparent);
-    border-radius: 8px;
-    font-size: 15px;
-    flex-grow: 1; 
-    background-color: var(--card-bg);
+.form-label {
     color: var(--text-color);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.search-input:focus {
+.form-control, .form-select {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(128,128,128,0.3);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--card-bg) !important;
     border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
 }
 
+/* Checkboxes */
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
 
-/* 10. Ajustes Responsivos Finales (Móvil) */
+/* Botones de acción */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
 
-@media screen and (max-width: 768px) {
-    /* Ajustes del Contenedor */
-    .container {
-        margin: 20px auto;
-        padding: 10px;
-    }
+.btn-primary:hover {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+}
 
-    /* Ajustes del Header */
-    .header {
-        flex-direction: column; /* Apila los elementos del header en móvil */
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
-    .header h2 {
-        width: 100%;
-        margin-bottom: 5px;
-        order: 1;
-        font-size: 24px;
-    }
-    
-    .search-box {
-        width: 100%; /* Ocupa todo el ancho en móvil */
-        max-width: none;
-        order: 2;
-    }
-
-    /* Botón de Nuevo Cliente a full width */
-    .header .btn-primary {
-        width: 100%;
-        justify-content: center;
-        order: 3;
-    }
-
-    /* Ajustes de Paginación en móvil */
-    .pagination-controls {
-        justify-content: space-between;
+/* Responsividad */
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
         gap: 10px;
     }
-    .pagination-controls .btn {
-        flex-grow: 1;
+    .search-container {
+        width: 100%;
     }
 }

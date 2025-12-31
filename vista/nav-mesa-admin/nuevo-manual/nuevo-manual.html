@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="manifest" href="/manifest.json">
+     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -111,7 +111,7 @@
                 await loadUserProfile();
                 setupEventListeners();
             } catch (error) {
-                console.error("Error en la carga inicial:", error);
+                window.manejarErrorGlobal(error);
                 showError('No se pudieron cargar los datos iniciales.');
             }
         }
@@ -141,7 +141,7 @@
                     sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
                 }
             } catch (error) {
-                console.error("Error al cargar perfil:", error);
+                window.manejarErrorGlobal(error);
             }
         }
 
@@ -280,18 +280,13 @@
                 });
 
                 // Mostrar mensaje de éxito
-                await Swal.fire({
-                    title: '¡Manual guardado!',
-                    text: 'El manual técnico se ha guardado correctamente.',
-                    icon: 'success',
-                    confirmButtonColor: '#6C43E0'
-                });
+                await showCustomSuccess('¡Manual guardado!', 'El manual técnico se ha guardado correctamente.');
                 
                 // Limpiar formulario
                 resetForm();
                 
             } catch (error) {
-                console.error('Error al guardar el manual:', error);
+                window.manejarErrorGlobal(error);
                 showError('No se pudo guardar el manual. Por favor, intenta nuevamente.');
             } finally {
                 // Restaurar botón
@@ -307,20 +302,14 @@
         }
 
         function cancelForm() {
-            Swal.fire({
-                title: '¿Cancelar operación?',
-                text: 'Los datos no guardados se perderán.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6C43E0',
-                confirmButtonText: 'Sí, cancelar',
-                cancelButtonText: 'Continuar editando'
-            }).then((result) => {
+            showCustomConfirm(
+                '¿Cancelar operación?', 
+                'Los datos no guardados se perderán.', 
+                'Sí, cancelar', 
+                'Continuar editando'
+            ).then((result) => {
                 if (result.isConfirmed) {
                     resetForm();
-                    // Opcional: Redirigir a otra página después de cancelar
-                     window.location.href = '../manuales/manuales.html';
                 }
             });
         }
@@ -330,12 +319,16 @@
         // =================================================================================
 
         function showError(message) {
-            Swal.fire({
-                title: 'Error',
-                text: message,
-                icon: 'error',
-                confirmButtonColor: '#6C43E0'
-            });
+            if (typeof showCustomError === 'function') {
+                showCustomError('Error', message);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#6C43E0'
+                });
+            }
         }
 
         // =================================================================================
@@ -356,9 +349,10 @@
             });
         });
     </script>
+    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
-    <script src="../js/particulas.js"></script>
+     <script src="../js/particulas.js"></script>
 
 </body>
 </html>

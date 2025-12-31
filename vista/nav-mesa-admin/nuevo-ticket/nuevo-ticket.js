@@ -1,4 +1,4 @@
- /*   // Configuración de Firebase - SOLO UNA VEZ
+    // Configuración de Firebase - SOLO UNA VEZ
     const firebaseConfig = {
         apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
         authDomain: "rsienterprise.firebaseapp.com",
@@ -481,29 +481,40 @@
 
     async function sendPushNotification(colaboradorIds, ticketData) {
         try {
-            console.log('📤 Enviando notificación REAL via Cloud Functions...');
+            console.log('📤 Enviando notificaciones...');
 
-            const callable = firebase.functions().httpsCallable("sendTicketNotification");
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'SHOW_NOTIFICATION',
+                    notification: {
+                        title: '🎫 Nuevo Ticket - RSI',
+                        body: `Ticket: ${ticketData.titulo}`,
+                        icon: '/vista/css/img/logoApp-192.png',
+                        badge: '/vista/css/img/logoApp-192.png',
+                        data: { 
+                            ticketId: ticketData.idTicket,
+                            type: 'new_ticket'
+                        },
+                        actions: [
+                            {
+                                action: 'open',
+                                title: 'Abrir Ticket'
+                            }
+                        ]
+                    }
+                });
+                console.log('✅ Notificación enviada al Service Worker');
+            } else {
+                new Notification('🎫 Nuevo Ticket', {
+                    body: `Ticket ${ticketData.idTicket} creado: ${ticketData.titulo}`,
+                    icon: '/vista/css/img/logoApp-192.png'
+                });
+            }
 
-            // Solo primer colaborador es responsable
-            const colaboradorId = colaboradorIds[0];
-
-            await callable({
-                colaboradorId,
-                titulo: ticketData.titulo,
-                ticketId: ticketData.idTicket
-            });
-
-            console.log("✅ Notificación enviada al backend");
         } catch (error) {
-
-            console.error("❌ Error enviando notificación push real:", error);
-
             window.manejarErrorGlobal(error);
-
         }
     }
-
 
     async function saveAdminTicket() {
         if (!validateAdminForm()) {
@@ -571,9 +582,7 @@
             }
         }
         
-        if (selectedCollaboratorsIds.length > 0) {
-            await sendPushNotification(selectedCollaboratorsIds, ticketData);
-        }
+
 
         return idTicket;
     }
@@ -746,454 +755,3 @@
             sessionStorage.removeItem('ticketPrefillData');
         }
     }
-        */
-       // Configuración de Firebase - SOLO UNA VEZ
-const firebaseConfig = {
-    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-    authDomain: "rsienterprise.firebaseapp.com",
-    projectId: "rsienterprise",
-    storageBucket: "rsienterprise.appspot.com",
-    messagingSenderId: "1063117165770",
-    appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
-};
-
-// Inicializar Firebase solo si no está inicializado
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-const appState = {
-    currentUser: null,
-    colaboradores: [],
-    clientes: [],
-    currentTicketType: 'operativo',
-    cotizacionesVendidas: [],
-    origenReporteId: null
-};
-
-let isSaving = false;
-
-// =================================================================================
-// FUNCIONES DE CARGA INICIAL
-// =================================================================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            console.log('Usuario autenticado:', user.email);
-            initialLoad();
-        } else {
-            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
-        }
-    });
-});
-
-async function initialLoad() {
-    try {
-        await loadUserProfile();
-        await loadClientes();
-        await loadCollaborators();
-        setupEventListeners();
-        setupSelect2();
-        checkPendingReportData();
-    } catch (error) {
-        window.manejarErrorGlobal(error);
-        showError('No se pudieron cargar los datos iniciales.');
-    }
-}
-
-async function loadUserProfile() {
-    const user = auth.currentUser;
-    if (!user) return;
-    
-    try {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            appState.currentUser = JSON.parse(savedUser);
-        } else {
-            const querySnapshot = await db.collection("colaboradores")
-                .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
-                .get();
-            
-            if (!querySnapshot.empty) {
-                const doc = querySnapshot.docs[0];
-                const userData = doc.data();
-                appState.currentUser = {
-                    id: doc.id,
-                    nombre: userData.NOMBRE,
-                    area: userData.ÁREA,
-                    imagen: userData.imagen || '../css/img/Logo-RSI-OFICIAL.png'
-                };
-                localStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
-            } else {
-                appState.currentUser = {
-                    id: user.uid,
-                    nombre: user.email,
-                    area: 'Usuario no registrado',
-                    imagen: '../css/img/Logo-RSI-OFICIAL.png'
-                };
-            }
-        }
-    } catch (error) {
-        window.manejarErrorGlobal(error);
-    }
-}
-
-async function loadClientes() {
-    try {
-        const snapshot = await db.collection('clientes').get();
-        const selectCuenta = document.getElementById('cuenta');
-        selectCuenta.innerHTML = '<option value="">Seleccione un cliente</option>';
-        
-        appState.clientes = snapshot.docs.map(doc => {
-            const data = doc.data();
-            const direccionCompleta = [data.Calle, data['No.Exterior'], data.Colonia, data['Codigo Postal'], data.Pais].filter(Boolean).join(', ');
-            const option = document.createElement('option');
-            option.value = doc.id;
-            option.textContent = data['Nombre Comercial'] || 'Cliente sin nombre comercial';
-            selectCuenta.appendChild(option);
-            return {
-                id: doc.id,
-                nombreComercial: data['Nombre Comercial'] || '',
-                rfc: data.RFC || '',
-                correo: data.Correo || '',
-                contacto: data.Nombre || '',
-                direccion: direccionCompleta
-            };
-        });
-    } catch (error) {
-        window.manejarErrorGlobal(error);
-    }
-}
-
-async function loadCollaborators() {
-    try {
-        const snapshot = await db.collection('colaboradores').get();
-        appState.colaboradores = snapshot.docs.map(doc => ({
-            id: doc.id,
-            nombre: doc.data().NOMBRE,
-            area: doc.data().ÁREA
-        }));
-
-        $('#colaboradores').select2({
-            data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
-            placeholder: 'Seleccione colaboradores',
-            width: '100%'
-        });
-
-        $('#rsiColaboradores').select2({
-            data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
-            placeholder: 'Seleccione responsable y copias',
-            width: '100%'
-        });
-    } catch (error) {
-        window.manejarErrorGlobal(error);
-    }
-}
-
-// =================================================================================
-// GESTIÓN DE COTIZACIONES
-// =================================================================================
-
-async function loadTodasLasCotizaciones() {
-    try {
-        const snapshot = await db.collection('cotizacionPdf').get();
-        const cotizacionesSelect = document.getElementById('cotizacion');
-        const infoText = document.getElementById('cotizacionInfoText');
-        
-        cotizacionesSelect.innerHTML = '<option value="">Seleccione una cotización</option>';
-        
-        if (snapshot.empty) {
-            infoText.textContent = 'No se encontraron cotizaciones';
-            infoText.style.color = 'red';
-        } else {
-            infoText.textContent = `Se encontraron ${snapshot.docs.length} cotizaciones.`;
-            infoText.style.color = 'var(--primary-color)';
-            
-            snapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = `${data.cotizacionNumero || 'S/N'} - ${data.estado || 'Sin estado'} - ${data.clienteNombre || 'Sin cliente'}`;
-                cotizacionesSelect.appendChild(option);
-            });
-        }
-        $('#cotizacion').trigger('change');
-    } catch (error) {
-        window.manejarErrorGlobal(error);
-    }
-}
-
-function toggleCotizacionSelect(value) {
-    const cotizacionContainer = document.getElementById('cotizacionContainer');
-    if (value === 'si') {
-        cotizacionContainer.style.display = 'block';
-        loadTodasLasCotizaciones();
-    } else {
-        cotizacionContainer.style.display = 'none';
-        clearCotizacionesSelect();
-    }
-}
-
-function clearCotizacionesSelect() {
-    const cotizacionesSelect = document.getElementById('cotizacion');
-    cotizacionesSelect.innerHTML = '<option value="">Seleccione una cotización</option>';
-    document.getElementById('cotizacionInfo').style.display = 'none';
-    $('#cotizacion').trigger('change');
-}
-
-// =================================================================================
-// LÓGICA DE GUARDADO (CORREGIDA)
-// =================================================================================
-
-async function saveTicket(event, type) {
-    if (event) event.preventDefault();
-    
-    if (isSaving) return;
-    isSaving = true;
-    
-    // Identificar botón de submit
-    const submitButton = event.target.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-    
-    try {
-        let ticketId;
-        if (type === 'operativo') {
-            ticketId = await saveOperativoTicket();
-        } else {
-            ticketId = await saveAdminTicket();
-        }
-        
-        // Muestra el SweetAlert y ESPERA a que el usuario le de click
-        await Swal.fire({
-            title: '¡Ticket creado exitosamente!',
-            text: `El ticket ${ticketId} ha sido registrado en el sistema.`,
-            icon: 'success',
-            confirmButtonColor: '#6C43E0',
-            confirmButtonText: 'Entendido'
-        });
-        
-        // Solo redirige después del OK del SweetAlert
-        window.location.href = '/vista/nav-mesa-admin/gestion-tickets-admin/gestion-tickets-admin.html';
-        
-    } catch (error) {
-        console.error(error);
-        showError(error.message || 'No se pudo guardar el ticket.');
-    } finally {
-        isSaving = false;
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-    }
-}
-
-async function saveOperativoTicket() {
-    if (!validateOperativoForm()) throw new Error('Formulario incompleto');
-    
-    const { idTicket } = await obtenerYActualizarContador();
-    const selectedCollaboratorsIds = $('#colaboradores').val() || [];
-    const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
-    const asociarCotizacion = document.querySelector('input[name="asociarCotizacion"]:checked').value;
-    const cotizacionId = asociarCotizacion === 'si' ? document.getElementById('cotizacion').value : null;
-
-    const ticketData = {
-        idTicket: idTicket,
-        titulo: document.getElementById('titulo').value,
-        estado: document.getElementById('estado').value,
-        prioridad: document.getElementById('prioridad').value,
-        area: document.getElementById('area').value,
-        colaboradores: selectedCollaboratorsIds,
-        responsableNombre: responsable ? responsable.nombre : '',
-        cuentaId: document.getElementById('cuenta').value,
-        cuentaNombre: $("#cuenta option:selected").text(),
-        direccionFiscal: document.getElementById('direccionFiscal').value,
-        rfc: document.getElementById('rfc').value,
-        atencionA: document.getElementById('atencionA').value,
-        correo: document.getElementById('correo').value,
-        fecha: document.getElementById('fecha').value,
-        ordenServicio: document.getElementById('ordenServicio').value,
-        proyecto: document.getElementById('proyecto').value,
-        servicio: document.getElementById('servicio').value,
-        sistemas: Array.from(document.querySelectorAll('input[name="sistemas"]:checked')).map(cb => cb.value),
-        descripcionActividades: document.getElementById('descripcionActividades').value,
-        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-        fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
-        tipo: 'operativo',
-        levantadoPor: appState.currentUser ? appState.currentUser.nombre : 'Sistema'
-    };
-
-    await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
-
-    if (asociarCotizacion === 'si' && cotizacionId) {
-        await db.collection('cotizacionPdf').doc(cotizacionId).update({
-            ticketAsociado: idTicket,
-            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }
-
-    if (selectedCollaboratorsIds.length > 0) {
-        await sendPushNotification(selectedCollaboratorsIds, ticketData);
-    }
-
-    return idTicket;
-}
-
-async function saveAdminTicket() {
-    if (!validateAdminForm()) throw new Error('Formulario incompleto');
-    
-    const { idTicket } = await obtenerYActualizarContador();
-    const selectedCollaboratorsIds = $('#rsiColaboradores').val() || [];
-    const responsable = appState.colaboradores.find(c => c.id === selectedCollaboratorsIds[0]);
-
-    const ticketData = {
-        idTicket: idTicket,
-        titulo: document.getElementById('rsiTitulo').value,
-        descripcionActividades: document.getElementById('rsiDescripcionActividades').value,
-        fecha: document.getElementById('rsiFecha').value,
-        fechaFinalizacion: document.getElementById('rsiFechaFinalizacion').value,
-        prioridad: document.getElementById('rsiPrioridad').value,
-        colaboradores: selectedCollaboratorsIds,
-        responsableNombre: responsable ? responsable.nombre : 'Sin asignar',
-        area: document.getElementById('rsiArea').value,
-        cuentaNombre: "Ticket Interno RSI",
-        estado: "pendiente",
-        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-        fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
-        tipo: 'administracion',
-        levantadoPor: appState.currentUser ? appState.currentUser.nombre : 'Sistema'
-    };
-
-    if (appState.origenReporteId) {
-        ticketData.origenReporteId = appState.origenReporteId;
-    }
-
-    await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
-
-    if (appState.origenReporteId) {
-        await db.collection('reportesSistema').doc(appState.origenReporteId).update({
-            estado: 'En Proceso',
-            ticketAsociado: idTicket,
-            responsableAsignado: ticketData.responsableNombre
-        });
-    }
-
-    if (selectedCollaboratorsIds.length > 0) {
-        await sendPushNotification(selectedCollaboratorsIds, ticketData);
-    }
-
-    return idTicket;
-}
-
-// =================================================================================
-// UTILIDADES Y AYUDANTES
-// =================================================================================
-
-async function obtenerYActualizarContador() {
-    const contadorRef = db.collection('contadorTickets').doc('contadorTicketsMesa');
-    let idTicket;
-    
-    await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(contadorRef);
-        let nuevoContador = doc.exists ? doc.data().contador + 1 : 1;
-        transaction.set(contadorRef, { contador: nuevoContador });
-        idTicket = `Ticket-RSI-${nuevoContador}`;
-    });
-    
-    return { idTicket };
-}
-
-function setupSelect2() {
-    $('#cuenta').select2({ placeholder: 'Seleccione un cliente', width: '100%' });
-    $('#cotizacion').select2({ placeholder: 'Seleccione una cotización', width: '100%' });
-}
-
-function setupEventListeners() {
-    document.querySelectorAll('.ticket-type-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            changeTicketType(this.getAttribute('data-type'));
-        });
-    });
-
-    $('#colaboradores').on('change', () => actualizarAreas('#colaboradores', 'area'));
-    $('#rsiColaboradores').on('change', () => actualizarAreas('#rsiColaboradores', 'rsiArea'));
-    
-    document.getElementById('cuenta').addEventListener('change', (e) => loadClientData(e.target.value));
-}
-
-function changeTicketType(type) {
-    appState.currentTicketType = type;
-    document.querySelectorAll('.ticket-type-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.ticket-type-btn[data-type="${type}"]`).classList.add('active');
-    
-    if (type === 'operativo') {
-        document.getElementById('adminFormContainer').style.display = 'none';
-        document.querySelector('.form-container').style.display = 'block';
-    } else {
-        document.querySelector('.form-container').style.display = 'none';
-        document.getElementById('adminFormContainer').style.display = 'block';
-    }
-}
-
-function actualizarAreas(selectorId, inputId) {
-    const selectedIds = $(selectorId).val() || [];
-    const areas = new Set();
-    selectedIds.forEach(id => {
-        const col = appState.colaboradores.find(c => c.id === id);
-        if (col?.area) areas.add(col.area);
-    });
-    document.getElementById(inputId).value = Array.from(areas).join(', ');
-}
-
-function loadClientData(clientId) {
-    const cliente = appState.clientes.find(c => c.id === clientId);
-    if (cliente) {
-        document.getElementById('direccionFiscal').value = cliente.direccion || '';
-        document.getElementById('rfc').value = cliente.rfc || '';
-        document.getElementById('atencionA').value = cliente.contacto || '';
-        document.getElementById('correo').value = cliente.correo || '';
-    }
-}
-
-function validateOperativoForm() {
-    const titulo = document.getElementById('titulo').value;
-    const cuenta = document.getElementById('cuenta').value;
-    if (!titulo.trim() || !cuenta) return false;
-    return true;
-}
-
-function validateAdminForm() {
-    return !!document.getElementById('rsiTitulo').value.trim();
-}
-
-function showError(message) {
-    Swal.fire({ title: 'Error', text: message, icon: 'error', confirmButtonColor: '#6C43E0' });
-}
-
-async function sendPushNotification(colaboradorIds, ticketData) {
-    try {
-        const callable = firebase.functions().httpsCallable("sendTicketNotification");
-        await callable({
-            colaboradorId: colaboradorIds[0],
-            titulo: ticketData.titulo,
-            ticketId: ticketData.idTicket
-        });
-    } catch (e) { console.error("Error notificación:", e); }
-}
-
-function checkPendingReportData() {
-    const dataJSON = sessionStorage.getItem('ticketPrefillData');
-    if (dataJSON) {
-        const data = JSON.parse(dataJSON);
-        changeTicketType('administracion');
-        setTimeout(() => {
-            document.getElementById('rsiTitulo').value = data.titulo || '';
-            document.getElementById('rsiDescripcionActividades').value = data.descripcion || '';
-            document.getElementById('rsiPrioridad').value = data.prioridad || 'Media';
-            appState.origenReporteId = data.origenReporteId;
-        }, 500);
-        sessionStorage.removeItem('ticketPrefillData');
-    }
-}
