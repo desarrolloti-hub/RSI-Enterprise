@@ -407,9 +407,8 @@
             setupEventListeners();
             console.log('✅ Todos los datos cargados correctamente');
         } catch (error) {
-            
+            console.error("Error en la carga inicial:", error);
             showError('No se pudieron cargar los datos iniciales.');
-            window.manejarErrorGlobal(error);
         }
     }
 
@@ -439,7 +438,7 @@
                 console.log('✅ Perfil cargado:', appState.currentUser);
             }
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al cargar perfil:", error);
         }
     }
 
@@ -464,11 +463,10 @@
             updateCollaboratorsUI();
 
         } catch (error) {
-            
+            console.error("❌ Error al cargar colaboradores:", error);
             appState.colaboradores = [];
             appState.collaboratorsLoaded = true;
             updateCollaboratorsUI();
-            window.manejarErrorGlobal(error);
         }
     }
 
@@ -503,9 +501,8 @@
             }
 
         } catch (error) {
-            
+            console.error("Error al cargar clientes:", error);
             appState.clientes = [];
-            window.manejarErrorGlobal(error);
         }
     }
 
@@ -589,7 +586,7 @@
             }
             
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al cargar datos del ticket:", error);
             showError('No se pudieron cargar los datos del ticket.');
         }
     }
@@ -719,7 +716,7 @@
             window.location.href = `../verTicket/verTicket.html?id=${appState.currentTicketId}`;
             
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al guardar cambios:", error);
             showError('No se pudieron guardar los cambios. Inténtalo de nuevo.');
         }
     }
@@ -849,7 +846,6 @@
 </script>
 
 <!-- MANTENER LOS SCRIPTS DE PERSONALIZACIÓN AL FINAL -->
- <script src="../js/filtrar-error.js"></script>
 <script src="../js/personalizacion-colores.js"></script>
 <script src="../js/navegacion-admin.js"></script>
 <script src="../js/particulas.js"></script>

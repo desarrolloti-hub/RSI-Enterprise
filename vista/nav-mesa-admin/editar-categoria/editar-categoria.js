@@ -55,7 +55,7 @@
                 verificarProductosAsociados(data.nombre);
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error cargando categoría:", error);
                 Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
             }
         }
@@ -74,7 +74,7 @@
                     nombreInput.parentNode.after(alert);
                 }
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error verificando productos:", error);
             }
         }
 
@@ -96,7 +96,7 @@
                     contenedorImagen.style.display = "none";
                     Swal.fire('Eliminada', 'La imagen ha sido eliminada', 'success');
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error(error);
                     Swal.fire('Error', 'No se pudo eliminar la imagen', 'error');
                 }
             }
@@ -147,7 +147,7 @@
                 }
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error(error);
                 Swal.fire('Error', error.message || 'Error al guardar', 'error');
             } finally {
                 btnGuardar.disabled = false;

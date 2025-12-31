@@ -73,7 +73,7 @@
                 actualizarBotonesPaginacion(snapshot.size);
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error cargando mensajes:", error);
                 container.innerHTML = `<div class="alert alert-danger">Error al cargar datos: ${error.message}</div>`;
             }
         }
@@ -177,7 +177,7 @@
                 cargarMensajes(null); // Recarga la página actual (lógica simplificada)
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error(error);
                 Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
             }
         }
@@ -198,7 +198,7 @@
                     if(window.showCustomSuccess) window.showCustomSuccess('Eliminado', 'Mensaje borrado');
 
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error(error);
                     window.showCustomError('Error', 'No se pudo eliminar');
                 }
             }

@@ -1,3 +1,4 @@
+
     // Configuración de Firebase - SOLO UNA VEZ
     const firebaseConfig = {
         apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
@@ -49,7 +50,7 @@
             }
             
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.warn('⚠️ FCM no pudo inicializarse:', error);
             return false;
         }
     }
@@ -71,7 +72,7 @@
 
 
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error en la carga inicial:", error);
             showError('No se pudieron cargar los datos iniciales.');
         }
     }
@@ -113,7 +114,7 @@
                 }
             }
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al cargar perfil:", error);
         }
     }
 
@@ -140,7 +141,7 @@
                 };
             });
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al cargar clientes:", error);
         }
     }
 
@@ -199,7 +200,7 @@
             $('#cotizacion').trigger('change');
             
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("❌ Error al cargar cotizaciones:", error);
             const infoText = document.getElementById('cotizacionInfoText');
             infoText.textContent = 'Error al cargar cotizaciones: ' + error.message;
             infoText.style.color = 'red';
@@ -227,7 +228,7 @@
                 width: '100%'
             });
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al cargar colaboradores:", error);
         }
     }
 
@@ -309,7 +310,7 @@
                 cotizacionInfo.style.display = 'none';
             }
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error al cargar datos de cotización:", error);
             cotizacionInfo.style.display = 'none';
         }
     }
@@ -398,7 +399,7 @@
             }, 3000);
             
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error('Error al guardar ticket:', error);
             showError('No se pudo guardar el ticket. Por favor, intente nuevamente.');
         } finally {
             isSaving = false;
@@ -467,7 +468,7 @@
                 });
                 console.log(`✅ Ticket ${idTicket} asociado a cotización ${cotizacionId}`);
             } catch (error) {
-            window.manejarErrorGlobal(error);
+                console.error("❌ Error al asociar ticket a cotización:", error);
                 // No lanzamos error aquí para no interrumpir el flujo principal
             }
         }
@@ -512,7 +513,7 @@
             }
 
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error('❌ Error enviando notificación:', error);
         }
     }
 
@@ -577,7 +578,7 @@
                 });
                 
             } catch (error) {
-            window.manejarErrorGlobal(error);
+                console.error("Error actualizando reporte original:", error);
                 // No detenemos el flujo, el ticket ya se creó
             }
         }
@@ -610,7 +611,7 @@
             
             return { nuevoContador, idTicket };
         } catch (error) {
-            window.manejarErrorGlobal(error);
+            console.error("Error en transacción de contador:", error);
             throw new Error("No se pudo generar el ID del ticket");
         }
     }

@@ -55,7 +55,7 @@ async function initialLoad() {
         console.log('Página de tickets cargada');
         
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error("Error en la carga inicial:", error);
         showError('No se pudieron cargar los datos iniciales.');
     }
 }
@@ -84,7 +84,7 @@ async function loadUserProfile() {
             sessionStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
         }
     } catch (error) {
-       window.manejarErrorGlobal(error);
+        console.error("Error al cargar perfil:", error);
     }
 }
 
@@ -107,7 +107,7 @@ async function loadCollaborators() {
             filterSelect.appendChild(option);
         });
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error("Error al cargar colaboradores:", error);
     }
 }
 
@@ -165,7 +165,7 @@ function loadTicketsPage(pageNumber) {
             showError('No se pudieron cargar los tickets.');
         });
     }).catch(error => {
-        window.manejarErrorGlobal(error);
+        console.error("Error en consulta de tickets:", error);
         showError('Error al consultar la base de datos.');
     });
 }
@@ -414,7 +414,7 @@ async function viewTicket(ticketId) {
     try {
         window.location.href = `../verTicket/verTicket.html?id=${ticketId}`;
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error('Error al ver ticket:', error);
         showError('No se pudo cargar el ticket.');
     }
 }
@@ -423,7 +423,7 @@ async function editTicket(ticketId) {
     try {
         window.location.href = `../editar-ticket/editar-ticket.html?id=${ticketId}`;
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error('Error al editar ticket:', error);
         showError('No se pudo cargar el ticket para editar.');
     }
 }
@@ -433,7 +433,7 @@ async function generatePdfPage(ticketId) {
     try {
         window.location.href = `../generar-pdf/generar-pdf.html?id=${ticketId}`;
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error('Error al redirigir a generar PDF:', error);
         showError('No se pudo cargar la página de generación de PDF.');
     }
 }
@@ -482,7 +482,7 @@ async function deleteTicket(ticketId) {
             }
         }
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error('Error al eliminar ticket:', error);
         showError('No se pudo mover el ticket a la papelera.');
     }
 }

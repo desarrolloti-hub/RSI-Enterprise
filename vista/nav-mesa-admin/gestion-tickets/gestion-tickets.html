@@ -247,7 +247,7 @@
                     }, 1000);
 
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error('Error generando PDF:', error);
                     this.hideProgressModal();
                     Swal.fire({
                         icon: 'error',
@@ -394,7 +394,7 @@
                                 yPosition += imageHeight + 10;
                             }
                         } catch (error) {
-                            window.manejarErrorGlobal(error);
+                            console.error('Error añadiendo imagen:', error);
                         }
                     }
 
@@ -470,7 +470,6 @@
                         minute: '2-digit'
                     });
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
                     return 'Fecha inválida';
                 }
             }
@@ -490,7 +489,7 @@
                     await addDoc(collection(db, 'pdfMesa'), pdfData);
                     console.log('PDF guardado en Firebase exitosamente');
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error('Error guardando PDF en Firebase:', error);
                     throw error;
                 }
             }
@@ -567,7 +566,7 @@
                         minute: '2-digit'
                     });
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error formateando fecha:", error);
                     return 'Fecha inválida';
                 }
             },
@@ -710,7 +709,7 @@
                                 });
                                 return true;
                             } catch (error) {
-                                window.manejarErrorGlobal(error);
+                                console.error("Error con Service Worker:", error);
                                 new Notification(title, {
                                     body: body,
                                     icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png'
@@ -727,7 +726,7 @@
                     }
                     return false;
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error mostrando notificación:", error);
                     return false;
                 }
             }
@@ -747,7 +746,7 @@
                             fechaActualizacion: data.fechaActualizacion || null
                         });
                     } catch (error) {
-                        window.manejarErrorGlobal(error);
+                        console.error("Error procesando ticket:", error);
                     }
                 });
                 return tickets;
@@ -861,7 +860,7 @@
                                 </div>
                             `;
                         } catch (error) {
-                            window.manejarErrorGlobal(error);
+                            console.error("Error renderizando ticket:", error);
                         }
                     });
                     
@@ -871,7 +870,7 @@
                         btn.addEventListener('click', () => TicketsController.showTicketDetails(btn.dataset.id));
                     });
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error renderizando tickets:", error);
                     Utils.showError("Error al mostrar los tickets");
                 }
             },
@@ -980,7 +979,7 @@
                     }
                     
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error cargando tickets:", error);
                     Utils.showError("No se pudieron cargar los tickets. " + error.message);
                     DOM.ticketsContainer.innerHTML = `
                         <div class="no-tickets">
@@ -1122,8 +1121,8 @@
                             }
                         });
                     } catch (error) {
-                        window.manejarErrorGlobal(error);   
-                        }
+                        console.warn("Advertencia: No se pudo cargar el historial de aceptación (indice requerido):", error);
+                    }
 
 
                     const evidenciasRef = collection(db, 'evidenciatickets');
@@ -1483,7 +1482,7 @@
                     });
                     
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error mostrando detalles:", error);
                     Utils.showError("No se pudieron cargar los detalles del ticket: " + error.message);
                 } finally {
                     Utils.hideLoading();
@@ -1621,7 +1620,7 @@
                     });
 
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error cargando historial:", error);
                     Utils.hideLoading();
                     Utils.showError("No se pudo cargar el historial de cambios.");
                 }
@@ -1697,7 +1696,7 @@
                     });
 
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error('Error aceptando ticket:', error);
                     Utils.showError('No se pudo aceptar el ticket: ' + error.message);
                 }
             },
@@ -1748,7 +1747,7 @@
                     }
                     return false;
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error verificando nuevos tickets:", error);
                     return false;
                 }
             },
@@ -1768,7 +1767,7 @@
                     await addDoc(collection(db, 'historialTicket'), historyData);
                     console.log('Historial de ticket registrado exitosamente.');
                 } catch (error) {
-                   window.manejarErrorGlobal(error);
+                    console.error('Error registrando historial:', error);
                 }
             },
             
@@ -1900,14 +1899,13 @@
                             });
                         })
                         .catch(error => {
-                            window.manejarErrorGlobal(error);
+                            console.log('Error al registrar ServiceWorker:', error);
                         });
                 });
             }
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="../js/filtrar-error.js"></script>
     <script src="../js/navegacion-admin.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/particulas.js"></script>

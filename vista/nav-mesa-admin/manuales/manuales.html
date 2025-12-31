@@ -108,7 +108,7 @@
                 setupEventListeners();
                 loadManuals();
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error en la carga inicial:", error);
                 showError('No se pudieron cargar los manuales.');
             }
         }
@@ -135,7 +135,7 @@
                     };
                 }
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error al cargar perfil:", error);
             }
         }
 
@@ -154,7 +154,7 @@
                 displayManuals();
                 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error al cargar manuales:", error);
                 showError('No se pudieron cargar los manuales.');
             }
         }
@@ -297,7 +297,7 @@
                     loadManuals();
                 }
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al eliminar manual:', error);
                 showError('No se pudo eliminar el manual.');
             }
         }
@@ -401,7 +401,6 @@
             });
         });
     </script>
-    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
     <script src="../js/particulas.js"></script>

@@ -55,7 +55,7 @@
                 renderizarImagenes();
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error cargando producto:", error);
                 Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
             }
         }

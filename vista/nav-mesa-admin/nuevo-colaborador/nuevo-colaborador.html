@@ -473,7 +473,6 @@
 
     <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
     <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/filtrar-error.js"></script>
     <script src="../js/navegacion-admin.js"></script>
 
     <script>
@@ -526,7 +525,7 @@
                         }
                     })
                     .catch(error => {
-                window.manejarErrorGlobal(error);
+                        console.warn('Error al buscar colaborador:', error);
                     });
             }
 
@@ -573,7 +572,7 @@
                 
                 return null;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al buscar colaborador:', error);
                 return null;
             }
         }
@@ -648,7 +647,7 @@
                 actualizarSelectAreas();
                 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al cargar áreas:', error);
                 // En caso de error, cargar áreas por defecto
                 cargarAreasPorDefecto();
             }
@@ -766,7 +765,7 @@
                 const nit = await generarNIT(subarea);
                 nitInput.value = nit;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error generando NIT:', error);
                 nitInput.value = 'Error al generar';
             }
         }
@@ -851,7 +850,7 @@
                 
                 return user;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error creando usuario en Auth:', error);
                 
                 // Asegurarse de eliminar la app temporal en caso de error
                 try {
@@ -909,7 +908,7 @@
                 
                 return true;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error creando documentos en Firestore:', error);
                 throw new Error('No se pudieron guardar los datos: ' + error.message);
             }
         }
@@ -969,7 +968,7 @@
                         photoPreview.appendChild(img);
                         
                     } catch (error) {
-                window.manejarErrorGlobal(error);
+                        console.error('Error procesando imagen:', error);
                         if (typeof showCustomError !== 'undefined') {
                             showCustomError('Error', error.message);
                         } else {
@@ -1097,7 +1096,7 @@
                     }, 4000);
                     
                 } catch (error) {
-                window.manejarErrorGlobal(error);
+                    console.error('Error creando colaborador:', error);
                     
                     // Cerrar loading si está abierto
                     if (typeof Swal !== 'undefined') {

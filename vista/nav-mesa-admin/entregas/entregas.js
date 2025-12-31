@@ -73,10 +73,10 @@
                 actualizarPaginacion(snapshot.size);
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error:", error);
                 // Si falla por índice, intenta cargar sin ordenamiento específico temporalmente
                 if(error.code === 'failed-precondition') {
-                    window.manejarErrorGlobal(error);
+                    console.warn("Falta índice compuesto. Cargando sin orden estricto.");
                     cargarEntregasSinOrden();
                 } else {
                     tBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar datos: ${error.message}</td></tr>`;
@@ -194,7 +194,7 @@
                 });
 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error(error);
                 Swal.fire("Error", "No se pudieron cargar los detalles", "error");
             }
         }
@@ -215,7 +215,6 @@
                     Swal.fire("Eliminado", "Registro borrado correctamente.", "success");
                     cargarEntregas(firstDocsStack.length > 1 ? 'current' : 'init');
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
                     Swal.fire("Error", "No se pudo eliminar.", "error");
                 }
             }

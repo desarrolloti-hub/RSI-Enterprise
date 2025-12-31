@@ -88,7 +88,7 @@ async function identifyCollaborator(email) {
         startRealtimeIncidentsListener(collaboratorName);
 
     } catch (error) {
-        window.manejarErrorGlobal(error);
+        console.error("Error identificando colaborador:", error);
         title.textContent = "Error de conexión";
         container.innerHTML = `<p class="error">Error al consultar datos de usuario: ${error.message}</p>`;
     }

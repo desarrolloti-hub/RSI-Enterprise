@@ -301,8 +301,7 @@
             ticketTypeFilter: document.getElementById('ticketTypeFilter'),
             applyFiltersBtn: document.getElementById('applyFiltersBtn'),
             resetFiltersBtn: document.getElementById('resetFiltersBtn'),
-            //Exportar boton deshabilitado por ahora
-            //exportBtn: document.getElementById('exportBtn'),
+            exportBtn: document.getElementById('exportBtn'),
             
             // Estadísticas
             totalTickets: document.getElementById('totalTickets'),
@@ -444,7 +443,7 @@
                     this.applyFilters();
                     
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error cargando datos:", error);
                     Utils.showError("No se pudieron cargar los datos del dashboard");
                 } finally {
                     Utils.hideLoading();
@@ -496,7 +495,7 @@
                             const fecha = ticket.fechaCreacion.toDate();
                             return fecha >= firstDay && fecha <= lastDay;
                         } catch (error) {
-                            window.manejarErrorGlobal(error);
+                            console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
                             return false;
                         }
                     });
@@ -742,7 +741,7 @@
                             monthlyData[monthYear].completed++;
                         }
                     } catch (error) {
-                        window.manejarErrorGlobal(error);
+                        console.warn('Error al procesar fecha del ticket:', ticket.fechaCreacion);
                     }
                 });
                 
@@ -1077,7 +1076,7 @@
                     doc.save(`reporte-tickets-${new Date().toISOString().split('T')[0]}.pdf`);
                     
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error generando PDF:", error);
                     Utils.showError("No se pudo generar el reporte PDF");
                 } finally {
                     Utils.hideLoading();
@@ -1103,10 +1102,10 @@
                     DOM.resetFiltersBtn.addEventListener('click', () => {
                         TicketsStatsController.resetFilters();
                     });
-                    // Boton para exportar a PDF (deshabilitado por ahora)
-                    //DOM.exportBtn.addEventListener('click', () => {
-                    //    TicketsStatsController.exportToPDF();
-                    //});
+                    
+                    DOM.exportBtn.addEventListener('click', () => {
+                        TicketsStatsController.exportToPDF();
+                    });
                     
                 } else {
                     // Redirigir al login si no está autenticado
@@ -1144,7 +1143,7 @@
             return { type: 'orderBy', fieldPath, directionStr };
         }
     </script>
-<script src="../js/filtrar-error.js"></script>
+
     <!-- Scripts de personalización y navegación -->
     <script>
         // Cargar scripts de navegación y personalización

@@ -86,7 +86,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
 
     <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
-    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
 
@@ -194,7 +193,7 @@
                         }
                     })
                     .catch(error => {
-                        window.manejarErrorGlobal(error);
+                        console.warn('Error al buscar colaborador:', error);
                     });
             }
 
@@ -241,7 +240,7 @@
                 
                 return null;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al buscar colaborador:', error);
                 return null;
             }
         }
@@ -260,7 +259,6 @@
                     minute: '2-digit'
                 });
             } catch (error) {
-                window.manejarErrorGlobal(error);
                 return 'Fecha inválida';
             }
         }
@@ -305,7 +303,7 @@
                 mostrarAreas(areas);
                 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al cargar áreas:', error);
                 mostrarError('Error al cargar las áreas');
             } finally {
                 mostrarLoading(false);
@@ -620,7 +618,7 @@
                 
                 return true;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al guardar área:', error);
                 Swal.showValidationMessage('Error al guardar el área: ' + error.message);
                 return false;
             }
@@ -751,7 +749,7 @@
                     mostrarExito('Área eliminada correctamente');
                     cargarAreas();
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error('Error al eliminar área:', error);
                     mostrarError('Error al eliminar el área');
                 }
             }
@@ -767,7 +765,7 @@
                 
                 return !snapshot.empty;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al verificar colaboradores:', error);
                 // En caso de error, asumimos que sí hay colaboradores para prevenir eliminaciones accidentales
                 return true;
             }

@@ -163,7 +163,7 @@
                     return entrySnapshot.docs[0].data().fecha.toDate();
                 }
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error obteniendo hora de entrada, usando fallback:", error);
             }
             
             // Fallback: 9:00 AM del día de hoy
@@ -220,7 +220,7 @@
                     .get();
                 return querySnapshot.empty ? null : querySnapshot.docs[0].data().rol;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error al obtener rol:", error);
                 return null;
             }
         }
@@ -247,7 +247,7 @@
                 }
                 return null;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error al obtener datos del usuario:", error);
                 return null;
             }
         }
@@ -391,7 +391,6 @@
                     try {
                         return await getLocation();
                     } catch (error) {
-                        
                         Swal.showValidationMessage(error.message || 'Error al obtener ubicación. Intenta de nuevo.');
                         return false;
                     }
@@ -411,7 +410,7 @@
             try {
                 return await getLocation();
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.warn("No se pudo obtener ubicación precisa, intentando con fallback...", error);
                 return await getFallbackLocation();
             }
         }
@@ -535,7 +534,7 @@
                 try {
                     await endAttendance(exitType, AppState.userData);
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error("Error al finalizar asistencia:", error);
                     showAlert(
                         'error', 
                         'Error al registrar la Salida', 
@@ -596,7 +595,7 @@
                 
                 return true;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error("Error manejando usuario autenticado:", error);
                 showAlert('error', 'Error', error.message);
                 
                 // Redirigir después de mostrar error
@@ -679,7 +678,6 @@
         document.head.appendChild(style);
     </script>
 
-    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
             <script src="../js/particulas.js"></script>
 

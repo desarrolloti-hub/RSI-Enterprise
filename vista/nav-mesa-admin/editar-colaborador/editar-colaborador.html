@@ -10,7 +10,281 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../gestion-colaboradores/gestion-colaboradores.css">
-    <link rel="stylesheet" href="./editar-colaborador.css">
+    <style>
+        .form-container {
+            padding: 25px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .form-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(108, 67, 224, 0.2);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(108, 67, 224, 0.2);
+        }
+
+        .form-control[readonly] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .form-control.password-field {
+            background-color: #f8f9fa;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(0,0,0,0.5);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-submit:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-cancel {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-cancel:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Estilos para la sección de foto */
+        .photo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .photo-upload-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 20px;
+        }
+        
+        .photo-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-color);
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 3rem;
+        }
+        
+        .photo-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .photo-upload-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .photo-upload-btn:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
+        }
+        
+        .photo-input {
+            display: none;
+        }
+        
+        .password-suggestion {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Nuevos estilos para área y subárea */
+        .subarea-group {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(108, 67, 224, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(108, 67, 224, 0.2);
+        }
+
+        .subarea-group.visible {
+            display: block;
+        }
+
+        .subarea-group label {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .form-note {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .nit-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nit-info i {
+            color: var(--primary-color);
+        }
+
+        .field-warning {
+            font-size: 0.8rem;
+            color: #e74c3c;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .readonly-note {
+            font-size: 0.85rem;
+            color: #e74c3c;
+            margin-top: 5px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+            }
+            
+            .form-section {
+                padding: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-submit, .btn-cancel {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .photo-upload-container {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
@@ -218,7 +492,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
 
     <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
-    <script src="../js/filtrar-error.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/navegacion-admin.js"></script>
 
@@ -302,7 +575,7 @@
                 actualizarFormulario(colaboradorData);
                 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error cargando colaborador:', error);
                 mostrarError('No se pudo cargar la información del colaborador');
             }
         }
@@ -406,7 +679,7 @@
                 actualizarSelectAreas();
                 
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error al cargar áreas:', error);
                 cargarAreasPorDefecto();
             }
         }
@@ -579,7 +852,7 @@
 
                 return true;
             } catch (error) {
-                window.manejarErrorGlobal(error);
+                console.error('Error actualizando documentos en Firestore:', error);
                 throw new Error('No se pudieron guardar los cambios: ' + error.message);
             }
         }
@@ -642,7 +915,7 @@
                         photoPreview.appendChild(img);
                         
                     } catch (error) {
-                        window.manejarErrorGlobal(error);
+                        console.error('Error procesando imagen:', error);
                         if (typeof showCustomError !== 'undefined') {
                             showCustomError('Error', error.message);
                         } else {
@@ -728,7 +1001,7 @@
                     }, 3000);
                     
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error('Error actualizando colaborador:', error);
                     
                     if (typeof Swal !== 'undefined') {
                         Swal.close();

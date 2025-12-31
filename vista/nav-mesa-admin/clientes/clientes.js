@@ -56,7 +56,8 @@
                 allClientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderTable();
             } catch (error) {
-                window.manejarErrorGlobal(error);   
+                console.error("Error cargando clientes:", error);
+                clientesBody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Error al cargar datos</td></tr>';
             }
         }
 
@@ -311,9 +312,8 @@
                 loadAllClientes(); // Recargar tabla
 
             } catch (error) {
-                
+                console.error(error);
                 Swal.fire('Error', 'No se pudo guardar el cliente', 'error');
-                window.manejarErrorGlobal(error);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -336,7 +336,7 @@
                     Swal.fire('Eliminado', 'Cliente eliminado correctamente', 'success');
                     loadAllClientes();
                 } catch (error) {
-                    window.manejarErrorGlobal(error);
+                    console.error(error);
                     Swal.fire('Error', 'No se pudo eliminar', 'error');
                 }
             }
