@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Categorías</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="gestionCategoriaCotizaciones.css">
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Gestión de Categorías</h2>
+            </div>
+            <div class="header-controls">
+                <div class="filters-row">
+                    <div class="filter-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar categorías por nombre...">
+                    </div>
+                </div>
+                <div class="buttons-row">
+                    <button class="btn" id="btnNuevaCategoria">
+                        <i class="fas fa-plus"></i>
+                        Nueva Categoría
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <!-- TABLA PARA ESCRITORIO -->
+            <table class="desktop-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Imagen</th>
+                        <th>Nombre de Categoría</th>
+                        <th>Fecha de Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriasTableBody">
+                    <tr>
+                        <td colspan="5" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando categorías...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- TARJETAS PARA MÓVIL -->
+            <div class="mobile-cards" id="mobileCardsContainer">
+                <!-- Las tarjetas se generarán dinámicamente -->
+            </div>
+        </div>
+        
+        <div class="pagination-container"></div>
+    </div>
+
+    <!-- MODAL PARA AGREGAR/EDITAR CATEGORÍA -->
+    <div id="categoriaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nueva Categoría</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoriaForm">
+                    <input type="hidden" id="categoriaId">
+                    
+                    <div class="form-group">
+                        <label for="nombreCategoria">
+                            <i class="fas fa-tag"></i> Nombre de la Categoría *
+                        </label>
+                        <input type="text" id="nombreCategoria" required 
+                               placeholder="Ej: Electrónicos, Ropa, Software">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="imagenInput">
+                            <i class="fas fa-image"></i> Imagen (Base64)
+                        </label>
+                        <div class="image-upload-container">
+                            <div class="image-preview" id="imagePreview">
+                                <i class="fas fa-image"></i>
+                                <span>Vista previa de la imagen</span>
+                            </div>
+                            <div class="image-upload-controls">
+                                <input type="file" id="imagenInput" accept="image/*" 
+                                       onchange="handleImageUpload(event)">
+                                <button type="button" class="btn-small" onclick="openImageUpload()">
+                                    <i class="fas fa-upload"></i> Subir Imagen
+                                </button>
+                                <button type="button" class="btn-small btn-danger" 
+                                        onclick="clearImage()" id="clearImageBtn" style="display: none;">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
+                            <textarea id="imagenBase64" rows="3" 
+                                      placeholder="O pega aquí una imagen en formato Base64..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-danger" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn">
+                            <i class="fas fa-save"></i> Guardar Categoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Scripts propios -->
+    <script type="module" src="./gestionCategoriaCotizaciones.js"></script>
+
+    <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
+
+    <script src="/components/navegacion-admin.js"></script>
+    <script src="/components/particulas.js"></script>
+</body>
+</html>
