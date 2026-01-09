@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -75,7 +74,7 @@
                 </div>
                 <div class="card-info">
                     <h3 id="weekly-attendance">0</h3>
-                    <p>Asistencias esta quincena</p>
+                    <p>Colaboradores Activos</p>
                 </div>
             </div>
             <div class="card">
@@ -130,8 +129,13 @@
             </div>
         </div>
 
-        <!-- Calendar Container -->
-        <div class="calendar-container">
+        <!-- Mobile Cards View (visible solo en móvil) -->
+        <div class="mobile-cards-view" id="mobileCardsView">
+            <!-- Las tarjetas se generarán dinámicamente -->
+        </div>
+
+        <!-- Calendar Container (visible solo en desktop) -->
+        <div class="calendar-container" id="calendarContainer">
             <div class="calendar-header">
                 <h3 id="currentMonthYear">Enero 2025 - 1ra Quincena</h3>
             </div>
@@ -143,7 +147,6 @@
         </div>
     </div>
 
-<script src="../js/filtrar-error.js"></script>
 <script>
 // Configuración de Firebase
 const firebaseConfig = {
@@ -164,12 +167,12 @@ const auth = firebase.auth();
 
 // Variables globales
 let attendanceRecords = [];
-let filteredRecords = [];
 let currentDate = new Date();
 let currentMonth = currentDate.getMonth();
 let currentYear = currentDate.getFullYear();
 let selectedQuincena = 1;
-let employees = [];
+let allEmployees = []; // Todos los empleados de la base de datos
+let activeEmployees = []; // Solo empleados con trabajo = "Activo"
 let currentUser = null;
 
 // Inicialización
@@ -177,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
     checkAuthState();
     initializeDateSelectors();
     setupEventListeners();
+    checkViewMode();
 });
 
 // Verificar autenticación
@@ -232,31 +236,69 @@ async function loadUserProfile() {
     }
 }
 
-// Cargar empleados desde Firebase
+// Cargar empleados desde Firebase - SOLO FILTRAR LOS CON trabajo = "Activo"
 async function loadEmployees() {
     try {
         const snapshot = await db.collection('colaboradores').get();
-        employees = snapshot.docs.map(doc => {
+        allEmployees = [];
+        activeEmployees = [];
+        
+        snapshot.docs.forEach(doc => {
             const data = doc.data();
-            return {
+            const trabajo = data['trabajo'] || 'Activo'; // Campo 'trabajo' en minúsculas
+            
+            const employee = {
                 id: doc.id,
                 name: data.NOMBRE || 'Sin nombre',
                 area: data.ÁREA || 'Sin área',
-                email: data['CORREO ELECTRÓNICO EMPRESARIAL'] || 'Sin email'
+                email: data['CORREO ELECTRÓNICO EMPRESARIAL'] || 'Sin email',
+                trabajo: trabajo
             };
+            
+            allEmployees.push(employee);
+            
+            // SOLO AÑADIR SI trabajo = "Activo" (comparación exacta)
+            if (trabajo === 'Activo') {
+                activeEmployees.push(employee);
+            }
         });
         
-        renderCalendar();
+        console.log('Total empleados:', allEmployees.length);
+        console.log('Empleados activos (trabajo="Activo"):', activeEmployees.length);
+        console.log('Empleados activos:', activeEmployees);
+        
+        // Actualizar contador de colaboradores activos
+        document.getElementById('weekly-attendance').textContent = activeEmployees.length;
+        
+        // Renderizar solo los activos
+        if (window.innerWidth <= 992) {
+            renderMobileCards(activeEmployees);
+        } else {
+            renderCalendar(activeEmployees);
+        }
     } catch (error) {
+        console.error('Error al cargar empleados:', error);
         manejadorErrorGlobal(error);
-        // Usar datos de ejemplo si hay error
-        employees = [
-            { id: 1, name: 'Juan Pérez', area: 'Desarrollo de Software' },
-            { id: 2, name: 'María García', area: 'Recursos Humanos' },
-            { id: 3, name: 'Carlos López', area: 'Ventas' },
-            { id: 4, name: 'Ana Martínez', area: 'Marketing' }
+        // Usar datos de ejemplo si hay error (solo activos)
+        allEmployees = [
+            { id: 1, name: 'Juan Pérez', area: 'Desarrollo de Software', trabajo: 'Activo' },
+            { id: 2, name: 'María García', area: 'Recursos Humanos', trabajo: 'Activo' },
+            { id: 3, name: 'Carlos López', area: 'Ventas', trabajo: 'Inactivo' }, // Este NO se mostrará
+            { id: 4, name: 'Ana Martínez', area: 'Marketing', trabajo: 'Activo' }
         ];
-        renderCalendar();
+        
+        // Filtrar solo activos
+        activeEmployees = allEmployees.filter(emp => emp.trabajo === 'Activo');
+        
+        console.log('Empleados activos (ejemplo):', activeEmployees);
+        
+        document.getElementById('weekly-attendance').textContent = activeEmployees.length;
+        
+        if (window.innerWidth <= 992) {
+            renderMobileCards(activeEmployees);
+        } else {
+            renderCalendar(activeEmployees);
+        }
     }
 }
 
@@ -299,7 +341,7 @@ function setupEventListeners() {
     document.getElementById('applyFilters').addEventListener('click', applyFilters);
     document.getElementById('quincena').addEventListener('change', function() {
         selectedQuincena = parseInt(this.value);
-        renderCalendar();
+        renderActiveEmployees();
     });
     
     // Búsqueda
@@ -318,7 +360,7 @@ function setupEventListeners() {
     if (showAllBtn) {
         showAllBtn.addEventListener('click', function() {
             document.getElementById('search-input').value = '';
-            renderCalendar();
+            renderActiveEmployees();
         });
     }
 
@@ -342,23 +384,30 @@ function setupEventListeners() {
             hamburger.style.display = 'block';
         });
     }
+
+    // Escuchar cambios en el tamaño de la ventana
+    window.addEventListener('resize', checkViewMode);
 }
 
-// Buscar empleados
+// Buscar empleados - SOLO ENTRE LOS ACTIVOS
 function searchEmployees() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
     
     if (!searchTerm) {
-        renderCalendar();
+        renderActiveEmployees();
         return;
     }
     
-    const filteredEmployees = employees.filter(employee => 
+    const searchResults = activeEmployees.filter(employee => 
         employee.name.toLowerCase().includes(searchTerm) || 
         employee.area.toLowerCase().includes(searchTerm)
     );
     
-    renderCalendar(filteredEmployees);
+    if (window.innerWidth <= 992) {
+        renderMobileCards(searchResults);
+    } else {
+        renderCalendar(searchResults);
+    }
 }
 
 // Aplicar filtros
@@ -369,11 +418,174 @@ function applyFilters() {
     currentMonth = parseInt(monthSelect.value);
     currentYear = parseInt(yearSelect.value);
     
-    renderCalendar();
+    renderActiveEmployees();
 }
 
-// Renderizar calendario
-function renderCalendar(employeesToShow = employees) {
+// Función para renderizar solo empleados activos
+function renderActiveEmployees() {
+    if (window.innerWidth <= 992) {
+        renderMobileCards(activeEmployees);
+    } else {
+        renderCalendar(activeEmployees);
+    }
+}
+
+// Verificar modo de vista (desktop o móvil)
+function checkViewMode() {
+    const isMobile = window.innerWidth <= 992;
+    const calendarContainer = document.getElementById('calendarContainer');
+    const mobileCardsView = document.getElementById('mobileCardsView');
+    
+    if (isMobile) {
+        calendarContainer.style.display = 'none';
+        mobileCardsView.style.display = 'block';
+        renderMobileCards(activeEmployees);
+    } else {
+        calendarContainer.style.display = 'block';
+        mobileCardsView.style.display = 'none';
+        renderCalendar(activeEmployees);
+    }
+}
+
+// Renderizar vista de tarjetas móviles
+function renderMobileCards(employeesToShow) {
+    const mobileCardsView = document.getElementById('mobileCardsView');
+    mobileCardsView.innerHTML = '';
+    
+    if (!employeesToShow || employeesToShow.length === 0) {
+        mobileCardsView.innerHTML = '<div class="no-results">No hay colaboradores activos</div>';
+        updateStats(0, 0, 0, 0, 0);
+        return;
+    }
+    
+    // Determinar días a mostrar según la quincena
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let startDay, endDay;
+    
+    if (selectedQuincena === 1) {
+        startDay = 1;
+        endDay = Math.min(15, daysInMonth);
+    } else {
+        startDay = 16;
+        endDay = daysInMonth;
+    }
+    
+    // Obtener días laborales (excluyendo domingos)
+    const workDays = [];
+    for (let day = startDay; day <= endDay; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek !== 0) { // Excluir domingos
+            workDays.push({ day, dayOfWeek });
+        }
+    }
+    
+    // Variables para estadísticas generales
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    let totalLate = 0;
+    let totalHours = 0;
+    
+    employeesToShow.forEach(employee => {
+        // Variables para el resumen del empleado
+        let employeePresent = 0;
+        let employeeAbsent = 0;
+        let employeeLate = 0;
+        let employeeHours = 0;
+        
+        // Calcular estadísticas para este empleado
+        workDays.forEach(({ day }) => {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // Buscar registros de asistencia para este empleado en esta fecha
+            const employeeAttendance = attendanceRecords.filter(record => 
+                record.nombre === employee.name && record.fecha === dateStr
+            );
+            
+            if (employeeAttendance.length > 0) {
+                // Mostrar entrada y salida
+                const entryRecord = employeeAttendance.find(record => record.tipoRegistro === 'entrada');
+                const exitRecord = employeeAttendance.find(record => record.tipoRegistro === 'salida');
+                
+                if (entryRecord) {
+                    const isLate = isRetardo(entryRecord.hora);
+                    if (isLate) {
+                        employeeLate++;
+                    } else {
+                        employeePresent++;
+                    }
+                }
+                
+                // Calcular horas trabajadas
+                if (entryRecord && exitRecord) {
+                    const entryTime = new Date(`2000-01-01T${entryRecord.hora}`);
+                    const exitTime = new Date(`2000-01-01T${exitRecord.hora}`);
+                    const hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60);
+                    if (hoursWorked > 0) {
+                        employeeHours += hoursWorked;
+                    }
+                }
+            } else {
+                employeeAbsent++;
+            }
+        });
+        
+        // Crear tarjeta móvil
+        const card = document.createElement('div');
+        card.className = 'mobile-card';
+        card.innerHTML = `
+            <div class="mobile-card-header">
+                <h4 class="employee-name-mobile" data-id="${employee.id}">${employee.name}</h4>
+                <span class="employee-area-mobile">${employee.area}</span>
+            </div>
+            <div class="mobile-card-stats">
+                <div class="mobile-stat-item">
+                    <span class="stat-label">Asistencias</span>
+                    <span class="stat-value present-mobile">${employeePresent}</span>
+                </div>
+                <div class="mobile-stat-item">
+                    <span class="stat-label">Faltas</span>
+                    <span class="stat-value absent-mobile">${employeeAbsent}</span>
+                </div>
+                <div class="mobile-stat-item">
+                    <span class="stat-label">Retardos</span>
+                    <span class="stat-value late-mobile">${employeeLate}</span>
+                </div>
+                <div class="mobile-stat-item">
+                    <span class="stat-label">Horas Trab.</span>
+                    <span class="stat-value hours-mobile">${employeeHours.toFixed(1)}</span>
+                </div>
+            </div>
+        `;
+        
+        mobileCardsView.appendChild(card);
+        
+        // Actualizar totales generales
+        totalPresent += employeePresent;
+        totalAbsent += employeeAbsent;
+        totalLate += employeeLate;
+        totalHours += employeeHours;
+    });
+    
+    // Actualizar estadísticas
+    updateStats(totalPresent, totalAbsent, totalLate, totalHours, employeesToShow.length);
+    
+    // Añadir event listeners para los nombres de empleados
+    document.querySelectorAll('.employee-name-mobile').forEach(name => {
+        name.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-id');
+            const month = currentMonth + 1;
+            const year = currentYear;
+            const quincena = selectedQuincena;
+            
+            // Redirigir a la página de asistencia específica del usuario
+            window.location.href = `../asistenciaUsuarioEspecifico/asistenciaUsuarioEspecifico.html?id=${employeeId}&month=${month}&year=${year}&quincena=${quincena}`;
+        });
+    });
+}
+
+// Renderizar calendario (para desktop)
+function renderCalendar(employeesToShow) {
     const calendarGrid = document.getElementById('calendarGrid');
     const currentMonthYear = document.getElementById('currentMonthYear');
     
@@ -387,6 +599,16 @@ function renderCalendar(employeesToShow = employees) {
     ];
     const quincenaText = selectedQuincena === 1 ? '1ra Quincena' : '2da Quincena';
     currentMonthYear.textContent = `${monthNames[currentMonth]} ${currentYear} - ${quincenaText}`;
+    
+    // Si no hay empleados activos para mostrar
+    if (!employeesToShow || employeesToShow.length === 0) {
+        const noDataRow = document.createElement('div');
+        noDataRow.className = 'no-data-row';
+        noDataRow.innerHTML = '<div class="no-data-message">No hay colaboradores activos</div>';
+        calendarGrid.appendChild(noDataRow);
+        updateStats(0, 0, 0, 0, 0);
+        return;
+    }
     
     // Determinar días a mostrar según la quincena
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -514,7 +736,7 @@ function renderCalendar(employeesToShow = employees) {
                     attendanceInfo.appendChild(exitElement);
                 }
                 
-                // Calcular horas trabajadas (ejemplo simplificado)
+                // Calcular horas trabajadas
                 if (entryRecord && exitRecord) {
                     const entryTime = new Date(`2000-01-01T${entryRecord.hora}`);
                     const exitTime = new Date(`2000-01-01T${exitRecord.hora}`);
@@ -605,10 +827,10 @@ function setupFirebaseListener() {
         // Ordenar por fecha más reciente primero
         attendanceRecords.sort((a, b) => b.dateObj - a.dateObj);
         
-        // Mostrar todos los registros al cargar
-        filteredRecords = [...attendanceRecords];
         updateStatsCards();
-        renderCalendar();
+        
+        // Renderizar solo los empleados activos
+        renderActiveEmployees();
     }, (error) => {
         console.error("Error al leer datos:", error);
     });
@@ -664,12 +886,6 @@ function isHorasExtras(hora) {
 
 // Actualizar estadísticas
 function updateStats(totalPresent, totalAbsent, totalLate, totalHours, employeeCount) {
-    // Actualizar tarjetas de estadísticas
-    document.getElementById('weekly-attendance').textContent = employeeCount;
-    document.getElementById('office-attendance').textContent = Math.floor(employeeCount * 0.6);
-    document.getElementById('iztapaluca-attendance').textContent = Math.floor(employeeCount * 0.3);
-    document.getElementById('onsite-attendance').textContent = Math.floor(employeeCount * 0.1);
-    
     // Actualizar resumen
     document.getElementById('summary-present').textContent = totalPresent;
     document.getElementById('summary-absent').textContent = totalAbsent;
@@ -683,29 +899,20 @@ function updateStatsCards() {
     today.setHours(0, 0, 0, 0);
     const todayStr = formatDate(today);
     
-    // Usar filteredRecords si hay datos, de lo contrario usar attendanceRecords
-    const recordsToUse = filteredRecords.length > 0 ? filteredRecords : attendanceRecords;
-    
-    // Asistencias hoy
-    const todayCount = recordsToUse.filter(record => 
-        formatDate(record.fecha) === todayStr
-    ).length;
-    
     // Asistencias por ubicación
-    const officeCount = recordsToUse.filter(record => 
+    const officeCount = attendanceRecords.filter(record => 
         record.tipo === 'office'
     ).length;
     
-    const iztapalucaCount = recordsToUse.filter(record => 
+    const iztapalucaCount = attendanceRecords.filter(record => 
         record.tipo === 'iztapaluca'
     ).length;
     
-    const onsiteCount = recordsToUse.filter(record => 
+    const onsiteCount = attendanceRecords.filter(record => 
         record.tipo === 'site'
     ).length;
     
     // Actualizar los valores en las tarjetas
-    document.getElementById('weekly-attendance').textContent = recordsToUse.length;
     document.getElementById('office-attendance').textContent = officeCount;
     document.getElementById('iztapaluca-attendance').textContent = iztapalucaCount;
     document.getElementById('onsite-attendance').textContent = onsiteCount;
