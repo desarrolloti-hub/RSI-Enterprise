@@ -946,26 +946,69 @@
                     </div>
                 </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 <!-- SECCIÓN ECOMMERCE -->
                 <div class="menu-nav-section">
-                    <button class="menu-nav-section-header" data-section="ecommerce">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>Ecommerce</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="menu-nav-section-content" id="section-ecommerce">
-                        <a href="/404.html" class="menu-nav-btn">
-                            <i class="fas fa-store"></i> Gestión de Tienda
-                        </a>
-                        <a href="/404.html" class="menu-nav-btn">
-                            <i class="fas fa-boxes"></i> Inventario
-                        </a>
-                        <a href="/404.html" class="menu-nav-btn">
-                            <i class="fas fa-chart-bar"></i> Ventas y Métricas
-                        </a>
-                    </div>
-                </div>
-                
+    <button class="menu-nav-section-header" data-section="ecommerce">
+        <i class="fas fa-shopping-cart"></i>
+        <span>Ecommerce</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="menu-nav-section-content" id="section-ecommerce">
+     
+   
+        <a href="/404.html" class="menu-nav-btn">
+            <i class="fas fa-store"></i> Gestión de Tienda
+        </a>
+        <a href="/vista/nav-mesa-admin/e-comerce/p" class="menu-nav-btn">
+            <i class="fas fa-boxes"></i> Inventario de Productos
+        </a>
+        
+        <a href="/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html" class="menu-nav-btn">
+            <i class="fas fa-images"></i> Carrusel (Slider)
+        </a>
+        
+        <a href="/404.html" class="menu-nav-btn">
+            <i class="fas fa-users"></i> Mis Clientes
+        </a>
+        <a href="/404.html" class="menu-nav-btn">
+            <i class="fas fa-address-book"></i> Lista de Contactos
+        </a>
+        
+        <a href="/404.html" class="menu-nav-btn">
+            <i class="fas fa-file-invoice-dollar"></i> Facturación
+        </a>
+        <a href="/404.html" class="menu-nav-btn">
+            <i class="fas fa-chart-line"></i> Ventas y Métricas
+        </a>
+
+    </div>
+</div>
+              
+
+
+
+
+
+
+
+
+
+
                 <!-- SECCIÓN CONFIGURACIÓN -->
                 <div class="menu-nav-section">
                     <button class="menu-nav-section-header" data-section="configuracion">
