@@ -166,7 +166,8 @@
         let clientes = [];
         let contadores = {};
         let currentUser = null;
-        
+        let debounceTimer;
+
         // Elementos del DOM
         const cotizacionesTableBody = document.getElementById('cotizacionesTableBody');
         const buscarInput = document.getElementById('buscarInput');
@@ -292,18 +293,25 @@
         }
 
         async function cargarCotizaciones() {
-            try {
-                const q = query(collection(db, 'cotizacionPdf'), orderBy('fechaCreacion', 'desc'));
-                const querySnapshot = await getDocs(q);
-                cotizaciones = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                filteredCotizaciones = [...cotizaciones];
-                currentPage = 1;
-                renderizarTablaCotizaciones();
-            } catch (error) {
-                console.error('Error al cargar cotizaciones:', error);
-                mostrarAlerta('❌ Error al cargar cotizaciones', 'error');
-            }
-        }
+    try {
+        mostrarLoading(true);
+        const q = query(collection(db, 'cotizacionPdf'), orderBy('fechaCreacion', 'desc'));
+        const querySnapshot = await getDocs(q);
+        cotizaciones = querySnapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data() 
+        }));
+        filteredCotizaciones = [...cotizaciones];
+        currentPage = 1;
+        renderizarTablaCotizaciones();
+        console.log(`Cargadas ${cotizaciones.length} cotizaciones`);
+    } catch (error) {
+        console.error('Error al cargar cotizaciones:', error);
+        mostrarAlerta('❌ Error al cargar cotizaciones', 'error');
+    } finally {
+        mostrarLoading(false);
+    }
+}
 
         async function inicializarApp() {
             onAuthStateChanged(auth, async (user) => {
@@ -456,21 +464,133 @@
             }
         }
 
-        function filtrarCotizaciones() {
-            const searchTerm = buscarInput.value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                filteredCotizaciones = [...cotizaciones];
-            } else {
-                filteredCotizaciones = cotizaciones.filter(coti => 
-                    coti.cotizacionNumero.toLowerCase().includes(searchTerm) ||
-                    coti.clienteNombre.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            currentPage = 1;
-            renderizarTablaCotizaciones();
+        async function buscarCotizacionesEnFirestore(termino) {
+    try {
+        mostrarLoading(true);
+        
+        // Si no hay término, cargar todas las cotizaciones normalmente
+        if (!termino || termino.trim() === '') {
+            await cargarCotizaciones();
+            return;
         }
+        
+        const terminoMinusculas = termino.toLowerCase().trim();
+        
+        console.log("Buscando en Firestore:", terminoMinusculas);
+        
+        // Primero intentamos buscar por número exacto o parcial
+        const consultas = [
+            query(
+                collection(db, 'cotizacionPdf'),
+                where('cotizacionNumero', '>=', terminoMinusculas),
+                where('cotizacionNumero', '<=', terminoMinusculas + '\uf8ff'),
+                orderBy('cotizacionNumero'),
+                limit(50)
+            )
+        ];
+        
+        // Ejecutar consultas
+        const resultadosPromises = consultas.map(q => getDocs(q).catch(e => {
+            console.warn("Consulta fallida:", e);
+            return { docs: [] }; // Retornar vacío si falla
+        }));
+        
+        const resultadosSnapshots = await Promise.all(resultadosPromises);
+        
+        // Combinar resultados
+        const cotizacionesMap = new Map();
+        
+        resultadosSnapshots.forEach(snapshot => {
+            const docs = snapshot.docs || [];
+            docs.forEach(doc => {
+                if (!cotizacionesMap.has(doc.id)) {
+                    cotizacionesMap.set(doc.id, { id: doc.id, ...doc.data() });
+                }
+            });
+        });
+        
+        // Convertir a array
+        let resultadosFirestore = Array.from(cotizacionesMap.values());
+        
+        // Si no hay resultados en Firestore, buscar localmente
+        if (resultadosFirestore.length === 0) {
+            console.log("No hay resultados en Firestore, buscando localmente...");
+            resultadosFirestore = cotizaciones.filter(coti => 
+                coti.cotizacionNumero.toLowerCase().includes(terminoMinusculas) ||
+                coti.clienteNombre.toLowerCase().includes(terminoMinusculas) ||
+                (coti.cotizacionDescripcion && 
+                 coti.cotizacionDescripcion.toLowerCase().includes(terminoMinusculas))
+            );
+        }
+        
+        // Ordenar por fecha más reciente
+        resultadosFirestore.sort((a, b) => {
+            const fechaA = a.fechaCreacion || a.cotizacionFecha;
+            const fechaB = b.fechaCreacion || b.cotizacionFecha;
+            return new Date(fechaB) - new Date(fechaA);
+        });
+        
+        filteredCotizaciones = resultadosFirestore;
+        currentPage = 1;
+        renderizarTablaCotizaciones();
+        
+        if (filteredCotizaciones.length === 0) {
+            mostrarAlerta('ℹ️ No se encontraron cotizaciones con ese criterio', 'info');
+        }
+        
+    } catch (error) {
+        console.error('Error en la búsqueda:', error);
+        
+        // Fallback a búsqueda local
+        const terminoMinusculas = termino.toLowerCase().trim();
+        filteredCotizaciones = cotizaciones.filter(coti => 
+            coti.cotizacionNumero.toLowerCase().includes(terminoMinusculas) ||
+            coti.clienteNombre.toLowerCase().includes(terminoMinusculas) ||
+            (coti.cotizacionDescripcion && 
+             coti.cotizacionDescripcion.toLowerCase().includes(terminoMinusculas))
+        );
+        currentPage = 1;
+        renderizarTablaCotizaciones();
+        
+        if (filteredCotizaciones.length === 0) {
+            mostrarAlerta('ℹ️ No se encontraron cotizaciones', 'info');
+        }
+    } finally {
+        mostrarLoading(false);
+    }
+}
+
+function filtrarCotizaciones() {
+    const searchTerm = buscarInput.value.trim();
+    
+    // Usar debouncing para evitar muchas consultas
+    clearTimeout(debounceTimer);
+    
+    if (searchTerm === '') {
+        // Si está vacío, mostrar todas las cotizaciones
+        filteredCotizaciones = [...cotizaciones];
+        currentPage = 1;
+        renderizarTablaCotizaciones();
+        return;
+    }
+    
+    // Si el término es muy corto, buscar localmente primero
+    if (searchTerm.length < 3) {
+        const terminoMinusculas = searchTerm.toLowerCase();
+        filteredCotizaciones = cotizaciones.filter(coti => 
+            coti.cotizacionNumero.toLowerCase().includes(terminoMinusculas) ||
+            coti.clienteNombre.toLowerCase().includes(terminoMinusculas)
+        );
+        currentPage = 1;
+        renderizarTablaCotizaciones();
+        return;
+    }
+    
+    // Para búsquedas más largas, consultar Firestore
+    debounceTimer = setTimeout(async () => {
+        await buscarCotizacionesEnFirestore(searchTerm);
+    }, 800); // 800ms de delay
+}
 
         function setupPagination() {
             const paginationContainer = document.getElementById('pagination-controls');
