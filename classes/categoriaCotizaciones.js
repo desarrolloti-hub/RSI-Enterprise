@@ -1,19 +1,5 @@
-// categoriaCotizaciones.js
+// categoriaCotizaciones.js - VERSIÓN v8
 import { db } from '/config/firebase-config.js';
-
-// Importar funciones específicas de Firestore desde CDN
-import { 
-    collection, 
-    addDoc, 
-    getDocs, 
-    doc, 
-    updateDoc, 
-    deleteDoc,
-    query,
-    orderBy,
-    serverTimestamp,
-    getDoc
-} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 class CategoriaCotizaciones {
     constructor(nombreCategoria = '', imagen = '') {
@@ -46,10 +32,10 @@ class CategoriaCotizaciones {
             const categoryData = {
                 nombreCategoria: this.nombreCategoria.trim(),
                 imagen: this.imagen || null,
-                fechaCreacion: serverTimestamp()
+                fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            const docRef = await addDoc(collection(db, "categoriasProductoServicio"), categoryData);
+            const docRef = await db.collection("categoriasProductoServicio").add(categoryData);
             return {
                 success: true,
                 id: docRef.id,
@@ -67,11 +53,9 @@ class CategoriaCotizaciones {
     // READ: Obtener todas las categorías
     static async getAll() {
         try {
-            const q = query(
-                collection(db, "categoriasProductoServicio"), 
-                orderBy("fechaCreacion", "desc")
-            );
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await db.collection("categoriasProductoServicio")
+                .orderBy("fechaCreacion", "desc")
+                .get();
             
             const categories = [];
             querySnapshot.forEach((doc) => {
@@ -101,8 +85,8 @@ class CategoriaCotizaciones {
     // READ: Obtener una categoría por ID
     static async getById(id) {
         try {
-            const docRef = doc(db, "categoriasProductoServicio", id);
-            const docSnap = await getDoc(docRef);
+            const docRef = db.collection("categoriasProductoServicio").doc(id);
+            const docSnap = await docRef.get();
             
             if (docSnap.exists()) {
                 return {
@@ -140,13 +124,13 @@ class CategoriaCotizaciones {
                 throw new Error('El nombre de la categoría no puede exceder los 100 caracteres');
             }
             
-            const categoryRef = doc(db, "categoriasProductoServicio", id);
+            const categoryRef = db.collection("categoriasProductoServicio").doc(id);
             const dataToUpdate = {
                 ...updatedData,
-                fechaActualizacion: serverTimestamp()
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            await updateDoc(categoryRef, dataToUpdate);
+            await categoryRef.update(dataToUpdate);
             
             return {
                 success: true,
@@ -164,7 +148,7 @@ class CategoriaCotizaciones {
     // DELETE: Eliminar una categoría
     static async delete(id) {
         try {
-            await deleteDoc(doc(db, "categoriasProductoServicio", id));
+            await db.collection("categoriasProductoServicio").doc(id).delete();
             
             return {
                 success: true,
@@ -182,11 +166,9 @@ class CategoriaCotizaciones {
     // Método para buscar categorías por nombre
     static async searchByName(searchTerm) {
         try {
-            const q = query(
-                collection(db, "categoriasProductoServicio"), 
-                orderBy("nombreCategoria")
-            );
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await db.collection("categoriasProductoServicio")
+                .orderBy("nombreCategoria")
+                .get();
             
             const categories = [];
             querySnapshot.forEach((doc) => {

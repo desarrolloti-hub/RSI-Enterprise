@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="gestionCategoriaCotizaciones.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
 <body>
     <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
@@ -129,9 +133,9 @@
 
     <!-- Scripts propios -->
     <script type="module" src="./gestionCategoriaCotizaciones.js"></script>
-
+   
     <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
-
+    <script src="/components/personalizacion-colores.js"></script>
     <script src="/components/navegacion-admin.js"></script>
     <script src="/components/particulas.js"></script>
 </body>

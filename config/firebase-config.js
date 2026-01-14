@@ -1,9 +1,4 @@
-// firebase-config.js
-// Usar Firebase v9 desde CDN
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-
+// firebase-config.js - VERSIÓN CORREGIDA
 // Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
@@ -16,12 +11,18 @@ const firebaseConfig = {
     measurementId: "G-38F2DBG9HE"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+// Inicializar solo si no está ya inicializado
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    console.log('✅ Firebase v8 inicializado correctamente');
+} else {
+    console.log('✅ Firebase v8 ya estaba inicializado');
+}
 
 // Obtener servicios
-const db = getFirestore(app);
-const auth = getAuth(app);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const storage = firebase.storage();
 
-// Exportar servicios
-export { db, auth, app };
+// Exportar servicios para usar con módulos ES6
+export { db, auth, storage };
