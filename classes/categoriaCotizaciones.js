@@ -82,13 +82,13 @@ class CategoriaCotizaciones {
         }
     }
 
-    // READ: Obtener una categoría por ID
+    // READ: Obtener una categoría por ID - CORREGIDO
     static async getById(id) {
         try {
             const docRef = db.collection("categoriasProductoServicio").doc(id);
             const docSnap = await docRef.get();
             
-            if (docSnap.exists()) {
+            if (docSnap.exists) { // EN V8 ES UNA PROPIEDAD, NO UNA FUNCIÓN
                 return {
                     success: true,
                     data: {

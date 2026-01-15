@@ -80,7 +80,7 @@ function displayCategorias() {
     if (!currentItems || currentItems.length === 0) {
         const emptyMessage = `
             <tr>
-                <td colspan="5" class="empty-state">
+                <td colspan="4" class="empty-state">
                     <i class="fas fa-inbox"></i>
                     <h3>No hay categorías para mostrar</h3>
                     <p>${document.getElementById('searchInput').value ? 
@@ -106,11 +106,10 @@ function displayCategorias() {
         return;
     }
 
-    // Mostrar tabla para escritorio
+    // Mostrar tabla para escritorio (SIN COLUMNA DE ID)
     const rowsHtml = currentItems.map(categoria => {
         return `
             <tr>
-                <td><strong>${categoria.id.substring(0, 8)}...</strong></td>
                 <td>
                     ${categoria.imagen ? 
                         `<img src="${categoria.imagen}" alt="${categoria.nombreCategoria}" 
@@ -133,14 +132,10 @@ function displayCategorias() {
 
     tbody.innerHTML = rowsHtml;
 
-    // Mostrar tarjetas para móvil
+    // Mostrar tarjetas para móvil (SIN ID)
     const cardsHtml = currentItems.map(categoria => {
         return `
             <div class="categoria-card">
-                <div class="card-row">
-                    <span class="card-label">ID:</span>
-                    <span class="card-value"><strong>${categoria.id.substring(0, 8)}...</strong></span>
-                </div>
                 <div class="card-row">
                     <span class="card-label">Imagen:</span>
                     <span class="card-value">
@@ -237,21 +232,12 @@ function changePage(pageNumber) {
 }
 
 // =================================================================================
-// FUNCIONES DE ACCIÓN - CRUD
+// FUNCIONES DE ACCIÓN - CRUD (CON SWEETALERT2)
 // =================================================================================
 
-function openModalForNew() {
+async function openModalForNew() {
     appState.editingCategoriaId = null;
-    document.getElementById('modalTitle').textContent = 'Nueva Categoría';
-    document.getElementById('categoriaId').value = '';
-    document.getElementById('nombreCategoria').value = '';
-    document.getElementById('imagenBase64').value = '';
-    
-    const imagePreview = document.getElementById('imagePreview');
-    imagePreview.innerHTML = '<i class="fas fa-image"></i><span>Vista previa de la imagen</span>';
-    document.getElementById('clearImageBtn').style.display = 'none';
-    
-    openModal();
+    await showCategoriaModal();
 }
 
 async function editCategoria(categoriaId) {
@@ -261,25 +247,7 @@ async function editCategoria(categoriaId) {
         if (result.success) {
             const categoria = result.data;
             appState.editingCategoriaId = categoriaId;
-            
-            document.getElementById('modalTitle').textContent = 'Editar Categoría';
-            document.getElementById('categoriaId').value = categoriaId;
-            document.getElementById('nombreCategoria').value = categoria.nombreCategoria || '';
-            document.getElementById('imagenBase64').value = categoria.imagen || '';
-            
-            const imagePreview = document.getElementById('imagePreview');
-            const clearImageBtn = document.getElementById('clearImageBtn');
-            
-            if (categoria.imagen) {
-                imagePreview.innerHTML = `<img src="${categoria.imagen}" alt="${categoria.nombreCategoria}" 
-                                          onerror="this.parentElement.innerHTML='<i class=\'fas fa-image\'></i><span>Error al cargar imagen</span>'">`;
-                clearImageBtn.style.display = 'inline-block';
-            } else {
-                imagePreview.innerHTML = '<i class="fas fa-image"></i><span>Vista previa de la imagen</span>';
-                clearImageBtn.style.display = 'none';
-            }
-            
-            openModal();
+            await showCategoriaModal(categoria);
         } else {
             showError(result.error || 'Error al cargar la categoría');
         }
@@ -289,59 +257,214 @@ async function editCategoria(categoriaId) {
     }
 }
 
-async function saveCategoria(event) {
-    event.preventDefault();
+async function showCategoriaModal(categoria = null) {
+    const isEditing = !!categoria;
+    const title = isEditing ? 'Editar Categoría' : 'Nueva Categoría';
+    const categoriaId = categoria?.id || '';
     
-    const nombreCategoria = document.getElementById('nombreCategoria').value.trim();
-    const imagen = document.getElementById('imagenBase64').value.trim();
-    const categoriaId = document.getElementById('categoriaId').value;
-    
-    if (!nombreCategoria) {
-        showError('El nombre de la categoría es requerido');
-        return;
-    }
-    
-    try {
-        const categoria = new CategoriaCotizaciones(nombreCategoria, imagen);
-        
-        if (categoriaId) {
-            // Actualizar categoría existente
-            const result = await CategoriaCotizaciones.update(categoriaId, categoria.toJSON());
+    // Crear el formulario HTML para SweetAlert2
+    const formHtml = `
+        <form id="categoriaFormSwal" class="categoria-form-swal">
+            <input type="hidden" id="categoriaId" value="${categoriaId}">
             
-            if (result.success) {
-                Swal.fire({
-                    title: '¡Actualizado!',
-                    text: 'La categoría ha sido actualizada exitosamente.',
-                    icon: 'success',
-                    confirmButtonColor: '#6C43E0'
-                });
-                
-                closeModal();
-                await loadCategorias();
-            } else {
-                showError(result.error || 'Error al actualizar la categoría');
+            <div class="form-group-swal">
+                <label for="nombreCategoria" class="form-label-swal">
+                    <i class="fas fa-tag"></i> Nombre de la Categoría *
+                </label>
+                <input type="text" id="nombreCategoria" class="form-input-swal" 
+                       value="${categoria?.nombreCategoria || ''}" required 
+                       placeholder="Ej: Electrónicos, Ropa, Software">
+            </div>
+            
+            <div class="form-group-swal">
+                <label class="form-label-swal">
+                    <i class="fas fa-image"></i> Imagen de la Categoría
+                </label>
+                <div class="image-upload-container-swal">
+                    <div class="image-preview-swal" id="imagePreviewSwal">
+                        ${categoria?.imagen ? 
+                            `<img src="${categoria.imagen}" alt="Vista previa" style="max-width: 100%; max-height: 150px; border-radius: 8px;">` : 
+                            '<i class="fas fa-image" style="font-size: 3rem; color: var(--primary-color); opacity: 0.7;"></i><br><span style="color: var(--text-color);">Vista previa de la imagen</span>'}
+                    </div>
+                    <div class="image-upload-controls-swal" style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="button" class="btn-small-swal" id="openImageUploadBtn" style="flex: 1;">
+                            <i class="fas fa-upload"></i> Subir Imagen
+                        </button>
+                        ${categoria?.imagen ? 
+                            '<button type="button" class="btn-small-swal btn-danger-swal" id="clearImageBtnSwal" style="flex: 1;">' +
+                            '<i class="fas fa-trash"></i> Eliminar Imagen</button>' : 
+                            '<button type="button" class="btn-small-swal btn-danger-swal" id="clearImageBtnSwal" style="flex: 1; display: none;">' +
+                            '<i class="fas fa-trash"></i> Eliminar Imagen</button>'}
+                    </div>
+                    <input type="file" id="imagenInputSwal" accept="image/*" style="display: none;">
+                    <textarea id="imagenBase64Swal" style="display: none;">${categoria?.imagen || ''}</textarea>
+                </div>
+            </div>
+        </form>
+    `;
+
+    const swalResult = await Swal.fire({
+        title: `<h3 style="color: var(--primary-color); margin-bottom: 20px;">${title}</h3>`,
+        html: formHtml,
+        showCancelButton: true,
+        confirmButtonText: isEditing ? 'Actualizar' : 'Crear',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: 'var(--primary-color)',
+        cancelButtonColor: 'var(--danger-color)',
+        width: 600,
+        padding: '2em',
+        customClass: {
+            container: 'categoria-swal-container',
+            popup: 'categoria-swal-popup',
+            title: 'categoria-swal-title',
+            htmlContainer: 'categoria-swal-html',
+            confirmButton: 'categoria-swal-confirm',
+            cancelButton: 'categoria-swal-cancel'
+        },
+        didOpen: () => {
+            // Configurar eventos para el formulario dentro de SweetAlert
+            const form = document.getElementById('categoriaFormSwal');
+            const nombreInput = document.getElementById('nombreCategoria');
+            const imagenInput = document.getElementById('imagenInputSwal');
+            const imagenBase64 = document.getElementById('imagenBase64Swal');
+            const imagePreview = document.getElementById('imagePreviewSwal');
+            const openImageBtn = document.getElementById('openImageUploadBtn');
+            const clearImageBtn = document.getElementById('clearImageBtnSwal');
+            
+            // Enfocar el input del nombre
+            if (nombreInput) {
+                nombreInput.focus();
             }
-        } else {
-            // Crear nueva categoría
-            const result = await categoria.create();
             
-            if (result.success) {
-                Swal.fire({
-                    title: '¡Creado!',
-                    text: 'La categoría ha sido creada exitosamente.',
-                    icon: 'success',
-                    confirmButtonColor: '#6C43E0'
+            // Evento para subir imagen
+            if (openImageBtn) {
+                openImageBtn.addEventListener('click', () => {
+                    imagenInput.click();
                 });
+            }
+            
+            // Evento para cambiar imagen
+            if (imagenInput) {
+                imagenInput.addEventListener('change', handleImageUploadSwal);
+            }
+            
+            // Evento para limpiar imagen
+            if (clearImageBtn) {
+                clearImageBtn.addEventListener('click', () => clearImageSwal());
+            }
+            
+            // Evento para el formulario
+            if (form) {
+                form.addEventListener('submit', (e) => e.preventDefault());
+            }
+            
+            // Función para manejar subida de imagen en SweetAlert
+            function handleImageUploadSwal(event) {
+                const file = event.target.files[0];
+                if (!file) return;
                 
-                closeModal();
-                await loadCategorias();
-            } else {
-                showError(result.error || 'Error al crear la categoría');
+                if (!file.type.startsWith('image/')) {
+                    showError('Por favor, selecciona un archivo de imagen válido.');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    showError('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    imagenBase64.value = base64Image;
+                    
+                    imagePreview.innerHTML = `<img src="${base64Image}" alt="Vista previa" style="max-width: 100%; max-height: 150px; border-radius: 8px;">`;
+                    clearImageBtn.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // Función para limpiar imagen en SweetAlert
+            function clearImageSwal() {
+                Swal.fire({
+                    title: '¿Eliminar imagen?',
+                    text: 'Esta acción no se puede deshacer.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: 'var(--primary-color)',
+                    cancelButtonColor: 'var(--danger-color)',
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-color)',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        imagenBase64.value = '';
+                        imagenInput.value = '';
+                        imagePreview.innerHTML = '<i class="fas fa-image" style="font-size: 3rem; color: var(--primary-color); opacity: 0.7;"></i><br><span style="color: var(--text-color);">Vista previa de la imagen</span>';
+                        clearImageBtn.style.display = 'none';
+                    }
+                });
+            }
+        },
+        preConfirm: async () => {
+            const nombreCategoria = document.getElementById('nombreCategoria')?.value.trim();
+            const imagen = document.getElementById('imagenBase64Swal')?.value.trim();
+            const categoriaIdInput = document.getElementById('categoriaId')?.value;
+            
+            if (!nombreCategoria) {
+                Swal.showValidationMessage('El nombre de la categoría es requerido');
+                return false;
+            }
+            
+            try {
+                // Crear instancia de categoría
+                const categoriaObj = new CategoriaCotizaciones(nombreCategoria, imagen);
+                
+                if (categoriaIdInput) {
+                    // Actualizar categoría existente
+                    const result = await CategoriaCotizaciones.update(categoriaIdInput, categoriaObj.toJSON());
+                    
+                    if (result.success) {
+                        return { success: true, message: 'Categoría actualizada exitosamente' };
+                    } else {
+                        Swal.showValidationMessage(result.error || 'Error al actualizar la categoría');
+                        return false;
+                    }
+                } else {
+                    // Crear nueva categoría
+                    const result = await categoriaObj.create();
+                    
+                    if (result.success) {
+                        return { success: true, message: 'Categoría creada exitosamente' };
+                    } else {
+                        Swal.showValidationMessage(result.error || 'Error al crear la categoría');
+                        return false;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al guardar categoría:', error);
+                Swal.showValidationMessage('No se pudo guardar la categoría: ' + error.message);
+                return false;
             }
         }
-    } catch (error) {
-        console.error('Error al guardar categoría:', error);
-        showError('No se pudo guardar la categoría.');
+    });
+
+    if (swalResult.isConfirmed && swalResult.value?.success) {
+        await Swal.fire({
+            title: '¡Éxito!',
+            text: swalResult.value.message,
+            icon: 'success',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: 'var(--primary-color)',
+            background: 'var(--card-bg)',
+            color: 'var(--text-color)'
+        });
+        
+        await loadCategorias();
     }
 }
 
@@ -357,19 +480,25 @@ async function deleteCategoria(categoriaId) {
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#6C43E0',
-            cancelButtonColor: '#dc3545'
+            confirmButtonColor: 'var(--primary-color)',
+            cancelButtonColor: 'var(--danger-color)',
+            background: 'var(--card-bg)',
+            color: 'var(--text-color)',
+            reverseButtons: true
         });
 
         if (result.isConfirmed) {
             const deleteResult = await CategoriaCotizaciones.delete(categoriaId);
             
             if (deleteResult.success) {
-                Swal.fire({
+                await Swal.fire({
                     title: '¡Eliminado!',
                     text: 'La categoría ha sido eliminada exitosamente.',
                     icon: 'success',
-                    confirmButtonColor: '#6C43E0'
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: 'var(--primary-color)',
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-color)'
                 });
                 
                 await loadCategorias();
@@ -384,62 +513,13 @@ async function deleteCategoria(categoriaId) {
 }
 
 // =================================================================================
-// FUNCIONES DE MODAL
-// =================================================================================
-
-function openModal() {
-    const modal = document.getElementById('categoriaModal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-    const modal = document.getElementById('categoriaModal');
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-function openImageUpload() {
-    document.getElementById('imagenInput').click();
-}
-
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-        showError('Por favor, selecciona un archivo de imagen válido.');
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64Image = e.target.result;
-        document.getElementById('imagenBase64').value = base64Image;
-        
-        const imagePreview = document.getElementById('imagePreview');
-        imagePreview.innerHTML = `<img src="${base64Image}" alt="Vista previa">`;
-        document.getElementById('clearImageBtn').style.display = 'inline-block';
-    };
-    reader.readAsDataURL(file);
-}
-
-function clearImage() {
-    document.getElementById('imagenBase64').value = '';
-    document.getElementById('imagenInput').value = '';
-    
-    const imagePreview = document.getElementById('imagePreview');
-    imagePreview.innerHTML = '<i class="fas fa-image"></i><span>Vista previa de la imagen</span>';
-    document.getElementById('clearImageBtn').style.display = 'none';
-}
-
-// =================================================================================
 // FUNCIONES AUXILIARES
 // =================================================================================
 
 const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     try {
+        // Si es un timestamp de Firestore
         if (timestamp.toDate) {
             return timestamp.toDate().toLocaleDateString('es-MX', {
                 year: 'numeric',
@@ -447,12 +527,25 @@ const formatDate = (timestamp) => {
                 day: 'numeric'
             });
         }
-        return new Date(timestamp).toLocaleDateString('es-MX', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        // Si es un string de fecha
+        if (typeof timestamp === 'string') {
+            return new Date(timestamp).toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        // Si es un objeto Date
+        if (timestamp instanceof Date) {
+            return timestamp.toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        return 'Fecha inválida';
     } catch (error) {
+        console.error('Error al formatear fecha:', error);
         return 'Fecha inválida';
     }
 };
@@ -462,16 +555,10 @@ function showError(message) {
         title: 'Error',
         text: message,
         icon: 'error',
-        confirmButtonColor: '#6C43E0'
-    });
-}
-
-function showSuccess(message) {
-    Swal.fire({
-        title: '¡Éxito!',
-        text: message,
-        icon: 'success',
-        confirmButtonColor: '#6C43E0'
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: 'var(--primary-color)',
+        background: 'var(--card-bg)',
+        color: 'var(--text-color)'
     });
 }
 
@@ -494,41 +581,6 @@ function setupEventListeners() {
     if (btnNuevaCategoria) {
         btnNuevaCategoria.addEventListener('click', openModalForNew);
     }
-
-    // Formulario de categoría
-    const categoriaForm = document.getElementById('categoriaForm');
-    if (categoriaForm) {
-        categoriaForm.addEventListener('submit', saveCategoria);
-    }
-
-    // Cerrar modal haciendo clic fuera
-    const modal = document.getElementById('categoriaModal');
-    if (modal) {
-        modal.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
-    }
-
-    // Evento en textarea de imagen
-    const imagenTextarea = document.getElementById('imagenBase64');
-    if (imagenTextarea) {
-        imagenTextarea.addEventListener('input', () => {
-            const imagePreview = document.getElementById('imagePreview');
-            const clearImageBtn = document.getElementById('clearImageBtn');
-            const value = imagenTextarea.value.trim();
-            
-            if (value && value.startsWith('data:image')) {
-                imagePreview.innerHTML = `<img src="${value}" alt="Vista previa" 
-                                             onerror="this.parentElement.innerHTML='<i class=\'fas fa-image\'></i><span>Imagen inválida</span>'">`;
-                clearImageBtn.style.display = 'inline-block';
-            } else if (value === '') {
-                imagePreview.innerHTML = '<i class="fas fa-image"></i><span>Vista previa de la imagen</span>';
-                clearImageBtn.style.display = 'none';
-            }
-        });
-    }
 }
 
 // =================================================================================
@@ -538,14 +590,7 @@ function setupEventListeners() {
 // Exportar funciones al scope global para que puedan ser llamadas desde HTML
 window.editCategoria = editCategoria;
 window.deleteCategoria = deleteCategoria;
-window.openImageUpload = openImageUpload;
-window.handleImageUpload = handleImageUpload;
-window.clearImage = clearImage;
-window.closeModal = closeModal;
-
-// También necesitas exportar openModalForNew si se usa desde HTML
 window.openModalForNew = openModalForNew;
-window.saveCategoria = saveCategoria;
 
 // =================================================================================
 // INICIALIZACIÓN

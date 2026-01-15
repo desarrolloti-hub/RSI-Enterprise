@@ -17,6 +17,9 @@
     --danger-color: #e74c3c;
     --success-color: #2ecc71;
     --warning-color: #f39c12;
+    --subtle-bg: #f0f0f0; /* Nuevo: fondo sutil para elementos */
+    --border-color: #e0e0e0; /* Nuevo: color para bordes */
+    --muted-text: #666; /* Nuevo: texto atenuado */
 }
 
 body {
@@ -190,7 +193,7 @@ body {
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
 }
 
 .card-row {
@@ -199,7 +202,7 @@ body {
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .card-row:last-child {
@@ -217,6 +220,7 @@ body {
 .card-value {
     flex: 1;
     text-align: right;
+    color: var(--text-color);
 }
 
 .card-image {
@@ -224,7 +228,7 @@ body {
     height: 60px;
     border-radius: 8px;
     object-fit: cover;
-    background: var(--background-color);
+    background: var(--subtle-bg);
 }
 
 .card-actions {
@@ -233,7 +237,7 @@ body {
     gap: 10px;
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid rgba(0,0,0,0.1);
+    border-top: 1px solid var(--border-color);
 }
 
 th {
@@ -249,7 +253,7 @@ th {
 
 td {
     padding: 16px 20px;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-color);
     font-size: 0.95rem;
     vertical-align: middle;
@@ -264,7 +268,7 @@ tr:hover {
     height: 50px;
     border-radius: 8px;
     object-fit: cover;
-    background: var(--background-color);
+    background: var(--subtle-bg);
 }
 
 .action-btn {
@@ -389,6 +393,7 @@ tr:hover {
     font-size: 1.1rem;
     max-width: 400px;
     line-height: 1.6;
+    color: var(--text-color);
 }
 
 /* MODAL */
@@ -446,6 +451,7 @@ tr:hover {
 .modal-header h3 {
     margin: 0;
     font-size: 1.5rem;
+    color: white;
 }
 
 .close-modal {
@@ -495,7 +501,7 @@ tr:hover {
 .form-group textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -516,7 +522,7 @@ tr:hover {
     font-family: 'Inter', sans-serif;
 }
 
-/* IMAGE UPLOAD */
+/* IMAGE UPLOAD - MODIFICADO */
 .image-upload-container {
     margin-top: 10px;
 }
@@ -530,16 +536,18 @@ tr:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--background-color);
+    background: var(--subtle-bg);
     color: var(--text-color);
     margin-bottom: 15px;
     overflow: hidden;
+    position: relative;
 }
 
 .image-preview img {
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 .image-preview i {
@@ -549,14 +557,49 @@ tr:hover {
     opacity: 0.7;
 }
 
+.image-preview span {
+    color: var(--muted-text);
+    font-size: 0.9rem;
+}
+
 .image-upload-controls {
     display: flex;
     gap: 10px;
-    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
 .image-upload-controls input[type="file"] {
     display: none;
+}
+
+/* Ocultar textarea del modal */
+#imagenBase64 {
+    display: none;
+}
+
+/* Mejorar botones de imagen */
+.image-upload-controls .btn-small {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+    background: var(--card-bg);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.image-upload-controls .btn-small:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.image-upload-controls .btn-small.btn-danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.image-upload-controls .btn-small.btn-danger:hover {
+    background: var(--danger-color);
+    color: white;
 }
 
 .modal-actions {
@@ -565,7 +608,133 @@ tr:hover {
     gap: 15px;
     margin-top: 25px;
     padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-actions .btn {
+    background: var(--card-bg);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.modal-actions .btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.modal-actions .btn.btn-danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.modal-actions .btn.btn-danger:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Estilos para SweetAlert2 personalizados (serán sobreescritos por personalizacion-colores.js) */
+.swal2-popup {
+    font-family: 'Inter', sans-serif !important;
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+.swal2-title {
+    color: var(--primary-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+}
+
+.swal2-html-container {
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+}
+
+.swal2-confirm {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 10px 25px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal2-confirm:hover {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.swal2-cancel {
+    background-color: var(--subtle-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 10px 25px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal2-cancel:hover {
+    background-color: var(--border-color) !important;
+    transform: translateY(-2px) !important;
+}
+
+.swal2-icon {
+    margin: 1.5em auto 1em !important;
+}
+
+.swal2-success [class^=swal2-success-line] {
+    background-color: var(--primary-color) !important;
+}
+
+.swal2-success [class^=swal2-success-circular-line] {
+    background-color: transparent !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+    border: 4px solid var(--primary-color)30 !important;
+}
+
+.swal2-icon.swal2-error {
+    border-color: var(--primary-color) !important;
+}
+
+.swal2-icon.swal2-error [class^=swal2-x-mark-line] {
+    background-color: var(--primary-color) !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: var(--warning-color) !important;
+    color: var(--warning-color) !important;
+}
+
+.swal2-icon.swal2-info {
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+
+.swal2-actions {
+    gap: 10px !important;
+}
+
+/* Ajustes para modo oscuro específicos */
+:root[data-theme="dark"] {
+    --border-color: #444;
+    --subtle-bg: #2a2a2a;
+    --muted-text: #999;
+}
+
+:root[data-theme="gray"] {
+    --border-color: #999;
+    --subtle-bg: #909090;
+    --muted-text: #666;
 }
 
 /* RESPONSIVE */
@@ -641,6 +810,18 @@ tr:hover {
     .modal-actions .btn {
         width: 100%;
     }
+    
+    .image-preview {
+        height: 150px;
+    }
+    
+    .image-upload-controls {
+        flex-direction: column;
+    }
+    
+    .image-upload-controls .btn-small {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -703,5 +884,184 @@ tr:hover {
     
     .modal-body {
         padding: 15px;
+    }
+    
+    .image-preview {
+        height: 120px;
+    }
+}
+/* Agregar al final del archivo CSS existente */
+
+/* ESTILOS PARA SWEETALERT2 PERSONALIZADO */
+.categoria-swal-container {
+    z-index: 10000 !important;
+}
+
+.categoria-swal-popup {
+    background: var(--card-bg) !important;
+    border-radius: 15px !important;
+    border: 2px solid var(--primary-color) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    max-width: 90vw !important;
+}
+
+.categoria-swal-title {
+    color: var(--primary-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 20px !important;
+}
+
+.categoria-swal-html {
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+}
+
+.categoria-swal-confirm {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 10px 25px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.categoria-swal-confirm:hover {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.categoria-swal-cancel {
+    background-color: var(--subtle-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 10px 25px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.categoria-swal-cancel:hover {
+    background-color: var(--border-color) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Estilos para formulario dentro de SweetAlert */
+.categoria-form-swal {
+    width: 100%;
+}
+
+.form-group-swal {
+    margin-bottom: 20px;
+}
+
+.form-label-swal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+}
+
+.form-label-swal i {
+    color: var(--primary-color);
+}
+
+.form-input-swal {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+}
+
+.form-input-swal:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.2);
+}
+
+.image-upload-container-swal {
+    margin-top: 10px;
+}
+
+.image-preview-swal {
+    width: 100%;
+    min-height: 150px;
+    border: 2px dashed var(--primary-color);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--subtle-bg);
+    color: var(--text-color);
+    margin-bottom: 15px;
+    overflow: hidden;
+    padding: 15px;
+    text-align: center;
+}
+
+.btn-small-swal {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    background: var(--card-bg);
+    color: var(--primary-color);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.btn-small-swal:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-danger-swal {
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+}
+
+.btn-danger-swal:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Responsive para SweetAlert */
+@media (max-width: 768px) {
+    .categoria-swal-popup {
+        width: 95vw !important;
+        margin: 10px !important;
+    }
+    
+    .image-preview-swal {
+        min-height: 120px;
+    }
+    
+    .image-upload-controls-swal {
+        flex-direction: column !important;
     }
 }
