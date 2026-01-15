@@ -386,7 +386,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         clearTimeout(timeout); 
-                        if (position.coords.accuracy > 100) {
+                        if (position.coords.accuracy > 1000) {
                             reject(new Error("La precisión de la ubicación es demasiado baja. Intenta en un área con mejor señal."));
                             return;
                         }

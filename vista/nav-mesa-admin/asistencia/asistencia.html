@@ -300,7 +300,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         clearTimeout(timeout); 
-                        if (position.coords.accuracy > 100) {
+                        if (position.coords.accuracy > 1000) {
                             reject(rechazarComoUsuario("La precisión de la ubicación es demasiado baja. Intenta en un área con mejor señal.")); return;
                         }
                         const coordinates = { latitude: Math.round(position.coords.latitude * 1000) / 1000, longitude: Math.round(position.coords.longitude * 1000) / 1000, accuracy: position.coords.accuracy, timestamp: firebase.firestore.Timestamp.fromDate(new Date()) };
