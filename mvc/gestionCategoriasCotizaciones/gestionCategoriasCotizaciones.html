@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Categorías</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="gestionCategoriaCotizaciones.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Gestión de Categorías</h2>
+            </div>
+            <div class="header-controls">
+                <div class="filters-row">
+                    <div class="filter-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar categorías por nombre...">
+                    </div>
+                </div>
+                <div class="buttons-row">
+                    <button class="btn" id="btnNuevaCategoria">
+                        <i class="fas fa-plus"></i>
+                        Nueva Categoría
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <!-- TABLA PARA ESCRITORIO -->
+            <!-- En el HTML, cambiar la tabla para que no tenga columna ID -->
+            <table class="desktop-table">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Nombre de Categoría</th>
+                        <th>Fecha de Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriasTableBody">
+                    <tr>
+                        <td colspan="4" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando categorías...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- TARJETAS PARA MÓVIL -->
+            <div class="mobile-cards" id="mobileCardsContainer">
+                <!-- Las tarjetas se generarán dinámicamente -->
+            </div>
+        </div>
+        
+        <div class="pagination-container"></div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Scripts propios -->
+    <script type="module" src="./gestionCategoriaCotizaciones.js"></script>
+   
+    <!-- SCRIPTS DE PERSONALIZACIÓN Y NAVEGACIÓN -->
+    <script src="/components/personalizacion-colores.js"></script>
+    <script src="/components/navegacion-admin.js"></script>
+    <script src="/components/particulas.js"></script>
+</body>
+</html>
