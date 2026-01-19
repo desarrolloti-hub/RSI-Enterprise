@@ -1,3 +1,4 @@
+/* gestionProductoServicioCotizaciones.css - Estilos para productos/servicios */
 /* ESTILOS BASE - SERÁN SOBREESCRITOS POR personalizacion-colores.js */
 * {
     margin: 0;
@@ -17,9 +18,10 @@
     --danger-color: #e74c3c;
     --success-color: #2ecc71;
     --warning-color: #f39c12;
-    --subtle-bg: #f0f0f0; /* Nuevo: fondo sutil para elementos */
-    --border-color: #e0e0e0; /* Nuevo: color para bordes */
-    --muted-text: #666; /* Nuevo: texto atenuado */
+    --subtle-bg: #f0f0f0;
+    --border-color: #e0e0e0;
+    --muted-text: #666;
+    --price-color: #27ae60; /* Nuevo: color para precios */
 }
 
 body {
@@ -187,7 +189,7 @@ body {
     gap: 15px;
 }
 
-.categoria-card {
+.producto-card {
     background: var(--card-bg);
     border-radius: 10px;
     padding: 20px;
@@ -213,7 +215,7 @@ body {
 .card-label {
     font-weight: 600;
     color: var(--primary-color);
-    min-width: 100px;
+    min-width: 120px;
 }
 
 .card-value {
@@ -237,6 +239,13 @@ body {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid var(--border-color);
+}
+
+/* Estilo especial para precios */
+.price-value {
+    color: var(--price-color);
+    font-weight: 700;
+    font-size: 1.1rem;
 }
 
 th {
@@ -497,6 +506,7 @@ tr:hover {
 }
 
 .form-group input[type="text"],
+.form-group input[type="number"],
 .form-group textarea {
     width: 100%;
     padding: 12px 15px;
@@ -509,6 +519,7 @@ tr:hover {
 }
 
 .form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
 .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-color);
@@ -519,6 +530,25 @@ tr:hover {
     min-height: 100px;
     resize: vertical;
     font-family: 'Inter', sans-serif;
+}
+
+/* Estilo específico para input de precio */
+.price-input {
+    position: relative;
+}
+
+.price-input::before {
+    content: "$";
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.price-input input {
+    padding-left: 30px !important;
 }
 
 /* IMAGE UPLOAD - MODIFICADO */
@@ -631,7 +661,7 @@ tr:hover {
     color: white;
 }
 
-/* Estilos para SweetAlert2 personalizados (serán sobreescritos por personalizacion-colores.js) */
+/* Estilos para SweetAlert2 personalizados */
 .swal2-popup {
     font-family: 'Inter', sans-serif !important;
     background: var(--card-bg) !important;
@@ -728,12 +758,210 @@ tr:hover {
     --border-color: #444;
     --subtle-bg: #2a2a2a;
     --muted-text: #999;
+    --price-color: #2ecc71;
 }
 
 :root[data-theme="gray"] {
     --border-color: #999;
     --subtle-bg: #909090;
     --muted-text: #666;
+    --price-color: #27ae60;
+}
+
+/* Agregar al final del archivo CSS existente */
+
+/* ESTILOS PARA SWEETALERT2 PERSONALIZADO */
+.producto-swal-container {
+    z-index: 10000 !important;
+}
+
+.producto-swal-popup {
+    background: var(--card-bg) !important;
+    border-radius: 15px !important;
+    border: 2px solid var(--primary-color) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    max-width: 90vw !important;
+}
+
+.producto-swal-title {
+    color: var(--primary-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 20px !important;
+}
+
+.producto-swal-html {
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+}
+
+.producto-swal-confirm {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 10px 25px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.producto-swal-confirm:hover {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.producto-swal-cancel {
+    background-color: var(--subtle-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 10px 25px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.producto-swal-cancel:hover {
+    background-color: var(--border-color) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Estilos para formulario dentro de SweetAlert */
+.producto-form-swal {
+    width: 100%;
+}
+
+.form-group-swal {
+    margin-bottom: 20px;
+}
+
+.form-label-swal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+}
+
+.form-label-swal i {
+    color: var(--primary-color);
+}
+
+.form-input-swal {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+}
+
+.form-input-swal:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.2);
+}
+
+/* Estilo específico para input de precio en SweetAlert */
+.price-input-swal {
+    position: relative;
+}
+
+.price-input-swal::before {
+    content: "$";
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    font-weight: 600;
+    z-index: 1;
+}
+
+.price-input-swal input {
+    padding-left: 30px !important;
+}
+
+.image-upload-container-swal {
+    margin-top: 10px;
+}
+
+.image-preview-swal {
+    width: 100%;
+    min-height: 150px;
+    border: 2px dashed var(--primary-color);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--subtle-bg);
+    color: var(--text-color);
+    margin-bottom: 15px;
+    overflow: hidden;
+    padding: 15px;
+    text-align: center;
+}
+
+.btn-small-swal {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+    background: var(--card-bg);
+    color: var(--primary-color);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.btn-small-swal:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-danger-swal {
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+}
+
+.btn-danger-swal:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Responsive para SweetAlert */
+@media (max-width: 768px) {
+    .producto-swal-popup {
+        width: 95vw !important;
+        margin: 10px !important;
+    }
+    
+    .image-preview-swal {
+        min-height: 120px;
+    }
+    
+    .image-upload-controls-swal {
+        flex-direction: column !important;
+    }
 }
 
 /* RESPONSIVE */
@@ -853,7 +1081,7 @@ tr:hover {
         padding: 10px;
     }
 
-    .categoria-card {
+    .producto-card {
         padding: 15px;
     }
 
@@ -889,94 +1117,19 @@ tr:hover {
         height: 120px;
     }
 }
-/* Agregar al final del archivo CSS existente */
-
-/* ESTILOS PARA SWEETALERT2 PERSONALIZADO */
-.categoria-swal-container {
-    z-index: 10000 !important;
+/* Estilos para categorías */
+.category-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
 }
 
-.categoria-swal-popup {
-    background: var(--card-bg) !important;
-    border-radius: 15px !important;
-    border: 2px solid var(--primary-color) !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
-    max-width: 90vw !important;
-}
-
-.categoria-swal-title {
-    color: var(--primary-color) !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 1.5rem !important;
-    font-weight: 600 !important;
-    margin-bottom: 20px !important;
-}
-
-.categoria-swal-html {
-    color: var(--text-color) !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
-}
-
-.categoria-swal-confirm {
-    background-color: var(--primary-color) !important;
-    border-color: var(--primary-color) !important;
-    color: white !important;
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 600 !important;
-    padding: 10px 25px !important;
-    border-radius: 8px !important;
-    transition: all 0.3s ease !important;
-}
-
-.categoria-swal-confirm:hover {
-    background-color: var(--secondary-color) !important;
-    border-color: var(--secondary-color) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-.categoria-swal-cancel {
-    background-color: var(--subtle-bg) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-color) !important;
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 600 !important;
-    padding: 10px 25px !important;
-    border-radius: 8px !important;
-    transition: all 0.3s ease !important;
-}
-
-.categoria-swal-cancel:hover {
-    background-color: var(--border-color) !important;
-    transform: translateY(-2px) !important;
-}
-
-/* Estilos para formulario dentro de SweetAlert */
-.categoria-form-swal {
-    width: 100%;
-}
-
-.form-group-swal {
-    margin-bottom: 20px;
-}
-
-.form-label-swal {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--text-color);
-    font-family: 'Inter', sans-serif;
-}
-
-.form-label-swal i {
-    color: var(--primary-color);
-}
-
-.form-input-swal {
+/* Estilo para select en SweetAlert */
+.form-input-swal select {
     width: 100%;
     padding: 12px 15px;
     border: 2px solid var(--border-color);
@@ -986,81 +1139,28 @@ tr:hover {
     background: var(--card-bg);
     color: var(--text-color);
     font-family: 'Inter', sans-serif;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236C43E0' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
 }
 
-.form-input-swal:focus {
+.form-input-swal select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.2);
 }
 
-.image-upload-container-swal {
-    margin-top: 10px;
-}
-
-.image-preview-swal {
-    width: 100%;
-    min-height: 150px;
-    border: 2px dashed var(--primary-color);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--subtle-bg);
-    color: var(--text-color);
-    margin-bottom: 15px;
-    overflow: hidden;
-    padding: 15px;
-    text-align: center;
-}
-
-.btn-small-swal {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 2px solid var(--primary-color);
-    background: var(--card-bg);
-    color: var(--primary-color);
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.btn-small-swal:hover {
-    background: var(--primary-color);
-    color: white;
-    transform: translateY(-2px);
-}
-
-.btn-danger-swal {
-    border-color: var(--danger-color);
-    color: var(--danger-color);
-}
-
-.btn-danger-swal:hover {
-    background: var(--danger-color);
-    color: white;
-}
-
-/* Responsive para SweetAlert */
+/* Mejorar visualización de select en móvil */
 @media (max-width: 768px) {
-    .categoria-swal-popup {
-        width: 95vw !important;
-        margin: 10px !important;
+    .form-input-swal select {
+        font-size: 0.95rem;
     }
-    
-    .image-preview-swal {
-        min-height: 120px;
-    }
-    
-    .image-upload-controls-swal {
-        flex-direction: column !important;
-    }
+}
+
+/* En la tabla, ajustar columna de categoría */
+.desktop-table th:nth-child(4),
+.desktop-table td:nth-child(4) {
+    min-width: 150px;
 }
