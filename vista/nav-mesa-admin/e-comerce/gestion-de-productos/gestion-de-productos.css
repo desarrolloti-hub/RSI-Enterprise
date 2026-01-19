@@ -1,0 +1,30 @@
+/* Layout y Contenedores */
+.main-container { max-width: 1200px; margin: 20px auto; padding: 20px; }
+.header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px; }
+.search-bar { display: flex; align-items: center; padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); flex-grow: 1; max-width: 400px; }
+.search-bar input { border: none; background: transparent; outline: none; margin-left: 10px; width: 100%; }
+
+/* Tabla Estructural */
+.table-responsive { width: 100%; overflow-x: auto; background: transparent; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.05); }
+
+/* Animación de Carga (Spinner) */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(0,0,0,0.1);
+    border-top: 5px solid var(--primary-color, #6C43E0); /* Usa el color de tu tema */
+    border-radius: 50%;
+    margin: 20px auto;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Botones de acción en tabla */
+.action-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 5px; transition: 0.2s; }
+.action-btn:hover { transform: scale(1.2); }
+
+/* Paginación */
+.pagination-container { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px; }
+.pagination-container button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid rgba(0,0,0,0.1); background: white; }

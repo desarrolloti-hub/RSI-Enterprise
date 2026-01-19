@@ -330,7 +330,6 @@ body {
 }
 
 .finish-btn {
-    background-color: #676767; /* Verde fijo (Éxito) */
     color: white;
 }
 .finish-btn:hover { background-color: #218838; }
@@ -519,40 +518,180 @@ body {
             background-color: transparent;
             display: none; 
         }
+        /* --- Estilos para mejorar la legibilidad y el espaciado en los detalles del ticket --- */
 
-
-        /* --- BLOQUE CORREGIDO PARA EVITAR DESBORDAMIENTO --- */
-
-.ticket-desc {
-    font-size: 0.9rem;
-    color: var(--text-color, #aaa)70;
-    margin-bottom: 15px;
-    line-height: 1.4;
-    flex-grow: 1;
-    
-    /* Estas propiedades son las que arreglan el error de la imagen */
-    word-break: break-word;    /* Rompe palabras largas */
-    overflow-wrap: anywhere;   /* Asegura que el texto se mantenga dentro */
-    hyphens: auto;             /* Añade guiones si es necesario (opcional) */
+.detail-section {
+    /* Añade margen debajo de cada sección principal */
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Separador suave */
 }
 
-.ticket-card {
-    background-color: var(--card-bg, #2a2a2a);
-    border: 1px solid var(--text-color, #444)30;
-    border-radius: 12px;
-    padding: 20px;
+.detail-section strong {
+    /* Estilo para los títulos de sección */
+    display: block;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    color: var(--primary-color, #e74c3c); /* Asume que usas una variable CSS para el color principal */
+}
+
+.progress-container {
+    /* Contenedor principal de la lista de colaboradores */
     display: flex;
     flex-direction: column;
-    box-shadow: var(--card-shadow, 0 4px 15px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    
-    /* Evita que cualquier elemento hijo "empuje" las paredes de la card */
-    overflow: hidden; 
+    gap: 10px; /* Espacio vertical entre cada colaborador */
 }
 
-.ticket-meta {
+.progress-item {
+    /* Estilo para cada fila de colaborador */
     display: flex;
-    flex-wrap: wrap;           /* Si los badges no caben, saltan de línea */
-    gap: 8px;
-    margin-bottom: 10px;
+    justify-content: space-between; /* Distribuye espacio entre nombre y estado */
+    align-items: center;
+    padding: 8px 10px;
+    background-color: rgba(255, 255, 255, 0.05); /* Fondo ligero para la fila */
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
+
+.progress-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.progress-name {
+    /* Estilo para el nombre del colaborador */
+    font-weight: 600;
+    flex-basis: 40%; /* Ocupa el 40% del espacio para el nombre */
+}
+
+.progress-status {
+    /* Estilo para el estado (Aceptado / Pendiente) */
+    font-size: 0.9em;
+    font-weight: 500;
+    /* Ajusta los colores de los íconos/texto según el estado */
+}
+
+/* Ajuste específico para el ícono de Ojo (Ver Evidencia) */
+.view-evidence-btn {
+    background: none;
+    border: none;
+    color: #007bff; /* Color azul para el ícono de ojo */
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-left: 10px;
+    padding: 0;
+}
+
+/* Colores de estado para legibilidad */
+.progress-status.completed {
+    color: #28a745; /* Verde */
+}
+
+.progress-status.pending {
+    color: #ffc107; /* Amarillo */
+}
+/* ========================================= */
+/* --- CSS para la Tabla de Historial (Responsive) --- */
+/* ========================================= */
+
+/* 1. Asegurar que la tabla y el texto dentro de SweetAlert se vean bien */
+/* Nota: Si el modal de Swal es muy pequeño, usa un media query */
+
+.swal2-popup {
+    /* Ajusta el ancho del modal en móvil si es necesario */
+    max-width: 95% !important; 
+}
+
+.history-table {
+    width: 100%;
+    /* Asegura que no haya padding excesivo en la tabla */
+    font-size: 0.9em; 
+}
+
+/* 2. Transformación en vista móvil */
+@media screen and (max-width: 768px) {
+    /* Ocultar el encabezado de la tabla en pantallas pequeñas */
+    .history-table thead {
+        display: none;
+    }
+
+    /* Hacer que el cuerpo de la tabla se comporte como bloques de elementos */
+    .history-table tbody, 
+    .history-table tr {
+        display: block;
+        width: 100%;
+    }
+
+    .history-table tr {
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2); /* Borde para separar registros */
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .history-table td {
+        /* Comportamiento de bloque para cada celda */
+        display: block;
+        text-align: right !important; /* Alineación del valor a la derecha */
+        padding-left: 50% !important; /* Espacio para el label simulado */
+        position: relative;
+        border-bottom: none; /* Elimina la línea de celda */
+    }
+
+    /* Mostrar encabezado simulado (label) */
+    .history-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        text-align: left; /* Alinea el label a la izquierda */
+        color: #e74c3c; /* Color del título de sección (Rojo) */
+    }
+
+    /* Asignar labels para accesibilidad y visualización */
+    .history-table tr td:nth-of-type(1)::before { content: "Fecha/Hora:"; }
+    .history-table tr td:nth-of-type(2)::before { content: "Est. Anterior:"; }
+    .history-table tr td:nth-of-type(3)::before { content: "Est. Nuevo:"; }
+    .history-table tr td:nth-of-type(4)::before { content: "Colaborador:"; }
+    .history-table tr td:nth-of-type(5)::before { content: "Motivo:"; }
+
+    /* Ajuste para que los badges se muestren correctamente */
+    .history-table td span.status-badge {
+        display: inline-block;
+        white-space: normal;
+        text-align: center;
+        max-width: 100%;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
