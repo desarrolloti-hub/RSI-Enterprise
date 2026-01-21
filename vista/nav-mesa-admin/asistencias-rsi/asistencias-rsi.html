@@ -447,6 +447,26 @@ function checkViewMode() {
     }
 }
 
+// Función para convertir formato 24 horas a 12 horas
+function formatTo12Hour(time24) {
+    if (!time24 || time24 === 'Sin hora') return 'Sin hora';
+    
+    // Separar horas y minutos
+    const [hours, minutes] = time24.split(':').map(Number);
+    
+    // Determinar AM o PM
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    
+    // Convertir a formato 12 horas
+    let hours12 = hours % 12;
+    hours12 = hours12 === 0 ? 12 : hours12; // 0 se convierte en 12 para 12 AM
+    
+    // Formatear minutos con 2 dígitos
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+    
+    return `${hours12}:${minutesStr} ${ampm}`;
+}
+
 // Renderizar vista de tarjetas móviles
 function renderMobileCards(employeesToShow) {
     const mobileCardsView = document.getElementById('mobileCardsView');
@@ -715,10 +735,14 @@ function renderCalendar(employeesToShow) {
                 const entryRecord = employeeAttendance.find(record => record.tipoRegistro === 'entrada');
                 const exitRecord = employeeAttendance.find(record => record.tipoRegistro === 'salida');
                 
+                // NOTA: Ahora la entrada (E:) va ARRIBA y la salida (S:) va ABAJO
+                
                 if (entryRecord) {
                     const isLate = isRetardo(entryRecord.hora);
                     const entryElement = document.createElement('p');
-                    entryElement.textContent = `E: ${entryRecord.hora}`;
+                    // Usar formato de 12 horas
+                    const entryTime12 = formatTo12Hour(entryRecord.hora);
+                    entryElement.textContent = `E: ${entryTime12}`;
                     entryElement.className = isLate ? 'late' : 'present';
                     attendanceInfo.appendChild(entryElement);
                     
@@ -731,7 +755,9 @@ function renderCalendar(employeesToShow) {
                 
                 if (exitRecord) {
                     const exitElement = document.createElement('p');
-                    exitElement.textContent = `S: ${exitRecord.hora}`;
+                    // Usar formato de 12 horas
+                    const exitTime12 = formatTo12Hour(exitRecord.hora);
+                    exitElement.textContent = `S: ${exitTime12}`;
                     exitElement.className = 'present';
                     attendanceInfo.appendChild(exitElement);
                 }
