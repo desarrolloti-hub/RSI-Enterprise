@@ -3,61 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Productos Premium</title>
+    <title>Gestor de Productos - RSI Enterprise</title>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+    <link rel="stylesheet" href="../css/productos.css">
     <link rel="stylesheet" href="gestion-de-productos.css">
 </head>
 <body>
-    
-
-    <div class="main-container">
-        <header class="header-actions">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Buscar productos..." oninput="filterProducts()">
-            </div>
-            <div class="button-group">
-                <button class="btn-action" onclick="openProductForm()"><i class="fas fa-plus"></i> Agregar Producto</button>
-            </div>
-        </header>
-
-        <div class="table-responsive">
-            <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Precio</th>
-                    <th>Desc.</th>
-                    <th>Final</th>
-                    <th>Marca</th>
-                    <th>Modelo</th>
-                    <th>SKU</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-                <tbody id="productsBody">
-                    </tbody>
-            </table>
+    <!-- Navbar Administrativo -->
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <img src="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png" alt="Logo RSI">
         </div>
+        <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+        <ul class="nan_menu">
+            <li><i class="fas fa-home"></i><a href="panel-administrador"> Inicio</a></li>
+        </ul>
+    </nav>
 
-        <div class="pagination-container">
-            <button onclick="previousPage()"><i class="fas fa-chevron-left"></i> Anterior</button>
-            <span id="pageNumber">Página 1</span>
-            <button onclick="nextPage()">Siguiente <i class="fas fa-chevron-right"></i></button>
+    <!-- Header con botones -->
+    <div class="header">
+        <div class="header-buttons">
+            <a href="nueva-categoria">
+                <button class="add-category-btn">
+                    <i class="fas fa-folder-plus"></i> Agregar Categoría
+                </button>
+            </a>
+            <a href="nuevo-producto">
+                <button class="add-product-btn">
+                    <i class="fas fa-plus-circle"></i> Agregar Producto
+                </button>
+            </a>
+            <a href="categorias.html">
+                <button class="view-index-btn">
+                    <i class="fas fa-list"></i> Ver productos del index
+                </button>
+            </a>
         </div>
     </div>
 
-   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <!-- Contenedor principal -->
+    <div class="container">
+        <!-- Buscador -->
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, marca, categoría...">
+            </div>
+            <button class="filter-btn" onclick="showFilters()">
+                <i class="fas fa-filter"></i> Filtros
+            </button>
+        </div>
+
+        <!-- Filtros avanzados (ocultos por defecto) -->
+        <div class="filters-container" id="filtersContainer" style="display: none;">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="filterCategory"><i class="fas fa-tag"></i> Categoría:</label>
+                    <select id="filterCategory">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterBrand"><i class="fas fa-industry"></i> Marca:</label>
+                    <input type="text" id="filterBrand" placeholder="Filtrar por marca">
+                </div>
+                <div class="filter-group">
+                    <label for="filterDiscount"><i class="fas fa-percentage"></i> Descuento:</label>
+                    <select id="filterDiscount">
+                        <option value="">Todos</option>
+                        <option value="with">Con descuento</option>
+                        <option value="without">Sin descuento</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="apply-filters-btn" onclick="applyFilters()">
+                    <i class="fas fa-check"></i> Aplicar Filtros
+                </button>
+                <button class="clear-filters-btn" onclick="clearFilters()">
+                    <i class="fas fa-times"></i> Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabla de productos -->
+        <div class="table-responsive">
+            <table id="productsTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-cube"></i> Nombre</th>
+                        <th><i class="fas fa-tags"></i> Categoría</th>
+                        <th><i class="fas fa-images"></i> Imágenes</th>
+                        <th><i class="fas fa-tag"></i> Precio</th>
+                        <th><i class="fas fa-percentage"></i> Descuento</th>
+                        <th><i class="fas fa-dollar-sign"></i> Precio Final</th>
+                        <th><i class="fas fa-industry"></i> Marca</th>
+                        <th><i class="fas fa-cog"></i> Modelo</th>
+                        <th><i class="fas fa-tasks"></i> Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productsBody">
+                    <!-- Los productos se cargarán aquí -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination">
+            <button id="prevPage" class="pagination-btn" onclick="previousPage()">
+                <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <div class="page-info">
+                <span id="pageNumber">Página 1</span>
+                <span id="totalProducts" class="total-count">de 0 productos</span>
+            </div>
+            <button id="nextPage" class="pagination-btn" onclick="nextPage()">
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="items-per-page">
+                <label>Mostrar:</label>
+                <select id="itemsPerPage" onchange="changeItemsPerPage()">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <i class="fas fa-cubes"></i>
+                <div>
+                    <h3 id="totalProductsStat">0</h3>
+                    <p>Productos totales</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <div>
+                    <h3 id="indexedProductsStat">0</h3>
+                    <p>En índice</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-percentage"></i>
+                <div>
+                    <h3 id="discountedProductsStat">0</h3>
+                    <p>Con descuento</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-images"></i>
+                <div>
+                    <h3 id="productsWithImagesStat">0</h3>
+                    <p>Con imágenes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script src="../../js/personalizacion-colores.js"></script>
-    <script src="../../js/particulas.js"></script>
-    <script src="../../js/navegacion-admin.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="gestion-de-productos.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
 </body>
 </html>

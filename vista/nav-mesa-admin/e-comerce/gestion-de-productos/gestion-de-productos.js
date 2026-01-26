@@ -1,6 +1,6 @@
 // gestion-de-productos.js
 
-// 1. CONFIGURACIÓN DE FIREBASE (Conexión directa)
+// Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
     authDomain: "rsienterprise.firebaseapp.com",
@@ -10,242 +10,647 @@ const firebaseConfig = {
     appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
 };
 
-// Inicializar Firebase si no se ha hecho
+// Inicializar Firebase si no está inicializado
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
 
-// Estado Global de la aplicación
-let products = [];
-let filteredProducts = [];
-let categories = [];
-let currentPage = 1;
-const itemsPerPage = 10;
-
-// 2. INICIALIZACIÓN Y CARGA DE DATOS
-document.addEventListener('DOMContentLoaded', async () => {
-    renderLoading(); // Mostrar spinner mientras carga
-    try {
-        await loadCategories();
-        await loadProducts();
-    } catch (error) {
-        console.error("Error en el arranque del sistema:", error);
+class ProductManager {
+    constructor() {
+        this.products = [];
+        this.filteredProducts = [];
+        this.categories = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.filters = {
+            category: '',
+            brand: '',
+            discount: ''
+        };
+        
+        this.init();
     }
-});
-
-// Función para mostrar el Spinner de carga en la tabla
-function renderLoading() {
-    const tbody = document.getElementById("productsBody");
-    if (tbody) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="9" style="text-align: center; padding: 50px;">
-                    <div class="spinner"></div>
-                    <p style="margin-top: 15px; opacity: 0.7;">Recolectando datos de la nube...</p>
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// Cargar categorías de la colección "categorias"
-async function loadCategories() {
-    const snap = await db.collection("categorias").get();
-    categories = snap.docs.map(doc => doc.data().nombre);
-}
-
-// Cargar productos de la colección "Productos"
-async function loadProducts() {
-    const snap = await db.collection("Productos").get();
-    products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    filteredProducts = [...products];
-    renderTable();
-}
-
-// 3. LÓGICA DEL BUSCADOR (CORREGIDA)
-window.filterProducts = function() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-
-    if (searchTerm === "") {
-        filteredProducts = [...products];
-    } else {
-        filteredProducts = products.filter(p => {
-            // Buscador "Deep Search" en todas las propiedades clave
-            return (
-                (p["Nombre Producto"] && p["Nombre Producto"].toLowerCase().includes(searchTerm)) ||
-                (p.Categoria && p.Categoria.toLowerCase().includes(searchTerm)) ||
-                (p.Marca && p.Marca.toLowerCase().includes(searchTerm)) ||
-                (p.Modelo && p.Modelo.toLowerCase().includes(searchTerm)) ||
-                (p.SKU && p.SKU.toLowerCase().includes(searchTerm))
-            );
-        });
-    }
-
-    currentPage = 1; // Reiniciar a la primera página al buscar
-    renderTable();
-};
-
-// 4. RENDERIZADO DE LA TABLA (CON COLORES PERSONALIZADOS)
-function renderTable() {
-    const tbody = document.getElementById("productsBody");
-    if (!tbody) return;
-
-    const start = (currentPage - 1) * itemsPerPage;
-    const paginated = filteredProducts.slice(start, start + itemsPerPage);
-
-    if (paginated.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">No se encontraron resultados para la búsqueda.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = paginated.map(p => {
-        const precio = parseFloat(p["Precio MXN"]) || 0;
-        const desc = parseFloat(p.Descuento) || 0;
-        const final = precio * (1 - desc / 100);
-
-        return `
-            <tr>
-                <td><strong>${p["Nombre Producto"] || 'S/N'}</strong></td>
-                <td>${p.Categoria || 'General'}</td>
-                <td>$${precio.toFixed(2)}</td>
-                <td><span class="badge-primary" style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">${desc}%</span></td>
-                <td style="color: var(--primary-color)"><strong>$${final.toFixed(2)}</strong></td>
-                <td>${p.Marca || '-'}</td>
-                <td>${p.Modelo || '-'}</td>
-                <td><small>${p.SKU || '-'}</small></td>
-                <td class="action-icons">
-                    <button class="action-btn" title="Editar" onclick="openProductForm('${p.id}')" style="color: var(--primary-color); background:none; border:none; cursor:pointer;">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn" title="Eliminar" onclick="deleteProduct('${p.id}')" style="color: var(--accent-color); background:none; border:none; cursor:pointer;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-
-    // Actualizar indicador de paginación
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-    document.getElementById("pageNumber").textContent = `Página ${currentPage} de ${totalPages || 1}`;
-}
-
-// 5. FUNCIONALIDADES ORIGINALES: FORMULARIO Y DESCUENTOS
-// Función para calcular precio final en tiempo real dentro del Swal
-window.updateFinalPrice = function() {
-    const p = parseFloat(document.getElementById('sw-price').value) || 0;
-    const d = parseFloat(document.getElementById('sw-disc').value) || 0;
-    const final = p * (1 - d / 100);
-    document.getElementById('sw-final').value = final.toFixed(2);
-};
-
-window.openProductForm = async function(id = null) {
-    const isEdit = !!id;
-    const p = isEdit ? products.find(prod => prod.id === id) : {};
-
-    const { value: formValues } = await Swal.fire({
-        title: isEdit ? 'Editar Producto' : 'Nuevo Producto',
-        width: '800px',
-        html: `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; text-align:left;">
-                <div>
-                    <label>Nombre del Producto</label><input id="sw-name" class="swal2-input" value="${p["Nombre Producto"] || ''}">
-                    <label>Precio MXN</label><input id="sw-price" type="number" class="swal2-input" oninput="updateFinalPrice()" value="${p["Precio MXN"] || ''}">
-                    <label>Descuento (%)</label><input id="sw-disc" type="number" class="swal2-input" oninput="updateFinalPrice()" value="${p.Descuento || 0}">
-                    <label>Precio Final Estimado</label><input id="sw-final" class="swal2-input" readonly value="0.00">
-                </div>
-                <div>
-                    <label>Categoría</label>
-                    <select id="sw-cat" class="swal2-input">
-                        ${categories.map(c => `<option value="${c}" ${p.Categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
-                    </select>
-                    <label>Marca</label><input id="sw-brand" class="swal2-input" value="${p.Marca || ''}">
-                    <label>Modelo</label><input id="sw-model" class="swal2-input" value="${p.Modelo || ''}">
-                    <label>SKU</label><input id="sw-sku" class="swal2-input" value="${p.SKU || ''}">
-                </div>
-                <div style="grid-column: span 2;">
-                    <label>Acción Masiva de Descuento:</label>
-                    <select id="sw-apply-to" class="swal2-input">
-                        <option value="single">Aplicar solo a este producto</option>
-                        <option value="category">Aplicar este % a toda la categoría</option>
-                    </select>
-                </div>
-            </div>
-        `,
-        didOpen: () => updateFinalPrice(),
-        showCancelButton: true,
-        confirmButtonText: 'Guardar Cambios',
-        preConfirm: () => {
-            const data = {
-                "Nombre Producto": document.getElementById('sw-name').value,
-                "Precio MXN": parseFloat(document.getElementById('sw-price').value) || 0,
-                "Descuento": parseFloat(document.getElementById('sw-disc').value) || 0,
-                "Categoria": document.getElementById('sw-cat').value,
-                "Marca": document.getElementById('sw-brand').value,
-                "Modelo": document.getElementById('sw-model').value,
-                "SKU": document.getElementById('sw-sku').value,
-                "ApplyTo": document.getElementById('sw-apply-to').value,
-                "_timestamp": Date.now()
-            };
-            if (!data["Nombre Producto"]) return Swal.showValidationMessage('El nombre es obligatorio');
-            return data;
+    
+    async init() {
+        try {
+            console.log('🚀 Inicializando ProductManager...');
+            
+            // Verificar conexión con Firebase
+            await db.collection("categorias").limit(1).get();
+            console.log('✅ Firebase conectado correctamente');
+            
+            await this.loadCategories();
+            await this.loadProducts();
+            this.setupEventListeners();
+            this.updateStats();
+        } catch (error) {
+            console.error('❌ Error inicializando ProductManager:', error);
+            this.showError('Error al conectar con la base de datos. Verifica tu conexión.');
         }
-    });
-
-    if (formValues) {
-        const { ApplyTo, ...productData } = formValues;
+    }
+    
+    async loadCategories() {
+        try {
+            console.log('📂 Cargando categorías...');
+            const snapshot = await db.collection("categoria").get();
+            
+            if (snapshot.empty) {
+                console.log('⚠️ No se encontraron categorías, usando categorías por defecto');
+                this.categories = ['CCTV', 'Alarma', 'Intrusión', 'Multimedia'];
+            } else {
+                this.categories = snapshot.docs.map(doc => doc.data().nombre);
+                console.log(`✅ Categorías cargadas: ${this.categories.length}`);
+            }
+            
+            this.updateCategoryFilters();
+        } catch (error) {
+            console.error("❌ Error cargando categorías:", error);
+            this.categories = ['CCTV', 'Alarma', 'Intrusión', 'Multimedia'];
+            this.updateCategoryFilters();
+        }
+    }
+    
+    async loadProducts() {
+        try {
+            console.log('📦 Cargando productos...');
+            
+            // Mostrar loader
+            this.showLoading();
+            
+            // Obtener productos de Firestore
+            const snapshot = await db.collection("indexproductos").get();
+            
+            console.log(`📊 Productos encontrados: ${snapshot.size}`);
+            
+            if (snapshot.empty) {
+                console.log('ℹ️ No se encontraron productos');
+                this.products = [];
+                this.filteredProducts = [];
+                this.renderTable();
+                this.hideLoading();
+                return;
+            }
+            
+            // Convertir documentos a array de productos
+            this.products = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    nombre: data["nombre"] || data.nombre || 'Sin nombre',
+                    categoria: data.categoria || data.Categoria || 'Sin categoría',
+                    precio: data["precio"] || data.precio || 0,
+                    descuento: data.descuento || data.Descuento || 0,
+                    marca: data.marca || 'Sin marca',
+                    modelo: data.modelo || 'Sin modelo',
+                    imagenes: data.imagenes || [],
+                    sku: data.sku || '',
+                    stock: data.stock || 0,
+                    activo: data.activo !== false
+                };
+            });
+            
+            // Verificar qué productos están en el índice destacado
+            await this.checkIndexedProducts();
+            
+            this.filteredProducts = [...this.products];
+            
+            console.log('✅ Productos cargados:', this.products.length);
+            
+            this.renderTable();
+            this.updateStats();
+            this.hideLoading();
+            
+        } catch (error) {
+            console.error("❌ Error cargando productos:", error);
+            this.showError('Error al cargar productos: ' + error.message);
+            this.hideLoading();
+        }
+    }
+    
+    async checkIndexedProducts() {
+        try {
+            console.log('⭐ Verificando productos indexados...');
+            const indexSnapshot = await db.collection("indexproductos").get();
+            const indexedIds = indexSnapshot.docs.map(doc => doc.data().productId);
+            
+            // Marcar productos que están en el índice
+            this.products.forEach(product => {
+                product.inIndex = indexedIds.includes(product.id);
+            });
+            
+            console.log(`✅ Productos en índice: ${indexedIds.length}`);
+        } catch (error) {
+            console.error("❌ Error verificando índice:", error);
+        }
+    }
+    
+    updateCategoryFilters() {
+        const filterCategory = document.getElementById('filterCategory');
+        if (!filterCategory) return;
+        
+        const options = '<option value="">Todas las categorías</option>' +
+            this.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        filterCategory.innerHTML = options;
+    }
+    
+    renderTable() {
+        const tbody = document.getElementById("productsBody");
+        if (!tbody) {
+            console.error('❌ No se encontró el elemento productsBody');
+            return;
+        }
+        
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        const paginatedProducts = this.filteredProducts.slice(start, end);
+        
+        if (paginatedProducts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="empty-state">
+                        <div style="text-align: center; padding: 40px;">
+                            <i class="fas fa-box-open" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+                            <h3 style="color: #666; margin: 0;">No se encontraron productos</h3>
+                            <p style="color: #888; margin: 10px 0 0;">Agrega tu primer producto haciendo clic en "Agregar Producto"</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            this.updatePagination();
+            return;
+        }
+        
+        tbody.innerHTML = paginatedProducts.map(product => this.createProductRow(product)).join('');
+        this.updatePagination();
+    }
+    
+    createProductRow(product) {
+        const precioOriginal = parseFloat(product.precio) || 0;
+        const descuento = parseFloat(product.descuento) || 0;
+        const precioFinal = descuento > 0 ? (precioOriginal * (1 - descuento/100)) : precioOriginal;
+        const hasImages = product.imagenes && product.imagenes.length > 0;
+        
+        return `
+            <tr data-product-id="${product.id}">
+                <td class="product-name">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <strong>${product.nombre}</strong>
+                        ${product.inIndex ? '<span class="index-badge" style="background: gold; color: #333; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;"><i class="fas fa-star"></i> Destacado</span>' : ''}
+                    </div>
+                </td>
+                <td>
+                    <span class="category-badge" style="background: #e3f2fd; color: #1976d2; padding: 4px 12px; border-radius: 20px; font-size: 14px;">
+                        ${product.categoria}
+                    </span>
+                </td>
+                <td class="image-indicator">
+                    <span class="${hasImages ? 'has-images' : 'no-images'}" 
+                          style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 5px; background: ${hasImages ? '#e8f5e9' : '#ffebee'}; color: ${hasImages ? '#2e7d32' : '#c62828'};">
+                        <i class="fas fa-${hasImages ? 'check-circle' : 'times-circle'}"></i>
+                        ${hasImages ? product.imagenes.length : '0'}
+                    </span>
+                </td>
+                <td class="price-cell">
+                    ${descuento > 0 ? `
+                        <div>
+                            <span class="original-price" style="text-decoration: line-through; color: #888; font-size: 14px;">
+                                $${precioOriginal.toFixed(2)}
+                            </span>
+                        </div>
+                    ` : `
+                        <span class="normal-price">$${precioOriginal.toFixed(2)}</span>
+                    `}
+                </td>
+                <td>
+                    ${descuento > 0 ? `
+                        <span class="discount-badge" style="background: linear-gradient(135deg, #FF9800, #F57C00); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                            -${descuento}%
+                        </span>
+                    ` : '<span class="no-discount" style="color: #666;">0%</span>'}
+                </td>
+                <td class="final-price">
+                    <strong style="color: #4CAF50; font-size: 18px;">$${precioFinal.toFixed(2)}</strong>
+                </td>
+                <td>
+                    <span class="brand-tag" style="background: #f3e5f5; color: #7b1fa2; padding: 4px 10px; border-radius: 4px; font-size: 14px;">
+                        ${product.marca}
+                    </span>
+                </td>
+                <td>
+                    <code style="background: #f5f5f5; padding: 3px 8px; border-radius: 4px; font-family: monospace;">
+                        ${product.modelo}
+                    </code>
+                </td>
+                <td class="actions-cell" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <button class="btn-edit" onclick="productManager.editProduct('${product.id}')" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                    <button class="btn-delete" onclick="productManager.deleteProduct('${product.id}')" style="background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                    <button class="btn-toggle-index ${product.inIndex ? 'indexed' : ''}" 
+                            onclick="productManager.toggleIndex('${product.id}')"
+                            style="background: ${product.inIndex ? '#4CAF50' : '#9e9e9e'}; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-star"></i> ${product.inIndex ? 'Quitar' : 'Agregar'}
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+    
+    updatePagination() {
+        const totalPages = Math.ceil(this.filteredProducts.length / this.itemsPerPage);
+        
+        const pageNumber = document.getElementById("pageNumber");
+        const totalProducts = document.getElementById("totalProducts");
+        const prevPage = document.getElementById("prevPage");
+        const nextPage = document.getElementById("nextPage");
+        
+        if (pageNumber) {
+            pageNumber.textContent = `Página ${this.currentPage}`;
+        }
+        
+        if (totalProducts) {
+            totalProducts.textContent = `de ${this.filteredProducts.length} productos`;
+        }
+        
+        if (prevPage) {
+            prevPage.disabled = this.currentPage === 1;
+        }
+        
+        if (nextPage) {
+            nextPage.disabled = this.currentPage === totalPages;
+        }
+    }
+    
+    previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.renderTable();
+        }
+    }
+    
+    nextPage() {
+        const totalPages = Math.ceil(this.filteredProducts.length / this.itemsPerPage);
+        if (this.currentPage < totalPages) {
+            this.currentPage++;
+            this.renderTable();
+        }
+    }
+    
+    changeItemsPerPage() {
+        const select = document.getElementById("itemsPerPage");
+        if (select) {
+            this.itemsPerPage = parseInt(select.value);
+            this.currentPage = 1;
+            this.renderTable();
+        }
+    }
+    
+    filterProducts() {
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        
+        const query = searchInput.value.toLowerCase();
+        
+        this.filteredProducts = this.products.filter(product => {
+            // Buscar en múltiples campos
+            const searchFields = [
+                product.nombre,
+                product.categoria,
+                product.marca,
+                product.modelo,
+                product.sku
+            ].map(field => field ? field.toString().toLowerCase() : '');
+            
+            const matchesSearch = query === '' || 
+                searchFields.some(field => field.includes(query));
+            
+            const matchesCategory = !this.filters.category || product.categoria === this.filters.category;
+            const matchesBrand = !this.filters.brand || 
+                (product.marca && product.marca.toLowerCase().includes(this.filters.brand.toLowerCase()));
+            const matchesDiscount = !this.filters.discount || 
+                (this.filters.discount === 'with' && parseFloat(product.descuento) > 0) ||
+                (this.filters.discount === 'without' && (!product.descuento || parseFloat(product.descuento) === 0));
+            
+            return matchesSearch && matchesCategory && matchesBrand && matchesDiscount;
+        });
+        
+        this.currentPage = 1;
+        this.renderTable();
+        this.updateStats();
+    }
+    
+    showFilters() {
+        const container = document.getElementById('filtersContainer');
+        if (container) {
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+    
+    applyFilters() {
+        const categorySelect = document.getElementById('filterCategory');
+        const brandInput = document.getElementById('filterBrand');
+        const discountSelect = document.getElementById('filterDiscount');
+        
+        if (categorySelect && brandInput && discountSelect) {
+            this.filters = {
+                category: categorySelect.value,
+                brand: brandInput.value,
+                discount: discountSelect.value
+            };
+            
+            this.filterProducts();
+            
+            // Cerrar filtros
+            const container = document.getElementById('filtersContainer');
+            if (container) {
+                container.style.display = 'none';
+            }
+        }
+    }
+    
+    clearFilters() {
+        const categorySelect = document.getElementById('filterCategory');
+        const brandInput = document.getElementById('filterBrand');
+        const discountSelect = document.getElementById('filterDiscount');
+        const searchInput = document.getElementById('searchInput');
+        
+        if (categorySelect) categorySelect.value = '';
+        if (brandInput) brandInput.value = '';
+        if (discountSelect) discountSelect.value = '';
+        if (searchInput) searchInput.value = '';
+        
+        this.filters = {
+            category: '',
+            brand: '',
+            discount: ''
+        };
+        
+        this.filteredProducts = [...this.products];
+        this.currentPage = 1;
+        this.renderTable();
+        this.updateStats();
+    }
+    
+    updateStats() {
+        const total = this.products.length;
+        const indexed = this.products.filter(p => p.inIndex).length;
+        const discounted = this.products.filter(p => parseFloat(p.descuento) > 0).length;
+        const withImages = this.products.filter(p => p.imagenes && p.imagenes.length > 0).length;
+        
+        const totalStat = document.getElementById('totalProductsStat');
+        const indexedStat = document.getElementById('indexedProductsStat');
+        const discountedStat = document.getElementById('discountedProductsStat');
+        const imagesStat = document.getElementById('productsWithImagesStat');
+        
+        if (totalStat) totalStat.textContent = total;
+        if (indexedStat) indexedStat.textContent = indexed;
+        if (discountedStat) discountedStat.textContent = discounted;
+        if (imagesStat) imagesStat.textContent = withImages;
+    }
+    
+    editProduct(id) {
+        // Redirigir a la página de edición con el ID del producto
+        window.location.href = `nuevo-producto/nuevo-producto.html?edit=${id}`;
+    }
+    
+    async deleteProduct(id) {
+        const product = this.products.find(p => p.id === id);
+        if (!product) return;
+        
+        const result = await Swal.fire({
+            title: '¿Eliminar producto?',
+            html: `¿Estás seguro de eliminar <strong>${product.nombre}</strong>?<br>
+                  Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6'
+        });
+        
+        if (result.isConfirmed) {
+            try {
+                // Mostrar loader
+                Swal.fire({
+                    title: 'Eliminando...',
+                    text: 'Por favor espera',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Eliminar del índice de productos
+                await db.collection("indexproductos").doc(id).delete();
+                
+                // También eliminar del índice destacado si está ahí
+                const indexQuery = await db.collection("indexproductos")
+                    .where("productId", "==", id)
+                    .get();
+                
+                if (!indexQuery.empty) {
+                    const batch = db.batch();
+                    indexQuery.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                }
+                
+                // Recargar productos
+                await this.loadProducts();
+                
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: 'Producto eliminado correctamente',
+                    icon: 'success',
+                    timer: 2000
+                });
+                
+            } catch (error) {
+                console.error("❌ Error eliminando producto:", error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al eliminar producto: ' + error.message,
+                    icon: 'error'
+                });
+            }
+        }
+    }
+    
+    async toggleIndex(id) {
+        const product = this.products.find(p => p.id === id);
+        if (!product) return;
+        
+        const isIndexed = product.inIndex;
         
         try {
-            // Guardar producto
-            if (isEdit) {
-                await db.collection("Productos").doc(id).update(productData);
-            } else {
-                await db.collection("Productos").add(productData);
-            }
-
-            // Aplicar descuento masivo si se seleccionó
-            if (ApplyTo === 'category') {
-                const batch = db.batch();
-                const categoryItems = await db.collection("Productos").where("Categoria", "==", productData.Categoria).get();
-                categoryItems.forEach(doc => {
-                    batch.update(doc.ref, { "Descuento": productData.Descuento });
+            if (isIndexed) {
+                // Eliminar del índice destacado
+                const querySnapshot = await db.collection("indexproductos")
+                    .where("productId", "==", id)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    const batch = db.batch();
+                    querySnapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                }
+                
+                product.inIndex = false;
+                
+                Swal.fire({
+                    title: '¡Quitado!',
+                    text: 'Producto quitado del índice destacado',
+                    icon: 'success',
+                    timer: 1500
                 });
-                await batch.commit();
+            } else {
+                // Agregar al índice destacado
+                await db.collection("indexproductos").add({
+                    productId: id,
+                    nombre: product.nombre,
+                    categoria: product.categoria,
+                    precio: product.precio,
+                    descuento: product.descuento,
+                    marca: product.marca,
+                    modelo: product.modelo,
+                    imagenes: product.imagenes,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                product.inIndex = true;
+                
+                Swal.fire({
+                    title: '¡Agregado!',
+                    text: 'Producto agregado al índice destacado',
+                    icon: 'success',
+                    timer: 1500
+                });
             }
-
-            // Usar alerta de éxito del script de colores
-            if (window.showCustomSuccess) window.showCustomSuccess('¡Éxito!', 'Base de datos sincronizada');
-            else Swal.fire('¡Éxito!', 'Base de datos sincronizada', 'success');
             
-            loadProducts();
-        } catch (e) {
-            Swal.fire('Error', e.message, 'error');
+            this.renderTable();
+            this.updateStats();
+            
+        } catch (error) {
+            console.error("❌ Error modificando índice:", error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al modificar índice: ' + error.message,
+                icon: 'error'
+            });
         }
     }
-};
-
-// 6. ELIMINAR (Usando confirmación personalizada)
-window.deleteProduct = async function(id) {
-    const res = await window.showCustomConfirm('¿Eliminar producto?', 'Esta acción borrará el registro permanentemente.');
-    if (res.isConfirmed) {
-        await db.collection("Productos").doc(id).delete();
-        loadProducts();
-        window.showCustomSuccess('Eliminado', 'El producto ha sido removido');
+    
+    showLoading() {
+        const tbody = document.getElementById("productsBody");
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9">
+                        <div style="text-align: center; padding: 40px;">
+                            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #6C43E0; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                            <p style="color: #666;">Cargando productos...</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
     }
+    
+    hideLoading() {
+        // El spinner se reemplaza cuando se renderizan los productos
+    }
+    
+    showError(message) {
+        Swal.fire({
+            title: 'Error',
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'Reintentar',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.loadProducts();
+            }
+        });
+    }
+    
+    setupEventListeners() {
+        // Buscador
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                this.filterProducts();
+            });
+        }
+        
+        // Filtros
+        const filterCategory = document.getElementById('filterCategory');
+        const filterBrand = document.getElementById('filterBrand');
+        const filterDiscount = document.getElementById('filterDiscount');
+        
+        if (filterCategory) {
+            filterCategory.addEventListener('change', () => {
+                this.filterProducts();
+            });
+        }
+        
+        if (filterBrand) {
+            filterBrand.addEventListener('input', () => {
+                this.filterProducts();
+            });
+        }
+        
+        if (filterDiscount) {
+            filterDiscount.addEventListener('change', () => {
+                this.filterProducts();
+            });
+        }
+        
+        // Items por página
+        const itemsPerPage = document.getElementById('itemsPerPage');
+        if (itemsPerPage) {
+            itemsPerPage.addEventListener('change', () => {
+                this.changeItemsPerPage();
+            });
+        }
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOM cargado, inicializando ProductManager...');
+    window.productManager = new ProductManager();
+});
+
+// Funciones globales para los botones
+window.previousPage = () => {
+    if (window.productManager) window.productManager.previousPage();
 };
 
-// 7. PAGINACIÓN
-window.nextPage = () => { 
-    if ((currentPage * itemsPerPage) < filteredProducts.length) { 
-        currentPage++; 
-        renderTable(); 
-    } 
+window.nextPage = () => {
+    if (window.productManager) window.productManager.nextPage();
 };
 
-window.previousPage = () => { 
-    if (currentPage > 1) { 
-        currentPage--; 
-        renderTable(); 
-    } 
+window.changeItemsPerPage = () => {
+    if (window.productManager) window.productManager.changeItemsPerPage();
+};
+
+window.showFilters = () => {
+    if (window.productManager) window.productManager.showFilters();
+};
+
+window.applyFilters = () => {
+    if (window.productManager) window.productManager.applyFilters();
+};
+
+window.clearFilters = () => {
+    if (window.productManager) window.productManager.clearFilters();
 };

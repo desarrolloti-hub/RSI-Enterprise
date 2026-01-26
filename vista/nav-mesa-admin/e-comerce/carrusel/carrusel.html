@@ -5,91 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Carrusel</title>
     
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-
-    <link rel="stylesheet" href="./carrusel.css">
-</head>
-<body>
-
-    <br><br><br>
     
-    <div class="container container-custom mt-5">
-        <h1 class="text-center mb-4"><i class="bi bi-images"></i> Administrador de Carrusel</h1>
-        
-        <button id="toggleBtn" class="btn btn-primary mb-4">
-            <i class="bi bi-plus-circle"></i> Nuevo Carrusel
-        </button>
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" />
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    
+    <!-- CSS personalizados -->
+    <link rel="stylesheet" href="carrusel.css">
+</head>
 
-        <div id="formContainer" class="card p-4 mb-4" style="display:none;">
-            <h3><i class="bi bi-pencil-square"></i> Editar Carrusel</h3>
-            <form id="carouselForm">
-                <input type="hidden" id="editId">
-                
-                <div class="mb-3">
-                    <label class="form-label">Nombre (Se usará como ID)</label>
-                    <input type="text" id="carouselName" class="form-control" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Imágenes (Máx. 5)</label>
-                    <input type="file" id="imageUpload" class="form-control" multiple accept="image/*" style="display: none;">
+<body>
+   
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <div class="container mt-5 pt-5">
+            <h1 class="text-center mb-4"><i class="bi bi-images"></i> Administrador de Carrusel</h1>
+            
+            <button id="toggleBtn" class="btn btn-primary mb-4">
+                <i class="bi bi-plus-circle"></i> Nuevo Carrusel
+            </button>
+
+            <div id="formContainer" class="form-section" style="display:none;">
+                <h3><i class="bi bi-pencil-square"></i> Editar Carrusel</h3>
+                <form id="carouselForm">
+                    <input type="hidden" id="editId">
                     
-                    <div id="imagePreviewContainer" class="image-preview-container">
-                        <div class="add-more-container" id="addMoreBtn">
-                            <i class="bi bi-plus-circle add-more-icon"></i>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre (Se usará como ID)</label>
+                        <input type="text" id="carouselName" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Imágenes (Máx. 5)</label>
+                        <input type="file" id="imageUpload" class="form-control" multiple accept="image/*" style="display: none;">
+                        <div id="imagePreviewContainer" class="image-preview-container">
+                            <div class="add-more-container" id="addMoreBtn">
+                                <i class="bi bi-plus-circle add-more-icon"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="button" id="cancelBtn" class="btn btn-secondary">
-                        <i class="bi bi-x"></i> Cancelar
-                    </button>
-                    <button type="submit" id="saveBtn" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div class="carousel-container card p-3 mb-5">
-            <h3><i class="bi bi-eye"></i> Vista Previa</h3>
-            <div id="previewCarousel" class="carousel slide">
-                <div class="carousel-inner" id="carouselItems">
-                    <div class="carousel-item active">
-                        <div class="d-flex justify-content-center align-items-center bg-secondary text-white" style="height: 300px;">
-                            Sin imágenes seleccionadas
-                        </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Cancelar
+                        </button>
+                        <button type="submit" id="saveBtn" class="btn btn-success">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
                     </div>
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#previewCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#previewCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
+                </form>
             </div>
+
+            <div class="carousel-container">
+                <h3><i class="bi bi-eye"></i> Vista Previa</h3>
+                <div id="previewCarousel" class="carousel slide">
+                    <div class="carousel-inner" id="carouselItems">
+                        <div class="carousel-item active">
+                            <div class="placeholder-image">
+                                <i class="bi bi-image" style="font-size: 3rem;"></i>
+                                <p>Agrega imágenes para previsualizar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#previewCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#previewCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                </div>
+            </div>
+
+            <h3 class="mt-5"><i class="bi bi-collection"></i> Carruseles Guardados</h3>
+            <div id="carouselsList" class="row mt-3"></div>
         </div>
+    </main>
 
-        <h3 class="mt-5"><i class="bi bi-collection"></i> Carruseles Guardados</h3>
-        <div id="carouselsList" class="row mt-3"></div>
-    </div>
-
+    <!-- Scripts externos -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
-    <script src="../js/filtrar-error.js"></script>
-    <script src="../js/firebase-init.js"></script>       
-    <script src="../js/personalizacion-colores.js"></script> 
-    <script src="../js/navegacion-admin.js"></script>        
-    <script src="./carrusel.js"></script>
-    <script src="../js/particulas.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
+    
+    <!-- Scripts del sistema -->
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    
+    <!-- Scripts específicos del carrusel -->
+    <script src="carrusel.js"></script>
 </body>
 </html>

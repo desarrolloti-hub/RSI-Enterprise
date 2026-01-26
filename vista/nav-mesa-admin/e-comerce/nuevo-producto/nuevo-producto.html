@@ -3,153 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Producto</title>
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
-    <link rel="stylesheet" href="./nuevo-producto.css">
+    <title>Nuevo Producto - RSI Enterprise</title>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="nuevo-producto.css">
+
 </head>
 <body>
-
-    <br><br><br>
-
-    <div class="container container-custom mt-5 mb-5 d-flex justify-content-center">
-        
-        <div class="registro-card-container w-100" style="max-width: 800px;">
-            <form id="registro-producto-form" class="registro-card p-4">
-                
-                <div class="card-circle-icon">
-                    <i class="fas fa-box-open"></i>
-                </div>
-
-                <h2 class="text-center mb-4 mt-4 titulo-form">Registro de Producto</h2>
-
-                <div class="row g-3">
-                    
-                    <div class="col-md-6">
-                        <label class="form-label">Nombre del Producto <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-box"></i></span>
-                            <input type="text" id="nombreProducto" class="form-control" placeholder="Ej: Cámara IP Dome" required>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Categoría <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-list"></i></span>
-                            <select id="categoria" class="form-select" required>
-                                <option value="" selected disabled>Seleccione...</option>
-                                </select>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Marca <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                            <input type="text" id="marca" class="form-control" placeholder="Ej: Dahua" required>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Modelo <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                            <input type="text" id="modelo" class="form-control" placeholder="Ej: DH-IPC-HDBW" required>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Precio (MXN) <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                            <input type="number" id="precio" class="form-control" placeholder="0.00" step="0.01" required>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">SKU <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
-                            <input type="text" id="sku" class="form-control" required>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Tipo</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-plug"></i></span>
-                            <input type="text" id="tipo" class="form-control" placeholder="Ej: Hardware">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Estructura</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
-                            <input type="text" id="estructura" class="form-control" placeholder="Ej: Metálica">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Enlace del Producto</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-link"></i></span>
-                            <input type="url" id="linkProducto" class="form-control" placeholder="https://...">
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Especificaciones</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
-                            <textarea id="especificaciones" class="form-control" rows="3" placeholder="Detalles técnicos..." required></textarea>
-                        </div>
-                    </div>
-
-                    <div class="col-12 mt-4">
-                        <h5 id="image-gallery-text" class="border-bottom pb-2 mb-3 text-primary">Imágenes del Producto <small class="text-muted fs-6">(Máx 3)</small></h5>
-                        
-                        <div class="image-gallery-container d-flex flex-wrap justify-content-center gap-3 mb-3" id="image-container">
-                            <p class="text-muted small fst-italic w-100 text-center m-0 py-4">No hay imágenes seleccionadas</p>
-                        </div>
-
-                        <div class="text-center">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-image-btn">
-                                <i class="fas fa-plus-circle"></i> Agregar Imagen
-                            </button>
-                            <input type="file" id="file-input" accept="image/*" style="display: none;">
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="mt-5 pt-3 border-top">
-                    <button type="submit" id="btn-guardar" class="btn btn-primary w-100 py-3 fw-bold fs-5">
-                        Registrar Producto <i class="fas fa-save ms-2"></i>
-                    </button>
-                </div>
-
-            </form>
+    <!-- Navbar -->
+    <nav class="nan_navbar">
+        <div class="nan_logo">
+            <img src="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png" alt="Logo RSI">
         </div>
+        <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
+        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
+        <ul class="nan_menu">
+            <li><i class="fas fa-arrow-left"></i><a href="gestion-de-productos.html"> Volver</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="form-header">
+            <h1><i class="fas fa-cube"></i> <span id="formTitle">Nuevo Producto</span></h1>
+            <p id="formSubtitle">Complete todos los campos para agregar un nuevo producto al catálogo</p>
+        </div>
+
+        <form id="productForm" class="product-form">
+            <input type="hidden" id="productId">
+            
+            <div class="form-sections">
+                <!-- Sección 1: Información Básica -->
+                <section class="form-section">
+                    <h2><i class="fas fa-info-circle"></i> Información Básica</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nombre"><i class="fas fa-tag"></i> Nombre del Producto *</label>
+                            <input type="text" id="nombre" required placeholder="Ej: Cámara de Seguridad 4K">
+                            <small class="helper-text">Nombre descriptivo del producto</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="categoria"><i class="fas fa-tags"></i> Categoría *</label>
+                            <select id="categoria" required>
+                                <option value="">Seleccione una categoría</option>
+                                <!-- Categorías se cargan dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección 2: Especificaciones -->
+                <section class="form-section">
+                    <h2><i class="fas fa-cogs"></i> Especificaciones</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="marca"><i class="fas fa-industry"></i> Marca *</label>
+                            <input type="text" id="marca" required placeholder="Ej: Hikvision, Dahua">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="modelo"><i class="fas fa-cog"></i> Modelo *</label>
+                            <input type="text" id="modelo" required placeholder="Ej: DS-2CD2347G2-LU">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sku"><i class="fas fa-barcode"></i> SKU/Código</label>
+                            <input type="text" id="sku" placeholder="Código interno">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descripcion"><i class="fas fa-align-left"></i> Descripción</label>
+                            <textarea id="descripcion" rows="3" placeholder="Descripción detallada del producto"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección 3: Precios -->
+                <section class="form-section">
+                    <h2><i class="fas fa-dollar-sign"></i> Precios</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="precio"><i class="fas fa-tag"></i> Precio Base (MXN) *</label>
+                            <div class="input-with-icon">
+                                <span class="currency">$</span>
+                                <input type="number" id="precio" step="0.01" min="0" required placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descuento"><i class="fas fa-percentage"></i> Descuento (%)</label>
+                            <div class="input-with-icon">
+                                <input type="number" id="descuento" step="1" min="0" max="100" value="0">
+                                <span class="percent">%</span>
+                            </div>
+                            <small class="helper-text">0-100% de descuento</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-calculator"></i> Precio Final</label>
+                            <div class="price-display">
+                                <div class="price-row">
+                                    <span>Precio Base:</span>
+                                    <span id="basePriceDisplay">$0.00</span>
+                                </div>
+                                <div class="price-row">
+                                    <span>Descuento:</span>
+                                    <span id="discountDisplay">0% ($0.00)</span>
+                                </div>
+                                <div class="price-row final-price">
+                                    <span>Precio Final:</span>
+                                    <span id="finalPriceDisplay">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección 4: Imágenes -->
+                <section class="form-section">
+                    <h2><i class="fas fa-images"></i> Imágenes del Producto</h2>
+                    <p class="section-info">Máximo 3 imágenes. Recomendado: 800x600px, formato JPG o PNG</p>
+                    
+                    <div class="upload-area" onclick="document.getElementById('imagenes').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Arrastra o haz clic para subir imágenes</h3>
+                        <p>Haz clic o arrastra imágenes aquí</p>
+                    </div>
+                    <input type="file" id="imagenes" multiple accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    
+                    <div class="image-preview-grid" id="imagePreviews">
+                        <!-- Las previsualizaciones se agregarán aquí -->
+                    </div>
+                </section>
+
+                <!-- Sección 5: Inventario -->
+                <section class="form-section">
+                    <h2><i class="fas fa-boxes"></i> Inventario</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="stock"><i class="fas fa-box"></i> Stock Disponible</label>
+                            <input type="number" id="stock" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="minStock"><i class="fas fa-exclamation-triangle"></i> Stock Mínimo</label>
+                            <input type="number" id="minStock" min="0" value="5">
+                            <small class="helper-text">Alerta cuando el stock sea menor</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-toggle-on"></i> Estado</label>
+                            <div class="toggle-group">
+                                <label class="switch">
+                                    <input type="checkbox" id="activo" checked>
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="toggle-label" id="statusLabel">Activo</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="cancel()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn-save-draft" onclick="saveDraft()">
+                    <i class="fas fa-save"></i> Guardar Borrador
+                </button>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-check"></i> <span id="submitText">Guardar Producto</span>
+                </button>
+            </div>
+        </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
-    <script src="../js/firebase-init.js"></script>
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-    
-    <script src="./nuevo-producto.js"></script>
-     <script src="../js/particulas.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="nuevo-producto.js"></script>
 </body>
 </html>
