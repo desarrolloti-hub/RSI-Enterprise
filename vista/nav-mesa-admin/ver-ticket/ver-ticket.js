@@ -1,0 +1,1 @@
+/vista/nav-mesa-admin/ver-ticket/ver-ticket.html

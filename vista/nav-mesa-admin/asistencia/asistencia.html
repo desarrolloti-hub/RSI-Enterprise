@@ -73,7 +73,6 @@
         </div>
     </div>
 
-
     <script>
         // --- CONSTANTES Y CONFIGURACIÓN ---
         const LONG_PRESS_DELAY = 5000;
@@ -111,10 +110,12 @@
             isSubmitting: false,
             longPressTimer: null,
             tetrisClickCount: 0,
-            tetrisLastClickTime: 0
+            tetrisLastClickTime: 0,
+            hasAttendanceToday: false,
+            existingAttendanceData: null
         };
 
-        // --- FUNCIONES DE UTILIDAD (Se mantienen) ---
+        // --- FUNCIONES DE UTILIDAD ---
         async function showAlert(type, title, message) {
             if (typeof window.showCustomAlert === 'function') {
                 switch(type) {
@@ -145,6 +146,7 @@
                 });
             }
         }
+        
         async function showLocationAlert() {
              return await Swal.fire({
                 title: 'Ubicación Requerida',
@@ -157,6 +159,7 @@
                 allowOutsideClick: false
             });
         }
+        
         function getFormattedDateTime() {
             const now = new Date();
             return {
@@ -167,7 +170,55 @@
             };
         }
 
-        // --- FUNCIONES DE DATOS, UI, GEOLOCALIZACIÓN Y ASISTENCIA (Se mantienen) ---
+        // --- FUNCIONES PARA VERIFICAR ASISTENCIA DEL DÍA ---
+        function getTodayDateKey() {
+            const today = new Date();
+            return `attendance_${today.getFullYear()}_${today.getMonth()}_${today.getDate()}`;
+        }
+
+        function hasAttendanceInLocalStorage(userId) {
+            const todayKey = getTodayDateKey();
+            const storedData = localStorage.getItem(`attendance_${userId}`);
+            
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                return data.dateKey === todayKey && data.attendanceTaken === true;
+            }
+            return false;
+        }
+
+        function saveAttendanceToLocalStorage(userId) {
+            const todayKey = getTodayDateKey();
+            const data = {
+                dateKey: todayKey,
+                attendanceTaken: true,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem(`attendance_${userId}`, JSON.stringify(data));
+        }
+
+        async function checkAttendanceInFirebase(userId) {
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                const querySnapshot = await db.collection('asistencias')
+                    .where('userId', '==', userId)
+                    .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(today))
+                    .where('fecha', '<', firebase.firestore.Timestamp.fromDate(tomorrow))
+                    .limit(1)
+                    .get();
+                
+                return !querySnapshot.empty ? querySnapshot.docs[0].data() : null;
+            } catch (error) {
+                console.error("Error al verificar asistencia en Firebase:", error);
+                return null;
+            }
+        }
+
+        // --- FUNCIONES DE DATOS, UI, GEOLOCALIZACIÓN Y ASISTENCIA ---
         async function getUserRole(email) {
             try {
                 const querySnapshot = await db.collection('usuarios').where('email', '==', email).limit(1).get();
@@ -193,51 +244,40 @@
             }
         }
 
-        async function checkActiveAttendanceFromCollaborators(email) {
-            try {
-                const collaboratorQuery = await db.collection('colaboradores').where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email).limit(1).get();
-                
-                if (collaboratorQuery.empty) return null;
-                
-                const collaboratorData = collaboratorQuery.docs[0].data();
-                const collaboratorId = collaboratorQuery.docs[0].id;
-                
-                if (collaboratorData.asistencia?.estado === true && collaboratorData.asistencia?.fecha) {
-                    const lastAttendanceDate = collaboratorData.asistencia.fecha.toDate();
-                    const today = new Date();
-                    
-                    if (lastAttendanceDate.getDate() === today.getDate() && 
-                        lastAttendanceDate.getMonth() === today.getMonth() && 
-                        lastAttendanceDate.getFullYear() === today.getFullYear()) {
-                        return { id: collaboratorId, ...collaboratorData, horaRegistro: lastAttendanceDate.toLocaleTimeString('es-ES') };
-                    }
-                }
-                return null;
-            } catch (error) { 
-                window.manejarErrorGlobal(error);
-                return null; 
-            }
-        }
-
-        function displayUserInfo(user) {
+        function displayUserInfo(user, existingAttendance = null) {
             const employeeDetails = document.querySelector('.employee-details');
             const employeeAvatar = document.getElementById('employeeAvatar');
             if (!employeeDetails) return;
+            
             const area = user['ÁREA'] || 'No especificado';
             const nit = user.NIT || 'ID no disponible';
             const rfc = user.RFC || 'No disponible';
             const telefono = user['TELÉFONO MOVIL'] || 'No disponible';
             const successColor = 'var(--success-color, #4CAF50)';
             const errorColor = 'var(--error-color, #f44336)';
+            
+            let attendanceStatus = '';
+            if (existingAttendance) {
+                const fechaRegistro = existingAttendance.fecha.toDate();
+                const horaRegistro = fechaRegistro.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+                attendanceStatus = `
+                    <p><strong>Asistencia hoy:</strong> 
+                    <span style="color: ${successColor}; font-weight: bold;">✓ YA REGISTRADA (${horaRegistro})</span></p>
+                    <p><strong>Tipo:</strong> ${getAttendanceTypeName(existingAttendance.tipo)}</p>
+                `;
+            } else {
+                attendanceStatus = `<p><strong>Asistencia hoy:</strong> 
+                    <span style="color: ${errorColor}; font-weight: bold;">PENDIENTE</span></p>`;
+            }
+            
             employeeDetails.innerHTML = `
                 <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
                 <p><strong>Área:</strong> ${area}</p>
                 <p><strong>ID Empleado:</strong> ${nit}</p>
                 <p><strong>RFC:</strong> ${rfc}</p>
                 <p><strong>Teléfono:</strong> ${telefono}</p>
-                <p><strong>Asistencia hoy:</strong> ${user.asistencia?.estado ? 
-                    `<span style="color: ${successColor};">Presente</span>` : 
-                    `<span style="color: ${errorColor};">Pendiente</span>`}</p>`;
+                ${attendanceStatus}`;
+                
             if (user.imagen) {
                 employeeAvatar.src = user.imagen;
             } else {
@@ -258,6 +298,10 @@
             const attendanceOptions = document.querySelectorAll('.attendance-option');
             attendanceOptions.forEach(option => {
                 option.addEventListener('click', function() {
+                    if (AppState.hasAttendanceToday) {
+                        showAlert('info', 'Asistencia ya registrada', 'Ya has registrado tu asistencia para hoy. No puedes registrar otra.');
+                        return;
+                    }
                     attendanceOptions.forEach(opt => opt.classList.remove('selected'));
                     this.classList.add('selected');
                 });
@@ -282,14 +326,11 @@
 
         function getLocation() { 
             return new Promise((resolve, reject) => {
-
-                //axuliar para el manejador de errores global
                 const rechazarComoUsuario = (msg)=>{
                     const error = new Error(msg);
                     error.isUserError = true;
                     return(error);
                 }
-
 
                 if (!navigator.geolocation) {
                     reject(rechazarComoUsuario("Geolocalización no soportada por el navegador")); return;
@@ -345,7 +386,7 @@
             }
         }
 
-        async function showLocationPermissionModal(callbackSubmitButton, userData) {
+        async function showLocationPermissionModal() {
             try {
                 const result = await showLocationAlert();
                 if (result && result.isConfirmed) {
@@ -353,16 +394,12 @@
                         const coords = await getLocation();
                         AppState.userCoordinates = coords;
                         await showAlert('success', 'Ubicación obtenida', 'Ahora puedes registrar tu asistencia.');
-                        if (callbackSubmitButton && userData) {
-                            callbackSubmitButton(userData);
-                        }
                         return true;
                     } catch (error) {
                         if (error.isUserError) {
                             console.warn("Error de geolocalización controlado:", error.message);
                             await showAlert('error', 'Problema de Ubicación', error.message);
                         } else {
-                            // Si es un error real de código, dejamos que el sistema crítico lo maneje
                             window.manejarErrorGlobal(error);
                             await showAlert('error', 'Error Crítico', 'Ha ocurrido un error inesperado.');
                         }
@@ -378,45 +415,81 @@
             }
         }
 
-        function isTimeValid() {
-            const now = new Date();
-            const formatter = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/Mexico_City' });
-            const parts = formatter.formatToParts(now);
-            const hourPart = parts.find(p => p.type === 'hour');
-            const currentHour = parseInt(hourPart.value, 10);
-            if (currentHour >= 5) {
-                return { valid: true, error: null };
-            } else {
-                return { valid: false, error: '¡Aún no es hora!', message: 'El registro de asistencia está disponible a partir de las 05:00 AM (Hora de México).' };
-            }
-        }
-
         async function registerAttendance(attendanceType, userData) {
             try {
+                // VERIFICACIÓN FINAL - No debe tener asistencia hoy
+                const existingAttendance = await checkAttendanceInFirebase(userData.id);
+                if (existingAttendance) {
+                    await showAlert('error', 'Asistencia ya registrada', 
+                        'Ya tienes una asistencia registrada para hoy. Solo se permite una por día.');
+                    redirectByRole(AppState.userRole);
+                    return false;
+                }
+
+                // VERIFICAR EN LOCALSTORAGE también
+                if (hasAttendanceInLocalStorage(userData.id)) {
+                    await showAlert('error', 'Asistencia ya registrada', 
+                        'Ya registraste asistencia hoy desde este dispositivo.');
+                    redirectByRole(AppState.userRole);
+                    return false;
+                }
+
                 const datetime = getFormattedDateTime();
                 if (!AppState.userCoordinates) {
                     AppState.userCoordinates = await getUserLocation();
                 }
+                
+                // Actualizar en colaboradores
                 await db.collection('colaboradores').doc(userData.id).update({
                     asistencia: { estado: true, tipo: attendanceType, fecha: datetime.timestamp },
                     ultimaAsistencia: datetime.timestamp
                 });
+                
+                // Crear registro en asistencias
                 const attendanceData = {
-                    userId: userData.id, email: userData['CORREO ELECTRÓNICO EMPRESARIAL'], nombre: userData.NOMBRE,
-                    area: userData['ÁREA'], tipo: attendanceType, fecha: datetime.timestamp, dia: datetime.dateString,
-                    horaRegistro: datetime.timeString, activo: true, ubicacion: AppState.userCoordinates,
-                    detalles: { correoPersonal: userData['CORREO ELECTRONICO PERSONAL'], correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'], rfc: userData.RFC }
+                    userId: userData.id, 
+                    email: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                    nombre: userData.NOMBRE,
+                    area: userData['ÁREA'], 
+                    tipo: attendanceType, 
+                    fecha: datetime.timestamp, 
+                    dia: datetime.dateString,
+                    horaRegistro: datetime.timeString, 
+                    activo: true, 
+                    ubicacion: AppState.userCoordinates,
+                    detalles: { 
+                        correoPersonal: userData['CORREO ELECTRONICO PERSONAL'], 
+                        correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                        rfc: userData.RFC 
+                    }
                 };
-                const batch = db.batch();
-                const attendanceRef = db.collection('asistencias').doc();
-                batch.set(attendanceRef, attendanceData);
-                await batch.commit();
+                
+                await db.collection('asistencias').add(attendanceData);
+                
+                // GUARDAR EN LOCALSTORAGE que ya tomó asistencia hoy
+                saveAttendanceToLocalStorage(userData.id);
+                
                 const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
                 const tipoAsistencia = getAttendanceTypeName(attendanceType);
-                const ubicacionMsg = attendanceType === 'office' || attendanceType === 'iztapaluca' ? 'Oficina verificada' : 'Ubicación del cliente verificada';
-                const mensajeExito = `Tu asistencia ha sido registrada correctamente.\n\nTipo: ${tipoAsistencia}\nUbicación: ${ubicacionMsg}\n\nSerás redirigido en 3 segundos...`;
-                await showAlert('success', 'Asistencia registrada', mensajeExito);
-                setTimeout(() => { redirectByRole(userRole); }, REDIRECT_DELAY);
+                
+                const mensajeExito = `
+                    <div style="text-align: left;">
+                        <strong>¡Asistencia registrada exitosamente!</strong><br><br>
+                        • Tipo: ${tipoAsistencia}<br>
+                        • Hora: ${datetime.timeString}<br>
+                        • Fecha: ${datetime.dateString}<br><br>
+                        <small>Recuerda que solo puedes registrar asistencia una vez por día.</small><br>
+                        <small>Serás redirigido en 3 segundos...</small>
+                    </div>
+                `;
+                
+                await showAlert('success', '✅ Asistencia registrada', mensajeExito);
+                
+                // Esperar un momento y redirigir
+                setTimeout(() => { 
+                    redirectByRole(userRole); 
+                }, REDIRECT_DELAY);
+                
                 return true;
             } catch (error) { 
                 window.manejarErrorGlobal(error);
@@ -428,8 +501,42 @@
         function setupSubmitButton(userData) {
             const submitBtn = document.getElementById('submitAttendance');
             const optionsGrid = document.querySelector('.options-grid');
+            
+            // Si ya tiene asistencia hoy, deshabilitar todo y redirigir
+            if (AppState.hasAttendanceToday) {
+                submitBtn.innerHTML = '<i class="fas fa-check-double"></i> Asistencia Ya Registrada';
+                submitBtn.disabled = true;
+                submitBtn.style.backgroundColor = '#6c757d';
+                submitBtn.style.cursor = 'not-allowed';
+                
+                document.querySelectorAll('.attendance-option').forEach(option => {
+                    option.classList.add('disabled-option');
+                    option.style.pointerEvents = 'none';
+                    option.style.opacity = '0.5';
+                });
+                
+                // Redirigir después de 3 segundos
+                setTimeout(() => {
+                    if (AppState.userRole) {
+                        redirectByRole(AppState.userRole);
+                    }
+                }, 3000);
+                
+                return;
+            }
+            
             submitBtn.addEventListener('click', async function() {
                 if (AppState.isSubmitting) return;
+                
+                // Verificar doblemente en localStorage
+                if (hasAttendanceInLocalStorage(userData.id)) {
+                    await showAlert('info', 'Asistencia ya registrada', 
+                        'Ya registraste asistencia hoy desde este dispositivo.');
+                    AppState.hasAttendanceToday = true;
+                    setupSubmitButton(userData); // Reconfigurar para deshabilitar
+                    return;
+                }
+                
                 const selectedOption = document.querySelector('.attendance-option.selected');
                 if (!selectedOption) {
                     await showAlert('error', 'Selecciona una opción', 'Debes seleccionar un tipo de asistencia antes de continuar.');
@@ -439,15 +546,12 @@
                     }
                     return;
                 }
-                const timeCheck = isTimeValid();
-                if (!timeCheck.valid) {
-                    await showAlert('error', timeCheck.error, timeCheck.message);
-                    return;
-                }
+                
                 const attendanceType = selectedOption.getAttribute('data-value');
                 AppState.isSubmitting = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
                 submitBtn.disabled = true;
+                
                 try {
                     const success = await registerAttendance(attendanceType, userData);
                     if (!success) {
@@ -465,7 +569,7 @@
             });
         }
         
-        // --- VALIDACIONES Y FLUJO PRINCIPAL (Se mantienen) ---
+        // --- VALIDACIONES Y FLUJO PRINCIPAL ---
         function validateUserPermissions(userRole) {
             const deniedRoles = ['user', 'admin'];
             return !deniedRoles.includes(userRole);
@@ -477,18 +581,54 @@
                 if (!AppState.userData) {
                     throw new Error('No se encontraron datos para este usuario');
                 }
+                
                 AppState.userRole = await getUserRole(user.email);
                 if (!validateUserPermissions(AppState.userRole)) {
                     throw new Error('No tienes permisos para acceder a esta función');
                 }
-                displayUserInfo(AppState.userData);
-                const activeAttendance = await checkActiveAttendanceFromCollaborators(user.email);
-                if (activeAttendance) {
-                    const mensajeAsistencia = `Ya registraste tu asistencia hoy a las ${activeAttendance.horaRegistro}.\n\nSerás redirigido al panel en 3 segundos...`;
-                    await showAlert('info', 'Asistencia ya registrada', mensajeAsistencia);
-                    setTimeout(() => { redirectByRole(AppState.userRole); }, REDIRECT_DELAY);
+                
+                // Verificar en LOCALSTORAGE primero (más rápido)
+                if (hasAttendanceInLocalStorage(AppState.userData.id)) {
+                    AppState.hasAttendanceToday = true;
+                    displayUserInfo(AppState.userData, { fecha: { toDate: () => new Date() }, tipo: 'local' });
+                    
+                    // Mostrar mensaje y redirigir inmediatamente
+                    await showAlert('info', 'Asistencia ya registrada', 
+                        'Ya registraste tu asistencia para hoy. Serás redirigido al panel.');
+                    
+                    setTimeout(() => {
+                        redirectByRole(AppState.userRole);
+                    }, 2000);
+                    
                     return false;
                 }
+                
+                // Verificar en FIREBASE
+                const existingAttendance = await checkAttendanceInFirebase(AppState.userData.id);
+                
+                if (existingAttendance) {
+                    AppState.hasAttendanceToday = true;
+                    AppState.existingAttendanceData = existingAttendance;
+                    // Guardar también en localStorage para futuras verificaciones
+                    saveAttendanceToLocalStorage(AppState.userData.id);
+                    
+                    displayUserInfo(AppState.userData, existingAttendance);
+                    
+                    // Mostrar mensaje y redirigir inmediatamente
+                    const fechaRegistro = existingAttendance.fecha.toDate();
+                    const horaRegistro = fechaRegistro.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+                    
+                    await showAlert('info', 'Asistencia ya registrada', 
+                        `Ya registraste tu asistencia hoy a las ${horaRegistro}. Serás redirigido al panel.`);
+                    
+                    setTimeout(() => {
+                        redirectByRole(AppState.userRole);
+                    }, 2000);
+                    
+                    return false;
+                }
+                
+                displayUserInfo(AppState.userData, null);
                 return true;
             } catch (error) {
                 window.manejarErrorGlobal(error);
@@ -502,15 +642,21 @@
             }
         }
 
-        async function initializeLocationFlow(userData) {
+        async function initializeLocationFlow() {
             const storedCoords = sessionStorage.getItem('userCoordinates');
             if (storedCoords) {
                 AppState.userCoordinates = JSON.parse(storedCoords);
                 AppState.isLocationRequested = true;
                 return true;
             }
+            
+            // Si ya tiene asistencia hoy, no pedir ubicación
+            if (AppState.hasAttendanceToday) {
+                return true;
+            }
+            
             if (!AppState.isLocationRequested) {
-                const locationConfirmed = await showLocationPermissionModal(setupSubmitButton, userData);
+                const locationConfirmed = await showLocationPermissionModal();
                 AppState.isLocationRequested = true;
                 return locationConfirmed;
             }
@@ -522,14 +668,22 @@
                 if (user) {
                     AppState.currentUser = user;
                     const userValid = await handleAuthenticatedUser(user);
+                    
                     if (!userValid) return;
-                    const timeCheck = isTimeValid();
-                    const locationInitialized = await initializeLocationFlow(AppState.userData);
-                    if (locationInitialized) {
-                        setupSubmitButton(AppState.userData);
-                    }
-                    if (!timeCheck.valid) {
-                        await showAlert('error', timeCheck.error, timeCheck.message);
+                    
+                    // Solo inicializar flujo de ubicación si no tiene asistencia hoy
+                    if (!AppState.hasAttendanceToday) {
+                        const locationInitialized = await initializeLocationFlow();
+                        if (locationInitialized && AppState.userData) {
+                            setupSubmitButton(AppState.userData);
+                        }
+                    } else {
+                        // Si ya tiene asistencia hoy, redirigir inmediatamente
+                        setTimeout(() => {
+                            if (AppState.userRole) {
+                                redirectByRole(AppState.userRole);
+                            }
+                        }, 1000);
                     }
                 } else {
                     window.location.href = "/vista/nav-visitantes/inicio-de-sesion.html";
@@ -537,7 +691,7 @@
             });
         }
         
-        // --- FUNCIÓN PARA EL EASTER EGG DE REDIRECCIÓN (CORREGIDA) ---
+        // --- FUNCIÓN PARA EL EASTER EGG DE REDIRECCIÓN ---
         function handleTetrisEasterEgg() {
             const now = Date.now();
             
@@ -553,13 +707,12 @@
 
             if (AppState.tetrisClickCount === TETRIS_CLICKS_REQUIRED) {
                 console.log("¡5 clics detectados! Redireccionando a egg.html");
-                // **Asegúrate de que esta ruta sea correcta**
                 window.location.href = 'egg.html'; 
                 AppState.tetrisClickCount = 0; 
             }
         }
 
-        // --- INICIALIZACIÓN DE LA APLICACIÓN (Se mantiene) ---
+        // --- INICIALIZACIÓN DE LA APLICACIÓN ---
         function initApp() {
             const attendanceContainer = document.getElementById('attendanceContainer');
             const attendanceFormContent = document.getElementById('attendanceFormContent');
@@ -587,13 +740,24 @@
 
         document.addEventListener('DOMContentLoaded', initApp);
 
-        // Estilos de animación (Se mantienen)
+        // Estilos de animación
         const style = document.createElement('style');
         style.textContent = `
             @keyframes shake {
                 0%, 100% { transform: translateX(0); }
                 20%, 60% { transform: translateX(-8px); }
                 40%, 80% { transform: translateX(8px); }
+            }
+            
+            .disabled-option {
+                opacity: 0.5;
+                cursor: not-allowed;
+                pointer-events: none !important;
+            }
+            
+            .disabled-option:hover {
+                transform: none !important;
+                box-shadow: none !important;
             }
         `;
         document.head.appendChild(style);
