@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Cotizaciones</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="consultar-cotizaciones.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <!-- El botón de menú será cargado por navegacion-admin.js -->
+            <div class="header-title-container">
+                <h2 class="title">Gestión de Cotizaciones</h2>
+            </div>
+            <div class="header-controls">
+                <div class="filters-row">
+                    <div class="filter-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar por número, cliente o descripción...">
+                    </div>
+                </div>
+                <div class="buttons-row">
+                    <a href="../nueva-cotizacion/nueva-cotizacion.html" class="btn">
+                        <i class="fas fa-plus"></i>
+                        Nueva Cotización
+                    </a>
+
+                    <a href="../gestionProductosServicios/gestionProductoServicioCotizaciones.html" class="btn">
+                        <i class="fas fa-box"></i>
+                        Productos / Servicios
+                    </a>
+
+                    <a href="../clientes/clientes.html" class="btn">
+                        <i class="fas fa-users"></i>
+                        Clientes
+                    </a>
+
+                    <button id="resumenCuentasBtn" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i>
+                        Resumen de Cuentas
+                    </button>
+                    
+                    <a href="GraficasCoti.html" id="descargarTodasBtn" class="btn btn-secondary">
+                        <i class="fas fa-chart-line"></i>
+                        Gráficas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <!-- TABLA PARA ESCRITORIO -->
+            <table class="desktop-table">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Descripción</th>
+                        <th>Generado por</th>
+                        <th>Ticket Asociado</th>
+                        <th>Estatus</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="cotizacionesTableBody">
+                    <tr>
+                        <td colspan="9" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando cotizaciones...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- TARJETAS PARA MÓVIL -->
+            <div class="mobile-cards" id="mobileCardsContainer">
+                <!-- Las tarjetas se generarán dinámicamente -->
+            </div>
+        </div>
+        
+        <div class="pagination-container"></div>
+    </div>
+
+    <!-- MODALES -->
+    <div id="modalPDF" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color:white !important;">Vista Previa del PDF - Cotización</h3>
+                <button class="close-modal" id="cerrarPdfBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="pdf-container" id="pdfViewer"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modalResumenCuentas" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="color:white !important;">Resumen de Cuentas</h3>
+                <button class="close-modal" id="cerrarResumenBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="resumenFiltros" class="resumen-filtros">
+                    <button class="btn-filtro active" data-filtro="todos">Todos</button>
+                    <button class="btn-filtro" data-filtro="en proceso">En Proceso</button>
+                    <button class="btn-filtro" data-filtro="vendida">Vendidas</button>
+                    <button class="btn-filtro" data-filtro="rechazada">Rechazadas</button>
+                </div>
+                <div id="resumenTotales" class="resumen-totales">
+                    <h3 id="resumenTitulo">Total de Todas las Cotizaciones</h3>
+                    <p id="resumenSumaTotal" class="total-amount">$0.00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING SPINNER -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>⏳ Procesando...</p>
+    </div>
+
+    <!-- SCRIPTS -->
+    <!-- IMPORTANTE: SweetAlert2 debe cargarse ANTES de Firebase -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script type="module">
+        // Importar el módulo principal
+        import './consultar-cotizaciones.js';
+    </script>
+    
+    <!-- Scripts de personalización y navegación -->
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/particulas.js"></script>
+</body>
+</html>

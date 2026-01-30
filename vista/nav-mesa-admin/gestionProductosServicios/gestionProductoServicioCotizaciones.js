@@ -1,5 +1,5 @@
-// gestionProductoServicioCotizaciones.js - Controlador/Vista
-import { ProductoServicioCotizaciones } from '/classes/productoServicioCotizaciones.js';
+// gestionProductoServicioCotizaciones.js - Controlador/Vista SIN CLASE
+import { db } from '/config/firebase-config.js';
 
 // =================================================================================
 // ESTADO DE LA APLICACIÓN
@@ -18,7 +18,343 @@ const appState = {
 };
 
 // =================================================================================
-// FUNCIONES PRINCIPALES
+// FUNCIONES DE VALIDACIÓN
+// =================================================================================
+
+function validateProducto(nombre, precioUnitario, categoriaId, imagen) {
+    if (!nombre || nombre.trim() === '') {
+        throw new Error('El nombre del producto/servicio es requerido');
+    }
+    
+    if (nombre.length > 100) {
+        throw new Error('El nombre del producto/servicio no puede exceder los 100 caracteres');
+    }
+    
+    if (precioUnitario === undefined || precioUnitario === null) {
+        throw new Error('El precio unitario es requerido');
+    }
+    
+    if (typeof precioUnitario !== 'number' || isNaN(precioUnitario)) {
+        throw new Error('El precio unitario debe ser un número válido');
+    }
+    
+    if (precioUnitario < 0) {
+        throw new Error('El precio unitario no puede ser negativo');
+    }
+    
+    if (precioUnitario > 1000000000) {
+        throw new Error('El precio unitario es demasiado alto');
+    }
+    
+    if (!categoriaId || categoriaId.trim() === '') {
+        throw new Error('La categoría es requerida');
+    }
+    
+    if (imagen && imagen.length > 5000000) {
+        throw new Error('La imagen es demasiado grande (máximo 5MB)');
+    }
+    
+    return true;
+}
+
+// =================================================================================
+// FUNCIONES DE FIREBASE (CRUD)
+// =================================================================================
+
+// Función para obtener nombres de categorías (reutilizable)
+async function getCategoriaNombre(categoriaId) {
+    try {
+        const docRef = db.collection("categoriasProductoServicio").doc(categoriaId);
+        const docSnap = await docRef.get();
+        
+        if (docSnap.exists) {
+            return docSnap.data().nombreCategoria || 'Sin categoría';
+        } else {
+            return 'Sin categoría';
+        }
+    } catch (error) {
+        console.error('Error al obtener nombre de categoría:', error);
+        return 'Sin categoría';
+    }
+}
+
+// Función para obtener todas las categorías
+async function getAllCategorias() {
+    try {
+        const querySnapshot = await db.collection("categoriasProductoServicio")
+            .orderBy("fechaCreacion", "desc")
+            .get();
+        
+        const categories = [];
+        querySnapshot.forEach((doc) => {
+            categories.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        return {
+            success: true,
+            data: categories,
+            message: 'Categorías obtenidas exitosamente',
+            count: categories.length
+        };
+    } catch (error) {
+        console.error('Error al obtener categorías:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al obtener las categorías',
+            data: [],
+            count: 0
+        };
+    }
+}
+
+// CREATE: Crear un nuevo producto/servicio
+async function createProducto(nombre, precioUnitario, imagen = '', categoriaId) {
+    try {
+        validateProducto(nombre, precioUnitario, categoriaId, imagen);
+        
+        // Verificar que la categoría exista
+        const categoriaRef = db.collection("categoriasProductoServicio").doc(categoriaId);
+        const categoriaSnap = await categoriaRef.get();
+        if (!categoriaSnap.exists) {
+            throw new Error('La categoría seleccionada no existe');
+        }
+        
+        const productData = {
+            nombre: nombre.trim(),
+            precioUnitario: Number(precioUnitario),
+            imagen: imagen || null,
+            categoriaId: categoriaId,
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        const docRef = await db.collection("productosServiciosCotizaciones").add(productData);
+        return {
+            success: true,
+            id: docRef.id,
+            message: 'Producto/Servicio creado exitosamente'
+        };
+    } catch (error) {
+        console.error('Error al crear producto/servicio:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al crear el producto/servicio'
+        };
+    }
+}
+
+// READ: Obtener todos los productos/servicios con nombres de categoría
+async function getAllProductos() {
+    try {
+        // Obtener productos
+        const querySnapshot = await db.collection("productosServiciosCotizaciones").get();
+        
+        const products = [];
+        
+        // Obtener todos los productos primero
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            const categoriaId = data.categoriaId || '';
+            
+            // Obtener nombre de la categoría
+            const categoriaNombre = categoriaId ? await getCategoriaNombre(categoriaId) : 'Sin categoría';
+            
+            products.push({
+                id: doc.id,
+                ...data,
+                precioUnitario: data.precioUnitario || 0,
+                categoriaId: categoriaId,
+                categoriaNombre: categoriaNombre
+            });
+        }
+        
+        // Ordenar por fecha de creación (manualmente)
+        products.sort((a, b) => {
+            const dateA = a.fechaCreacion ? (a.fechaCreacion.toDate ? a.fechaCreacion.toDate() : new Date(a.fechaCreacion)) : new Date(0);
+            const dateB = b.fechaCreacion ? (b.fechaCreacion.toDate ? b.fechaCreacion.toDate() : new Date(b.fechaCreacion)) : new Date(0);
+            return dateB - dateA; // Orden descendente
+        });
+        
+        return {
+            success: true,
+            data: products,
+            message: 'Productos/Servicios obtenidos exitosamente',
+            count: products.length
+        };
+    } catch (error) {
+        console.error('Error al obtener productos/servicios:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al obtener los productos/servicios',
+            data: [],
+            count: 0
+        };
+    }
+}
+
+// READ: Obtener un producto/servicio por ID con nombre de categoría
+async function getProductoById(id) {
+    try {
+        const docRef = db.collection("productosServiciosCotizaciones").doc(id);
+        const docSnap = await docRef.get();
+        
+        if (docSnap.exists) {
+            const data = docSnap.data();
+            const categoriaId = data.categoriaId || '';
+            let categoriaNombre = 'Sin categoría';
+            
+            // Obtener nombre de la categoría
+            if (categoriaId) {
+                categoriaNombre = await getCategoriaNombre(categoriaId);
+            }
+            
+            return {
+                success: true,
+                data: {
+                    id: docSnap.id,
+                    ...data,
+                    precioUnitario: data.precioUnitario || 0,
+                    categoriaId: categoriaId,
+                    categoriaNombre: categoriaNombre
+                },
+                message: 'Producto/Servicio obtenido exitosamente'
+            };
+        } else {
+            return {
+                success: false,
+                error: 'Producto/Servicio no encontrado'
+            };
+        }
+    } catch (error) {
+        console.error('Error al obtener producto/servicio:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al obtener el producto/servicio'
+        };
+    }
+}
+
+// UPDATE: Actualizar un producto/servicio existente
+async function updateProducto(id, updatedData) {
+    try {
+        // Validar datos si se están actualizando
+        if (updatedData.nombre !== undefined) {
+            if (updatedData.nombre.trim() === '') {
+                throw new Error('El nombre del producto/servicio es requerido');
+            }
+            
+            if (updatedData.nombre.length > 100) {
+                throw new Error('El nombre del producto/servicio no puede exceder los 100 caracteres');
+            }
+        }
+        
+        if (updatedData.precioUnitario !== undefined) {
+            const precio = Number(updatedData.precioUnitario);
+            if (isNaN(precio)) {
+                throw new Error('El precio unitario debe ser un número válido');
+            }
+            
+            if (precio < 0) {
+                throw new Error('El precio unitario no puede ser negativo');
+            }
+            
+            if (precio > 1000000000) {
+                throw new Error('El precio unitario es demasiado alto');
+            }
+            
+            updatedData.precioUnitario = precio;
+        }
+        
+        if (updatedData.categoriaId !== undefined) {
+            if (updatedData.categoriaId.trim() === '') {
+                throw new Error('La categoría es requerida');
+            }
+            
+            // Verificar que la categoría exista
+            const categoriaRef = db.collection("categoriasProductoServicio").doc(updatedData.categoriaId);
+            const categoriaSnap = await categoriaRef.get();
+            if (!categoriaSnap.exists) {
+                throw new Error('La categoría seleccionada no existe');
+            }
+        }
+        
+        const productRef = db.collection("productosServiciosCotizaciones").doc(id);
+        const dataToUpdate = {
+            ...updatedData,
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await productRef.update(dataToUpdate);
+        
+        return {
+            success: true,
+            message: 'Producto/Servicio actualizado exitosamente'
+        };
+    } catch (error) {
+        console.error('Error al actualizar producto/servicio:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al actualizar el producto/servicio'
+        };
+    }
+}
+
+// DELETE: Eliminar un producto/servicio
+async function deleteProductoById(id) {
+    try {
+        await db.collection("productosServiciosCotizaciones").doc(id).delete();
+        
+        return {
+            success: true,
+            message: 'Producto/Servicio eliminado exitosamente'
+        };
+    } catch (error) {
+        console.error('Error al eliminar producto/servicio:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al eliminar el producto/servicio'
+        };
+    }
+}
+
+// Método para obtener productos por categoría
+async function getProductosByCategoriaId(categoriaId) {
+    try {
+        const querySnapshot = await db.collection("productosServiciosCotizaciones")
+            .where("categoriaId", "==", categoriaId)
+            .get();
+        
+        const products = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            products.push({
+                id: doc.id,
+                ...data,
+                precioUnitario: data.precioUnitario || 0
+            });
+        });
+        
+        return {
+            success: true,
+            data: products,
+            message: 'Productos/Servicios obtenidos exitosamente',
+            count: products.length
+        };
+    } catch (error) {
+        console.error('Error al obtener productos por categoría:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al obtener productos por categoría',
+            data: [],
+            count: 0
+        };
+    }
+}
+
+// =================================================================================
+// FUNCIONES PRINCIPALES DE LA INTERFAZ
 // =================================================================================
 
 async function initialLoad() {
@@ -37,7 +373,7 @@ async function initialLoad() {
 
 async function loadCategorias() {
     try {
-        const result = await ProductoServicioCotizaciones.getCategorias();
+        const result = await getAllCategorias();
         
         if (result.success) {
             appState.categorias = result.data || [];
@@ -58,7 +394,7 @@ async function loadProductos() {
     
     try {
         console.log('Solicitando productos/servicios...');
-        const result = await ProductoServicioCotizaciones.getAll();
+        const result = await getAllProductos();
         console.log('Respuesta recibida:', result);
         
         if (result.success) {
@@ -346,7 +682,7 @@ async function openModalForNew() {
 
 async function editProducto(productoId) {
     try {
-        const result = await ProductoServicioCotizaciones.getById(productoId);
+        const result = await getProductoById(productoId);
         
         if (result.success) {
             const producto = result.data;
@@ -366,7 +702,6 @@ async function showProductoModal(producto = null) {
     const title = isEditing ? 'Editar Producto/Servicio' : 'Nuevo Producto/Servicio';
     const productoId = producto?.id || '';
     const categoriaIdActual = producto?.categoriaId || '';
-    const categoriaNombreActual = producto?.categoriaNombre || 'Seleccionar categoría';
     
     // Generar opciones para el select de categorías
     let categoriasOptions = '<option value="">Seleccionar categoría</option>';
@@ -588,12 +923,19 @@ async function showProductoModal(producto = null) {
             }
             
             try {
-                // Crear instancia de producto/servicio
-                const productoObj = new ProductoServicioCotizaciones(nombre, Number(precioUnitario), imagen, categoriaId);
+                // Validar datos
+                validateProducto(nombre, Number(precioUnitario), categoriaId, imagen);
+                
+                const productoData = {
+                    nombre: nombre,
+                    precioUnitario: Number(precioUnitario),
+                    imagen: imagen || null,
+                    categoriaId: categoriaId
+                };
                 
                 if (productoIdInput) {
                     // Actualizar producto/servicio existente
-                    const result = await ProductoServicioCotizaciones.update(productoIdInput, productoObj.toJSON());
+                    const result = await updateProducto(productoIdInput, productoData);
                     
                     if (result.success) {
                         return { success: true, message: 'Producto/Servicio actualizado exitosamente' };
@@ -603,7 +945,7 @@ async function showProductoModal(producto = null) {
                     }
                 } else {
                     // Crear nuevo producto/servicio
-                    const result = await productoObj.create();
+                    const result = await createProducto(nombre, Number(precioUnitario), imagen, categoriaId);
                     
                     if (result.success) {
                         return { success: true, message: 'Producto/Servicio creado exitosamente' };
@@ -655,7 +997,7 @@ async function deleteProducto(productoId) {
         });
 
         if (result.isConfirmed) {
-            const deleteResult = await ProductoServicioCotizaciones.delete(productoId);
+            const deleteResult = await deleteProductoById(productoId);
             
             if (deleteResult.success) {
                 await Swal.fire({

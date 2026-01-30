@@ -22,7 +22,6 @@ if (!firebase.apps.length) {
 // Obtener servicios
 const db = firebase.firestore();
 const auth = firebase.auth();
-const storage = firebase.storage();
 
 // Exportar servicios para usar con módulos ES6
-export { db, auth, storage };
+export { db, auth };

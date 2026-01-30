@@ -1,5 +1,5 @@
-// gestionCategoriaCotizaciones.js - Controlador/Vista
-import { CategoriaCotizaciones } from '/classes/categoriaCotizaciones.js';
+// gestionCategoriaCotizaciones.js - Controlador/Vista SIN CLASE
+import { db } from '/config/firebase-config.js';
 
 // =================================================================================
 // ESTADO DE LA APLICACIÓN
@@ -16,7 +16,170 @@ const appState = {
 };
 
 // =================================================================================
-// FUNCIONES PRINCIPALES
+// FUNCIONES DE VALIDACIÓN
+// =================================================================================
+
+function validateCategoria(nombreCategoria, imagen) {
+    if (!nombreCategoria || nombreCategoria.trim() === '') {
+        throw new Error('El nombre de la categoría es requerido');
+    }
+    
+    if (nombreCategoria.length > 100) {
+        throw new Error('El nombre de la categoría no puede exceder los 100 caracteres');
+    }
+    
+    if (imagen && imagen.length > 5000000) { // 5MB en bytes
+        throw new Error('La imagen es demasiado grande (máximo 5MB)');
+    }
+    
+    return true;
+}
+
+// =================================================================================
+// FUNCIONES DE FIREBASE (CRUD)
+// =================================================================================
+
+// CREATE: Crear una nueva categoría
+async function createCategoria(nombreCategoria, imagen = '') {
+    try {
+        validateCategoria(nombreCategoria, imagen);
+        
+        const categoryData = {
+            nombreCategoria: nombreCategoria.trim(),
+            imagen: imagen || null,
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        const docRef = await db.collection("categoriasProductoServicio").add(categoryData);
+        return {
+            success: true,
+            id: docRef.id,
+            message: 'Categoría creada exitosamente'
+        };
+    } catch (error) {
+        console.error('Error al crear categoría:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al crear la categoría'
+        };
+    }
+}
+
+// READ: Obtener todas las categorías
+async function getAllCategorias() {
+    try {
+        const querySnapshot = await db.collection("categoriasProductoServicio")
+            .orderBy("fechaCreacion", "desc")
+            .get();
+        
+        const categories = [];
+        querySnapshot.forEach((doc) => {
+            categories.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        return {
+            success: true,
+            data: categories,
+            message: 'Categorías obtenidas exitosamente',
+            count: categories.length
+        };
+    } catch (error) {
+        console.error('Error al obtener categorías:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al obtener las categorías',
+            data: [],
+            count: 0
+        };
+    }
+}
+
+// READ: Obtener una categoría por ID
+async function getCategoriaById(id) {
+    try {
+        const docRef = db.collection("categoriasProductoServicio").doc(id);
+        const docSnap = await docRef.get();
+        
+        if (docSnap.exists) {
+            return {
+                success: true,
+                data: {
+                    id: docSnap.id,
+                    ...docSnap.data()
+                },
+                message: 'Categoría obtenida exitosamente'
+            };
+        } else {
+            return {
+                success: false,
+                error: 'Categoría no encontrada'
+            };
+        }
+    } catch (error) {
+        console.error('Error al obtener categoría:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al obtener la categoría'
+        };
+    }
+}
+
+// UPDATE: Actualizar una categoría existente
+async function updateCategoria(id, updatedData) {
+    try {
+        // Validar datos mínimos
+        if (updatedData.nombreCategoria && updatedData.nombreCategoria.trim() === '') {
+            throw new Error('El nombre de la categoría es requerido');
+        }
+        
+        if (updatedData.nombreCategoria && updatedData.nombreCategoria.length > 100) {
+            throw new Error('El nombre de la categoría no puede exceder los 100 caracteres');
+        }
+        
+        const categoryRef = db.collection("categoriasProductoServicio").doc(id);
+        const dataToUpdate = {
+            ...updatedData,
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await categoryRef.update(dataToUpdate);
+        
+        return {
+            success: true,
+            message: 'Categoría actualizada exitosamente'
+        };
+    } catch (error) {
+        console.error('Error al actualizar categoría:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al actualizar la categoría'
+        };
+    }
+}
+
+// DELETE: Eliminar una categoría
+async function deleteCategoriaById(id) {
+    try {
+        await db.collection("categoriasProductoServicio").doc(id).delete();
+        
+        return {
+            success: true,
+            message: 'Categoría eliminada exitosamente'
+        };
+    } catch (error) {
+        console.error('Error al eliminar categoría:', error);
+        return {
+            success: false,
+            error: error.message || 'Error al eliminar la categoría'
+        };
+    }
+}
+
+// =================================================================================
+// FUNCIONES PRINCIPALES DE LA INTERFAZ
 // =================================================================================
 
 async function initialLoad() {
@@ -34,7 +197,7 @@ async function initialLoad() {
 
 async function loadCategorias() {
     try {
-        const result = await CategoriaCotizaciones.getAll();
+        const result = await getAllCategorias();
         
         if (result.success) {
             appState.categorias = result.data;
@@ -242,7 +405,7 @@ async function openModalForNew() {
 
 async function editCategoria(categoriaId) {
     try {
-        const result = await CategoriaCotizaciones.getById(categoriaId);
+        const result = await getCategoriaById(categoriaId);
         
         if (result.success) {
             const categoria = result.data;
@@ -421,12 +584,17 @@ async function showCategoriaModal(categoria = null) {
             }
             
             try {
-                // Crear instancia de categoría
-                const categoriaObj = new CategoriaCotizaciones(nombreCategoria, imagen);
+                // Validar la categoría
+                validateCategoria(nombreCategoria, imagen);
+                
+                const categoriaData = {
+                    nombreCategoria: nombreCategoria,
+                    imagen: imagen || null
+                };
                 
                 if (categoriaIdInput) {
                     // Actualizar categoría existente
-                    const result = await CategoriaCotizaciones.update(categoriaIdInput, categoriaObj.toJSON());
+                    const result = await updateCategoria(categoriaIdInput, categoriaData);
                     
                     if (result.success) {
                         return { success: true, message: 'Categoría actualizada exitosamente' };
@@ -436,7 +604,7 @@ async function showCategoriaModal(categoria = null) {
                     }
                 } else {
                     // Crear nueva categoría
-                    const result = await categoriaObj.create();
+                    const result = await createCategoria(nombreCategoria, imagen);
                     
                     if (result.success) {
                         return { success: true, message: 'Categoría creada exitosamente' };
@@ -488,7 +656,7 @@ async function deleteCategoria(categoriaId) {
         });
 
         if (result.isConfirmed) {
-            const deleteResult = await CategoriaCotizaciones.delete(categoriaId);
+            const deleteResult = await deleteCategoriaById(categoriaId);
             
             if (deleteResult.success) {
                 await Swal.fire({
