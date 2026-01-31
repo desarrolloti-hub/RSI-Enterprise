@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Nueva cotización</title>
+    
+    <!-- Fuente Inter para consistencia -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="nueva-cotizacion.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <div class="header-title-container">
+                <h2 id="modalTitle">Nueva Cotización</h2>
+            </div>
+            <button id="cerrarModalBtn" class="close-btn">×</button>
+        </div>
+        <div class="form-body">
+            <form id="cotizacionForm" class="form-section">
+                <div class="section-card empresa">
+                    <h3><i class="fas fa-building"></i> Datos de la Empresa</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="empresaSelector"><i class="fas fa-map-marker-alt"></i> Sucursal</label>
+                            <select id="empresaSelector" name="empresaSelector" required>
+                                <option value="RSI NEZA">RSI NEZA</option>
+                                <option value="RSI IXT">RSI IXT</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="empresaRFC"><i class="fas fa-id-card"></i> RFC</label>
+                            <input type="text" id="empresaRFC" name="empresaRFC" value="XAXX010101000" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="empresaDireccion"><i class="fas fa-map"></i> Dirección Fiscal</label>
+                            <input type="text" id="empresaDireccion" name="empresaDireccion" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="empresaTelefono"><i class="fas fa-phone"></i> Teléfono</label>
+                            <input type="tel" id="empresaTelefono" name="empresaTelefono" value="(55) 1234-5678" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card cliente">
+                    <h3><i class="fas fa-user-tie"></i> Datos del Cliente</h3>
+                    <div class="cliente-search-container">
+                        <input type="text" id="clienteSearch" class="search-input" placeholder="🔍 Buscar cliente por nombre o RFC..." autocomplete="off">
+                        <div id="clienteDropdown" class="cliente-dropdown"></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="clienteNombre"><i class="fas fa-user"></i> Nombre del Cliente</label>
+                            <input type="text" id="clienteNombre" name="clienteNombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteRFC"><i class="fas fa-id-card"></i> RFC</label>
+                            <input type="text" id="clienteRFC" name="clienteRFC">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="clienteDireccion"><i class="fas fa-map-marker-alt"></i> Dirección (Contacto 1)</label>
+                            <input type="text" id="clienteDireccion" name="clienteDireccion" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteTelefono"><i class="fas fa-phone"></i> Teléfono</label>
+                            <input type="tel" id="clienteTelefono" name="clienteTelefono" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card cotizacion">
+                    <h3><i class="fas fa-file-invoice-dollar"></i> Información de la Cotización</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cotizacionNumero"><i class="fas fa-hashtag"></i> Número de Cotización</label>
+                            <input type="text" id="cotizacionNumero" name="cotizacionNumero" readonly>
+                            <small class="form-text">Generado automáticamente</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoCotizacion"><i class="fas fa-tag"></i> Tipo de Cotización *</label>
+                            <select id="tipoCotizacion" name="tipoCotizacion" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="implementacion">Implementación</option>
+                                <option value="proyecto">Proyecto</option>
+                                <option value="servicio">Servicio</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cotizacionFecha"><i class="fas fa-calendar"></i> Fecha</label>
+                            <input type="date" id="cotizacionFecha" name="cotizacionFecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cotizacionVigencia"><i class="fas fa-clock"></i> Vigencia (días)</label>
+                            <input type="number" id="cotizacionVigencia" name="cotizacionVigencia" value="30" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cotizacionMoneda"><i class="fas fa-money-bill-wave"></i> Moneda</label>
+                            <select id="cotizacionMoneda" name="cotizacionMoneda" required>
+                                <option value="MXN">Peso Mexicano (MXN)</option>
+                                <option value="USD">Dólar Americano (USD)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoCredito"><i class="fas fa-credit-card"></i> Tipo de Pago</label>
+                            <select id="tipoCredito" name="tipoCredito">
+                                <option value="">Seleccionar...</option>
+                                <option value="contado">Contado</option>
+                                <option value="credito">Crédito</option>
+                                <option value="debido">Debido</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
+                        </div>
+                        <div id="creditOptions" class="credit-options">
+                            <h4><i class="fas fa-calendar-alt"></i> Opciones de Crédito</h4>
+                            <div class="credit-grid">
+                                <div class="form-group">
+                                    <label for="diasCredito">Días de Crédito</label>
+                                    <select id="diasCredito" name="diasCredito">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="8">8 días</option>
+                                        <option value="15">15 días</option>
+                                        <option value="30">30 días</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="cotizacionDescripcion"><i class="fas fa-align-left"></i> Descripción (para búsquedas)</label>
+                            <textarea id="cotizacionDescripcion" name="cotizacionDescripcion" rows="3" 
+                                maxlength="500" 
+                                placeholder="Descripción breve de la cotización para búsquedas internas (máximo 500 caracteres)..."></textarea>
+                            <div class="contador-caracteres">
+                                <span>Descripción breve</span>
+                                <span id="contadorCaracteres" class="contador">0/500 caracteres</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card productos">
+                    <div class="section-header">
+                        <h3><i class="fas fa-shopping-cart"></i> Productos / Servicios</h3>
+                        <button type="button" id="agregarItemBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Agregar Item
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table id="itemsTable" class="items-table">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-arrows-alt"></i></th>
+                                    <th>Categoría</th>
+                                    <th>Unidad</th>
+                                    <th>Descripción</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-card totales">
+                    <h3><i class="fas fa-calculator"></i> Totales</h3>
+                    <div class="totales-grid">
+                        <div class="totales-row">
+                            <label>Subtotal:</label>
+                            <span id="subtotal">$0.00</span>
+                        </div>
+                        <div class="totales-row">
+                            <label for="descuento">Descuento (%):</label>
+                            <input type="number" id="descuento" name="descuento" value="0" min="0" max="100" step="0.01">
+                        </div>
+                        <div class="totales-row">
+                            <label for="impuesto">IVA (%):</label>
+                            <input type="number" id="impuesto" name="impuesto" value="16" min="0" max="100" step="0.01">
+                        </div>
+                        <div class="totales-row total-final">
+                            <label>Total:</label>
+                            <span id="total">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3><i class="fas fa-file-contract"></i> Términos y Condiciones</h3>
+                    <div class="form-group">
+                        <textarea id="terminos" name="terminos" rows="5" placeholder="Ingrese los términos y condiciones...">
+1. La presente cotización se realiza en base a los requerimientos necesarios para la solución tecnológica.
+2. Condiciones de pago, 70% de anticipo y 30% al término de la instalación y funcionamiento.
+3. En caso de cancelación tendrá una penalización del 20% en el total de la cotización.
+4. Trabajo adicional que no esté dentro de la cotización tendrá un costo extra.
+5. Los equipos tienen un año de garantía por defecto de fábrica.
+6. La instalación tendrá la garantía de 2 meses siempre y cuando no cuente con daños o manipulación.
+                        </textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancelarBtn" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Generar Cotización PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>⏳ Procesando...</p>
+    </div>
+
+    <script src="nueva-cotizacion.js" type="module"></script>
+    <script src="../js/navegacion-admin.js"></script>
+    <script src="../js/personalizacion-colores.js"></script>
+    <script src="../js/particulas.js"></script>
+
+</body>
+</html>
