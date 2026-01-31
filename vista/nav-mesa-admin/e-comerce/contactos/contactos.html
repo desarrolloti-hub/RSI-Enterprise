@@ -1,56 +1,102 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestión de Contactos</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Contactos</title>
     
-    <link rel="stylesheet" href="./contactos.css">
+    <!-- Firebase SDK (DEBE IR PRIMERO) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="contactos.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-
-    <br><br><br>
-
-    <div class="container container-custom mt-5">
-        <h2 class="text-center mb-4 titulo-pagina">
-            <i class="fas fa-envelope-open-text"></i> Mensajes de Contacto
-        </h2>
-
-        <div id="contactos-container" class="mensajes-grid mb-4">
-            <div class="col-12 text-center p-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
+    <div class="contactos-container">
+        <div class="contactos-header">
+            <h1><i class="fas fa-address-book"></i> Gestión de Contactos</h1>
+            <p>Administra los mensajes recibidos desde el formulario de contacto</p>
+        </div>
+        
+        <div class="contactos-content">
+            <!-- Filtros y búsqueda -->
+            <div class="contactos-filters">
+                <div class="filter-group">
+                    <label for="filterEstado"><i class="fas fa-filter"></i> Filtrar por estado:</label>
+                    <select id="filterEstado" class="form-select">
+                        <option value="todos">Todos los estados</option>
+                        <option value="Sin contestar">Sin contestar</option>
+                        <option value="Contestado">Contestado</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="searchContacto"><i class="fas fa-search"></i> Buscar:</label>
+                    <input type="text" id="searchContacto" placeholder="Nombre, email o mensaje..." class="form-input">
+                </div>
+            </div>
+            
+            <!-- Contenedor de mensajes -->
+            <div id="mensajesContainer" class="mensajes-container">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando mensajes...</p>
+                </div>
+            </div>
+            
+            <!-- Paginación -->
+            <div class="contactos-pagination">
+                <button id="btnPaginaAnterior" class="btn-pagination" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <span id="paginaActual" class="pagina-indicator">Página 1</span>
+                <button id="btnPaginaSiguiente" class="btn-pagination" disabled>
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="contactos-stats">
+                <div class="stat-card">
+                    <i class="fas fa-envelope"></i>
+                    <div class="stat-content">
+                        <h3 id="totalMensajes">0</h3>
+                        <p>Total mensajes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-content">
+                        <h3 id="pendientesMensajes">0</h3>
+                        <p>Pendientes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="stat-content">
+                        <h3 id="contestadosMensajes">0</h3>
+                        <p>Contestados</p>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="pagination-container card p-3 d-flex flex-row justify-content-between align-items-center">
-            <button id="btnAnterior" class="btn btn-outline-secondary" disabled>
-                <i class="fas fa-chevron-left"></i> Anterior
-            </button>
-            <span id="paginaActual" class="fw-bold">Página 1</span>
-            <button id="btnSiguiente" class="btn btn-outline-secondary" disabled>
-                Siguiente <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
-    <script src="../js/firebase-init.js"></script>
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-    
-    <script src="./contactos.js"></script>
-    <script src="../js/particulas.js"></script>
+    <!-- Scripts (en orden correcto) -->
+    <!-- Firebase SDK ya está cargado en el head -->
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="contactos.js" type="module"></script>
 </body>
 </html>

@@ -1,149 +1,391 @@
-/* admin-contactos.css */
-
-.titulo-pagina {
-    color: var(--primary-color);
-    font-weight: 700;
+/* Estilos base que personalizacion-colores.js complementará */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Grid Layout */
-.mensajes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
+body {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    background-color: var(--background-color, #f5f5f5);
+    color: var(--text-color, #333);
+    padding: 20px;
+    min-height: 100vh;
 }
 
-/* Tarjeta de Mensaje */
-.mensaje-card {
-    background-color: var(--card-bg) !important;
-    color: var(--text-color) !important; /* Forzar el color del texto global */
-    border: 1px solid rgba(128,128,128,0.2);
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
-    overflow: hidden; /* Evitar que contenido se salga */
+.contactos-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.mensaje-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+.contactos-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--primary-color, #6C43E0);
 }
 
-/* Bordes de estado */
-.mensaje-card.border-success {
-    border-left: 5px solid #198754 !important; /* Verde */
+.contactos-header h1 {
+    color: var(--primary-color, #6C43E0);
+    margin-bottom: 10px;
+    font-size: 2.5rem;
 }
 
-.mensaje-card.border-warning {
-    border-left: 5px solid #ffc107 !important; /* Amarillo */
-}
-
-/* Título (Nombre) */
-.mensaje-card .card-title {
-    color: var(--primary-color) !important;
-    font-size: 1.2rem;
-    margin-bottom: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 70%;
-}
-
-/* Información de Contacto (Email y Teléfono) */
-.info-contacto {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 15px;
-    font-size: 0.9rem;
-    color: var(--text-color);
+.contactos-header p {
+    color: var(--text-color, #666);
+    font-size: 1.1rem;
     opacity: 0.8;
 }
 
-.info-contacto i {
-    color: var(--primary-color);
-    width: 20px;
-    text-align: center;
+/* Filtros */
+.contactos-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--card-bg, #fff);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow, 0 2px 10px rgba(0,0,0,0.1));
 }
 
-/* Contenido del mensaje */
-.mensaje-contenido {
-    background-color: rgba(255, 255, 255, 0.05); /* Fondo muy sutil */
+.filter-group {
+    flex: 1;
+    min-width: 250px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--primary-color, #6C43E0);
+}
+
+.form-select, .form-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--accent-color, #8B5FEB);
     border-radius: 8px;
-    padding: 10px;
-    font-style: italic;
-    font-size: 0.95rem;
-    color: var(--text-color);
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid rgba(128,128,128,0.1);
+    background: var(--card-bg, #fff);
+    color: var(--text-color, #333);
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
-/* Footer de la tarjeta (Fecha y Selector) */
-.card-footer-custom {
+.form-select:focus, .form-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #6C43E0);
+    box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.2);
+}
+
+/* Contenedor de mensajes */
+.mensajes-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.mensaje-card {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: var(--card-shadow, 0 4px 15px rgba(0,0,0,0.1));
+    border-left: 4px solid var(--primary-color, #6C43E0);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.mensaje-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.mensaje-card.pendiente {
+    border-left-color: #ff6b6b;
+}
+
+.mensaje-card.contestado {
+    border-left-color: #28a745;
+}
+
+.mensaje-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.mensaje-nombre {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--primary-color, #6C43E0);
+    margin-bottom: 5px;
+}
+
+.mensaje-email {
+    color: var(--text-color, #666);
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.mensaje-telefono {
+    background: rgba(108, 67, 224, 0.1);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--primary-color, #6C43E0);
+    display: inline-block;
+}
+
+.mensaje-contenido {
+    margin: 15px 0;
+    line-height: 1.6;
+    color: var(--text-color, #444);
+}
+
+.mensaje-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(128,128,128,0.2);
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(108, 67, 224, 0.1);
 }
 
-.fecha-texto {
-    font-size: 0.8rem;
-    color: var(--text-color);
-    opacity: 0.6;
+.mensaje-fecha {
+    color: var(--text-color, #888);
+    font-size: 0.85rem;
 }
 
-/* Botón Eliminar (X en la esquina) */
-.btn-eliminar {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: transparent;
+.mensaje-acciones {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-accion {
+    padding: 8px 15px;
     border: none;
-    color: var(--text-color);
-    opacity: 0.5;
-    transition: all 0.2s;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 2;
+    gap: 5px;
+}
+
+.btn-eliminar {
+    background: #dc3545;
+    color: white;
 }
 
 .btn-eliminar:hover {
-    background-color: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
-    opacity: 1;
+    background: #c82333;
+    transform: scale(1.05);
 }
 
-/* Selector de estado */
-.selector-estado {
-    background-color: var(--card-bg) !important;
-    color: var(--text-color) !important;
-    border-color: rgba(128,128,128,0.3);
-    cursor: pointer;
+.btn-estado {
+    background: var(--accent-color, #8B5FEB);
+    color: white;
+}
+
+.btn-estado:hover {
+    background: var(--secondary-color, #5a35c7);
+}
+
+.estado-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 0.85rem;
-    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estado-pendiente {
+    background: rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+}
+
+.estado-contestado {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
 }
 
 /* Paginación */
-.pagination-container {
-    background-color: var(--card-bg) !important;
-    border: 1px solid rgba(128,128,128,0.2);
-    color: var(--text-color) !important;
+.contactos-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin: 30px 0;
+    padding: 20px;
+    background: var(--card-bg, #fff);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow, 0 2px 10px rgba(0,0,0,0.1));
 }
 
-#paginaActual {
-    color: var(--primary-color);
+.btn-pagination {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color, #6C43E0);
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Ajustes Responsive */
+.btn-pagination:hover:not(:disabled) {
+    background: var(--secondary-color, #5a35c7);
+    transform: translateY(-2px);
+}
+
+.btn-pagination:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.pagina-indicator {
+    font-weight: 600;
+    color: var(--primary-color, #6C43E0);
+    font-size: 1.1rem;
+}
+
+/* Estadísticas */
+.contactos-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.stat-card {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--card-shadow, 0 4px 15px rgba(0,0,0,0.1));
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.stat-card i {
+    font-size: 2.5rem;
+    color: var(--primary-color, #6C43E0);
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    color: var(--primary-color, #6C43E0);
+    margin-bottom: 5px;
+}
+
+.stat-content p {
+    color: var(--text-color, #666);
+    font-size: 0.95rem;
+}
+
+/* Estados de carga y error */
+.loading-state, .error-state, .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--card-bg, #fff);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow, 0 2px 10px rgba(0,0,0,0.1));
+}
+
+.loading-state i {
+    font-size: 3rem;
+    color: var(--primary-color, #6C43E0);
+    margin-bottom: 20px;
+}
+
+.loading-state p {
+    font-size: 1.2rem;
+    color: var(--text-color, #666);
+}
+
+.error-state {
+    color: #dc3545;
+    border: 2px solid rgba(220, 53, 69, 0.2);
+}
+
+.error-state i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--text-color, #888);
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    color: var(--text-color, #666);
+    margin-bottom: 10px;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .mensajes-grid {
+    .contactos-filters {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        min-width: 100%;
+    }
+    
+    .mensajes-container {
         grid-template-columns: 1fr;
+    }
+    
+    .contactos-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .mensaje-footer {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .mensaje-acciones {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .contactos-container {
+        padding: 10px;
+    }
+    
+    .contactos-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .mensaje-card {
+        padding: 20px;
+    }
+    
+    .btn-accion {
+        padding: 6px 12px;
+        font-size: 0.85rem;
     }
 }
