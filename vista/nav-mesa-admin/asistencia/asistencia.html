@@ -197,6 +197,7 @@
             localStorage.setItem(`attendance_${userId}`, JSON.stringify(data));
         }
 
+        // Verificar asistencia en Firebase
         async function checkAttendanceInFirebase(userId) {
             try {
                 const today = new Date();
@@ -215,6 +216,63 @@
             } catch (error) {
                 console.error("Error al verificar asistencia en Firebase:", error);
                 return null;
+            }
+        }
+
+        // Verificar asistencia en colaboradores
+        async function checkAttendanceInCollaborators(email) {
+            try {
+                const querySnapshot = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (querySnapshot.empty) return null;
+                
+                const collaboratorData = querySnapshot.docs[0].data();
+                if (collaboratorData.asistencia?.estado === true && collaboratorData.asistencia?.fecha) {
+                    const lastAttendanceDate = collaboratorData.asistencia.fecha.toDate();
+                    const today = new Date();
+                    
+                    if (lastAttendanceDate.getDate() === today.getDate() && 
+                        lastAttendanceDate.getMonth() === today.getMonth() && 
+                        lastAttendanceDate.getFullYear() === today.getFullYear()) {
+                        return collaboratorData.asistencia;
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error("Error al verificar asistencia en colaboradores:", error);
+                return null;
+            }
+        }
+
+        // Verificar doble asistencia (tanto en asistencias como en colaboradores)
+        async function checkDoubleAttendance(userId, email) {
+            try {
+                const [firebaseAttendance, collaboratorAttendance] = await Promise.all([
+                    checkAttendanceInFirebase(userId),
+                    checkAttendanceInCollaborators(email)
+                ]);
+                
+                if (firebaseAttendance || collaboratorAttendance) {
+                    return {
+                        exists: true,
+                        firebaseData: firebaseAttendance,
+                        collaboratorData: collaboratorAttendance,
+                        horaRegistro: firebaseAttendance?.fecha ? 
+                            firebaseAttendance.fecha.toDate().toLocaleTimeString('es-ES') : 
+                            (collaboratorAttendance?.fecha ? 
+                                collaboratorAttendance.fecha.toDate().toLocaleTimeString('es-ES') : 
+                                'No disponible'),
+                        tipo: firebaseAttendance?.tipo || collaboratorAttendance?.tipo || 'No especificado'
+                    };
+                }
+                
+                return { exists: false };
+            } catch (error) {
+                console.error("Error verificando doble asistencia:", error);
+                return { exists: false };
             }
         }
 
@@ -260,14 +318,24 @@
             if (existingAttendance) {
                 const fechaRegistro = existingAttendance.fecha.toDate();
                 const horaRegistro = fechaRegistro.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+                const tipoAsistencia = existingAttendance.tipo ? getAttendanceTypeName(existingAttendance.tipo) : 'No especificado';
+                
                 attendanceStatus = `
                     <p><strong>Asistencia hoy:</strong> 
                     <span style="color: ${successColor}; font-weight: bold;">✓ YA REGISTRADA (${horaRegistro})</span></p>
-                    <p><strong>Tipo:</strong> ${getAttendanceTypeName(existingAttendance.tipo)}</p>
+                    <p><strong>Tipo:</strong> ${tipoAsistencia}</p>
+                    <p style="color: #ff6b6b; font-weight: bold;">
+                    <i class="fas fa-exclamation-triangle"></i> Solo se permite una asistencia por día
+                    </p>
                 `;
             } else {
-                attendanceStatus = `<p><strong>Asistencia hoy:</strong> 
-                    <span style="color: ${errorColor}; font-weight: bold;">PENDIENTE</span></p>`;
+                attendanceStatus = `
+                    <p><strong>Asistencia hoy:</strong> 
+                    <span style="color: ${errorColor}; font-weight: bold;">PENDIENTE</span></p>
+                    <p style="color: #4e54c8; font-style: italic;">
+                    <i class="fas fa-info-circle"></i> Puedes registrar asistencia una vez por día
+                    </p>
+                `;
             }
             
             employeeDetails.innerHTML = `
@@ -299,7 +367,7 @@
             attendanceOptions.forEach(option => {
                 option.addEventListener('click', function() {
                     if (AppState.hasAttendanceToday) {
-                        showAlert('info', 'Asistencia ya registrada', 'Ya has registrado tu asistencia para hoy. No puedes registrar otra.');
+                        showAlert('info', 'Asistencia ya registrada', 'Ya has registrado tu asistencia para hoy. Solo se permite una vez por día.');
                         return;
                     }
                     attendanceOptions.forEach(opt => opt.classList.remove('selected'));
@@ -415,22 +483,51 @@
             }
         }
 
+        // Función para validar si ya tiene asistencia hoy (antes de registrar)
+        async function validateNoDuplicateAttendanceBeforeRegister(userId, email) {
+            try {
+                // Verificar en localStorage
+                if (hasAttendanceInLocalStorage(userId)) {
+                    return {
+                        hasAttendance: true,
+                        source: 'localStorage',
+                        message: 'Ya registraste asistencia hoy desde este dispositivo.'
+                    };
+                }
+                
+                // Verificar en Firebase
+                const doubleCheck = await checkDoubleAttendance(userId, email);
+                if (doubleCheck.exists) {
+                    return {
+                        hasAttendance: true,
+                        source: 'firebase',
+                        data: doubleCheck,
+                        message: 'Ya tienes una asistencia registrada para hoy.'
+                    };
+                }
+                
+                return { hasAttendance: false };
+            } catch (error) {
+                console.error("Error validando asistencia duplicada:", error);
+                return { hasAttendance: false }; // En caso de error, permitir continuar
+            }
+        }
+
         async function registerAttendance(attendanceType, userData) {
             try {
                 // VERIFICACIÓN FINAL - No debe tener asistencia hoy
-                const existingAttendance = await checkAttendanceInFirebase(userData.id);
-                if (existingAttendance) {
+                const validationResult = await validateNoDuplicateAttendanceBeforeRegister(userData.id, userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                
+                if (validationResult.hasAttendance) {
                     await showAlert('error', 'Asistencia ya registrada', 
-                        'Ya tienes una asistencia registrada para hoy. Solo se permite una por día.');
-                    redirectByRole(AppState.userRole);
-                    return false;
-                }
-
-                // VERIFICAR EN LOCALSTORAGE también
-                if (hasAttendanceInLocalStorage(userData.id)) {
-                    await showAlert('error', 'Asistencia ya registrada', 
-                        'Ya registraste asistencia hoy desde este dispositivo.');
-                    redirectByRole(AppState.userRole);
+                        validationResult.message + '\n\nSolo se permite una asistencia por día.');
+                    
+                    // Actualizar estado y redirigir
+                    AppState.hasAttendanceToday = true;
+                    setTimeout(() => {
+                        redirectByRole(AppState.userRole);
+                    }, 2000);
+                    
                     return false;
                 }
 
@@ -478,7 +575,9 @@
                         • Tipo: ${tipoAsistencia}<br>
                         • Hora: ${datetime.timeString}<br>
                         • Fecha: ${datetime.dateString}<br><br>
-                        <small>Recuerda que solo puedes registrar asistencia una vez por día.</small><br>
+                        <small style="color: #4CAF50;">
+                        <i class="fas fa-check-circle"></i> ¡Recuerda que solo puedes registrar asistencia una vez por día!
+                        </small><br>
                         <small>Serás redirigido en 3 segundos...</small>
                     </div>
                 `;
@@ -528,10 +627,13 @@
             submitBtn.addEventListener('click', async function() {
                 if (AppState.isSubmitting) return;
                 
-                // Verificar doblemente en localStorage
-                if (hasAttendanceInLocalStorage(userData.id)) {
+                // Verificar doblemente en localStorage y Firebase
+                const validationResult = await validateNoDuplicateAttendanceBeforeRegister(userData.id, userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                
+                if (validationResult.hasAttendance) {
                     await showAlert('info', 'Asistencia ya registrada', 
-                        'Ya registraste asistencia hoy desde este dispositivo.');
+                        validationResult.message + '\n\nSerás redirigido automáticamente.');
+                    
                     AppState.hasAttendanceToday = true;
                     setupSubmitButton(userData); // Reconfigurar para deshabilitar
                     return;
@@ -587,14 +689,44 @@
                     throw new Error('No tienes permisos para acceder a esta función');
                 }
                 
-                // Verificar en LOCALSTORAGE primero (más rápido)
+                // Verificar doble asistencia (localStorage + Firebase + colaboradores)
+                const doubleCheck = await checkDoubleAttendance(AppState.userData.id, user.email);
+                
+                if (doubleCheck.exists) {
+                    AppState.hasAttendanceToday = true;
+                    AppState.existingAttendanceData = doubleCheck.firebaseData || doubleCheck.collaboratorData;
+                    
+                    // Guardar también en localStorage para futuras verificaciones
+                    saveAttendanceToLocalStorage(AppState.userData.id);
+                    
+                    // Mostrar información con datos de la asistencia existente
+                    displayUserInfo(AppState.userData, AppState.existingAttendanceData);
+                    
+                    // Mostrar mensaje detallado
+                    const fechaRegistro = AppState.existingAttendanceData.fecha ? 
+                        AppState.existingAttendanceData.fecha.toDate() : new Date();
+                    const horaRegistro = fechaRegistro.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+                    const tipoAsistencia = getAttendanceTypeName(doubleCheck.tipo);
+                    
+                    await showAlert('info', 'Asistencia ya registrada', 
+                        `Ya registraste tu asistencia hoy a las ${horaRegistro}.\n\n` +
+                        `Tipo: ${tipoAsistencia}\n\n` +
+                        `Solo se permite una asistencia por día. Serás redirigido al panel.`);
+                    
+                    setTimeout(() => {
+                        redirectByRole(AppState.userRole);
+                    }, 2000);
+                    
+                    return false;
+                }
+                
+                // Verificar en localStorage (por si acaso)
                 if (hasAttendanceInLocalStorage(AppState.userData.id)) {
                     AppState.hasAttendanceToday = true;
                     displayUserInfo(AppState.userData, { fecha: { toDate: () => new Date() }, tipo: 'local' });
                     
-                    // Mostrar mensaje y redirigir inmediatamente
                     await showAlert('info', 'Asistencia ya registrada', 
-                        'Ya registraste tu asistencia para hoy. Serás redirigido al panel.');
+                        'Ya registraste tu asistencia para hoy desde este dispositivo. Serás redirigido al panel.');
                     
                     setTimeout(() => {
                         redirectByRole(AppState.userRole);
@@ -603,31 +735,7 @@
                     return false;
                 }
                 
-                // Verificar en FIREBASE
-                const existingAttendance = await checkAttendanceInFirebase(AppState.userData.id);
-                
-                if (existingAttendance) {
-                    AppState.hasAttendanceToday = true;
-                    AppState.existingAttendanceData = existingAttendance;
-                    // Guardar también en localStorage para futuras verificaciones
-                    saveAttendanceToLocalStorage(AppState.userData.id);
-                    
-                    displayUserInfo(AppState.userData, existingAttendance);
-                    
-                    // Mostrar mensaje y redirigir inmediatamente
-                    const fechaRegistro = existingAttendance.fecha.toDate();
-                    const horaRegistro = fechaRegistro.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
-                    
-                    await showAlert('info', 'Asistencia ya registrada', 
-                        `Ya registraste tu asistencia hoy a las ${horaRegistro}. Serás redirigido al panel.`);
-                    
-                    setTimeout(() => {
-                        redirectByRole(AppState.userRole);
-                    }, 2000);
-                    
-                    return false;
-                }
-                
+                // Si no tiene asistencia, mostrar formulario normal
                 displayUserInfo(AppState.userData, null);
                 return true;
             } catch (error) {

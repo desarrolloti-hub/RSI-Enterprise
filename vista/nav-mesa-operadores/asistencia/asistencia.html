@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-     <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -130,7 +130,8 @@
             userCoordinates: null,
             isLocationRequested: false,
             isSubmitting: false,
-            longPressTimer: null
+            longPressTimer: null,
+            hasAlreadyRegisteredToday: false
         };
 
         // --- FUNCIONES DE UTILIDAD CORREGIDAS ---
@@ -212,6 +213,13 @@
             };
         }
 
+        // Función para verificar si dos fechas son el mismo día
+        function isSameDay(date1, date2) {
+            return date1.getDate() === date2.getDate() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getFullYear() === date2.getFullYear();
+        }
+
         // --- FUNCIONES DE DATOS ---
 
         // Obtener rol del usuario
@@ -254,7 +262,7 @@
             }
         }
 
-        // Verificar asistencia activa
+        // Verificar asistencia activa desde la colección 'colaboradores'
         async function checkActiveAttendanceFromCollaborators(email) {
             try {
                 const collaboratorQuery = await db.collection('colaboradores')
@@ -271,9 +279,7 @@
                     const lastAttendanceDate = collaboratorData.asistencia.fecha.toDate();
                     const today = new Date();
                     
-                    if (lastAttendanceDate.getDate() === today.getDate() && 
-                        lastAttendanceDate.getMonth() === today.getMonth() && 
-                        lastAttendanceDate.getFullYear() === today.getFullYear()) {
+                    if (isSameDay(lastAttendanceDate, today)) {
                         return { 
                             id: collaboratorId, 
                             ...collaboratorData, 
@@ -283,8 +289,70 @@
                 }
                 return null;
             } catch (error) { 
-                console.error("Error al verificar asistencia activa:", error); 
+                console.error("Error al verificar asistencia activa en colaboradores:", error); 
                 return null; 
+            }
+        }
+
+        // Verificar si ya tiene asistencia registrada hoy en la colección 'asistencias'
+        async function checkExistingAttendanceToday(userId) {
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                const attendanceQuery = await db.collection('asistencias')
+                    .where('userId', '==', userId)
+                    .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(today))
+                    .where('fecha', '<', firebase.firestore.Timestamp.fromDate(tomorrow))
+                    .limit(1)
+                    .get();
+                
+                if (!attendanceQuery.empty) {
+                    const attendanceData = attendanceQuery.docs[0].data();
+                    const attendanceDate = attendanceData.fecha.toDate();
+                    
+                    if (isSameDay(attendanceDate, new Date())) {
+                        return {
+                            exists: true,
+                            data: attendanceData,
+                            horaRegistro: attendanceDate.toLocaleTimeString('es-ES'),
+                            tipo: attendanceData.tipo
+                        };
+                    }
+                }
+                
+                return { exists: false };
+            } catch (error) { 
+                console.error("Error al verificar asistencia en colección asistencias:", error); 
+                return { exists: false }; 
+            }
+        }
+
+        // Verificar doble registro de asistencia
+        async function checkForDoubleAttendance(userId, userEmail) {
+            try {
+                // Verificar en colaboradores
+                const collaboratorCheck = await checkActiveAttendanceFromCollaborators(userEmail);
+                
+                // Verificar en asistencias
+                const attendanceCheck = await checkExistingAttendanceToday(userId);
+                
+                return {
+                    hasInCollaborators: collaboratorCheck !== null,
+                    hasInAttendances: attendanceCheck.exists,
+                    collaboratorData: collaboratorCheck,
+                    attendanceData: attendanceCheck.data,
+                    horaRegistro: collaboratorCheck?.horaRegistro || attendanceCheck.horaRegistro,
+                    tipo: collaboratorCheck?.asistencia?.tipo || attendanceCheck.tipo
+                };
+            } catch (error) {
+                console.error("Error verificando doble asistencia:", error);
+                return {
+                    hasInCollaborators: false,
+                    hasInAttendances: false
+                };
             }
         }
 
@@ -312,7 +380,7 @@
                 <p><strong>RFC:</strong> ${rfc}</p>
                 <p><strong>Teléfono:</strong> ${telefono}</p>
                 <p><strong>Asistencia hoy:</strong> ${user.asistencia?.estado ? 
-                    `<span style="color: ${successColor};">Presente</span>` : 
+                    `<span style="color: ${successColor};">Presente (${user.asistencia?.tipo || 'No especificado'})</span>` : 
                     `<span style="color: ${errorColor};">Pendiente</span>`}</p>
             `;
             
@@ -512,6 +580,36 @@
             }
         }
 
+        // Validar si ya registró asistencia hoy
+        async function validateNoDuplicateAttendance(userId, userEmail) {
+            try {
+                const doubleCheck = await checkForDoubleAttendance(userId, userEmail);
+                
+                if (doubleCheck.hasInCollaborators || doubleCheck.hasInAttendances) {
+                    AppState.hasAlreadyRegisteredToday = true;
+                    
+                    const tipoAsistencia = doubleCheck.tipo ? getAttendanceTypeName(doubleCheck.tipo) : 'No especificado';
+                    const horaRegistro = doubleCheck.horaRegistro || 'No disponible';
+                    
+                    const mensaje = `Ya registraste tu asistencia hoy a las ${horaRegistro}.\n\nTipo: ${tipoAsistencia}\n\nSerás redirigido al panel en 3 segundos...`;
+                    
+                    await showAlert('info', 'Asistencia ya registrada', mensaje);
+                    
+                    setTimeout(() => { 
+                        redirectByRole(AppState.userRole); 
+                    }, REDIRECT_DELAY);
+                    
+                    return false;
+                }
+                
+                AppState.hasAlreadyRegisteredToday = false;
+                return true;
+            } catch (error) {
+                console.error("Error validando duplicado de asistencia:", error);
+                return true; // Permitir continuar en caso de error
+            }
+        }
+
         // Registrar asistencia en Firebase - CORREGIDA
         async function registerAttendance(attendanceType, userData) {
             try {
@@ -519,6 +617,12 @@
                 
                 if (!AppState.userCoordinates) {
                     AppState.userCoordinates = await getUserLocation();
+                }
+                
+                // Validar que no tenga ya asistencia registrada hoy
+                const canProceed = await validateNoDuplicateAttendance(userData.id, userData['CORREO ELECTRÓNICO EMPRESARIAL']);
+                if (!canProceed) {
+                    return false;
                 }
                 
                 // Actualizar colaborador
@@ -587,6 +691,12 @@
             submitBtn.addEventListener('click', async function() {
                 if (AppState.isSubmitting) return;
                 
+                // Verificar si ya registró asistencia hoy
+                if (AppState.hasAlreadyRegisteredToday) {
+                    await showAlert('info', 'Asistencia ya registrada', 'Ya registraste tu asistencia para hoy. No puedes registrar más de una vez por día.');
+                    return;
+                }
+                
                 const selectedOption = document.querySelector('.attendance-option.selected');
                 
                 if (!selectedOption) {
@@ -651,12 +761,20 @@
 
                 displayUserInfo(AppState.userData);
                 
-                const activeAttendance = await checkActiveAttendanceFromCollaborators(user.email);
+                // Verificar si ya tiene asistencia registrada hoy
+                const doubleCheck = await checkForDoubleAttendance(
+                    AppState.userData.id, 
+                    user.email
+                );
                 
-                if (activeAttendance) {
-                    // MENSAJE CORREGIDO - sin HTML
-                    const mensajeAsistencia = `Ya registraste tu asistencia hoy a las ${activeAttendance.horaRegistro}.\n\nSerás redirigido al panel en 3 segundos...`;
-                    await showAlert('info', 'Asistencia ya registrada', mensajeAsistencia);
+                if (doubleCheck.hasInCollaborators || doubleCheck.hasInAttendances) {
+                    AppState.hasAlreadyRegisteredToday = true;
+                    
+                    const tipoAsistencia = doubleCheck.tipo ? getAttendanceTypeName(doubleCheck.tipo) : 'No especificado';
+                    const horaRegistro = doubleCheck.horaRegistro || 'No disponible';
+                    
+                    const mensaje = `Ya registraste tu asistencia hoy a las ${horaRegistro}.\n\nTipo: ${tipoAsistencia}\n\nSerás redirigido al panel en 3 segundos...`;
+                    await showAlert('info', 'Asistencia ya registrada', mensaje);
                     
                     setTimeout(() => { 
                         redirectByRole(AppState.userRole); 
@@ -766,7 +884,7 @@
     </script>
 
     <script src="../js/personalizacion-colores.js"></script>
-            <script src="../js/partuculas.js"></script>
+    <script src="../js/partuculas.js"></script>
 
 </body>
 </html>

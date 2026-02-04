@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Gestión de Opiniones</title>
+    
+    <!-- Firebase SDK (DEBE IR PRIMERO) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="opiniones.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="opiniones-container">
+        <div class="opiniones-header">
+            <h1><i class="fas fa-comments"></i> Gestión de Opiniones</h1>
+            <p>Administra las opiniones y comentarios de los clientes</p>
+        </div>
+        
+        <div class="opiniones-content">
+            <!-- Estadísticas principales -->
+            <div class="opiniones-stats">
+                <div class="stat-card">
+                    <i class="fas fa-star"></i>
+                    <div class="stat-content">
+                        <h3 id="totalOpiniones">0</h3>
+                        <p>Opiniones totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-chart-line"></i>
+                    <div class="stat-content">
+                        <h3 id="calificacionPromedio">0.0</h3>
+                        <p>Calificación promedio</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div class="stat-content">
+                        <h3 id="opinionesHoy">0</h3>
+                        <p>Hoy</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="opiniones-filters">
+                <div class="filter-group">
+                    <label for="filterCalificacion"><i class="fas fa-filter"></i> Filtrar por calificación:</label>
+                    <select id="filterCalificacion" class="form-select">
+                        <option value="todas">Todas las calificaciones</option>
+                        <option value="5">★★★★★ (5 estrellas)</option>
+                        <option value="4">★★★★☆ (4 estrellas)</option>
+                        <option value="3">★★★☆☆ (3 estrellas)</option>
+                        <option value="2">★★☆☆☆ (2 estrellas)</option>
+                        <option value="1">★☆☆☆☆ (1 estrella)</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="searchOpinion"><i class="fas fa-search"></i> Buscar:</label>
+                    <input type="text" id="searchOpinion" placeholder="Nombre o comentario..." class="form-input">
+                </div>
+            </div>
+            
+            <!-- Vista Desktop: Tabla -->
+            <div class="opiniones-table-container desktop-only">
+                <table class="opiniones-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-user"></i> Cliente</th>
+                            <th><i class="fas fa-star"></i> Calificación</th>
+                            <th><i class="fas fa-comment"></i> Comentario</th>
+                            <th><i class="fas fa-calendar"></i> Fecha</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="opiniones-lista">
+                        <tr>
+                            <td colspan="5" class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando opiniones...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Vista Móvil: Tarjetas (se crea dinámicamente) -->
+            <!-- El contenedor se creará en JS -->
+            
+            <!-- Paginación -->
+            <div class="opiniones-pagination">
+                <button id="btnPaginaAnterior" class="btn-pagination" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <span id="paginaActual" class="pagina-indicator">Página 1</span>
+                <button id="btnPaginaSiguiente" class="btn-pagination" disabled>
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <!-- Distribución de calificaciones -->
+            <div class="calificaciones-distribucion">
+                <h3><i class="fas fa-chart-bar"></i> Distribución de calificaciones</h3>
+                <div class="distribucion-bars">
+                    <div class="bar-container">
+                        <span>5 ★</span>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="bar5" data-count="0"></div>
+                        </div>
+                        <span id="count5">0</span>
+                    </div>
+                    <div class="bar-container">
+                        <span>4 ★</span>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="bar4" data-count="0"></div>
+                        </div>
+                        <span id="count4">0</span>
+                    </div>
+                    <div class="bar-container">
+                        <span>3 ★</span>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="bar3" data-count="0"></div>
+                        </div>
+                        <span id="count3">0</span>
+                    </div>
+                    <div class="bar-container">
+                        <span>2 ★</span>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="bar2" data-count="0"></div>
+                        </div>
+                        <span id="count2">0</span>
+                    </div>
+                    <div class="bar-container">
+                        <span>1 ★</span>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="bar1" data-count="0"></div>
+                        </div>
+                        <span id="count1">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="opiniones.js"></script>
+</body>
+</html>
