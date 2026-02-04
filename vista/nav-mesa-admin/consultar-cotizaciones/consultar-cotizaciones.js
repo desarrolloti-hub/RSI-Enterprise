@@ -694,7 +694,7 @@ function displayCotizaciones() {
                     <button class="action-btn download" data-id="${coti.id}" title="Descargar PDF">
                         <i class="fas fa-download"></i>
                     </button>
-                    <a href="cotizacion_formulario.html?id=${coti.id}" class="action-btn edit" title="Editar">
+                    <a href="../editar-cotizacion/editar-cotizacion.html?id=${coti.id}" class="action-btn edit" title="Editar">
                         <i class="fas fa-edit"></i>
                     </a>
                     <button class="action-btn delete" data-id="${coti.id}" title="Eliminar">

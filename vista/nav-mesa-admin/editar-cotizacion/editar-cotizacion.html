@@ -5,7 +5,7 @@
     <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSI Enterprise - Nueva cotización</title>
+    <title>RSI Enterprise - Editar cotización</title>
     
     <!-- Fuente Inter para consistencia -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -18,13 +18,13 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <link rel="stylesheet" href="nueva-cotizacion.css">
+    <link rel="stylesheet" href="../nueva-cotizacion/nueva-cotizacion.css">
 </head>
 <body>
     <div class="main-container">
         <div class="header">
             <div class="header-title-container">
-                <h2 id="modalTitle">Nueva Cotización</h2>
+                <h2 id="modalTitle">Editar Cotización</h2>
             </div>
             <button id="cerrarModalBtn" class="close-btn">×</button>
         </div>
@@ -87,16 +87,17 @@
                         <div class="form-group">
                             <label for="cotizacionNumero"><i class="fas fa-hashtag"></i> Número de Cotización</label>
                             <input type="text" id="cotizacionNumero" name="cotizacionNumero" readonly>
-                            <small class="form-text">Generado automáticamente</small>
+                            <small class="form-text">Edición de cotización existente</small>
                         </div>
                         <div class="form-group">
-                            <label for="tipoCotizacion"><i class="fas fa-tag"></i> Tipo de Cotización *</label>
-                            <select id="tipoCotizacion" name="tipoCotizacion" required>
+                            <label for="tipoCotizacion"><i class="fas fa-tag"></i> Tipo de Cotización</label>
+                            <select id="tipoCotizacion" name="tipoCotizacion" disabled>
                                 <option value="">Seleccionar...</option>
                                 <option value="implementacion">Implementación</option>
                                 <option value="proyecto">Proyecto</option>
                                 <option value="servicio">Servicio</option>
                             </select>
+                            <input type="hidden" id="tipoCotizacionHidden" name="tipoCotizacionHidden">
                         </div>
                         <div class="form-group">
                             <label for="cotizacionFecha"><i class="fas fa-calendar"></i> Fecha</label>
@@ -218,7 +219,7 @@
                         <i class="fas fa-times"></i> Cancelar
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Generar Cotización PDF
+                        <i class="fas fa-save"></i> Actualizar Cotización PDF
                     </button>
                 </div>
             </form>
@@ -230,9 +231,10 @@
         <p>⏳ Procesando...</p>
     </div>
 
-    <script src="nueva-cotizacion.js" type="module"></script>
+    <script src="editar-cotizacion.js" type="module"></script>
     <script src="../js/navegacion-admin.js"></script>
     <script src="../js/personalizacion-colores.js"></script>
     <script src="../js/particulas.js"></script>
+
 </body>
 </html>

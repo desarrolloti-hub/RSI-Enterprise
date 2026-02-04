@@ -245,7 +245,7 @@ async function updateProducto(id, updatedData) {
                 throw new Error('El nombre del producto/servicio es requerido');
             }
             
-            if (updatedData.nombre.length > 100) {
+            if (updatedData.nombre.length > 1000) {
                 throw new Error('El nombre del producto/servicio no puede exceder los 100 caracteres');
             }
         }

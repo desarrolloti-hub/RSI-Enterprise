@@ -1,4 +1,4 @@
-// nueva-cotizacion.js - Módulo principal para formulario de cotización
+// editar-cotizacion.js - Módulo para edición de cotización
 import { 
     initializeApp 
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -33,14 +33,11 @@ let currentUser = null;
 let isManualEntry = false;
 let categorias = [];
 let productos = [];
-let cotizacionTemporalId = null; // ID de la cotización temporal
+let cotizacionTemporalId = null;
 let formularioGuardadoExitosamente = false;
-let formularioHaSidoModificado = false; // Nueva variable para rastrear cambios
-let isClosingConfirmed = false; // Control para confirmación de cierre
-let tipoCotizacionBloqueado = false; // Variable para controlar si el tipo está bloqueado
-
-// Variables para seguimiento de productos modificados
-let productosModificados = new Map(); // Mapa de productos con precio modificado
+let formularioHaSidoModificado = false;
+let isClosingConfirmed = false;
+let productosModificados = new Map();
 
 // Constantes
 const empresasDirecciones = { 
@@ -77,6 +74,7 @@ const creditOptions = document.getElementById('creditOptions');
 const diasCredito = document.getElementById('diasCredito');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const tipoCotizacionSelect = document.getElementById('tipoCotizacion');
+const tipoCotizacionHidden = document.getElementById('tipoCotizacionHidden');
 const cotizacionNumeroInput = document.getElementById('cotizacionNumero');
 const agregarItemBtn = document.getElementById('agregarItemBtn');
 
@@ -120,64 +118,17 @@ function agruparTecnologias(items) {
     return grupos;
 }
 
-// Obtener el nombre de la categoría por su ID
 function obtenerNombreCategoria(categoriaId) {
     const categoria = categorias.find(c => c.id === categoriaId);
     return categoria ? categoria.nombre : categoriaId;
 }
 
-// === FUNCIÓN PARA BLOQUEAR EL SELECTOR DE TIPO DE COTIZACIÓN ===
-function bloquearTipoCotizacion() {
-    if (tipoCotizacionBloqueado) return;
-    
-    tipoCotizacionSelect.disabled = true;
-    tipoCotizacionSelect.style.backgroundColor = '#f0f0f0';
-    tipoCotizacionSelect.style.cursor = 'not-allowed';
-    tipoCotizacionSelect.title = 'El tipo de cotización no puede ser cambiado una vez generado el número';
-    tipoCotizacionBloqueado = true;
-    
-    // Agregar un mensaje informativo
-    const tipoCotizacionContainer = tipoCotizacionSelect.parentElement;
-    const mensajeInfo = document.createElement('small');
-    mensajeInfo.className = 'form-text';
-    mensajeInfo.textContent = 'Bloqueado (no editable después de generar el número)';
-    mensajeInfo.style.color = '#666';
-    mensajeInfo.style.display = 'block';
-    mensajeInfo.style.marginTop = '2px';
-    
-    // Verificar si ya existe el mensaje
-    if (!tipoCotizacionContainer.querySelector('.form-text:last-child')) {
-        tipoCotizacionContainer.appendChild(mensajeInfo);
-    } else {
-        // Reemplazar el mensaje anterior
-        const textoAnterior = tipoCotizacionContainer.querySelector('.form-text:last-child');
-        tipoCotizacionContainer.replaceChild(mensajeInfo, textoAnterior);
-    }
-}
-
-// === FUNCIÓN PARA DESBLOQUEAR EL SELECTOR DE TIPO DE COTIZACIÓN (para edición) ===
-function desbloquearTipoCotizacion() {
-    tipoCotizacionSelect.disabled = false;
-    tipoCotizacionSelect.style.backgroundColor = '';
-    tipoCotizacionSelect.style.cursor = '';
-    tipoCotizacionSelect.title = '';
-    tipoCotizacionBloqueado = false;
-    
-    // Remover el mensaje informativo
-    const tipoCotizacionContainer = tipoCotizacionSelect.parentElement;
-    const mensajeInfo = tipoCotizacionContainer.querySelector('.form-text:last-child');
-    if (mensajeInfo && mensajeInfo.textContent.includes('Bloqueado')) {
-        mensajeInfo.remove();
-    }
-}
-
-// === 🚨 PROTECCIÓN CONTRA CIERRE ACCIDENTAL ===
+// === PROTECCIÓN CONTRA CIERRE ACCIDENTAL ===
 function marcarFormularioModificado() {
     if (!formularioHaSidoModificado) {
         formularioHaSidoModificado = true;
         console.log('Formulario marcado como modificado');
         
-        // Agregar el evento beforeunload cuando se modifica por primera vez
         if (!window._beforeunloadAdded) {
             window.addEventListener('beforeunload', manejarCierrePestana);
             window._beforeunloadAdded = true;
@@ -186,77 +137,12 @@ function marcarFormularioModificado() {
     }
 }
 
-// Función para manejar el cierre de la pestaña
 function manejarCierrePestana(e) {
-    // Solo mostrar alerta si hay cambios sin guardar
     if (formularioHaSidoModificado && !formularioGuardadoExitosamente && !isClosingConfirmed) {
-        // Mostrar el mensaje estándar del navegador
         e.preventDefault();
         e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de querer salir?';
-        
-        // Opcional: También podemos guardar automáticamente aquí
-        // pero es mejor dejar que el usuario decida
-        
         return e.returnValue;
     }
-}
-
-// Función para guardar la cotización antes de salir
-async function guardarCotizacionAntesDeSalir() {
-    try {
-        // Verificar si hay datos para guardar
-        if (!formularioHaSidoModificado || !tipoCotizacionSelect.value) {
-            console.log('No hay datos suficientes para guardar antes de salir');
-            return false;
-        }
-
-        mostrarLoading(true);
-        
-        // Si no hay número de cotización, generar uno temporal
-        if (!cotizacionNumeroInput.value) {
-            await generarNumeroCotizacion();
-        }
-
-        // Guardar la cotización temporal
-        await guardarCotizacionTemporal();
-        
-        mostrarAlerta('✅ Cotización guardada temporalmente', 'success');
-        console.log('Cotización guardada antes de salir con ID:', cotizacionTemporalId);
-        
-        return true;
-    } catch (error) {
-        console.error('Error al guardar cotización antes de salir:', error);
-        return false;
-    } finally {
-        mostrarLoading(false);
-    }
-}
-
-// Función para mostrar SweetAlert cuando se cierra la pestaña
-function mostrarAlertaCierrePestana() {
-    // Esta función se llamará desde el botón de cierre personalizado
-    // No se puede llamar desde beforeunload directamente
-    return Swal.fire({
-        title: '¿Estás seguro de salir?',
-        html: `
-            <div style="text-align: left; margin: 15px 0;">
-                <p>Tienes cambios sin guardar en la cotización.</p>
-                <p><strong>¿Qué deseas hacer?</strong></p>
-            </div>
-        `,
-        icon: 'warning',
-        showCancelButton: true,
-        showDenyButton: true,
-        confirmButtonText: 'Guardar y salir',
-        denyButtonText: 'Salir sin guardar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#3085d6',
-        denyButtonColor: '#d33',
-        cancelButtonColor: '#6b7280',
-        reverseButtons: true,
-        allowOutsideClick: false,
-        backdrop: true
-    });
 }
 
 // === FUNCIONES DE DATOS Y FIREBASE ===
@@ -273,17 +159,6 @@ async function cargarInformacionUsuario(email) {
     } catch (error) {
         console.error('Error al cargar información del usuario:', error);
         currentUser.nombreCompleto = email;
-    }
-}
-
-async function cargarContadores() {
-    try {
-        const contadoresSnapshot = await getDocs(collection(db, 'contadoresCotizaciones'));
-        contadoresSnapshot.forEach((doc) => {
-            contadores[doc.id] = doc.data().count || 0;
-        });
-    } catch (error) {
-        console.error('Error al cargar contadores:', error);
     }
 }
 
@@ -306,7 +181,6 @@ async function cargarClientes() {
             });
         });
 
-        // Clientes específicos
         const clientesEspecificos = [
             { nombre: 'LATAMGYM S.A.P.I. DE C.V.', rfc: 'LAT110824BJ4', contacto1: 'AV PASEO DE LA REFORMA 296 PISO 16 CUAUHTÉMOC, C.D.MX. CP: 06600' },
             { nombre: 'TIENDAS CHEDRAUI S.A.B. DE C.V.', rfc: 'TCH850701RM1', contacto1: 'AV. CONSTITUYENTES 1150 MIGUEL HIDALGO, C.D.MX. CP: 11950' },
@@ -386,7 +260,6 @@ async function buscarProductosPorTexto(texto, categoriaId = null) {
         let productosFiltrados = [];
         
         if (categoriaId) {
-            // Buscar solo en productos de la categoría seleccionada
             const q = query(
                 collection(db, 'productosServiciosCotizaciones'),
                 where('categoriaId', '==', categoriaId)
@@ -407,7 +280,6 @@ async function buscarProductosPorTexto(texto, categoriaId = null) {
                 }
             });
         } else {
-            // Buscar en todos los productos
             const allProductsQuery = await getDocs(collection(db, 'productosServiciosCotizaciones'));
             
             allProductsQuery.forEach((doc) => {
@@ -432,7 +304,6 @@ async function buscarProductosPorTexto(texto, categoriaId = null) {
     }
 }
 
-// === NUEVA FUNCIÓN PARA ACTUALIZAR PRODUCTO EN FIREBASE ===
 async function actualizarProductoEnFirebase(productoId, nuevoPrecio) {
     try {
         const productoRef = doc(db, 'productosServiciosCotizaciones', productoId);
@@ -453,7 +324,6 @@ async function actualizarProductoEnFirebase(productoId, nuevoPrecio) {
     }
 }
 
-// === NUEVA FUNCIÓN PARA CREAR NUEVO PRODUCTO EN FIREBASE ===
 async function crearNuevoProductoEnFirebase(categoriaId, nombreProducto, precio) {
     try {
         const nuevoProducto = {
@@ -503,201 +373,7 @@ function establecerFechaActual() {
     document.getElementById('cotizacionFecha').value = new Date().toISOString().split('T')[0]; 
 }
 
-async function generarNumeroCotizacion() {
-    try {
-        const tipoCotizacion = tipoCotizacionSelect.value;
-        if (!tipoCotizacion) { 
-            cotizacionNumeroInput.value = ''; 
-            return null; 
-        }
-
-        // Mostrar alerta informativa
-        Swal.fire({
-            title: 'Cotización Temporal',
-            html: `
-                <div style="text-align: left;">
-                    <p>La cotización se almacenará temporalmente en el sistema.</p>
-                    <p><strong>Recomendación:</strong> Termine de completar todos los datos para una cotización completa.</p>
-                    <p>Número de cotización: <strong>Se generará automáticamente</strong></p>
-                </div>
-            `,
-            icon: 'info',
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#3085d6',
-            allowOutsideClick: false
-        });
-
-        // Obtener el contador actual y actualizarlo inmediatamente
-        const contadorRef = doc(db, 'contadoresCotizaciones', tipoCotizacion);
-        const contadorDoc = await getDoc(contadorRef);
-        let nuevoContador = contadorDoc.exists() ? contadorDoc.data().count + 1 : 1;
-        
-        // ACTUALIZAR EL CONTADOR EN LA BASE DE DATOS INMEDIATAMENTE
-        await setDoc(contadorRef, { count: nuevoContador }, { merge: true });
-        
-        // Generar número de cotización
-        const hoy = new Date();
-        const fechaStr = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, '0')}${String(hoy.getDate()).padStart(2, '0')}`;
-        const numeroCompleto = `RSI-${fechaStr}-${tipoCotizacion.toUpperCase()}-${nuevoContador}`;
-        
-        cotizacionNumeroInput.value = numeroCompleto;
-        contadores[tipoCotizacion] = nuevoContador;
-        
-        // BLOQUEAR EL SELECTOR DE TIPO DE COTIZACIÓN
-        bloquearTipoCotizacion();
-        
-        marcarFormularioModificado();
-
-        // Guardar cotización temporal
-        await guardarCotizacionTemporal();
-        
-        return numeroCompleto;
-    } catch (error) {
-        console.error('Error al generar número de cotización:', error);
-        const fecha = new Date();
-        const numeroManual = `RSI-${fecha.getFullYear()}${String(fecha.getMonth() + 1).padStart(2, '0')}${String(fecha.getDate()).padStart(2, '0')}-MANUAL-1`;
-        cotizacionNumeroInput.value = numeroManual;
-        
-        // BLOQUEAR EL SELECTOR DE TIPO DE COTIZACIÓN incluso en caso de error
-        if (tipoCotizacionSelect.value) {
-            bloquearTipoCotizacion();
-        }
-        
-        return numeroManual;
-    }
-}
-
-async function guardarCotizacionTemporal() {
-    if (!tipoCotizacionSelect.value || !cotizacionNumeroInput.value) {
-        return;
-    }
-
-    try {
-        const datosFormulario = new FormData(cotizacionForm);
-        const cotizacionData = Object.fromEntries(datosFormulario.entries());
-        const empresaInfo = empresasDirecciones[empresaSelector.value];
-        
-        cotizacionData.empresaNombre = empresaInfo.nombre;
-        cotizacionData.empresaDireccion = empresaInfo.direccion;
-        cotizacionData.empresaTelefono = empresaInfo.telefono;
-        cotizacionData.empresaRFC = empresaInfo.rfc;
-        cotizacionData.tipoCotizacion = tipoCotizacionSelect.value;
-        cotizacionData.esEntradaManual = isManualEntry;
-        cotizacionData.estatus = 'borrador'; // Estado temporal
-        
-        // Obtener items actuales con nombres de categoría
-        const itemsTableRows = itemsTableBody.children;
-        const itemsData = Array.from(itemsTableRows).map(row => {
-            const categoriaId = row.querySelector('.item-categoria').value;
-            const categoriaNombre = obtenerNombreCategoria(categoriaId);
-            
-            return {
-                categoria: categoriaId,
-                categoriaNombre: categoriaNombre, // Agregar el nombre de la categoría
-                tipoTecnologia: row.querySelector('.item-tipo-tecnologia').value,
-                descripcion: row.querySelector('.item-descripcion').value,
-                cantidad: parseFloat(row.querySelector('.item-cantidad').value) || 0,
-                precio: parseFloat(row.querySelector('.item-precio').value) || 0
-            };
-        });
-        
-        cotizacionData.items = itemsData;
-        cotizacionData.fechaCreacion = new Date().toISOString();
-        cotizacionData.generadoPor = { 
-            uid: currentUser?.uid || 'unknown', 
-            email: currentUser?.email || 'unknown', 
-            nombre: currentUser?.nombreCompleto || 'Usuario desconocido'
-        };
-
-        if (cotizacionTemporalId) {
-            // Actualizar cotización temporal existente
-            await updateDoc(doc(db, 'cotizacionPdf', cotizacionTemporalId), cotizacionData);
-            console.log('Cotización temporal actualizada');
-        } else {
-            // Crear nueva cotización temporal
-            const docRef = await addDoc(collection(db, 'cotizacionPdf'), cotizacionData);
-            cotizacionTemporalId = docRef.id;
-            console.log('Cotización temporal creada con ID:', cotizacionTemporalId);
-        }
-    } catch (error) {
-        console.error('Error al guardar cotización temporal:', error);
-    }
-}
-
-// === FUNCIÓN PARA VERIFICAR Y OFRECER GUARDAR NUEVO PRODUCTO ===
-async function verificarNuevoProducto(row) {
-    if (!row) return false;
-    
-    const descripcionInput = row.querySelector('.item-descripcion');
-    const categoriaSelect = row.querySelector('.item-categoria');
-    const precioInput = row.querySelector('.item-precio');
-    
-    const descripcion = descripcionInput.value.trim();
-    const categoriaId = categoriaSelect.value;
-    const precio = parseFloat(precioInput.value) || 0;
-    
-    if (descripcion && categoriaId && precio > 0) {
-        // Verificar si el producto no existe en la lista de productos cargados
-        const productoExistente = productos.find(p => p.nombre.toLowerCase() === descripcion.toLowerCase());
-        
-        if (!productoExistente) {
-            // Preguntar si desea guardar como nuevo producto
-            const result = await Swal.fire({
-                title: '¿Guardar como nuevo producto?',
-                html: `
-                    <div style="text-align: left;">
-                        <p><strong>${descripcion}</strong></p>
-                        <p>Categoría: ${categoriaSelect.options[categoriaSelect.selectedIndex].text}</p>
-                        <p>Precio: $${precio.toFixed(2)}</p>
-                        <p>¿Desea guardar este producto para futuras cotizaciones?</p>
-                    </div>
-                `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, guardar',
-                cancelButtonText: 'No, solo agregar',
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6b7280',
-                allowOutsideClick: false
-            });
-            
-            if (result.isConfirmed) {
-                mostrarLoading(true);
-                try {
-                    const nuevoProductoId = await crearNuevoProductoEnFirebase(
-                        categoriaId, 
-                        descripcion, 
-                        precio
-                    );
-                    
-                    if (nuevoProductoId) {
-                        mostrarAlerta('✅ Producto guardado correctamente', 'success');
-                        // Recargar productos de la categoría para incluir el nuevo
-                        await cargarProductosPorCategoria(categoriaId);
-                        return true;
-                    }
-                } catch (error) {
-                    console.error('Error al guardar producto:', error);
-                    mostrarAlerta('Error al guardar producto', 'error');
-                } finally {
-                    mostrarLoading(false);
-                }
-            }
-        }
-    }
-    return false;
-}
-
-// === FUNCIÓN PARA VERIFICAR EL ÚLTIMO ITEM ANTES DE AGREGAR UNO NUEVO ===
-async function verificarUltimoItemAntesDeAgregar() {
-    const rows = itemsTableBody.children;
-    if (rows.length === 0) return;
-    
-    const ultimaFila = rows[rows.length - 1];
-    return await verificarNuevoProducto(ultimaFila);
-}
-
-// === FUNCIÓN MEJORADA PARA AGREGAR ITEM ===
+// === FUNCIÓN PARA AGREGAR ITEM ===
 function agregarItem() {
     const row = document.createElement('tr');
     row.draggable = true;
@@ -734,7 +410,6 @@ function agregarItem() {
     
     itemsTableBody.appendChild(row);
 
-    // Configurar eventos para la nueva fila
     const categoriaSelect = row.querySelector('.item-categoria');
     const tipoTecnologiaSelect = row.querySelector('.item-tipo-tecnologia');
     const descripcionInput = row.querySelector('.item-descripcion');
@@ -743,7 +418,6 @@ function agregarItem() {
     const precioInput = row.querySelector('.item-precio');
     const eliminarBtn = row.querySelector('.eliminar-item');
 
-    // === FUNCIÓN PARA BUSCAR Y MOSTRAR PRODUCTOS DE LA CATEGORÍA SELECCIONADA ===
     async function buscarProductosCategoriaSeleccionada() {
         const categoriaId = categoriaSelect.value;
         const searchText = descripcionInput.value.trim();
@@ -756,7 +430,6 @@ function agregarItem() {
         }
     }
 
-    // === MANEJO DE TECLA ENTER/TAB PARA NAVEGACIÓN ===
     categoriaSelect.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === 'Tab') {
             e.preventDefault();
@@ -785,33 +458,23 @@ function agregarItem() {
         }
     });
 
-    // === ENTER EN EL ÚLTIMO CAMPO: VERIFICA SI ES NUEVO PRODUCTO Y AGREGA OTRO ITEM ===
     precioInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            
-            // Calcular total primero
             calcularTotalItem(row);
-            
-            // Verificar si es un producto nuevo que se debe guardar
             await verificarNuevoProducto(row);
-            
-            // Agregar nuevo item
             agregarItem().querySelector('.item-categoria').focus();
             marcarFormularioModificado();
         } else if (e.key === 'Tab') {
-            // Con Tab, ir al botón de eliminar
             e.preventDefault();
             eliminarBtn.focus();
         }
     });
 
-    // Evento para cambio de categoría
     categoriaSelect.addEventListener('change', async function() {
         const categoriaId = this.value;
         if (categoriaId) {
             await cargarProductosPorCategoria(categoriaId);
-            // Si hay texto en la descripción, buscar productos de esta categoría
             if (descripcionInput.value.trim().length >= 2) {
                 buscarProductosCategoriaSeleccionada();
             }
@@ -819,7 +482,6 @@ function agregarItem() {
         marcarFormularioModificado();
     });
 
-    // Evento para búsqueda de productos - SOLO DE LA CATEGORÍA SELECCIONADA
     let searchTimeout;
     descripcionInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
@@ -838,7 +500,6 @@ function agregarItem() {
         marcarFormularioModificado();
     });
 
-    // Evento para clic en el campo de descripción - mostrar productos de la categoría si existe
     descripcionInput.addEventListener('click', function() {
         const categoriaId = categoriaSelect.value;
         const searchText = this.value.trim();
@@ -848,16 +509,13 @@ function agregarItem() {
         }
     });
 
-    // Evento para ocultar dropdown al hacer clic fuera
     document.addEventListener('click', function(e) {
         if (!descripcionInput.contains(e.target) && !productoDropdown.contains(e.target)) {
             productoDropdown.style.display = 'none';
         }
     });
 
-    // Eventos para cálculos con seguimiento de modificaciones
     cantidadInput.addEventListener('input', () => {
-        // Forzar número entero
         if (cantidadInput.value.includes('.')) {
             cantidadInput.value = Math.floor(parseFloat(cantidadInput.value));
         }
@@ -870,9 +528,7 @@ function agregarItem() {
         const precioOriginal = productos.find(p => p.nombre === descripcion)?.precioUnitario;
         const precioActual = parseFloat(this.value);
         
-        // Si hay un producto cargado y el precio es diferente, registrar la modificación
         if (precioOriginal && precioActual !== precioOriginal) {
-            // Buscar el producto en la lista
             const producto = productos.find(p => p.nombre === descripcion);
             if (producto && !productosModificados.has(producto.id)) {
                 productosModificados.set(producto.id, {
@@ -888,7 +544,6 @@ function agregarItem() {
         marcarFormularioModificado();
     });
     
-    // Prevenir entrada de decimales en cantidad
     cantidadInput.addEventListener('keypress', function(e) {
         if (e.key === '.' || e.key === ',') {
             e.preventDefault();
@@ -897,7 +552,6 @@ function agregarItem() {
     
     eliminarBtn.addEventListener('click', () => eliminarItem(row));
 
-    // Eventos para drag and drop
     row.addEventListener('dragstart', () => { 
         setTimeout(() => row.classList.add('dragging'), 0); 
     });
@@ -924,7 +578,6 @@ function mostrarProductosDropdown(dropdown, productosList, descripcionInput, pre
 
     dropdown.style.display = 'block';
 
-    // Configurar eventos para las opciones
     dropdown.querySelectorAll('.producto-option').forEach(option => {
         option.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -932,16 +585,14 @@ function mostrarProductosDropdown(dropdown, productosList, descripcionInput, pre
             const precio = parseFloat(this.getAttribute('data-precio'));
             
             descripcionInput.value = nombre;
-            descripcionInput.setAttribute('data-producto-id', id); // Guardar ID para referencia
+            descripcionInput.setAttribute('data-producto-id', id);
             precioInput.value = precio;
             dropdown.style.display = 'none';
             marcarFormularioModificado();
             
-            // Calcular total automáticamente
             const row = descripcionInput.closest('tr');
             calcularTotalItem(row);
             
-            // Mover foco al siguiente campo
             precioInput.focus();
         });
     });
@@ -953,11 +604,6 @@ function calcularTotalItem(row) {
     const total = cantidad * precio;
     row.querySelector('.item-total').textContent = formatearMoneda(total);
     calcularTotales();
-    
-    // Guardar cambios temporales
-    if (tipoCotizacionSelect.value && cotizacionNumeroInput.value) {
-        guardarCotizacionTemporal();
-    }
 }
 
 function calcularTotales() {
@@ -984,16 +630,80 @@ function eliminarItem(row) {
         row.remove();
         calcularTotales();
         marcarFormularioModificado();
-        // Guardar cambios temporales
-        if (tipoCotizacionSelect.value && cotizacionNumeroInput.value) {
-            guardarCotizacionTemporal();
-        }
     } else {
         mostrarAlerta('Debe mantener al menos un item.', 'warning');
     }
 }
 
-// === NUEVA FUNCIÓN PARA MANEJAR PRODUCTOS MODIFICADOS ===
+// === FUNCIONES PARA VERIFICACIÓN Y MANEJO DE PRODUCTOS ===
+async function verificarNuevoProducto(row) {
+    if (!row) return false;
+    
+    const descripcionInput = row.querySelector('.item-descripcion');
+    const categoriaSelect = row.querySelector('.item-categoria');
+    const precioInput = row.querySelector('.item-precio');
+    
+    const descripcion = descripcionInput.value.trim();
+    const categoriaId = categoriaSelect.value;
+    const precio = parseFloat(precioInput.value) || 0;
+    
+    if (descripcion && categoriaId && precio > 0) {
+        const productoExistente = productos.find(p => p.nombre.toLowerCase() === descripcion.toLowerCase());
+        
+        if (!productoExistente) {
+            const result = await Swal.fire({
+                title: '¿Guardar como nuevo producto?',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>${descripcion}</strong></p>
+                        <p>Categoría: ${categoriaSelect.options[categoriaSelect.selectedIndex].text}</p>
+                        <p>Precio: $${precio.toFixed(2)}</p>
+                        <p>¿Desea guardar este producto para futuras cotizaciones?</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'No, solo agregar',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6b7280',
+                allowOutsideClick: false
+            });
+            
+            if (result.isConfirmed) {
+                mostrarLoading(true);
+                try {
+                    const nuevoProductoId = await crearNuevoProductoEnFirebase(
+                        categoriaId, 
+                        descripcion, 
+                        precio
+                    );
+                    
+                    if (nuevoProductoId) {
+                        mostrarAlerta('✅ Producto guardado correctamente', 'success');
+                        await cargarProductosPorCategoria(categoriaId);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error al guardar producto:', error);
+                    mostrarAlerta('Error al guardar producto', 'error');
+                } finally {
+                    mostrarLoading(false);
+                }
+            }
+        }
+    }
+    return false;
+}
+
+async function verificarUltimoItemAntesDeAgregar() {
+    const rows = itemsTableBody.children;
+    if (rows.length === 0) return;
+    
+    const ultimaFila = rows[rows.length - 1];
+    return await verificarNuevoProducto(ultimaFila);
+}
+
 async function manejarProductosModificados() {
     if (productosModificados.size === 0) {
         return;
@@ -1002,7 +712,6 @@ async function manejarProductosModificados() {
     try {
         mostrarLoading(true);
         
-        // Crear un array de promesas para actualizar productos
         const actualizaciones = [];
         
         for (const [productoId, datos] of productosModificados) {
@@ -1031,13 +740,11 @@ async function manejarProductosModificados() {
             }
         }
         
-        // Ejecutar todas las actualizaciones
         if (actualizaciones.length > 0) {
             await Promise.all(actualizaciones);
             mostrarAlerta('✅ Productos actualizados correctamente', 'success');
         }
         
-        // Limpiar el mapa de productos modificados
         productosModificados.clear();
         
     } catch (error) {
@@ -1116,11 +823,6 @@ function seleccionarCliente(cliente) {
     });
     ocultarDropdown();
     marcarFormularioModificado();
-    
-    // Guardar cambios temporales
-    if (tipoCotizacionSelect.value && cotizacionNumeroInput.value) {
-        guardarCotizacionTemporal();
-    }
 }
 
 function activarEntradaManual() {
@@ -1139,6 +841,7 @@ function resetearFormulario() {
     cotizacionForm.reset();
     itemsTableBody.innerHTML = '';
     tipoCotizacionSelect.value = '';
+    tipoCotizacionHidden.value = '';
     cotizacionNumeroInput.value = '';
     handleEmpresaChange();
     establecerFechaActual();
@@ -1152,10 +855,6 @@ function resetearFormulario() {
     formularioHaSidoModificado = false;
     productosModificados.clear();
     
-    // Desbloquear el tipo de cotización al resetear
-    desbloquearTipoCotizacion();
-    
-    // Remover el evento beforeunload si existe
     if (window._beforeunloadAdded) {
         window.removeEventListener('beforeunload', manejarCierrePestana);
         window._beforeunloadAdded = false;
@@ -1199,7 +898,6 @@ async function generarPDF(data) {
            .text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
     };
     
-    // Mapa de nombres de categoría para mostrar en el PDF
     const categoriaDisplayMap = {
         'CCTV': '📹 CCTV', 
         'DH': '🏠 DETECTOR DE HUMO', 
@@ -1290,7 +988,6 @@ async function generarPDF(data) {
     pdf.text(info, margin, y); 
     y += 10;
     
-    // Usar el nombre de la categoría del item en lugar del ID
     const grupos = agruparTecnologias(data.items);
     Object.entries(grupos).forEach(([categoria, items]) => {
         const nombreCategoria = categoriaDisplayMap[categoria] || categoria;
@@ -1412,50 +1109,7 @@ async function generarPDF(data) {
     return pdf.output('blob');
 }
 
-// === LÓGICA DE INICIALIZACIÓN Y EDICIÓN ===
-async function inicializarFormulario() {
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            Swal.fire({ 
-                title: 'Acceso no autorizado', 
-                text: 'Debes iniciar sesión para acceder a esta función', 
-                icon: 'warning', 
-                confirmButtonText: 'Iniciar sesión' 
-            }).then(() => {
-                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
-            });
-            return;
-        }
-        
-        currentUser = user;
-        await cargarInformacionUsuario(user.email);
-        await cargarClientes();
-        await cargarCategorias();
-        await cargarContadores();
-        
-        handleEmpresaChange();
-        handleTipoCreditoChange();
-        establecerFechaActual();
-        
-        // Verificar si estamos editando
-        const params = new URLSearchParams(window.location.search);
-        const idCoti = params.get('id');
-        
-        if (idCoti) {
-            await cargarCotizacionParaEdicion(idCoti);
-        } else {
-            resetearFormulario();
-            
-            // Configurar evento para generar número de cotización
-            tipoCotizacionSelect.addEventListener('change', async function() {
-                if (this.value && !tipoCotizacionBloqueado) {
-                    await generarNumeroCotizacion();
-                }
-            });
-        }
-    });
-}
-
+// === CARGA DE COTIZACIÓN PARA EDICIÓN ===
 async function cargarCotizacionParaEdicion(id) {
     mostrarLoading(true);
     try {
@@ -1466,22 +1120,36 @@ async function cargarCotizacionParaEdicion(id) {
             isEditing = true;
             editingId = id;
             modalTitle.textContent = '✏️ Editar Cotización';
-            document.getElementById('pageTitle').textContent = '✏️ Editar Cotización';
-            cotizacionForm.querySelector('button[type="submit"]').innerHTML = '<span>💾</span> Actualizar Cotización PDF';
+            cotizacionForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Actualizar Cotización PDF';
 
             // Llenar campos
             document.getElementById('cotizacionNumero').value = cotizacion.cotizacionNumero || '';
             document.getElementById('cotizacionVigencia').value = cotizacion.cotizacionVigencia || 30;
             document.getElementById('cotizacionMoneda').value = cotizacion.cotizacionMoneda || 'MXN';
             document.getElementById('cotizacionFecha').value = cotizacion.cotizacionFecha || '';
-            document.getElementById('tipoCotizacion').value = cotizacion.tipoCotizacion || '';
+            
+            // Tipo de cotización - BLOQUEADO pero visible
+            const tipoCotizacionValor = cotizacion.tipoCotizacion || '';
+            tipoCotizacionSelect.value = tipoCotizacionValor;
+            tipoCotizacionSelect.disabled = true;
+            tipoCotizacionSelect.style.backgroundColor = '#f5f5f5';
+            tipoCotizacionSelect.style.cursor = 'not-allowed';
+            tipoCotizacionHidden.value = tipoCotizacionValor;
+            
             document.getElementById('descuento').value = cotizacion.descuento || 0;
             document.getElementById('impuesto').value = cotizacion.impuesto || 16;
             document.getElementById('terminos').value = cotizacion.terminos || '';
             document.getElementById('cotizacionDescripcion').value = cotizacion.cotizacionDescripcion || '';
+            
+            // Actualizar contador de caracteres
+            if (document.getElementById('contadorCaracteres')) {
+                document.getElementById('contadorCaracteres').textContent = 
+                    `${cotizacion.cotizacionDescripcion?.length || 0}/500 caracteres`;
+            }
 
             // Datos de la Empresa 
-            empresaSelector.value = cotizacion.empresaNombre?.includes('NEZA') ? 'RSI NEZA' : 'RSI IXT';
+            const empresaNombre = cotizacion.empresaNombre || '';
+            empresaSelector.value = empresaNombre.includes('NEZA') ? 'RSI NEZA' : 'RSI IXT';
             handleEmpresaChange();
 
             // Datos del Cliente
@@ -1523,14 +1191,9 @@ async function cargarCotizacionParaEdicion(id) {
             
             calcularTotales();
             
-            // Si ya hay un número de cotización, bloquear el tipo
-            if (cotizacion.cotizacionNumero) {
-                bloquearTipoCotizacion();
-            }
-            
             // Marcar como modificado
             formularioHaSidoModificado = true;
-            marcarFormularioModificado(); // Esto agregará el evento beforeunload
+            marcarFormularioModificado();
 
         } else {
             mostrarAlerta('Cotización no encontrada. Redirigiendo al listado.', 'error');
@@ -1553,9 +1216,9 @@ async function manejarSubmitFormulario(e) {
         return;
     }
     
-    const tipoCotizacion = tipoCotizacionSelect.value;
+    const tipoCotizacion = tipoCotizacionHidden.value || tipoCotizacionSelect.value;
     if (!tipoCotizacion) { 
-        mostrarAlerta('Debe seleccionar un tipo de cotización', 'error'); 
+        mostrarAlerta('El tipo de cotización es requerido', 'error'); 
         return; 
     }
     
@@ -1571,6 +1234,9 @@ async function manejarSubmitFormulario(e) {
         const cotizacionData = Object.fromEntries(datosFormulario.entries());
         const empresaInfo = empresasDirecciones[empresaSelector.value];
         
+        // Usar el valor del campo oculto para tipo de cotización
+        cotizacionData.tipoCotizacion = tipoCotizacionHidden.value || tipoCotizacionSelect.value;
+        
         cotizacionData.empresaNombre = empresaInfo.nombre;
         cotizacionData.empresaDireccion = empresaInfo.direccion;
         cotizacionData.empresaTelefono = empresaInfo.telefono;
@@ -1583,7 +1249,7 @@ async function manejarSubmitFormulario(e) {
             
             return {
                 categoria: categoriaId,
-                categoriaNombre: categoriaNombre, // Agregar el nombre de la categoría
+                categoriaNombre: categoriaNombre,
                 tipoTecnologia: row.querySelector('.item-tipo-tecnologia').value,
                 descripcion: row.querySelector('.item-descripcion').value,
                 cantidad: parseFloat(row.querySelector('.item-cantidad').value),
@@ -1600,7 +1266,6 @@ async function manejarSubmitFormulario(e) {
         
         cotizacionData.items = itemsData;
         cotizacionData.esEntradaManual = isManualEntry;
-        cotizacionData.tipoCotizacion = tipoCotizacion;
         
         const subtotal = itemsData.reduce((sum, item) => sum + item.total, 0);
         const descuentoPorcentaje = parseFloat(cotizacionData.descuento) || 0;
@@ -1614,49 +1279,24 @@ async function manejarSubmitFormulario(e) {
         cotizacionData.impuestoMonto = impuestoMonto;
         cotizacionData.totalFinal = subtotalConDescuento + impuestoMonto;
         
-        // No es necesario actualizar el contador aquí porque ya se actualizó cuando se generó el número
+        // Actualizar la cotización
+        const cotizacionOriginal = (await getDoc(doc(db, 'cotizacionPdf', editingId))).data();
+        cotizacionData.generadoPor = cotizacionOriginal.generadoPor;
+        cotizacionData.fechaCreacion = cotizacionOriginal.fechaCreacion;
+        cotizacionData.fechaActualizacion = new Date().toISOString();
+        cotizacionData.actualizadoPor = {
+            uid: currentUser.uid,
+            email: currentUser.email,
+            nombre: currentUser.nombreCompleto
+        };
+        cotizacionData.estatus = 'actualizada';
         
-        // Actualizar o crear la cotización
-        if (isEditing && editingId) {
-            // Mantener datos existentes
-            const cotizacionOriginal = (await getDoc(doc(db, 'cotizacionPdf', editingId))).data();
-            cotizacionData.generadoPor = cotizacionOriginal.generadoPor;
-            cotizacionData.fechaCreacion = cotizacionOriginal.fechaCreacion;
-            cotizacionData.estatus = 'completada';
-            
-            await updateDoc(doc(db, 'cotizacionPdf', editingId), cotizacionData);
-            mostrarAlerta('✅ Cotización actualizada y completada', 'success');
-        } else if (cotizacionTemporalId) {
-            // Actualizar cotización temporal existente
-            cotizacionData.estatus = 'completada';
-            cotizacionData.generadoPor = { 
-                uid: currentUser.uid, 
-                email: currentUser.email, 
-                nombre: currentUser.nombreCompleto, 
-                fechaGeneracion: new Date().toISOString() 
-            };
-            cotizacionData.fechaCreacion = new Date().toISOString();
-            
-            await updateDoc(doc(db, 'cotizacionPdf', cotizacionTemporalId), cotizacionData);
-            mostrarAlerta('✅ Cotización completada', 'success');
-        } else {
-            // Crear nueva cotización
-            cotizacionData.fechaCreacion = new Date().toISOString();
-            cotizacionData.estatus = 'completada';
-            cotizacionData.generadoPor = { 
-                uid: currentUser.uid, 
-                email: currentUser.email, 
-                nombre: currentUser.nombreCompleto, 
-                fechaGeneracion: new Date().toISOString() 
-            };
-            
-            await addDoc(collection(db, 'cotizacionPdf'), cotizacionData);
-            mostrarAlerta('✅ Cotización creada', 'success');
-        }
+        await updateDoc(doc(db, 'cotizacionPdf', editingId), cotizacionData);
+        mostrarAlerta('✅ Cotización actualizada correctamente', 'success');
         
         // Generar y descargar PDF
         const pdfBlob = await generarPDF(cotizacionData);
-        descargarPDFLocal(pdfBlob, `cotizacion-${cotizacionData.cotizacionNumero}.pdf`);
+        descargarPDFLocal(pdfBlob, `cotizacion-${cotizacionData.cotizacionNumero}-actualizada.pdf`);
         
         // Permitir cierre
         formularioGuardadoExitosamente = true;
@@ -1674,8 +1314,8 @@ async function manejarSubmitFormulario(e) {
         }, 1500);
         
     } catch (error) {
-        console.error('Error al guardar cotización:', error);
-        mostrarAlerta('❌ Error al guardar: ' + error.message, 'error');
+        console.error('Error al actualizar cotización:', error);
+        mostrarAlerta('❌ Error al actualizar: ' + error.message, 'error');
     } finally {
         mostrarLoading(false);
     }
@@ -1689,115 +1329,75 @@ async function confirmarCierre() {
         return;
     }
     
-    const result = await mostrarAlertaCierrePestana();
+    const result = await Swal.fire({
+        title: '¿Estás seguro de salir?',
+        html: `
+            <div style="text-align: left; margin: 15px 0;">
+                <p>Tienes cambios sin guardar en la cotización.</p>
+                <p><strong>¿Qué deseas hacer?</strong></p>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'Guardar y salir',
+        denyButtonText: 'Salir sin guardar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6',
+        denyButtonColor: '#d33',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+        allowOutsideClick: false,
+        backdrop: true
+    });
 
     if (result.isConfirmed) {
-        // Guardar y salir
-        const guardadoExitoso = await guardarCotizacionAntesDeSalir();
-        if (guardadoExitoso) {
-            formularioGuardadoExitosamente = true;
-            isClosingConfirmed = true;
-            window.location.href = '../consultar-cotizaciones/consultar-cotizaciones.html';
-        } else {
-            mostrarAlerta('No se pudo guardar la cotización', 'error');
-        }
+        // Guardar y salir - usando el submit del formulario
+        await manejarSubmitFormulario(new Event('submit'));
     } else if (result.isDenied) {
         // Salir sin guardar
         isClosingConfirmed = true;
         window.location.href = '../consultar-cotizaciones/consultar-cotizaciones.html';
-    } else {
-        // Cancelar - quedarse en la página
-        // No hacer nada
     }
+    // Si cancela, no hacer nada
 }
 
-// === NUEVA FUNCIÓN PARA CONFIGURAR NAVEGACIÓN CON ENTER/TAB ===
-function configurarNavegacionFormulario() {
-    // Obtener todos los campos del formulario en orden
-    const camposFormulario = [
-        // Datos de la Empresa
-        empresaSelector,
-        empresaRFC,
-        empresaTelefono,
-        
-        // Búsqueda de Cliente
-        clienteSearch,
-        
-        // Si es entrada manual, incluir estos campos
-        // (se agregarán dinámicamente si es necesario)
-    ];
-    
-    // Agregar listener para navegación en cada campo
-    camposFormulario.forEach((campo, index) => {
-        if (campo && campo.addEventListener) {
-            campo.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === 'Tab') {
-                    e.preventDefault();
-                    const siguienteIndex = index + 1;
-                    if (siguienteIndex < camposFormulario.length && camposFormulario[siguienteIndex]) {
-                        camposFormulario[siguienteIndex].focus();
-                        if (camposFormulario[siguienteIndex].select) {
-                            camposFormulario[siguienteIndex].select();
-                        }
-                    }
-                }
+// === INICIALIZACIÓN ===
+async function inicializarFormulario() {
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            Swal.fire({ 
+                title: 'Acceso no autorizado', 
+                text: 'Debes iniciar sesión para acceder a esta función', 
+                icon: 'warning', 
+                confirmButtonText: 'Iniciar sesión' 
+            }).then(() => {
+                window.location.href = '../nav-visitantes/inicio-de-sesion.html';
             });
+            return;
         }
-    });
-    
-    // Campos del cliente (solo si es entrada manual)
-    const camposCliente = [clienteNombre, clienteRFC, clienteDireccion, clienteTelefono];
-    camposCliente.forEach((campo, index) => {
-        if (campo && campo.addEventListener) {
-            campo.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === 'Tab') {
-                    e.preventDefault();
-                    const siguienteIndex = index + 1;
-                    if (siguienteIndex < camposCliente.length && camposCliente[siguienteIndex]) {
-                        camposCliente[siguienteIndex].focus();
-                        if (camposCliente[siguienteIndex].select) {
-                            camposCliente[siguienteIndex].select();
-                        }
-                    } else {
-                        // Ir al siguiente campo principal
-                        tipoCotizacionSelect.focus();
-                    }
-                }
-            });
-        }
-    });
-    
-    // Campos de Información de Cotización
-    const camposCotizacion = [
-        tipoCotizacionSelect,
-        document.getElementById('cotizacionFecha'),
-        document.getElementById('cotizacionVigencia'),
-        document.getElementById('cotizacionMoneda'),
-        tipoCredito,
-        diasCredito,
-        document.getElementById('cotizacionDescripcion')
-    ];
-    
-    camposCotizacion.forEach((campo, index) => {
-        if (campo && campo.addEventListener) {
-            campo.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === 'Tab') {
-                    e.preventDefault();
-                    const siguienteIndex = index + 1;
-                    if (siguienteIndex < camposCotizacion.length && camposCotizacion[siguienteIndex]) {
-                        camposCotizacion[siguienteIndex].focus();
-                        if (camposCotizacion[siguienteIndex].select) {
-                            camposCotizacion[siguienteIndex].select();
-                        }
-                    } else {
-                        // Ir al primer item de la tabla
-                        const primeraCategoria = document.querySelector('.item-categoria');
-                        if (primeraCategoria) {
-                            primeraCategoria.focus();
-                        }
-                    }
-                }
-            });
+        
+        currentUser = user;
+        await cargarInformacionUsuario(user.email);
+        await cargarClientes();
+        await cargarCategorias();
+        
+        handleEmpresaChange();
+        handleTipoCreditoChange();
+        establecerFechaActual();
+        
+        // Obtener el ID de la cotización a editar
+        const params = new URLSearchParams(window.location.search);
+        const idCoti = params.get('id');
+        
+        if (idCoti) {
+            await cargarCotizacionParaEdicion(idCoti);
+        } else {
+            // Si no hay ID, redirigir al listado
+            mostrarAlerta('No se especificó una cotización para editar', 'error');
+            setTimeout(() => {
+                window.location.href = '../consultar-cotizaciones/consultar-cotizaciones.html';
+            }, 2000);
         }
     });
 }
@@ -1805,19 +1405,12 @@ function configurarNavegacionFormulario() {
 // === EVENT LISTENERS PRINCIPALES ===
 document.addEventListener('DOMContentLoaded', () => {
     inicializarFormulario();
-    
-    // Configurar navegación después de inicializar
-    setTimeout(configurarNavegacionFormulario, 500);
 });
 
 cotizacionForm.addEventListener('submit', manejarSubmitFormulario);
 
-// === MODIFICACIÓN PRINCIPAL: EL EVENT LISTENER DEL BOTÓN "AGREGAR ITEM" ===
 agregarItemBtn.addEventListener('click', async () => {
-    // Primero verificar si el último item tiene un producto nuevo
     await verificarUltimoItemAntesDeAgregar();
-    
-    // Luego agregar el nuevo item
     const nuevaFila = agregarItem();
     nuevaFila.querySelector('.item-categoria').focus();
     marcarFormularioModificado();
@@ -1856,7 +1449,7 @@ document.getElementById('cotizacionDescripcion').addEventListener('input', funct
     marcarFormularioModificado();
 });
 
-// Agregar listeners para marcar el formulario como modificado en todos los campos
+// Agregar listeners para marcar el formulario como modificado
 document.querySelectorAll('input, select, textarea').forEach(element => {
     if (!element.id.includes('Search') && element.id !== 'cerrarModalBtn' && element.id !== 'cancelarBtn') {
         element.addEventListener('change', marcarFormularioModificado);
