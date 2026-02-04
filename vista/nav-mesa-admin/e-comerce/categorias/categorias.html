@@ -3,70 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Categorías</title>
+    <title>RSI Enterprise - Gestión de Categorías</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <!-- Firebase SDK (DEBE IR PRIMERO) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="categorias.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="./categorias.css">
 </head>
 <body>
-
-    <br><br><br>
-
-    <div class="container container-custom mt-5">
-        <h2 class="text-center mb-4 titulo-pagina">Gestión de Categorías</h2>
+    <div class="categorias-container">
+        <div class="categorias-header">
+            <h1><i class="fas fa-tags"></i> Gestión de Categorías</h1>
+            <p>Administra las categorías de productos del sistema</p>
+        </div>
         
-        <div class="d-flex justify-content-end mb-3">
-            <a href="../nueva-categoria/nueva-categoria.html" class="btn btn-primary btn-accion">
-                <i class="fas fa-plus"></i> Nueva Categoría
-            </a>
-        </div>
-
-        <div class="table-responsive card p-0">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Imagen</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="categorias-lista">
-                    <tr>
-                        <td colspan="4" class="text-center p-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="categorias-content">
+            <!-- Botones de acción -->
+            <div class="categorias-actions">
+                <a href="nuevaCategoria.html" class="btn-nueva-categoria">
+                    <i class="fas fa-plus"></i> Nueva Categoría
+                </a>
+                
+                <a href="categoriasPapelera.html" class="btn-papelera">
+                    <i class="fas fa-trash-alt"></i> Ver Papelera
+                </a>
+            </div>
+            
+            <!-- Contenedor para ambas vistas -->
+            <div class="categorias-list-container">
+                <!-- Vista Desktop: Tabla (visible en escritorio) -->
+                <table class="categorias-table desktop-only">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID</th>
+                            <th><i class="fas fa-tag"></i> Nombre</th>
+                            <th><i class="fas fa-image"></i> Imagen</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categorias-lista">
+                        <tr>
+                            <td colspan="4" class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando categorías...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- Vista Móvil: Tarjetas (visible en móvil, se crea dinámicamente) -->
+                <!-- El contenedor de tarjetas se creará automáticamente en JS -->
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="categorias-stats">
+                <div class="stat-card">
+                    <i class="fas fa-tags"></i>
+                    <div class="stat-content">
+                        <h3 id="totalCategorias">0</h3>
+                        <p>Categorías activas</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-box"></i>
+                    <div class="stat-content">
+                        <h3 id="productosAsociados">0</h3>
+                        <p>Productos asociados</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-trash-alt"></i>
+                    <div class="stat-content">
+                        <h3 id="categoriasPapelera">0</h3>
+                        <p>En papelera</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="floating-button-container">
-        <a href="../categorias-papelera/categorias-papelera.html" class="boton-flotante" title="Ver Papelera">
-            <i class="fas fa-trash-restore"></i> Papelera
-        </a>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
-    <script src="../js/firebase-init.js"></script>
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-    <script src="../js/filtrar-error.js"></script>
-    
-    <script src="./categorias.js"></script>
-    <script src="../js/particulas.js"></script>
-
+    <!-- Scripts -->
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="categorias.js"></script>
 </body>
 </html>
