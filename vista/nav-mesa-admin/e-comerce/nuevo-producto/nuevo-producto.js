@@ -1,359 +1,622 @@
-// nuevo-producto.js
-import { initializeFirebase, db, storage } from './firebase-config.js';
+// nuevo-producto.js - VERSIÓN SIMPLIFICADA QUE FUNCIONA
 
-class ProductEditor {
-    constructor() {
-        this.productId = null;
-        this.isEditing = false;
-        this.currentImages = [];
-        this.MAX_IMAGES = 3;
-        this.productData = null;
-        
-        this.init();
-    }
-    
-    async init() {
-        try {
-            await initializeFirebase();
-            await this.loadCategories();
-            await this.checkEditMode();
-            this.setupEventListeners();
-            this.calculatePrice();
-        } catch (error) {
-            console.error('Error inicializando editor:', error);
-            this.showError('Error al cargar el editor');
-        }
-    }
-    
-    async checkEditMode() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const editId = urlParams.get('edit');
-        
-        if (editId) {
-            this.isEditing = true;
-            this.productId = editId;
-            await this.loadProductData(editId);
-            document.getElementById('formTitle').textContent = 'Editar Producto';
-            document.getElementById('formSubtitle').textContent = 'Modifique los campos necesarios';
-            document.getElementById('submitText').textContent = 'Actualizar Producto';
-        }
-    }
-    
-    async loadCategories() {
-        try {
-            const snapshot = await db.collection("categoria").get();
-            const categories = snapshot.docs.map(doc => doc.data().nombre);
+// Variables globales
+let db, storage;
+const appState = {
+    productoId: null,
+    esNuevoProducto: true,
+    productoData: null,
+    categorias: [],
+    imagenesCargadas: [],
+    estaIndexado: false,
+    estaCargando: false
+};
+
+// Inicializar Firebase
+function inicializarFirebase() {
+    return new Promise((resolve) => {
+        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+            db = firebase.firestore();
+            storage = firebase.storage();
+            console.log('✅ Firebase inicializado');
+            resolve(true);
+        } else {
+            const check = setInterval(() => {
+                if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                    clearInterval(check);
+                    db = firebase.firestore();
+                    storage = firebase.storage();
+                    console.log('✅ Firebase inicializado (retardado)');
+                    resolve(true);
+                }
+            }, 100);
             
-            const select = document.getElementById('categoria');
-            select.innerHTML = '<option value="">Seleccione una categoría</option>' +
-                categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-        } catch (error) {
-            console.error("Error cargando categorías:", error);
-        }
-    }
-    
-    async loadProductData(productId) {
-        try {
-            const doc = await db.collection("indexproductos").doc(productId).get();
-            
-            if (doc.exists) {
-                this.productData = { id: doc.id, ...doc.data() };
-                this.populateForm(this.productData);
-            } else {
-                this.showError('Producto no encontrado');
-                setTimeout(() => window.location.href = 'gestion-de-productos.html', 2000);
-            }
-        } catch (error) {
-            console.error("Error cargando producto:", error);
-            this.showError('Error al cargar datos del producto');
-        }
-    }
-    
-    populateForm(data) {
-        // Información básica
-        document.getElementById('nombre').value = data["nombre"] || '';
-        document.getElementById('categoria').value = data.categoria || '';
-        document.getElementById('marca').value = data.marca || '';
-        document.getElementById('modelo').value = data.modelo || '';
-        document.getElementById('sku').value = data.sku || '';
-        document.getElementById('descripcion').value = data.descripcion || '';
-        
-        // Precios
-        document.getElementById('precio').value = data["precio"] || 0;
-        document.getElementById('descuento').value = data.descuento || 0;
-        
-        // Inventario
-        document.getElementById('stock').value = data.stock || 0;
-        document.getElementById('minStock').value = data.minStock || 5;
-        document.getElementById('activo').checked = data.activo !== false;
-        document.getElementById('statusLabel').textContent = data.activo !== false ? 'Activo' : 'Inactivo';
-        
-        // Imágenes
-        this.currentImages = data.imagenes || [];
-        this.updateImagePreviews();
-        
-        // Calcular precio final
-        this.calculatePrice();
-    }
-    
-    async saveProduct(e) {
-        e.preventDefault();
-        
-        if (!this.validateForm()) {
-            return;
-        }
-        
-        const formData = this.collectFormData();
-        
-        try {
-            // Subir imágenes si hay nuevas
-            if (this.hasNewImages()) {
-                const uploadedUrls = await this.uploadImages();
-                formData.imagenes = [...this.currentImages.filter(img => typeof img === 'string'), ...uploadedUrls];
-            }
-            
-            // Guardar en Firestore
-            if (this.isEditing) {
-                await db.collection("indexproductos").doc(this.productId).update(formData);
-                this.showSuccess('Producto actualizado correctamente');
-            } else {
-                await db.collection("indexproductos").add(formData);
-                this.showSuccess('Producto creado correctamente');
-            }
-            
-            // Redirigir después de 2 segundos
             setTimeout(() => {
-                window.location.href = 'gestion-de-productos.html';
-            }, 2000);
-            
-        } catch (error) {
-            console.error("Error guardando producto:", error);
-            this.showError('Error al guardar producto: ' + error.message);
+                clearInterval(check);
+                console.error('❌ Firebase no se cargó');
+                mostrarError('Firebase no se pudo inicializar.');
+                resolve(false);
+            }, 10000);
         }
+    });
+}
+
+// Obtener parámetros de la URL
+function obtenerParametrosURL() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    return { id };
+}
+
+// Mostrar/ocultar estado
+function mostrarEstado(tipo, mensaje) {
+    const estado = document.getElementById('estadoOperacion');
+    const icono = document.getElementById('estadoIcono');
+    const texto = document.getElementById('estadoMensaje');
+    
+    if (!estado || !icono || !texto) return;
+    
+    estado.className = `estado-operacion ${tipo}`;
+    texto.textContent = mensaje;
+    
+    switch(tipo) {
+        case 'loading':
+            icono.className = 'fas fa-spinner fa-spin';
+            break;
+        case 'success':
+            icono.className = 'fas fa-check-circle';
+            break;
+        case 'error':
+            icono.className = 'fas fa-exclamation-triangle';
+            break;
     }
     
-    validateForm() {
-        const requiredFields = ['nombre', 'categoria', 'marca', 'modelo', 'precio'];
+    estado.classList.add('visible');
+}
+
+function ocultarEstado() {
+    const estado = document.getElementById('estadoOperacion');
+    if (estado) estado.classList.remove('visible');
+}
+
+// Cargar categorías
+async function cargarCategorias() {
+    try {
+        const snapshot = await db.collection("categorias").orderBy("nombre").get();
+        appState.categorias = snapshot.docs.map(doc => doc.data().nombre);
         
-        for (const fieldId of requiredFields) {
-            const field = document.getElementById(fieldId);
-            if (!field.value.trim()) {
-                this.showError(`El campo "${field.previousElementSibling.textContent}" es requerido`);
-                field.focus();
-                return false;
+        const selects = [
+            document.getElementById('categoria'),
+            document.getElementById('selectedCategory')
+        ];
+        
+        selects.forEach(select => {
+            if (select) {
+                select.innerHTML = `
+                    <option value="">Seleccionar categoría...</option>
+                    ${appState.categorias.map(cat => 
+                        `<option value="${cat}">${cat}</option>`
+                    ).join('')}
+                `;
             }
-        }
-        
-        const price = parseFloat(document.getElementById('precio').value);
-        if (price < 0) {
-            this.showError('El precio no puede ser negativo');
-            return false;
-        }
+        });
         
         return true;
+    } catch (error) {
+        console.error("Error cargando categorías:", error);
+        return false;
     }
-    
-    collectFormData() {
-        return {
-            "nombre": document.getElementById('nombre').value.trim(),
-            "categoria": document.getElementById('categoria').value,
-            "marca": document.getElementById('marca').value.trim(),
-            "modelo": document.getElementById('modelo').value.trim(),
-            "sku": document.getElementById('sku').value.trim(),
-            "descripcion": document.getElementById('descripcion').value.trim(),
-            "precio": parseFloat(document.getElementById('precio').value),
-            "descuento": parseFloat(document.getElementById('descuento').value) || 0,
-            "stock": parseInt(document.getElementById('stock').value) || 0,
-            "minStock": parseInt(document.getElementById('minStock').value) || 5,
-            "activo": document.getElementById('activo').checked,
-            "imagenes": this.currentImages,
-            "ultimaActualizacion": firebase.firestore.FieldValue.serverTimestamp()
+}
+
+// Cargar producto por ID
+async function cargarProducto(id) {
+    try {
+        mostrarEstado('loading', 'Cargando producto...');
+        
+        const doc = await db.collection("Productos").doc(id).get();
+        
+        if (!doc.exists) {
+            throw new Error('Producto no encontrado');
+        }
+        
+        appState.productoData = { 
+            id: doc.id, 
+            ...doc.data(),
+            Imagenes: doc.data().Imagenes || []
         };
-    }
-    
-    async uploadImages() {
-        const uploadPromises = [];
+        appState.productoId = id;
+        appState.esNuevoProducto = false;
         
-        for (const image of this.currentImages) {
-            if (typeof image === 'object') {
-                // Es un archivo nuevo, subirlo
-                const uploadPromise = this.uploadImageToStorage(image);
-                uploadPromises.push(uploadPromise);
-            }
-        }
-        
-        return Promise.all(uploadPromises);
-    }
-    
-    async uploadImageToStorage(file) {
-        return new Promise((resolve, reject) => {
-            const storageRef = storage.ref();
-            const fileName = `products/${Date.now()}_${file.name}`;
-            const uploadTask = storageRef.child(fileName).put(file);
-            
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    // Progreso de subida
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log('Subida: ' + progress + '%');
-                },
-                (error) => {
-                    reject(error);
-                },
-                async () => {
-                    // Subida completada
-                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                    resolve(downloadURL);
-                }
-            );
-        });
-    }
-    
-    hasNewImages() {
-        return this.currentImages.some(img => typeof img === 'object');
-    }
-    
-    calculatePrice() {
-        const precio = parseFloat(document.getElementById("precio").value) || 0;
-        const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-        
-        // Validar descuento
-        if (descuento < 0) {
-            document.getElementById("descuento").value = 0;
-            return this.calculatePrice();
-        }
-        if (descuento > 100) {
-            document.getElementById("descuento").value = 100;
-            return this.calculatePrice();
-        }
-        
-        const descuentoMonto = precio * (descuento / 100);
-        const precioFinal = precio - descuentoMonto;
-        
-        // Actualizar displays
-        document.getElementById("basePriceDisplay").textContent = `$${precio.toFixed(2)}`;
-        document.getElementById("discountDisplay").textContent = 
-            `${descuento}% ($${descuentoMonto.toFixed(2)})`;
-        document.getElementById("finalPriceDisplay").textContent = `$${precioFinal.toFixed(2)}`;
-    }
-    
-    handleImageUpload(event) {
-        const files = Array.from(event.target.files).slice(0, this.MAX_IMAGES - this.currentImages.length);
-        
-        files.forEach(file => {
-            if (this.currentImages.length < this.MAX_IMAGES) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.currentImages.push({
-                        file: file,
-                        preview: e.target.result
-                    });
-                    this.updateImagePreviews();
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Limpiar input
-        event.target.value = '';
-    }
-    
-    updateImagePreviews() {
-        const container = document.getElementById('imagePreviews');
-        
-        if (this.currentImages.length === 0) {
-            container.innerHTML = `
-                <div class="empty-preview">
-                    <i class="fas fa-images"></i>
-                    <p>No hay imágenes seleccionadas</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = this.currentImages.map((img, index) => `
-            <div class="preview-item">
-                <img src="${typeof img === 'object' ? img.preview : img}" alt="Preview ${index + 1}">
-                <button class="remove-image" onclick="productEditor.removeImage(${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `).join('');
-    }
-    
-    removeImage(index) {
-        this.currentImages.splice(index, 1);
-        this.updateImagePreviews();
-    }
-    
-    async saveDraft() {
-        const formData = this.collectFormData();
-        formData.estado = 'borrador';
-        
+        // Verificar indexación
         try {
-            if (this.isEditing) {
-                await db.collection("indexproductos").doc(this.productId).update(formData);
-                this.showSuccess('Borrador guardado');
-            } else {
-                await db.collection("borradores").add(formData);
-                this.showSuccess('Borrador guardado en borradores');
-            }
-        } catch (error) {
-            console.error("Error guardando borrador:", error);
-            this.showError('Error al guardar borrador');
+            const indexDoc = await db.collection("indexproductos").doc(id).get();
+            appState.estaIndexado = indexDoc.exists;
+        } catch (e) {
+            appState.estaIndexado = false;
         }
+        
+        // Llenar formulario
+        llenarFormulario();
+        
+        // Mostrar UI
+        document.getElementById('accionesRapidas').style.display = 'flex';
+        document.getElementById('vistasPrevia').style.display = 'block';
+        document.getElementById('tituloModulo').innerHTML = `
+            <i class="fas fa-edit"></i>
+            <span>Editar Producto</span>
+        `;
+        document.getElementById('subtituloModulo').textContent = 'Modifica los campos necesarios';
+        document.getElementById('btnGuardarTexto').textContent = 'Actualizar Producto';
+        
+        ocultarEstado();
+        
+    } catch (error) {
+        console.error("Error cargando producto:", error);
+        mostrarError(`Error: ${error.message}`);
+        setTimeout(() => {
+            window.location.href = '/vista/nav-mesa-admin/e-comerce/products/productos.html';
+        }, 3000);
+    }
+}
+
+// Llenar formulario
+function llenarFormulario() {
+    const data = appState.productoData;
+    
+    document.getElementById('productoId').value = data.id;
+    document.getElementById('nombre').value = data["Nombre Producto"] || '';
+    document.getElementById('sku').value = data.SKU || '';
+    document.getElementById('categoria').value = data.Categoria || '';
+    document.getElementById('marca').value = data.Marca || '';
+    document.getElementById('modelo').value = data.Modelo || '';
+    document.getElementById('tipo').value = data.Tipo || '';
+    document.getElementById('precio').value = data["Precio MXN"] || 0;
+    document.getElementById('descuento').value = data.Descuento || 0;
+    document.getElementById('estructura').value = data.Estructura || '';
+    document.getElementById('resolucion').value = data.Resolucion || '';
+    document.getElementById('conectividad').value = data.Conectividad || '';
+    document.getElementById('link').value = data.Link || '';
+    document.getElementById('especificaciones').value = data.Especificaciones || '';
+    
+    // Mostrar ID
+    const idDisplay = document.getElementById('productoIdDisplay');
+    if (idDisplay) {
+        idDisplay.innerHTML = `<i class="fas fa-fingerprint id-icon"></i> ID: ${data.id}`;
     }
     
-    cancel() {
-        Swal.fire({
-            title: '¿Cancelar cambios?',
-            text: 'Los cambios no guardados se perderán',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, cancelar',
-            cancelButtonText: 'Seguir editando'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = 'gestion-de-productos.html';
+    // Actualizar botón de index
+    const btnIndex = document.getElementById('btnToggleIndex');
+    if (btnIndex) {
+        if (appState.estaIndexado) {
+            btnIndex.innerHTML = '<i class="fas fa-star"></i> <span>Quitar del índice</span>';
+            btnIndex.className = 'btn-action btn-index active';
+        } else {
+            btnIndex.innerHTML = '<i class="far fa-star"></i> <span>Agregar al índice</span>';
+            btnIndex.className = 'btn-action btn-index';
+        }
+        btnIndex.disabled = false;
+    }
+    
+    // Habilitar botón eliminar
+    const btnEliminar = document.getElementById('btnEliminar');
+    if (btnEliminar) btnEliminar.disabled = false;
+    
+    calcularPrecioFinal();
+}
+
+// Calcular precio final
+function calcularPrecioFinal() {
+    const precio = parseFloat(document.getElementById("precio").value) || 0;
+    const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+    
+    if (descuento < 0) document.getElementById("descuento").value = 0;
+    if (descuento > 100) document.getElementById("descuento").value = 100;
+    
+    const precioFinal = precio * (1 - descuento/100);
+    document.getElementById("precioFinalDisplay").textContent = `$${precioFinal.toFixed(2)} MXN`;
+}
+
+// ============================================
+// FUNCIÓN PRINCIPAL DE GUARDADO - SIMPLIFICADA
+// ============================================
+async function guardarProducto(event) {
+    event.preventDefault();
+    
+    if (appState.estaCargando) return;
+    
+    try {
+        appState.estaCargando = true;
+        mostrarEstado('loading', 'Guardando producto...');
+        
+        // Validar formulario básico
+        const nombre = document.getElementById('nombre').value.trim();
+        const sku = document.getElementById('sku').value.trim();
+        const categoria = document.getElementById('categoria').value;
+        const precio = parseFloat(document.getElementById('precio').value);
+        
+        if (!nombre || !sku || !categoria || precio <= 0) {
+            throw new Error('Por favor completa todos los campos requeridos');
+        }
+        
+        // Preparar datos del producto
+        const datosProducto = {
+            "Nombre Producto": nombre,
+            "SKU": sku,
+            "Categoria": categoria,
+            "Precio MXN": precio,
+            "Descuento": parseFloat(document.getElementById('descuento').value) || 0,
+            "Precio Final": precio * (1 - (parseFloat(document.getElementById('descuento').value) || 0)/100),
+            "Marca": document.getElementById('marca').value.trim(),
+            "Modelo": document.getElementById('modelo').value.trim(),
+            "Tipo": document.getElementById('tipo').value.trim(),
+            "Estructura": document.getElementById('estructura').value.trim(),
+            "Resolucion": document.getElementById('resolucion').value.trim(),
+            "Conectividad": document.getElementById('conectividad').value.trim(),
+            "Link": document.getElementById('link').value.trim(),
+            "Especificaciones": document.getElementById('especificaciones').value.trim(),
+            "Fecha Actualizacion": firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        console.log('📦 Datos a guardar:', datosProducto);
+        
+        // Guardar en Firestore
+        let productoId;
+        
+        if (appState.esNuevoProducto) {
+            // Crear nuevo producto
+            datosProducto.FechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
+            datosProducto.Imagenes = []; // Array vacío por ahora
+            
+            const docRef = await db.collection("Productos").add(datosProducto);
+            productoId = docRef.id;
+            appState.productoId = productoId;
+            
+            console.log('✅ Producto creado con ID:', productoId);
+            
+            // Mostrar ID
+            const idDisplay = document.getElementById('productoIdDisplay');
+            if (idDisplay) {
+                idDisplay.innerHTML = `<i class="fas fa-fingerprint id-icon"></i> ID: ${productoId}`;
             }
-        });
-    }
-    
-    showSuccess(message) {
-        Swal.fire({
-            title: '¡Éxito!',
-            text: message,
-            icon: 'success',
-            timer: 2000
-        });
-    }
-    
-    showError(message) {
+            
+            // Mostrar acciones rápidas
+            document.getElementById('accionesRapidas').style.display = 'flex';
+            
+        } else {
+            // Actualizar producto existente
+            await db.collection("Productos").doc(appState.productoId).update(datosProducto);
+            productoId = appState.productoId;
+            console.log('✅ Producto actualizado:', productoId);
+        }
+        
+        // Mostrar éxito
+        mostrarEstado('success', appState.esNuevoProducto ? 
+            '✅ Producto creado exitosamente!' : '✅ Producto actualizado exitosamente!');
+        
+        // Si es nuevo, cambiar UI
+        if (appState.esNuevoProducto) {
+            appState.esNuevoProducto = false;
+            document.getElementById('btnGuardarTexto').textContent = 'Actualizar Producto';
+            
+            // Preguntar si quiere indexar
+            setTimeout(() => {
+                Swal.fire({
+                    title: '¡Éxito!',
+                    html: `
+                        <p>Producto guardado correctamente.</p>
+                        <p><strong>ID:</strong> ${productoId}</p>
+                        <p>¿Deseas agregarlo al índice?</p>
+                    `,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, indexar',
+                    cancelButtonText: 'No, gracias',
+                    confirmButtonColor: '#ffd700'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        toggleIndexacion();
+                    }
+                });
+            }, 1000);
+        }
+        
+        // Redirigir después de 3 segundos
+        setTimeout(() => {
+            window.location.href = '/vista/nav-mesa-admin/e-comerce/products/productos.html';
+        }, 3000);
+        
+    } catch (error) {
+        console.error("❌ Error guardando producto:", error);
+        mostrarEstado('error', `Error: ${error.message}`);
+        appState.estaCargando = false;
+        
         Swal.fire({
             title: 'Error',
-            text: message,
-            icon: 'error'
-        });
-    }
-    
-    setupEventListeners() {
-        document.getElementById('productForm').addEventListener('submit', (e) => this.saveProduct(e));
-        document.getElementById('precio').addEventListener('input', () => this.calculatePrice());
-        document.getElementById('descuento').addEventListener('input', () => this.calculatePrice());
-        
-        // Toggle activo/inactivo
-        document.getElementById('activo').addEventListener('change', function() {
-            document.getElementById('statusLabel').textContent = this.checked ? 'Activo' : 'Inactivo';
+            text: error.message,
+            icon: 'error',
+            confirmButtonColor: '#6C43E0'
         });
     }
 }
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    window.productEditor = new ProductEditor();
-});
+// Toggle indexación
+async function toggleIndexacion() {
+    if (!appState.productoId) {
+        mostrarError('Primero guarda el producto');
+        return;
+    }
+    
+    try {
+        const productoNombre = document.getElementById('nombre').value.trim();
+        const categoria = document.getElementById('categoria').value;
+        const precio = parseFloat(document.getElementById('precio').value) || 0;
+        const descuento = parseFloat(document.getElementById('descuento').value) || 0;
+        const marca = document.getElementById('marca').value.trim();
+        
+        if (appState.estaIndexado) {
+            // Quitar del índice
+            await db.collection("indexproductos").doc(appState.productoId).delete();
+            appState.estaIndexado = false;
+            
+            Swal.fire({
+                title: 'Índice actualizado',
+                text: 'Producto quitado del índice',
+                icon: 'success',
+                confirmButtonColor: '#6C43E0',
+                timer: 2000
+            });
+            
+            // Actualizar botón
+            const btnIndex = document.getElementById('btnToggleIndex');
+            if (btnIndex) {
+                btnIndex.innerHTML = '<i class="far fa-star"></i> <span>Agregar al índice</span>';
+                btnIndex.className = 'btn-action btn-index';
+            }
+            
+        } else {
+            // Agregar al índice
+            await db.collection("indexproductos").doc(appState.productoId).set({
+                productId: appState.productoId,
+                productoNombre: productoNombre,
+                categoria: categoria,
+                precio: precio,
+                descuento: descuento,
+                marca: marca,
+                fechaIndexacion: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            appState.estaIndexado = true;
+            
+            Swal.fire({
+                title: '¡Indexado!',
+                html: `
+                    <p>Producto agregado al índice</p>
+                    <p><strong>ID:</strong> ${appState.productoId}</p>
+                `,
+                icon: 'success',
+                confirmButtonColor: '#ffd700',
+                timer: 3000
+            });
+            
+            // Actualizar botón
+            const btnIndex = document.getElementById('btnToggleIndex');
+            if (btnIndex) {
+                btnIndex.innerHTML = '<i class="fas fa-star"></i> <span>Quitar del índice</span>';
+                btnIndex.className = 'btn-action btn-index active';
+            }
+        }
+        
+    } catch (error) {
+        console.error("Error en indexación:", error);
+        mostrarError(`Error: ${error.message}`);
+    }
+}
 
-// Funciones globales
-window.handleImageUpload = (event) => productEditor.handleImageUpload(event);
-window.cancel = () => productEditor.cancel();
-window.saveDraft = () => productEditor.saveDraft();
+// Eliminar producto
+async function eliminarProductoConfirmado() {
+    if (!appState.productoId) return;
+    
+    try {
+        mostrarEstado('loading', 'Eliminando producto...');
+        
+        // 1. Eliminar del índice si está indexado
+        if (appState.estaIndexado) {
+            await db.collection("indexproductos").doc(appState.productoId).delete();
+        }
+        
+        // 2. Eliminar el producto
+        await db.collection("Productos").doc(appState.productoId).delete();
+        
+        mostrarEstado('success', '✅ Producto eliminado');
+        
+        setTimeout(() => {
+            window.location.href = '/vista/nav-mesa-admin/e-comerce/products/productos.html';
+        }, 2000);
+        
+    } catch (error) {
+        console.error("Error eliminando:", error);
+        mostrarEstado('error', `Error: ${error.message}`);
+    }
+}
+
+// Confirmar eliminación
+function confirmarEliminacion() {
+    const nombre = document.getElementById('nombre').value.trim() || 'este producto';
+    
+    Swal.fire({
+        title: '¿Eliminar producto?',
+        html: `
+            <p>¿Estás seguro de eliminar <strong>"${nombre}"</strong>?</p>
+            <p>Esta acción no se puede deshacer.</p>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6C43E0'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            eliminarProductoConfirmado();
+        }
+    });
+}
+
+// Mostrar ID completo
+function mostrarIdCompleto() {
+    const id = appState.productoId;
+    
+    if (!id) {
+        mostrarError('No hay ID disponible');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'ID del Producto',
+        html: `
+            <div style="text-align: left;">
+                <p><strong>ID completo:</strong></p>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; word-break: break-all; font-family: monospace;">
+                    ${id}
+                </div>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#6C43E0'
+    });
+}
+
+// Copiar ID
+function copiarIdAlPortapapeles() {
+    const id = appState.productoId;
+    
+    if (!id) return;
+    
+    navigator.clipboard.writeText(id).then(() => {
+        Swal.fire({
+            title: '¡Copiado!',
+            text: 'ID copiado al portapapeles',
+            icon: 'success',
+            timer: 1500
+        });
+    });
+}
+
+// Cancelar edición
+function cancelarEdicion() {
+    Swal.fire({
+        title: '¿Cancelar?',
+        text: 'Los cambios no guardados se perderán.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'Continuar',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6C43E0'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/vista/nav-mesa-admin/e-comerce/products/productos.html';
+        }
+    });
+}
+
+// Mostrar error
+function mostrarError(mensaje) {
+    Swal.fire({
+        title: 'Error',
+        text: mensaje,
+        icon: 'error',
+        confirmButtonColor: '#6C43E0'
+    });
+}
+
+// Manejar imágenes (simplificado)
+function manejarImagenes(input) {
+    if (!input.files) return;
+    
+    const archivos = Array.from(input.files);
+    
+    // Validar cantidad
+    if (archivos.length > 3) {
+        mostrarError('Máximo 3 imágenes');
+        input.value = '';
+        return;
+    }
+    
+    // Mostrar previsualizaciones
+    const contenedor = document.getElementById('imagePreviews');
+    if (contenedor) {
+        contenedor.innerHTML = '';
+        
+        archivos.forEach(archivo => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewId = 'preview-' + Date.now();
+                contenedor.innerHTML += `
+                    <div class="image-preview-item" id="${previewId}">
+                        <img src="${e.target.result}" class="preview-image" alt="Previsualización">
+                        <button type="button" class="delete-image-btn" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(archivo);
+        });
+    }
+    
+    // Actualizar contador
+    const uploadInfo = document.getElementById('uploadInfo');
+    if (uploadInfo) {
+        uploadInfo.textContent = `${archivos.length}/3 imágenes`;
+    }
+}
+
+// Inicializar aplicación
+async function inicializarApp() {
+    console.log('🚀 Inicializando módulo de productos...');
+    
+    // Inicializar Firebase
+    const firebaseListo = await inicializarFirebase();
+    if (!firebaseListo) return;
+    
+    // Cargar categorías
+    await cargarCategorias();
+    
+    // Obtener parámetros
+    const { id } = obtenerParametrosURL();
+    
+    if (id) {
+        // Modo edición
+        await cargarProducto(id);
+    } else {
+        // Modo nuevo producto
+        appState.esNuevoProducto = true;
+        
+        // Configurar eventos
+        document.getElementById('precio').addEventListener('input', calcularPrecioFinal);
+        document.getElementById('descuento').addEventListener('input', calcularPrecioFinal);
+        
+        // Mostrar vistas previas
+        document.getElementById('vistasPrevia').style.display = 'block';
+        
+        console.log('✅ Listo para crear nuevo producto');
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarApp);
+} else {
+    inicializarApp();
+}
+
+// Hacer funciones disponibles globalmente
+window.calcularPrecioFinal = calcularPrecioFinal;
+window.manejarImagenes = manejarImagenes;
+window.toggleIndexacion = toggleIndexacion;
+window.mostrarIdCompleto = mostrarIdCompleto;
+window.copiarIdAlPortapapeles = copiarIdAlPortapapeles;
+window.confirmarEliminacion = confirmarEliminacion;
+window.cancelarEdicion = cancelarEdicion;

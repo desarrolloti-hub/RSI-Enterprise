@@ -9,6 +9,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script> <!-- AÑADIDO -->
+
     
     <!-- Estilos -->
     <link rel="stylesheet" href="productos.css">
@@ -29,15 +31,16 @@
         <div class="productos-content">
             <!-- Acciones principales -->
             <div class="productos-actions">
-                <button class="btn-action btn-add" onclick="showAddModal()">
-                    <i class="fas fa-plus"></i> Nuevo Producto
-                </button>
+                <!-- CAMBIAR POR ESTE BOTÓN: -->
+            <button class="btn-action btn-add" onclick="redirigirANuevoProducto()">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </button>
                 
-                <a href="categorias.html" class="btn-action btn-categories">
+                <a href="/vista/nav-mesa-admin/e-comerce/categorias/categorias.html" class="btn-action btn-categories">
                     <i class="fas fa-tags"></i> Categorías
                 </a>
                 
-                <a href="indexproductos.html" class="btn-action btn-index">
+                <a href="/vista/nav-mesa-admin/e-comerce/" class="btn-action btn-index">
                     <i class="fas fa-star"></i> Productos Index
                 </a>
             </div>
