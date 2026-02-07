@@ -1,5 +1,5 @@
 // Sistema de gestión de categorías - Versión responsive
-// categorias.js - VERSIÓN CORREGIDA CON IMÁGENES EN BASE64
+// categorias.js - VERSIÓN CORREGIDA CON IMÁGENES VISIBLES
 
 // Variables globales
 let db;
@@ -131,10 +131,13 @@ async function cargarCategorias() {
             return;
         }
         
-        // Generar HTML para la tabla (desktop)
+        // Generar HTML para la tabla (desktop) y tarjetas (móvil)
         let tablaHTML = '';
         let cardsHTML = '';
         appState.categorias = [];
+        
+        // Primero, procesar todas las categorías
+        const categoriasPromesas = [];
         
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
@@ -142,41 +145,40 @@ async function cargarCategorias() {
             
             appState.categorias.push({ id, ...data });
             
-            // Determinar si la imagen está en Base64 o URL
+            // Obtener imagen
             let imagenSrc = data.imagen || '';
-            let esBase64 = false;
+            const tieneImagen = imagenSrc && imagenSrc.trim() !== '';
             
-            if (imagenSrc) {
-                // Verificar si es Base64
-                esBase64 = imagenSrc.startsWith('data:image');
-                if (esBase64) {
-                    // Para imágenes Base64 grandes, usar un thumbnail más pequeño
-                    if (imagenSrc.length > 10000) {
-                        // Intentar crear un thumbnail más pequeño
-                        imagenSrc = crearThumbnailBase64(imagenSrc);
-                    }
-                }
-            }
-            
-            // HTML para TABLA (desktop)
+            // HTML SIMPLE Y DIRECTO para TABLA - ESTO SÍ MUESTRA LAS IMÁGENES
             tablaHTML += `
                 <tr data-id="${id}">
-                    <td>${id.substring(0, 8)}...</td>
-                    <td>
+                    <td class="col-id">${id.substring(0, 8)}...</td>
+                    <td class="col-nombre">
                         <strong>${escapeHtml(data.nombre || 'Sin nombre')}</strong>
                     </td>
-                    <td>
-                        ${imagenSrc ? `
-                            <img src="${imagenSrc}" 
-                                 class="imagen-categoria" 
-                                 alt="${escapeHtml(data.nombre || 'Categoría')}"
-                                 title="Clic para ampliar"
-                                 onclick="ampliarImagen('${imagenSrc}', '${escapeHtml(data.nombre)}', ${esBase64})">
-                        ` : '<span class="sin-imagen">Sin imagen</span>'}
+                    <td class="col-imagen">
+                        ${tieneImagen ? 
+                            `<div class="celda-imagen">
+                                <img src="${imagenSrc}" 
+                                     class="imagen-tabla" 
+                                     alt="${escapeHtml(data.nombre || 'Categoría')}"
+                                     title="Clic para ampliar"
+                                     onclick="ampliarImagen('${escapeBase64ForHtml(imagenSrc)}', '${escapeHtml(data.nombre)}', true)"
+                                     onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iOCIgZmlsbD0iIzJEMkQyRCIvPgo8cGF0aCBkPSJNMzAgMjBDMjYuMTM0IDIwIDIzIDIzLjEzNCAyMyAyN0MyMyAzMC44NjYgMjYuMTM0IDM0IDMwIDM0QzMzLjg2NiAzNCAzNyAzMC44NjYgMzcgMjdDMzcgMjMuMTM0IDMzLjg2NiAyMCAzMCAyMFpNMzAgMzZDMjUuNTgyIDM2IDIxIDM4Ljg0IDIxIDQzVjQ1SDM5VjQzQzM5IDM4Ljg0IDM0LjQxOCAzNiAzMCAzNloiIGZpbGw9IiM2QzQzRTAiLz4KPC9zdmc+Cg=='">
+                            </div>` : 
+                            `<div class="celda-sin-imagen">
+                                <i class="fas fa-image"></i>
+                                <span>Sin imagen</span>
+                            </div>`
+                        }
                     </td>
-                    <td>
+                    <td class="col-acciones">
                         <div class="acciones-container">
-                            <button class="btn-accion btn-editar" data-id="${id}" data-nombre="${escapeHtml(data.nombre)}" data-imagen="${data.imagen || ''}" title="Editar categoría">
+                            <button class="btn-accion btn-editar" 
+                                    data-id="${id}" 
+                                    data-nombre="${escapeHtml(data.nombre)}" 
+                                    data-imagen="${imagenSrc}" 
+                                    title="Editar categoría">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
                             <button class="btn-accion btn-eliminar" 
@@ -196,7 +198,11 @@ async function cargarCategorias() {
                     <div class="card-header">
                         <span class="card-id">ID: ${id.substring(0, 8)}...</span>
                         <div class="card-acciones">
-                            <button class="btn-accion btn-accion-small btn-editar" data-id="${id}" data-nombre="${escapeHtml(data.nombre)}" data-imagen="${data.imagen || ''}" title="Editar">
+                            <button class="btn-accion btn-accion-small btn-editar" 
+                                    data-id="${id}" 
+                                    data-nombre="${escapeHtml(data.nombre)}" 
+                                    data-imagen="${imagenSrc}" 
+                                    title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn-accion btn-accion-small btn-eliminar" 
@@ -210,12 +216,13 @@ async function cargarCategorias() {
                     
                     <div class="card-content">
                         <div class="card-imagen-container">
-                            ${imagenSrc ? `
-                                <img src="${imagenSrc}" 
+                            ${tieneImagen ? 
+                                `<img src="${imagenSrc}" 
                                      class="card-imagen" 
                                      alt="${escapeHtml(data.nombre || 'Categoría')}"
-                                     onclick="ampliarImagen('${imagenSrc}', '${escapeHtml(data.nombre)}', ${esBase64})">
-                            ` : '<div class="sin-imagen">Sin imagen</div>'}
+                                     onclick="ampliarImagen('${escapeBase64ForHtml(imagenSrc)}', '${escapeHtml(data.nombre)}', true)">` : 
+                                `<div class="sin-imagen">Sin imagen</div>`
+                            }
                         </div>
                         
                         <div class="card-detalles">
@@ -284,7 +291,7 @@ async function mostrarModalNuevaCategoria() {
                         <i class="fas fa-tag"></i> Nombre de la categoría *
                     </label>
                     <input type="text" id="nombre" class="swal2-input" 
-                           placeholder="Ej: Bebidas, Postres, Entradas..." 
+                           placeholder="Colca la categoria" 
                            style="background: #3d3d3d; color: #fff; border: 1px solid #555;"
                            required>
                 </div>
@@ -431,9 +438,6 @@ async function mostrarModalEditarCategoria(categoriaId, nombre, imagenBase64) {
     
     // Crear thumbnail para preview si es Base64 grande
     let imagenPreview = nuevaImagenBase64;
-    if (nuevaImagenBase64 && nuevaImagenBase64.length > 10000) {
-        imagenPreview = crearThumbnailBase64(nuevaImagenBase64);
-    }
     
     const { value: formValues } = await Swal.fire({
         title: 'Editar Categoría',
@@ -455,11 +459,10 @@ async function mostrarModalEditarCategoria(categoriaId, nombre, imagenBase64) {
                     </label>
                     <div style="text-align: center;">
                         <div id="editImagenPreview" style="margin-bottom: 15px;">
-                            ${imagenPreview ? `
+                            ${nuevaImagenBase64 ? `
                                 <div style="position: relative; display: inline-block;">
-                                    <img src="${imagenPreview}" 
-                                         style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid var(--primary-color, #6C43E0);"
-                                         onclick="ampliarImagen('${imagenPreview}', '${escapeHtml(nombre)}', true)">
+                                    <img src="${nuevaImagenBase64}" 
+                                         style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid var(--primary-color, #6C43E0);">
                                     <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;"
                                          onclick="document.getElementById('btnEditEliminarImagen').click()">
                                         <i class="fas fa-times" style="color: white; font-size: 14px;"></i>
@@ -532,7 +535,9 @@ async function mostrarModalEditarCategoria(categoriaId, nombre, imagenBase64) {
                             <p style="margin-top: 10px; color: #aaa;">No hay imagen seleccionada</p>
                         </div>
                     `;
-                    document.getElementById('btnEditEliminarImagen').style.display = 'none';
+                    if (document.getElementById('btnEditEliminarImagen')) {
+                        document.getElementById('btnEditEliminarImagen').style.display = 'none';
+                    }
                     document.getElementById('btnEditSeleccionarImagen').textContent = 'Seleccionar Imagen';
                 });
             }
@@ -720,7 +725,7 @@ async function actualizarCategoria(categoriaId, data) {
 function optimizarImagenBase64(base64String, maxWidth = 300, maxHeight = 300) {
     return new Promise((resolve) => {
         // Si la imagen ya es pequeña, devolverla tal cual
-        if (base64String.length < 20000) {
+        if (!base64String || base64String.length < 20000) {
             resolve(base64String);
             return;
         }
@@ -765,27 +770,55 @@ function optimizarImagenBase64(base64String, maxWidth = 300, maxHeight = 300) {
     });
 }
 
-// Crear thumbnail de imagen Base64 (más pequeño para preview)
+// Crear thumbnail de imagen Base64 (para tabla)
 function crearThumbnailBase64(base64String) {
-    // Si ya es pequeña, devolver tal cual
-    if (base64String.length < 10000) {
-        return base64String;
-    }
-    
-    // Para simplificar, si es muy grande, usar una versión simplificada
-    // En una implementación real, se usaría canvas como arriba
-    try {
-        // Intentar extraer el tipo MIME y datos
-        const matches = base64String.match(/^data:(.+);base64,(.+)$/);
-        if (matches) {
-            // Devolver solo los primeros 10000 caracteres para preview
-            return `data:${matches[1]};base64,${matches[2].substring(0, 10000)}...`;
+    return new Promise((resolve) => {
+        if (!base64String || base64String.length < 50000) {
+            resolve(base64String);
+            return;
         }
-    } catch (e) {
-        console.warn('Error al crear thumbnail:', e);
-    }
-    
-    return base64String;
+        
+        try {
+            const img = new Image();
+            img.src = base64String;
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Thumbnail para tabla: 60x60 máximo
+                const maxSize = 60;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height = Math.round((height * maxSize) / width);
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width = Math.round((width * maxSize) / height);
+                        height = maxSize;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const thumbnailBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(thumbnailBase64);
+            };
+            
+            img.onerror = () => {
+                resolve(base64String);
+            };
+        } catch (error) {
+            resolve(base64String);
+        }
+    });
 }
 
 // Formatear fecha
@@ -955,6 +988,16 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Función para escapar Base64 para atributos HTML
+function escapeBase64ForHtml(base64) {
+    if (!base64) return '';
+    return base64
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, '')
+        .replace(/\r/g, '');
 }
 
 // Mostrar error

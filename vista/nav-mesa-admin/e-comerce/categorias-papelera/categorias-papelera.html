@@ -3,74 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Papelera de Categorías</title>
+    <title>RSI Enterprise - Papelera de Categorías</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <!-- Firebase SDK (DEBE IR PRIMERO) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="categorias-papelera.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="./categorias-papelera.css">
 </head>
 <body>
-
-    <br><br><br>
-
-    <div class="container container-custom mt-5">
-        <h2 class="text-center mb-4 titulo-pagina">
-            <i class="fas fa-trash-alt"></i> Papelera de Categorías
-        </h2>
+    <div class="papelera-container">
+        <div class="papelera-header">
+            <h1><i class="fas fa-trash-alt"></i> Papelera de Categorías</h1>
+            <p>Gestiona las categorías eliminadas del sistema</p>
+        </div>
         
-        <div class="alert alert-info d-flex align-items-center" role="alert">
-            <i class="fas fa-info-circle me-2"></i>
-            <div>
-                Aquí puedes restaurar categorías eliminadas o borrarlas permanentemente.
+        <div class="papelera-content">
+            <!-- Botones de acción -->
+            <div class="papelera-actions">
+                <a href="/vista/nav-mesa-admin/e-comerce/categorias/categorias.html" class="btn-volver">
+                    <i class="fas fa-arrow-left"></i> Volver a Categorías
+                </a>
+                
+                <button class="btn-vaciar-papelera" id="btnVaciarPapelera" style="display: none;">
+                    <i class="fas fa-broom"></i> Vaciar Papelera
+                </button>
+                
+                <button class="btn-eliminar-todo" id="btnEliminarTodo" style="display: none;">
+                    <i class="fas fa-trash-alt"></i> Eliminar Todo Permanentemente
+                </button>
+            </div>
+            
+            <!-- Contenedor para ambas vistas -->
+            <div class="papelera-list-container">
+                <!-- Vista Desktop: Tabla (visible en escritorio) -->
+                <table class="papelera-table desktop-only">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID</th>
+                            <th><i class="fas fa-tag"></i> Nombre</th>
+                            <th><i class="fas fa-image"></i> Imagen</th>
+                            <th><i class="fas fa-calendar-alt"></i> Eliminada el</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="papelera-lista">
+                        <tr>
+                            <td colspan="5" class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando papelera...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- Vista Móvil: Tarjetas (visible en móvil) -->
+                <div id="papelera-cards" class="papelera-cards-container"></div>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="papelera-stats">
+                <div class="stat-card">
+                    <i class="fas fa-trash-alt"></i>
+                    <div class="stat-content">
+                        <h3 id="totalPapelera">0</h3>
+                        <p>Categorías en papelera</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-content">
+                        <h3 id="tiempoPromedio">0</h3>
+                        <p>Días en papelera (prom.)</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-database"></i>
+                    <div class="stat-content">
+                        <h3 id="espacioOcupado">0</h3>
+                        <p>Espacio ocupado</p>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="table-responsive card p-0">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Imagen</th>
-                        <th>Fecha Eliminación</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="categorias-papelera-lista">
-                    <tr>
-                        <td colspan="5" class="text-center p-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
     </div>
 
-    <div class="floating-button-container-left">
-        <a href="../categorias/categorias.html" class="boton-flotante-azul" title="Regresar a Categorías">
-            <i class="fas fa-arrow-left"></i> Regresar
-        </a>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
-    <script src="../js/filtrar-error.js"></script>
-    <script src="../js/firebase-init.js"></script>
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-    
-    <script src="./categorias-papelera.js"></script>
-    <script src="../js/particulas.js"></script>
-
+    <!-- Scripts -->
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="categorias-papelera.js"></script>
 </body>
 </html>
