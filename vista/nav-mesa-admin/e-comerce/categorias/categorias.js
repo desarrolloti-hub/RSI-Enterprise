@@ -1,8 +1,8 @@
 // Sistema de gestión de categorías - Versión responsive
-// categorias.js
+// categorias.js - VERSIÓN CORREGIDA CON IMÁGENES VISIBLES
 
 // Variables globales
-let db, storage;
+let db;
 const appState = {
     categorias: [],
     totalCategorias: 0,
@@ -10,21 +10,22 @@ const appState = {
     totalPapelera: 0
 };
 
+// Tamaño máximo para imágenes en Base64 (aproximadamente 500KB)
+const MAX_IMAGE_SIZE = 500 * 1024; // 500KB en bytes
+
 // Esperar a que Firebase esté listo
 function waitForFirebase() {
     return new Promise((resolve) => {
         if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
             db = firebase.firestore();
-            storage = firebase.storage();
-            console.log('✅ Firebase inicializado para categorías');
+            console.log('✅ Firebase Firestore inicializado');
             resolve(true);
         } else {
             const checkInterval = setInterval(() => {
                 if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
                     clearInterval(checkInterval);
                     db = firebase.firestore();
-                    storage = firebase.storage();
-                    console.log('✅ Firebase inicializado para categorías (retardado)');
+                    console.log('✅ Firebase Firestore inicializado (retardado)');
                     resolve(true);
                 }
             }, 100);
@@ -103,9 +104,9 @@ async function cargarCategorias() {
                         <i class="fas fa-tags"></i>
                         <h3>No hay categorías</h3>
                         <p>No se han creado categorías todavía.</p>
-                        <a href="nuevaCategoria.html" class="btn-nueva-categoria" style="margin-top: 15px; display: inline-flex;">
+                        <button id="btnCrearPrimeraCategoria" class="btn-nueva-categoria" style="margin-top: 15px;">
                             <i class="fas fa-plus"></i> Crear primera categoría
-                        </a>
+                        </button>
                     </td>
                 </tr>
             `;
@@ -118,19 +119,25 @@ async function cargarCategorias() {
                         <i class="fas fa-tags"></i>
                         <h3>No hay categorías</h3>
                         <p>No se han creado categorías todavía.</p>
-                        <a href="nuevaCategoria.html" class="btn-nueva-categoria" style="margin-top: 15px; display: inline-flex;">
+                        <button id="btnCrearPrimeraCategoria" class="btn-nueva-categoria" style="margin-top: 15px;">
                             <i class="fas fa-plus"></i> Crear primera categoría
-                        </a>
+                        </button>
                     </div>
                 `;
             }
+            
+            // Configurar evento para el botón
+            document.getElementById('btnCrearPrimeraCategoria')?.addEventListener('click', mostrarModalNuevaCategoria);
             return;
         }
         
-        // Generar HTML para la tabla (desktop)
+        // Generar HTML para la tabla (desktop) y tarjetas (móvil)
         let tablaHTML = '';
         let cardsHTML = '';
         appState.categorias = [];
+        
+        // Primero, procesar todas las categorías
+        const categoriasPromesas = [];
         
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
@@ -138,26 +145,40 @@ async function cargarCategorias() {
             
             appState.categorias.push({ id, ...data });
             
-            // HTML para TABLA (desktop)
+            // Obtener imagen
+            let imagenSrc = data.imagen || '';
+            const tieneImagen = imagenSrc && imagenSrc.trim() !== '';
+            
+            // HTML SIMPLE Y DIRECTO para TABLA - ESTO SÍ MUESTRA LAS IMÁGENES
             tablaHTML += `
                 <tr data-id="${id}">
-                    <td>${id.substring(0, 8)}...</td>
-                    <td>
+                    <td class="col-id">${id.substring(0, 8)}...</td>
+                    <td class="col-nombre">
                         <strong>${escapeHtml(data.nombre || 'Sin nombre')}</strong>
-                        ${data.descripcion ? `<br><small>${escapeHtml(data.descripcion)}</small>` : ''}
                     </td>
-                    <td>
-                        ${data.imagen ? `
-                            <img src="${data.imagen}" 
-                                 class="imagen-categoria" 
-                                 alt="${escapeHtml(data.nombre || 'Categoría')}"
-                                 title="Clic para ampliar"
-                                 onclick="ampliarImagen('${data.imagen}', '${escapeHtml(data.nombre)}')">
-                        ` : '<span class="sin-imagen">Sin imagen</span>'}
+                    <td class="col-imagen">
+                        ${tieneImagen ? 
+                            `<div class="celda-imagen">
+                                <img src="${imagenSrc}" 
+                                     class="imagen-tabla" 
+                                     alt="${escapeHtml(data.nombre || 'Categoría')}"
+                                     title="Clic para ampliar"
+                                     onclick="ampliarImagen('${escapeBase64ForHtml(imagenSrc)}', '${escapeHtml(data.nombre)}', true)"
+                                     onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iOCIgZmlsbD0iIzJEMkQyRCIvPgo8cGF0aCBkPSJNMzAgMjBDMjYuMTM0IDIwIDIzIDIzLjEzNCAyMyAyN0MyMyAzMC44NjYgMjYuMTM0IDM0IDMwIDM0QzMzLjg2NiAzNCAzNyAzMC44NjYgMzcgMjdDMzcgMjMuMTM0IDMzLjg2NiAyMCAzMCAyMFpNMzAgMzZDMjUuNTgyIDM2IDIxIDM4Ljg0IDIxIDQzVjQ1SDM5VjQzQzM5IDM4Ljg0IDM0LjQxOCAzNiAzMCAzNloiIGZpbGw9IiM2QzQzRTAiLz4KPC9zdmc+Cg=='">
+                            </div>` : 
+                            `<div class="celda-sin-imagen">
+                                <i class="fas fa-image"></i>
+                                <span>Sin imagen</span>
+                            </div>`
+                        }
                     </td>
-                    <td>
+                    <td class="col-acciones">
                         <div class="acciones-container">
-                            <button class="btn-accion btn-editar" data-id="${id}" title="Editar categoría">
+                            <button class="btn-accion btn-editar" 
+                                    data-id="${id}" 
+                                    data-nombre="${escapeHtml(data.nombre)}" 
+                                    data-imagen="${imagenSrc}" 
+                                    title="Editar categoría">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
                             <button class="btn-accion btn-eliminar" 
@@ -177,7 +198,11 @@ async function cargarCategorias() {
                     <div class="card-header">
                         <span class="card-id">ID: ${id.substring(0, 8)}...</span>
                         <div class="card-acciones">
-                            <button class="btn-accion btn-accion-small btn-editar" data-id="${id}" title="Editar">
+                            <button class="btn-accion btn-accion-small btn-editar" 
+                                    data-id="${id}" 
+                                    data-nombre="${escapeHtml(data.nombre)}" 
+                                    data-imagen="${imagenSrc}" 
+                                    title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn-accion btn-accion-small btn-eliminar" 
@@ -191,23 +216,17 @@ async function cargarCategorias() {
                     
                     <div class="card-content">
                         <div class="card-imagen-container">
-                            ${data.imagen ? `
-                                <img src="${data.imagen}" 
+                            ${tieneImagen ? 
+                                `<img src="${imagenSrc}" 
                                      class="card-imagen" 
                                      alt="${escapeHtml(data.nombre || 'Categoría')}"
-                                     onclick="ampliarImagen('${data.imagen}', '${escapeHtml(data.nombre)}')">
-                            ` : '<div class="sin-imagen">Sin imagen</div>'}
+                                     onclick="ampliarImagen('${escapeBase64ForHtml(imagenSrc)}', '${escapeHtml(data.nombre)}', true)">` : 
+                                `<div class="sin-imagen">Sin imagen</div>`
+                            }
                         </div>
                         
                         <div class="card-detalles">
                             <h3 class="card-nombre">${escapeHtml(data.nombre || 'Sin nombre')}</h3>
-                            
-                            ${data.descripcion ? `
-                                <div class="card-descripcion">
-                                    <i class="fas fa-align-left"></i>
-                                    <p>${escapeHtml(data.descripcion)}</p>
-                                </div>
-                            ` : ''}
                             
                             <div class="card-detalle">
                                 <i class="fas fa-hashtag"></i>
@@ -226,10 +245,6 @@ async function cargarCategorias() {
                             <i class="fas fa-circle" style="color: #28a745;"></i>
                             Activa
                         </span>
-                        <div class="card-acciones-mobile">
-                         
-                           
-                        </div>
                     </div>
                 </div>
             `;
@@ -240,9 +255,6 @@ async function cargarCategorias() {
         
         if (cardsContainer) {
             cardsContainer.innerHTML = cardsHTML;
-        } else {
-            // Si no existe el contenedor de tarjetas, crearlo dinámicamente
-            crearContenedorTarjetas(cardsHTML);
         }
         
         // Configurar eventos
@@ -257,18 +269,556 @@ async function cargarCategorias() {
     }
 }
 
-// Crear contenedor de tarjetas dinámicamente
-function crearContenedorTarjetas(cardsHTML) {
-    const cardsContainer = document.createElement('div');
-    cardsContainer.id = 'categorias-cards';
-    cardsContainer.className = 'categorias-cards-container';
+// Mostrar modal para nueva categoría
+async function mostrarModalNuevaCategoria() {
+    let imagenBase64 = '';
+    let imagenFile = null;
     
-    const tableContainer = document.querySelector('.categorias-list-container');
-    if (tableContainer) {
-        // Insertar después de la tabla
-        tableContainer.appendChild(cardsContainer);
-        cardsContainer.innerHTML = cardsHTML;
+    // Crear input file oculto
+    const inputFile = document.createElement('input');
+    inputFile.type = 'file';
+    inputFile.accept = 'image/*';
+    inputFile.id = 'imagenUpload';
+    inputFile.style.display = 'none';
+    document.body.appendChild(inputFile);
+    
+    const { value: formValues } = await Swal.fire({
+        title: 'Nueva Categoría',
+        html: `
+            <div style="text-align: left;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="nombre" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color, #fff);">
+                        <i class="fas fa-tag"></i> Nombre de la categoría *
+                    </label>
+                    <input type="text" id="nombre" class="swal2-input" 
+                           placeholder="Colca la categoria" 
+                           style="background: #3d3d3d; color: #fff; border: 1px solid #555;"
+                           required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color, #fff);">
+                        <i class="fas fa-image"></i> Imagen de la categoría
+                    </label>
+                    <div style="text-align: center;">
+                        <div id="imagenPreview" style="margin-bottom: 15px;">
+                            <div class="sin-imagen" style="display: inline-block; padding: 20px; background: rgba(108, 67, 224, 0.1); border-radius: 8px;">
+                                <i class="fas fa-image" style="font-size: 2rem; color: #8B5FEB;"></i>
+                                <p style="margin-top: 10px; color: #aaa;">No hay imagen seleccionada</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button type="button" id="btnSeleccionarImagen" class="btn-accion" 
+                                    style="background: var(--accent-color, #8B5FEB); color: white; padding: 10px 20px;">
+                                <i class="fas fa-upload"></i> Seleccionar Imagen
+                            </button>
+                            <button type="button" id="btnEliminarImagen" class="btn-accion" 
+                                    style="background: #dc3545; color: white; padding: 10px 20px; display: none;">
+                                <i class="fas fa-trash"></i> Quitar
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.85rem; color: #aaa;">
+                            <i class="fas fa-info-circle"></i> Tamaño máximo: 500KB (Recomendado: 200x200px)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar Categoría',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#6C43E0',
+        cancelButtonColor: '#6c757d',
+        width: '500px',
+        background: '#2d2d2d',
+        color: '#ffffff',
+        customClass: {
+            popup: 'modal-categoria',
+            title: 'modal-title',
+            htmlContainer: 'modal-content'
+        },
+        preConfirm: () => {
+            const nombre = document.getElementById('nombre').value;
+            
+            if (!nombre.trim()) {
+                Swal.showValidationMessage('El nombre de la categoría es obligatorio');
+                return false;
+            }
+            
+            return { nombre: nombre.trim(), imagenBase64, imagenFile };
+        },
+        didOpen: () => {
+            // Configurar evento para seleccionar imagen
+            document.getElementById('btnSeleccionarImagen').addEventListener('click', () => {
+                inputFile.click();
+            });
+            
+            // Configurar evento para eliminar imagen
+            document.getElementById('btnEliminarImagen').addEventListener('click', () => {
+                imagenBase64 = '';
+                imagenFile = null;
+                document.getElementById('imagenPreview').innerHTML = `
+                    <div class="sin-imagen" style="display: inline-block; padding: 20px; background: rgba(108, 67, 224, 0.1); border-radius: 8px;">
+                        <i class="fas fa-image" style="font-size: 2rem; color: #8B5FEB;"></i>
+                        <p style="margin-top: 10px; color: #aaa;">No hay imagen seleccionada</p>
+                    </div>
+                `;
+                document.getElementById('btnEliminarImagen').style.display = 'none';
+                document.getElementById('btnSeleccionarImagen').style.display = 'flex';
+            });
+            
+            // Configurar input file
+            inputFile.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        Swal.showValidationMessage('Por favor selecciona una imagen válida (JPEG, PNG, etc.)');
+                        return;
+                    }
+                    
+                    if (file.size > MAX_IMAGE_SIZE) {
+                        Swal.showValidationMessage(`La imagen es demasiado grande (${(file.size/1024).toFixed(0)}KB). Máximo permitido: 500KB`);
+                        return;
+                    }
+                    
+                    imagenFile = file;
+                    
+                    // Mostrar preview y convertir a Base64
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64String = e.target.result;
+                        
+                        // Optimizar imagen si es muy grande
+                        let imagenOptimizada = await optimizarImagenBase64(base64String, 200, 200);
+                        imagenBase64 = imagenOptimizada;
+                        
+                        document.getElementById('imagenPreview').innerHTML = `
+                            <div style="position: relative; display: inline-block;">
+                                <img src="${imagenOptimizada}" 
+                                     style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid var(--primary-color, #6C43E0);">
+                                <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                                     onclick="document.getElementById('btnEliminarImagen').click()">
+                                    <i class="fas fa-times" style="color: white; font-size: 14px;"></i>
+                                </div>
+                            </div>
+                        `;
+                        document.getElementById('btnEliminarImagen').style.display = 'flex';
+                        document.getElementById('btnSeleccionarImagen').style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        },
+        willClose: () => {
+            // Limpiar input file
+            if (inputFile.parentNode) {
+                inputFile.parentNode.removeChild(inputFile);
+            }
+        }
+    });
+    
+    if (formValues) {
+        await guardarNuevaCategoria(formValues);
     }
+}
+
+// Mostrar modal para editar categoría
+async function mostrarModalEditarCategoria(categoriaId, nombre, imagenBase64) {
+    let nuevaImagenBase64 = imagenBase64 || '';
+    let imagenFile = null;
+    
+    // Crear input file oculto
+    const inputFile = document.createElement('input');
+    inputFile.type = 'file';
+    inputFile.accept = 'image/*';
+    inputFile.id = 'imagenUpload';
+    inputFile.style.display = 'none';
+    document.body.appendChild(inputFile);
+    
+    // Crear thumbnail para preview si es Base64 grande
+    let imagenPreview = nuevaImagenBase64;
+    
+    const { value: formValues } = await Swal.fire({
+        title: 'Editar Categoría',
+        html: `
+            <div style="text-align: left;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="editNombre" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color, #fff);">
+                        <i class="fas fa-tag"></i> Nombre de la categoría *
+                    </label>
+                    <input type="text" id="editNombre" class="swal2-input" 
+                           value="${escapeHtml(nombre)}"
+                           style="background: #3d3d3d; color: #fff; border: 1px solid #555;"
+                           required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color, #fff);">
+                        <i class="fas fa-image"></i> Imagen de la categoría
+                    </label>
+                    <div style="text-align: center;">
+                        <div id="editImagenPreview" style="margin-bottom: 15px;">
+                            ${nuevaImagenBase64 ? `
+                                <div style="position: relative; display: inline-block;">
+                                    <img src="${nuevaImagenBase64}" 
+                                         style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid var(--primary-color, #6C43E0);">
+                                    <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                                         onclick="document.getElementById('btnEditEliminarImagen').click()">
+                                        <i class="fas fa-times" style="color: white; font-size: 14px;"></i>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="sin-imagen" style="display: inline-block; padding: 20px; background: rgba(108, 67, 224, 0.1); border-radius: 8px;">
+                                    <i class="fas fa-image" style="font-size: 2rem; color: #8B5FEB;"></i>
+                                    <p style="margin-top: 10px; color: #aaa;">No hay imagen seleccionada</p>
+                                </div>
+                            `}
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button type="button" id="btnEditSeleccionarImagen" class="btn-accion" 
+                                    style="background: var(--accent-color, #8B5FEB); color: white; padding: 10px 20px;">
+                                <i class="fas fa-upload"></i> ${nuevaImagenBase64 ? 'Cambiar Imagen' : 'Seleccionar Imagen'}
+                            </button>
+                            ${nuevaImagenBase64 ? `
+                                <button type="button" id="btnEditEliminarImagen" class="btn-accion" 
+                                        style="background: #dc3545; color: white; padding: 10px 20px;">
+                                    <i class="fas fa-trash"></i> Quitar
+                                </button>
+                            ` : ''}
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.85rem; color: #aaa;">
+                            <i class="fas fa-info-circle"></i> Tamaño máximo: 500KB (Recomendado: 200x200px)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Actualizar Categoría',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#6C43E0',
+        cancelButtonColor: '#6c757d',
+        width: '500px',
+        background: '#2d2d2d',
+        color: '#ffffff',
+        customClass: {
+            popup: 'modal-categoria',
+            title: 'modal-title',
+            htmlContainer: 'modal-content'
+        },
+        preConfirm: () => {
+            const nombre = document.getElementById('editNombre').value;
+            
+            if (!nombre.trim()) {
+                Swal.showValidationMessage('El nombre de la categoría es obligatorio');
+                return false;
+            }
+            
+            return { nombre: nombre.trim(), nuevaImagenBase64, imagenFile };
+        },
+        didOpen: () => {
+            // Configurar evento para seleccionar imagen
+            document.getElementById('btnEditSeleccionarImagen').addEventListener('click', () => {
+                inputFile.click();
+            });
+            
+            // Configurar evento para eliminar imagen
+            if (nuevaImagenBase64) {
+                document.getElementById('btnEditEliminarImagen').addEventListener('click', () => {
+                    nuevaImagenBase64 = '';
+                    imagenFile = null;
+                    document.getElementById('editImagenPreview').innerHTML = `
+                        <div class="sin-imagen" style="display: inline-block; padding: 20px; background: rgba(108, 67, 224, 0.1); border-radius: 8px;">
+                            <i class="fas fa-image" style="font-size: 2rem; color: #8B5FEB;"></i>
+                            <p style="margin-top: 10px; color: #aaa;">No hay imagen seleccionada</p>
+                        </div>
+                    `;
+                    if (document.getElementById('btnEditEliminarImagen')) {
+                        document.getElementById('btnEditEliminarImagen').style.display = 'none';
+                    }
+                    document.getElementById('btnEditSeleccionarImagen').textContent = 'Seleccionar Imagen';
+                });
+            }
+            
+            // Configurar input file
+            inputFile.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        Swal.showValidationMessage('Por favor selecciona una imagen válida (JPEG, PNG, etc.)');
+                        return;
+                    }
+                    
+                    if (file.size > MAX_IMAGE_SIZE) {
+                        Swal.showValidationMessage(`La imagen es demasiado grande (${(file.size/1024).toFixed(0)}KB). Máximo permitido: 500KB`);
+                        return;
+                    }
+                    
+                    imagenFile = file;
+                    
+                    // Mostrar preview y convertir a Base64
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64String = e.target.result;
+                        
+                        // Optimizar imagen
+                        let imagenOptimizada = await optimizarImagenBase64(base64String, 200, 200);
+                        nuevaImagenBase64 = imagenOptimizada;
+                        
+                        document.getElementById('editImagenPreview').innerHTML = `
+                            <div style="position: relative; display: inline-block;">
+                                <img src="${imagenOptimizada}" 
+                                     style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid var(--primary-color, #6C43E0);">
+                                <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                                     onclick="document.getElementById('btnEditEliminarImagen').click()">
+                                    <i class="fas fa-times" style="color: white; font-size: 14px;"></i>
+                                </div>
+                            </div>
+                        `;
+                        if (document.getElementById('btnEditEliminarImagen')) {
+                            document.getElementById('btnEditEliminarImagen').style.display = 'flex';
+                        }
+                        document.getElementById('btnEditSeleccionarImagen').textContent = 'Cambiar Imagen';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        },
+        willClose: () => {
+            // Limpiar input file
+            if (inputFile.parentNode) {
+                inputFile.parentNode.removeChild(inputFile);
+            }
+        }
+    });
+    
+    if (formValues) {
+        await actualizarCategoria(categoriaId, formValues);
+    }
+}
+
+// Guardar nueva categoría CON IMAGEN EN BASE64
+async function guardarNuevaCategoria(data) {
+    try {
+        Swal.fire({
+            title: 'Creando categoría...',
+            text: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            background: '#2d2d2d',
+            color: '#ffffff'
+        });
+        
+        // Preparar datos para guardar
+        const nuevaCategoria = {
+            nombre: data.nombre,
+            fechaCreacion: new Date(),
+            activa: true
+        };
+        
+        // Agregar imagen Base64 si existe
+        if (data.imagenBase64) {
+            // Optimizar aún más la imagen antes de guardar
+            const imagenOptimizada = await optimizarImagenBase64(data.imagenBase64, 300, 300);
+            nuevaCategoria.imagen = imagenOptimizada;
+            nuevaCategoria.tieneImagen = true;
+            nuevaCategoria.formatoImagen = 'base64';
+        } else {
+            nuevaCategoria.imagen = '';
+            nuevaCategoria.tieneImagen = false;
+        }
+        
+        // Guardar en Firestore
+        await db.collection("categorias").add(nuevaCategoria);
+        
+        Swal.fire({
+            title: '¡Categoría creada!',
+            text: `"${data.nombre}" ha sido creada exitosamente`,
+            icon: 'success',
+            background: '#2d2d2d',
+            color: '#ffffff',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        
+        // Recargar categorías
+        await cargarCategorias();
+        
+    } catch (error) {
+        console.error('Error guardando categoría:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'No se pudo crear la categoría: ' + error.message,
+            icon: 'error',
+            background: '#2d2d2d',
+            color: '#ffffff'
+        });
+    }
+}
+
+// Actualizar categoría existente CON IMAGEN EN BASE64
+async function actualizarCategoria(categoriaId, data) {
+    try {
+        Swal.fire({
+            title: 'Actualizando categoría...',
+            text: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            background: '#2d2d2d',
+            color: '#ffffff'
+        });
+        
+        // Preparar datos para actualizar
+        const categoriaActualizada = {
+            nombre: data.nombre,
+            fechaActualizacion: new Date()
+        };
+        
+        // Agregar imagen Base64 si existe o eliminarla
+        if (data.nuevaImagenBase64) {
+            // Optimizar imagen antes de guardar
+            const imagenOptimizada = await optimizarImagenBase64(data.nuevaImagenBase64, 300, 300);
+            categoriaActualizada.imagen = imagenOptimizada;
+            categoriaActualizada.tieneImagen = true;
+            categoriaActualizada.formatoImagen = 'base64';
+        } else if (data.nuevaImagenBase64 === '') {
+            // Eliminar imagen
+            categoriaActualizada.imagen = '';
+            categoriaActualizada.tieneImagen = false;
+        }
+        
+        // Actualizar en Firestore
+        await db.collection("categorias").doc(categoriaId).update(categoriaActualizada);
+        
+        Swal.fire({
+            title: '¡Categoría actualizada!',
+            text: `"${data.nombre}" ha sido actualizada exitosamente`,
+            icon: 'success',
+            background: '#2d2d2d',
+            color: '#ffffff',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        
+        // Recargar categorías
+        await cargarCategorias();
+        
+    } catch (error) {
+        console.error('Error actualizando categoría:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'No se pudo actualizar la categoría: ' + error.message,
+            icon: 'error',
+            background: '#2d2d2d',
+            color: '#ffffff'
+        });
+    }
+}
+
+// Optimizar imagen Base64 (reducir tamaño y dimensiones)
+function optimizarImagenBase64(base64String, maxWidth = 300, maxHeight = 300) {
+    return new Promise((resolve) => {
+        // Si la imagen ya es pequeña, devolverla tal cual
+        if (!base64String || base64String.length < 20000) {
+            resolve(base64String);
+            return;
+        }
+        
+        const img = new Image();
+        img.src = base64String;
+        
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // Calcular nuevas dimensiones manteniendo proporción
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = Math.round((width * maxHeight) / height);
+                    height = maxHeight;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Comprimir a JPEG con 80% de calidad
+            const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            resolve(optimizedBase64);
+        };
+        
+        img.onerror = () => {
+            // Si falla la optimización, devolver la original
+            console.warn('Error al optimizar imagen, usando original');
+            resolve(base64String);
+        };
+    });
+}
+
+// Crear thumbnail de imagen Base64 (para tabla)
+function crearThumbnailBase64(base64String) {
+    return new Promise((resolve) => {
+        if (!base64String || base64String.length < 50000) {
+            resolve(base64String);
+            return;
+        }
+        
+        try {
+            const img = new Image();
+            img.src = base64String;
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Thumbnail para tabla: 60x60 máximo
+                const maxSize = 60;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height = Math.round((height * maxSize) / width);
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width = Math.round((width * maxSize) / height);
+                        height = maxSize;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const thumbnailBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(thumbnailBase64);
+            };
+            
+            img.onerror = () => {
+                resolve(base64String);
+            };
+        } catch (error) {
+            resolve(base64String);
+        }
+    });
 }
 
 // Formatear fecha
@@ -297,11 +847,17 @@ function formatearFecha(timestamp) {
 
 // Configurar eventos para ambas vistas
 function configurarEventos() {
+    // Evento para nueva categoría (botón principal)
+    document.getElementById('btnNuevaCategoria')?.addEventListener('click', mostrarModalNuevaCategoria);
+    
     // Eventos para editar (tabla y tarjetas)
     document.querySelectorAll('.btn-editar').forEach(button => {
         button.addEventListener('click', (e) => {
             const id = e.currentTarget.dataset.id;
-            window.location.href = `editarCategoria.html?id=${id}`;
+            const nombre = e.currentTarget.dataset.nombre;
+            const imagen = e.currentTarget.dataset.imagen;
+            
+            mostrarModalEditarCategoria(id, nombre, imagen);
         });
     });
     
@@ -412,7 +968,7 @@ async function eliminarCategoria(id, nombre) {
 }
 
 // Función para ampliar imagen
-function ampliarImagen(url, titulo) {
+function ampliarImagen(url, titulo, esBase64 = false) {
     Swal.fire({
         title: titulo,
         imageUrl: url,
@@ -420,7 +976,9 @@ function ampliarImagen(url, titulo) {
         showCloseButton: true,
         showConfirmButton: false,
         background: '#2d2d2d',
-        color: '#ffffff'
+        color: '#ffffff',
+        imageWidth: esBase64 ? 400 : 'auto',
+        imageHeight: esBase64 ? 400 : 'auto'
     });
 }
 
@@ -430,6 +988,16 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Función para escapar Base64 para atributos HTML
+function escapeBase64ForHtml(base64) {
+    if (!base64) return '';
+    return base64
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, '')
+        .replace(/\r/g, '');
 }
 
 // Mostrar error
@@ -493,3 +1061,5 @@ window.reloadCategorias = cargarCategorias;
 window.getCategoriasStats = cargarEstadisticas;
 window.eliminarCategoria = eliminarCategoria;
 window.ampliarImagen = ampliarImagen;
+window.mostrarModalNuevaCategoria = mostrarModalNuevaCategoria;
+window.mostrarModalEditarCategoria = mostrarModalEditarCategoria;

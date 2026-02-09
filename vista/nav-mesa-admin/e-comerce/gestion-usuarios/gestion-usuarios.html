@@ -3,1089 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios</title>
+    <title>RSI Enterprise - Gestión de Usuarios</title>
     
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="gestion-usuarios.css">
     
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
-    <style>
-        /* ========== ESTILOS CSS COMPLETOS ========== */
-        
-        /* Estilos base */
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Header y navegación */
-        .nan_header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #FFD700;
-        }
-
-        .nan_navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .nan_logo img {
-            height: 40px;
-            width: auto;
-        }
-
-        .nan_menu {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            align-items: center;
-        }
-
-        .nan_menu li {
-            margin-left: 20px;
-        }
-
-        .nan_menu a {
-            color: #FFD700;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-            display: flex;
-            align-items: center;
-        }
-
-        .nan_menu a:hover {
-            color: #ffffff;
-        }
-
-        .nan_menu i {
-            margin-right: 5px;
-        }
-
-        .nan_hamburger, .nan_close {
-            display: none;
-            background: none;
-            border: none;
-            color: #FFD700;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        /* Contenedor principal */
-        .usuarios-container {
-            padding: 20px;
-            width: 98%;
-            margin: 80px auto 0;
-            box-sizing: border-box;
-        }
-
-        /* Título */
-        .titulo-usuarios {
-            text-align: center;
-            font-size: 2.2rem;
-            color: #FFD700;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-        }
-
-        /* Contenedor de tabla */
-        .tabla-contenedor {
-            width: 100%;
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Personalización del scroll */
-        .tabla-contenedor::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        .tabla-contenedor::-webkit-scrollbar-track {
-            background: #1E1E1E;
-        }
-
-        .tabla-contenedor::-webkit-scrollbar-thumb {
-            background-color: #FFD700;
-            border-radius: 10px;
-        }
-
-        /* Tabla */
-        .tabla-usuarios {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0 auto;
-            table-layout: fixed;
-        }
-
-        /* Cabecera de tabla */
-        .tabla-usuarios thead {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .tabla-usuarios th {
-            background-color: #1A1A1A;
-            color: #FFD700;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #FFD700;
-        }
-
-        /* Celdas y filas */
-        .tabla-usuarios td {
-            padding: 1rem;
-            color: #E0E0E0;
-            border-bottom: 1px solid #333;
-            vertical-align: middle;
-        }
-
-        .tabla-usuarios tr {
-            transition: background-color 0.2s ease;
-        }
-
-        .tabla-usuarios tr:hover {
-            background-color: #252525;
-        }
-
-        .tabla-usuarios tr:nth-child(even) {
-            background-color: #1E1E1E;
-        }
-
-        .tabla-usuarios tr:nth-child(even):hover {
-            background-color: #282828;
-        }
-
-        /* Rol de usuario */
-        .rol-usuario {
-            background-color: #2D2D2D;
-            color: #FFD700;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 500;
-            display: inline-block;
-            border: 1px solid #444;
-        }
-
-        /* Botones de acción */
-        .acciones-container {
-            display: flex;
-            gap: 0.8rem;
-            justify-content: center;
-        }
-
-        .btn-detalles, .btn-eliminar {
-            background: none;
-            border: none;
-            color: #FFD700;
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: all 0.2s;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-detalles:hover {
-            background-color: rgba(0, 123, 255, 0.1);
-            color: #007bff;
-            transform: scale(1.1);
-        }
-
-        .btn-eliminar:hover {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-            transform: scale(1.1);
-        }
-
-        /* Indicador de carga */
-        .loading-indicator {
-            text-align: center;
-            padding: 2rem;
-            color: #FFD700;
-        }
-
-        .loading-indicator i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Estado vacío */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #888;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        /* Footer fijo */
-        #mainContentFooter {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            background: linear-gradient(135deg, #6C43E0 0%, #5a35c7 100%);
-            padding: 8px 15px;
-            text-align: center;
-            border-top: 1px solid rgba(108, 67, 224, 0.3);
-            box-sizing: border-box;
-            margin: 0;
-            z-index: 999;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        #mainContentFooter div {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 0 auto;
-            max-width: 1200px;
-        }
-
-        #mainContentFooter img {
-            width: 16px;
-            height: 16px;
-            object-fit: contain;
-            opacity: 0.9;
-            display: block;
-        }
-
-        #mainContentFooter p {
-            margin: 0;
-            font-size: 0.7rem;
-            color: white;
-            line-height: 1.2;
-            font-weight: 500;
-        }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-            .usuarios-container {
-                padding: 15px;
-                width: 95%;
-            }
-            
-            .tabla-contenedor {
-                overflow-x: auto;
-            }
-            
-            .tabla-usuarios {
-                min-width: 800px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .nan_hamburger, .nan_close {
-                display: block;
-            }
-            
-            .nan_menu {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: rgba(0, 0, 0, 0.95);
-                flex-direction: column;
-                padding: 20px;
-            }
-            
-            .nan_menu.active {
-                display: flex;
-            }
-            
-            .nan_menu li {
-                margin: 10px 0;
-                width: 100%;
-            }
-            
-            .titulo-usuarios {
-                font-size: 1.8rem;
-            }
-            
-            .tabla-usuarios th,
-            .tabla-usuarios td {
-                padding: 0.8rem;
-                font-size: 0.9rem;
-            }
-            
-            .btn-detalles, .btn-eliminar {
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .usuarios-container {
-                padding: 10px;
-                margin: 60px auto 0;
-            }
-            
-            .titulo-usuarios {
-                font-size: 1.5rem;
-            }
-            
-            .acciones-container {
-                gap: 0.5rem;
-            }
-            
-            #mainContentFooter {
-                padding: 4px 8px;
-            }
-            
-            #mainContentFooter img {
-                width: 12px;
-                height: 12px;
-            }
-            
-            #mainContentFooter p {
-                font-size: 0.6rem;
-            }
-        }
-    </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-
 <body>
-    <!-- Header -->
-    <header class="nan_header">
-        <nav class="nan_navbar">
-            <div class="nan_logo">
-                <!-- Logo como SVG inline para evitar error 404 -->
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="40" height="40" rx="5" fill="#FFD700"/>
-                    <text x="20" y="25" font-family="Arial" font-size="16" fill="#000000" text-anchor="middle" font-weight="bold">RSI</text>
-                </svg>
+    <div class="usuarios-container">
+        <div class="usuarios-header">
+            <h1><i class="fas fa-users"></i> Gestión de Usuarios</h1>
+            <p>Administra los usuarios del sistema RSI Enterprise</p>
+        </div>
+        
+        <div class="usuarios-content">
+            <!-- Botones de acción -->
+            <div class="usuarios-actions">
+                <button class="btn-refresh" id="btnRefresh">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+                <button class="btn-export" id="btnExportExcel">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </button>
+                <button class="btn-filtros" id="btnMostrarFiltros">
+                    <i class="fas fa-filter"></i> Filtros
+                </button>
             </div>
-            <button class="nan_hamburger" aria-label="Abrir menú">
-                <i class="fas fa-bars"></i>
-            </button>
-            <button class="nan_close" aria-label="Cerrar menú" style="display: none;">
-                <i class="fas fa-times"></i>
-            </button>
-            <ul class="nan_menu">
-                <li>
-                    <a href="../dashAdmin.html">
-                        <i class="fas fa-home"></i> Inicio
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </header>
-
-    <!-- Contenido principal -->
-    <main class="usuarios-container">
-        <h1 class="titulo-usuarios">
-            <i class="fas fa-users-cog"></i> Gestión de Usuarios
-        </h1>
-        
-        <div class="tabla-contenedor">
-            <table class="tabla-usuarios">
-                <thead>
-                    <tr>
-                        <th width="15%">ID</th>
-                        <th width="20%">Nombre</th>
-                        <th width="25%">Correo</th>
-                        <th width="15%">Rol</th>
-                        <th width="15%">Fecha Registro</th>
-                        <th width="10%">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="usuariosBody">
-                    <!-- Los datos se cargarán dinámicamente -->
-                    <tr>
-                        <td colspan="6" class="loading-indicator">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Cargando usuarios...</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer id="mainContentFooter">
-        <div>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="8" cy="8" r="8" fill="#FFD700"/>
-                <text x="8" y="11" font-family="Arial" font-size="6" fill="#000000" text-anchor="middle" font-weight="bold">RSI</text>
-            </svg>
-            <p>Mesa de ayuda desarrollada por RSI Enterprise Mexico</p>
-        </div>
-    </footer>
-
-    <!-- Scripts externos -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
-    
-    <!-- Script de particulas (compatible) -->
-    <script>
-        /* ========== SCRIPT DE PARTÍCULAS ========== */
-        (function() {
-            // Solo crear si no existe ya
-            if (document.getElementById('loveCanvas')) return;
             
-            const canvas = document.createElement('canvas');
-            canvas.id = 'loveCanvas';
-            
-            canvas.style.position = 'fixed';
-            canvas.style.top = '0';
-            canvas.style.left = '0';
-            canvas.style.zIndex = '-1';
-            canvas.style.pointerEvents = 'none';
-            document.body.appendChild(canvas);
-
-            const ctx = canvas.getContext('2d');
-            let W, H;
-            let hearts = [];
-            let maxHearts = 30;
-
-            function setSize() {
-                W = window.innerWidth;
-                H = window.innerHeight;
-                canvas.width = W;
-                canvas.height = H;
-            }
-            
-            window.addEventListener('resize', setSize);
-            setSize();
-
-            function initHearts() {
-                const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#ffb3c1', '#c9184a'];
-                for (let i = 0; i < maxHearts; i++) {
-                    hearts.push({
-                        x: Math.random() * W,
-                        y: Math.random() * H,
-                        size: Math.random() * 8 + 4,
-                        d: Math.random() * 0.5 + 0.5,
-                        color: colors[Math.floor(Math.random() * colors.length)],
-                        oscilation: Math.random() * 0.02
-                    });
-                }
-            }
-
-            function drawHeart(x, y, size, color) {
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.bezierCurveTo(x, y - 3 * size / 4, x - size, y - 3 * size / 4, x - size, y);
-                ctx.bezierCurveTo(x - size, y + size / 2, x, y + size, x, y + 1.5 * size);
-                ctx.bezierCurveTo(x, y + size, x + size, y + size / 2, x + size, y);
-                ctx.bezierCurveTo(x + size, y - 3 * size / 4, x, y - 3 * size / 4, x, y);
-                ctx.fill();
-            }
-
-            function draw() {
-                ctx.clearRect(0, 0, W, H);
-                
-                for (let i = 0; i < maxHearts; i++) {
-                    const h = hearts[i];
-                    drawHeart(h.x, h.y, h.size, h.color);
-                }
-                update();
-            }
-
-            let angle = 0;
-            function update() {
-                angle += 0.01;
-
-                for (let i = 0; i < maxHearts; i++) {
-                    const h = hearts[i];
-                    
-                    h.y += h.d * 1.5;
-                    h.x += Math.sin(angle + h.oscilation) * 1;
-
-                    if (h.y > H + 20) {
-                        hearts[i].y = -20;
-                        hearts[i].x = Math.random() * W;
-                    }
-
-                    if (h.x > W) h.x = 0;
-                    else if (h.x < 0) h.x = W;
-                }
-            }
-
-            function loop() {
-                draw();
-                requestAnimationFrame(loop);
-            }
-
-            initHearts();
-            loop();
-        })();
-    </script>
-
-    <!-- Script de personalización de colores (compatible) -->
-    <script>
-        /* ========== SCRIPT DE PERSONALIZACIÓN DE COLORES ========== */
-        (function() {
-            'use strict';
-
-            // Verificar si Firebase está disponible
-            if (typeof firebase === 'undefined') {
-                console.log('Firebase no cargado para personalización');
-                return;
-            }
-
-            // Configuración de Firebase
-            const firebaseConfig = {
-                apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-                authDomain: "rsienterprise.firebaseapp.com",
-                projectId: "rsienterprise",
-                storageBucket: "rsienterprise.appspot.com",
-                messagingSenderId: "1063117165770",
-                appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
-            };
-
-            // Inicializar Firebase si no está inicializado
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            
-            const db = firebase.firestore();
-            
-            // Opciones de personalización
-            const backgroundOptions = [
-                { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
-                { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
-                { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
-            ];
-            
-            const themeOptions = [
-                { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
-                { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
-                { id: 'green', name: 'Verde', primary: '#4CAF50', secondary: '#388E3C', accent: '#66BB6A' },
-                { id: 'orange', name: 'Naranja', primary: '#FF9800', secondary: '#F57C00', accent: '#FFB74D' },
-                { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
-                { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
-            ];
-
-            // Función auxiliar para obtener colores más sutiles
-            function getSubtleBackground(baseColor) {
-                if (baseColor === '#1a1a1a') return '#2a2a2a';
-                if (baseColor === '#808080') return '#909090';
-                return '#f0f0f0';
-            }
-
-            // Aplicar estilos CSS personalizados
-            function applyCustomStyles(preferences) {
-                console.log('🎨 Aplicando estilos personalizados');
-                
-                const selectedBackground = backgroundOptions.find(bg => bg.id === (preferences?.background || 'dark')) || backgroundOptions[1];
-                const selectedTheme = themeOptions.find(theme => theme.id === (preferences?.theme || 'purple')) || themeOptions[0];
-                
-                const styleId = 'personalizacion-colores-styles';
-                let styleElement = document.getElementById(styleId);
-                
-                if (!styleElement) {
-                    styleElement = document.createElement('style');
-                    styleElement.id = styleId;
-                    document.head.appendChild(styleElement);
-                }
-                
-                // CSS personalizado para toda la aplicación
-                styleElement.textContent = `
-                    /* VARIABLES CSS GLOBALES */
-                    :root {
-                        --primary-color: ${selectedTheme.primary};
-                        --secondary-color: ${selectedTheme.secondary};
-                        --accent-color: ${selectedTheme.accent};
-                        --background-color: ${selectedBackground.color};
-                        --text-color: ${selectedBackground.textColor};
-                        --card-bg: ${selectedBackground.cardBg};
-                    }
-                    
-                    /* APLICAR COLORES A ELEMENTOS */
-                    body {
-                        background-color: ${getSubtleBackground(selectedBackground.color)} !important;
-                        color: var(--text-color) !important;
-                    }
-                    
-                    /* HEADER */
-                    .nan_header {
-                        background: rgba(0, 0, 0, 0.95) !important;
-                        border-bottom: 2px solid var(--primary-color) !important;
-                    }
-                    
-                    /* FOOTER */
-                    #mainContentFooter {
-                        background: var(--primary-color) !important;
-                        border-top-color: var(--secondary-color) !important;
-                    }
-                    
-                    /* BOTONES */
-                    .btn-detalles:hover {
-                        background-color: ${selectedTheme.primary}20 !important;
-                        color: ${selectedTheme.primary} !important;
-                    }
-                    
-                    .btn-eliminar:hover {
-                        background-color: #dc354520 !important;
-                        color: #dc3545 !important;
-                    }
-                    
-                    /* TABLA */
-                    .tabla-usuarios th {
-                        background-color: ${selectedBackground.cardBg} !important;
-                        color: var(--primary-color) !important;
-                        border-bottom: 2px solid var(--primary-color) !important;
-                    }
-                    
-                    .rol-usuario {
-                        background-color: ${selectedTheme.primary}20 !important;
-                        color: ${selectedTheme.primary} !important;
-                        border-color: ${selectedTheme.primary}40 !important;
-                    }
-                    
-                    /* SWEETALERT2 */
-                    .swal2-popup {
-                        background: ${selectedBackground.cardBg} !important;
-                        color: ${selectedBackground.textColor} !important;
-                        border: 2px solid ${selectedTheme.primary} !important;
-                    }
-                    
-                    .swal2-title {
-                        color: ${selectedTheme.primary} !important;
-                    }
-                    
-                    .swal2-confirm {
-                        background: ${selectedTheme.primary} !important;
-                    }
-                `;
-            }
-
-            // Cargar preferencias de personalización
-            async function loadPersonalizationPreferences() {
-                try {
-                    // 1. Intentar cargar desde localStorage
-                    const savedPrefs = localStorage.getItem('personalizationPreferences');
-                    if (savedPrefs) {
-                        const preferences = JSON.parse(savedPrefs);
-                        applyCustomStyles(preferences);
-                        return preferences;
-                    }
-                    
-                    // 2. Usar valores por defecto (modo oscuro + púrpura)
-                    const defaultPreferences = {
-                        background: 'dark',
-                        theme: 'purple',
-                        backgroundImage: null
-                    };
-                    
-                    applyCustomStyles(defaultPreferences);
-                    localStorage.setItem('personalizationPreferences', JSON.stringify(defaultPreferences));
-                    return defaultPreferences;
-                    
-                } catch (error) {
-                    console.error('❌ Error al cargar preferencias:', error);
-                    // Valores por defecto en caso de error
-                    applyCustomStyles({ background: 'dark', theme: 'purple' });
-                    return { background: 'dark', theme: 'purple' };
-                }
-            }
-
-            // Inicializar
-            function init() {
-                console.log('🎨 Iniciando personalización de colores...');
-                loadPersonalizationPreferences();
-            }
-
-            // Iniciar cuando el DOM esté listo
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
-
-        })();
-    </script>
-
-    <!-- Script principal de gestión de usuarios -->
-    <script>
-        /* ========== SCRIPT PRINCIPAL DE GESTIÓN DE USUARIOS ========== */
-        
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-            authDomain: "rsienterprise.firebaseapp.com",
-            projectId: "rsienterprise",
-            storageBucket: "rsienterprise.appspot.com",
-            messagingSenderId: "1063117165770",
-            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
-        };
-
-        // Inicializar Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Variables globales
-        let usuariosUnsubscribe = null;
-
-        // Formateador de fecha
-        function formatearFecha(timestamp) {
-            if (!timestamp) return 'Sin fecha';
-            try {
-                const fecha = timestamp.toDate();
-                return fecha.toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch (error) {
-                return 'Fecha inválida';
-            }
-        }
-
-        // Capitalizar texto
-        function capitalizarTexto(texto) {
-            if (!texto) return '';
-            return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
-        }
-
-        // Mostrar estado de carga
-        function mostrarCarga() {
-            const tbody = document.getElementById('usuariosBody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="loading-indicator">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Cargando usuarios...</p>
-                    </td>
-                </tr>
-            `;
-        }
-
-        // Mostrar estado vacío
-        function mostrarEstadoVacio() {
-            const tbody = document.getElementById('usuariosBody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="empty-state">
-                        <i class="fas fa-users-slash"></i>
-                        <p>No hay usuarios registrados</p>
-                    </td>
-                </tr>
-            `;
-        }
-
-        // Renderizar usuarios en la tabla
-        function renderizarUsuarios(usuarios) {
-            const tbody = document.getElementById('usuariosBody');
-            
-            if (!usuarios || usuarios.length === 0) {
-                mostrarEstadoVacio();
-                return;
-            }
-            
-            let html = '';
-            
-            usuarios.forEach((usuario) => {
-                const id = usuario.id || 'N/A';
-                const nombre = usuario.nombreCompleto || 'Usuario sin nombre';
-                const email = usuario.email || 'Sin correo';
-                const rol = usuario.rol || 'Usuario';
-                const fecha = formatearFecha(usuario.fechaRegistro);
-                
-                html += `
-                    <tr>
-                        <td title="${id}">${id.substring(0, 8)}...</td>
-                        <td>${capitalizarTexto(nombre)}</td>
-                        <td title="${email}">
-                            <i class="fas fa-envelope"></i> ${email}
-                        </td>
-                        <td>
-                            <span class="rol-usuario" title="${rol}">
-                                ${capitalizarTexto(rol)}
-                            </span>
-                        </td>
-                        <td>${fecha}</td>
-                        <td class="acciones-container">
-                            <button class="btn-detalles" data-id="${id}" title="Ver detalles">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn-eliminar" data-id="${id}" title="Eliminar usuario">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            tbody.innerHTML = html;
-            agregarEventListeners();
-        }
-
-        // Cargar usuarios desde Firebase
-        async function cargarUsuarios() {
-            try {
-                mostrarCarga();
-                
-                const snapshot = await db.collection('usuarios').get();
-                const usuarios = [];
-                
-                snapshot.forEach(doc => {
-                    usuarios.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-                
-                renderizarUsuarios(usuarios);
-                
-            } catch (error) {
-                console.error('Error cargando usuarios:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de conexión',
-                    text: 'No se pudieron cargar los usuarios',
-                    confirmButtonColor: '#FFD700',
-                    background: '#1e1e1e',
-                    color: '#ffffff'
-                });
-            }
-        }
-
-        // Escuchar cambios en tiempo real
-        function escucharCambiosUsuarios() {
-            if (usuariosUnsubscribe) {
-                usuariosUnsubscribe();
-            }
-            
-            usuariosUnsubscribe = db.collection('usuarios').onSnapshot(
-                (snapshot) => {
-                    const usuarios = [];
-                    snapshot.forEach(doc => {
-                        usuarios.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    renderizarUsuarios(usuarios);
-                },
-                (error) => {
-                    console.error('Error en listener:', error);
-                }
-            );
-        }
-
-        // Mostrar detalles del usuario
-        async function mostrarDetalles(id) {
-            try {
-                const doc = await db.collection('usuarios').doc(id).get();
-                
-                if (!doc.exists) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Usuario no encontrado',
-                        confirmButtonColor: '#FFD700'
-                    });
-                    return;
-                }
-                
-                const usuario = doc.data();
-                const fechaRegistro = formatearFecha(usuario.fechaRegistro);
-                
-                Swal.fire({
-                    title: `<strong>${usuario.nombreCompleto || 'Detalles'}</strong>`,
-                    html: `
-                        <div style="text-align: left; color: #e0e0e0;">
-                            <p><b><i class="fas fa-id-card"></i> ID:</b> ${doc.id.substring(0, 20)}...</p>
-                            <p><b><i class="fas fa-user"></i> Nombre:</b> ${usuario.nombreCompleto || 'No especificado'}</p>
-                            <p><b><i class="fas fa-envelope"></i> Email:</b> ${usuario.email || 'No especificado'}</p>
-                            <p><b><i class="fas fa-user-tag"></i> Rol:</b> ${capitalizarTexto(usuario.rol || 'Usuario')}</p>
-                            <p><b><i class="fas fa-calendar-plus"></i> Fecha Registro:</b> ${fechaRegistro}</p>
-                        </div>
-                    `,
-                    icon: 'info',
-                    confirmButtonText: 'Cerrar',
-                    confirmButtonColor: '#FFD700',
-                    background: '#1e1e1e',
-                    color: '#ffffff'
-                });
-                
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudieron obtener los detalles',
-                    confirmButtonColor: '#FFD700'
-                });
-            }
-        }
-
-        // Eliminar usuario
-        async function eliminarUsuario(id, nombre) {
-            const result = await Swal.fire({
-                title: '¿Eliminar usuario?',
-                html: `
-                    <div style="color: #e0e0e0; text-align: left;">
-                        <p><b>Usuario:</b> ${nombre}</p>
-                        <p class="mt-3" style="color: #ff6b6b;">
-                            <i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer
-                        </p>
+            <!-- Filtros (oculto por defecto) -->
+            <div class="filtros-container" id="filtrosContainer" style="display: none;">
+                <div class="filtros-content">
+                    <div class="filtro-group">
+                        <label><i class="fas fa-user"></i> Nombre</label>
+                        <input type="text" id="filtroNombre" class="filtro-input" placeholder="Buscar por nombre...">
                     </div>
-                `,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar',
-                background: '#1e1e1e',
-                reverseButtons: true
-            });
+                    <div class="filtro-group">
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="text" id="filtroEmail" class="filtro-input" placeholder="Buscar por email...">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-calendar"></i> Fecha Inicio</label>
+                        <input type="date" id="filtroFechaInicio" class="filtro-input">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-calendar"></i> Fecha Fin</label>
+                        <input type="date" id="filtroFechaFin" class="filtro-input">
+                    </div>
+                    <div class="filtro-acciones">
+                        <button class="btn-aplicar-filtros" id="btnAplicarFiltros">
+                            <i class="fas fa-check"></i> Aplicar
+                        </button>
+                        <button class="btn-limpiar-filtros" id="btnLimpiarFiltros">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
             
-            if (result.isConfirmed) {
-                try {
-                    await db.collection('usuarios').doc(id).delete();
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Eliminado!',
-                        text: 'Usuario eliminado correctamente',
-                        confirmButtonColor: '#FFD700',
-                        timer: 2000,
-                        timerProgressBar: true
-                    });
-                } catch (error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'No se pudo eliminar el usuario',
-                        confirmButtonColor: '#FFD700'
-                    });
-                }
-            }
-        }
-
-        // Agregar event listeners
-        function agregarEventListeners() {
-            // Detalles
-            document.querySelectorAll('.btn-detalles').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = btn.getAttribute('data-id');
-                    mostrarDetalles(id);
-                });
-            });
+            <!-- Contenedor para la tabla -->
+            <div class="usuarios-list-container">
+                <table class="usuarios-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID</th>
+                            <th><i class="fas fa-user"></i> Nombre</th>
+                            <th><i class="fas fa-envelope"></i> Correo</th>
+                            <th><i class="fas fa-user-tag"></i> Rol</th>
+                            <th><i class="fas fa-calendar-alt"></i> Fecha Registro</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usuarios-lista">
+                        <tr>
+                            <td colspan="6" class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando usuarios...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
-            // Eliminar
-            document.querySelectorAll('.btn-eliminar').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const id = btn.getAttribute('data-id');
-                    const nombre = btn.closest('tr').querySelector('td:nth-child(2)').textContent;
-                    await eliminarUsuario(id, nombre);
-                });
-            });
-        }
-
-        // Navegación móvil
-        function initNavegacionMovil() {
-            const hamburger = document.querySelector('.nan_hamburger');
-            const closeBtn = document.querySelector('.nan_close');
-            const menu = document.querySelector('.nan_menu');
+            <!-- Estadísticas -->
+            <div class="usuarios-stats">
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-content">
+                        <h3 id="totalUsuarios">0</h3>
+                        <p>Usuarios totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-user-check"></i>
+                    <div class="stat-content">
+                        <h3 id="usuariosActivos">0</h3>
+                        <p>Usuarios activos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-user-clock"></i>
+                    <div class="stat-content">
+                        <h3 id="usuariosRecientes">0</h3>
+                        <p>Registrados este mes</p>
+                    </div>
+                </div>
+            </div>
             
-            if (hamburger && menu) {
-                hamburger.addEventListener('click', () => {
-                    menu.classList.add('active');
-                    hamburger.style.display = 'none';
-                    closeBtn.style.display = 'block';
-                });
-                
-                closeBtn.addEventListener('click', () => {
-                    menu.classList.remove('active');
-                    closeBtn.style.display = 'none';
-                    hamburger.style.display = 'block';
-                });
-            }
-        }
+            <!-- Paginación -->
+            <div class="paginacion-container">
+                <button class="btn-paginacion" id="btnAnterior" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <span class="pagina-info" id="paginaInfo">Página 1 de 1</span>
+                <button class="btn-paginacion" id="btnSiguiente" disabled>
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-        // Inicializar todo
-        async function init() {
-            try {
-                console.log('Inicializando gestión de usuarios...');
-                
-                // Inicializar navegación móvil
-                initNavegacionMovil();
-                
-                // Cargar usuarios
-                await cargarUsuarios();
-                
-                // Escuchar cambios
-                escucharCambiosUsuarios();
-                
-                console.log('Gestión de usuarios inicializada');
-                
-            } catch (error) {
-                console.error('Error inicializando:', error);
-            }
-        }
+    <!-- Modal para detalles -->
+    <div class="modal-overlay" id="detalleModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> Detalles del Usuario</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-cancelar" id="closeModalBtn">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+                <button class="btn-modal btn-eliminar-usuario" id="eliminarUsuarioBtn">
+                    <i class="fas fa-trash-alt"></i> Eliminar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
 
-        // Limpiar recursos
-        function limpiarRecursos() {
-            if (usuariosUnsubscribe) {
-                usuariosUnsubscribe();
-            }
-        }
-
-        // Inicializar cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', init);
-        
-        // Limpiar al salir
-        window.addEventListener('beforeunload', limpiarRecursos);
-    </script>
+    <!-- Scripts -->
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="gestion-usuarios.js"></script>
 </body>
 </html>

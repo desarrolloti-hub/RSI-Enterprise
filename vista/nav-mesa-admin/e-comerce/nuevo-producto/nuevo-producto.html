@@ -3,188 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuevo Producto - RSI Enterprise</title>
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>RSI Enterprise - Editar Producto</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    
+    <!-- Estilos -->
     <link rel="stylesheet" href="nuevo-producto.css">
-
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Script de debug -->
+    <script>
+        console.log('🔍 Debug: nuevo-producto.html cargado');
+        console.log('🔍 URL actual:', window.location.href);
+        console.log('🔍 Parámetros:', new URLSearchParams(window.location.search).toString());
+        
+        window.addEventListener('error', function(e) {
+            console.error('❌ Error global:', e.error);
+            console.error('❌ En archivo:', e.filename);
+            console.error('❌ Línea:', e.lineno);
+        });
+    </script>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="nan_navbar">
-        <div class="nan_logo">
-            <img src="https://rsienterprise.com/vista/css/img/LOGO BLANCO.png" alt="Logo RSI">
+    <div class="editar-container">
+        <!-- Encabezado -->
+        <a href="/vista/nav-mesa-admin/e-comerce/productos/productos.html" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver a Gestión de Productos
+        </a>
+        
+        <div class="editar-header">
+            <h1 id="tituloModulo">
+                <i class="fas fa-plus-circle"></i>
+                <span>Nuevo Producto</span>
+            </h1>
+            <p id="subtituloModulo">Completa todos los campos para agregar un nuevo producto</p>
         </div>
-        <button class="nan_hamburger" aria-label="Abrir menú">&#9776;</button>
-        <button class="nan_close" aria-label="Cerrar menú" style="display: none;">&times;</button>
-        <ul class="nan_menu">
-            <li><i class="fas fa-arrow-left"></i><a href="gestion-de-productos.html"> Volver</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
-        <div class="form-header">
-            <h1><i class="fas fa-cube"></i> <span id="formTitle">Nuevo Producto</span></h1>
-            <p id="formSubtitle">Complete todos los campos para agregar un nuevo producto al catálogo</p>
+        
+        <!-- Estado de la operación -->
+        <div id="estadoOperacion" class="estado-operacion">
+            <i id="estadoIcono" class="fas fa-spinner fa-spin"></i>
+            <p id="estadoMensaje"></p>
         </div>
-
-        <form id="productForm" class="product-form">
-            <input type="hidden" id="productId">
+        
+        <!-- Acciones rápidas -->
+        <div class="acciones-rapidas" id="accionesRapidas" style="display: none;">
+            <div class="acciones-info">
+                <span class="producto-id" id="productoIdDisplay">
+                    <i class="fas fa-fingerprint id-icon"></i>
+                    <span id="idTexto">ID: Cargando...</span>
+                </span>
+                <span id="indexStatus" class="index-badge not-indexed">
+                    <i class="far fa-star"></i> No indexado
+                </span>
+            </div>
             
-            <div class="form-sections">
-                <!-- Sección 1: Información Básica -->
-                <section class="form-section">
-                    <h2><i class="fas fa-info-circle"></i> Información Básica</h2>
-                    <div class="form-grid">
+            <div class="acciones-botones">
+                <button id="btnToggleIndex" class="btn-action btn-index" onclick="toggleIndexacion()" disabled>
+                    <i class="far fa-star"></i> <span>Agregar al índice</span>
+                </button>
+                <button id="btnEliminar" class="btn-action btn-eliminar" onclick="confirmarEliminacion()" disabled>
+                    <i class="fas fa-trash-alt"></i> Eliminar Producto
+                </button>
+                <!-- Botón para ver ID completo (se agregará dinámicamente) -->
+            </div>
+        </div>
+        
+        <!-- Información sobre el ID -->
+        <div class="id-info-section" id="idInfoSection" style="display: none;">
+            <h4><i class="fas fa-info-circle"></i> Información sobre el ID</h4>
+            <ul>
+                <li><strong>ID único:</strong> Cada producto tiene un ID único generado por Firebase</li>
+                <li><strong>Uso del ID:</strong> Puedes usar este ID para referenciar el producto en otros sistemas</li>
+                <li><strong>Indexación:</strong> Necesitas el ID para agregar el producto al índice</li>
+                <li><strong>Backup:</strong> Guarda este ID para recuperar el producto si es necesario</li>
+            </ul>
+            <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
+                <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Haz click en el ID para copiarlo al portapapeles
+            </p>
+        </div>
+        
+        <!-- Formulario principal -->
+        <div class="formulario-container">
+            <form id="productoForm" onsubmit="guardarProducto(event)">
+                <input type="hidden" id="productoId">
+                
+                <!-- Información básica -->
+                <div class="form-columns">
+                    <div class="form-column">
+                        <h2><i class="fas fa-info-circle"></i> Información básica</h2>
+                        
                         <div class="form-group">
-                            <label for="nombre"><i class="fas fa-tag"></i> Nombre del Producto *</label>
-                            <input type="text" id="nombre" required placeholder="Ej: Cámara de Seguridad 4K">
-                            <small class="helper-text">Nombre descriptivo del producto</small>
+                            <label for="nombre"><i class="fas fa-cube"></i> Nombre del Producto *</label>
+                            <input type="text" id="nombre" required placeholder="Ej: Cámara CCTV 4K Full HD" maxlength="200">
                         </div>
                         
                         <div class="form-group">
-                            <label for="categoria"><i class="fas fa-tags"></i> Categoría *</label>
+                            <label for="sku"><i class="fas fa-barcode"></i> SKU (Código único) *</label>
+                            <input type="text" id="sku" required placeholder="Ej: CAM-4K-001" maxlength="50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="categoria"><i class="fas fa-tag"></i> Categoría *</label>
                             <select id="categoria" required>
-                                <option value="">Seleccione una categoría</option>
-                                <!-- Categorías se cargan dinámicamente -->
+                                <option value="">Seleccionar categoría...</option>
                             </select>
                         </div>
                     </div>
-                </section>
-
-                <!-- Sección 2: Especificaciones -->
-                <section class="form-section">
-                    <h2><i class="fas fa-cogs"></i> Especificaciones</h2>
-                    <div class="form-grid">
+                    
+                    <div class="form-column">
+                        <h2><i class="fas fa-industry"></i> Especificaciones del producto</h2>
+                        
                         <div class="form-group">
                             <label for="marca"><i class="fas fa-industry"></i> Marca *</label>
-                            <input type="text" id="marca" required placeholder="Ej: Hikvision, Dahua">
+                            <input type="text" id="marca" required placeholder="Ej: Hikvision, Dahua, Samsung" maxlength="100">
                         </div>
                         
                         <div class="form-group">
                             <label for="modelo"><i class="fas fa-cog"></i> Modelo *</label>
-                            <input type="text" id="modelo" required placeholder="Ej: DS-2CD2347G2-LU">
+                            <input type="text" id="modelo" required placeholder="Ej: DS-2CD2143G0-I" maxlength="100">
                         </div>
                         
                         <div class="form-group">
-                            <label for="sku"><i class="fas fa-barcode"></i> SKU/Código</label>
-                            <input type="text" id="sku" placeholder="Código interno">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="descripcion"><i class="fas fa-align-left"></i> Descripción</label>
-                            <textarea id="descripcion" rows="3" placeholder="Descripción detallada del producto"></textarea>
+                            <label for="tipo"><i class="fas fa-cube"></i> Tipo de producto *</label>
+                            <input type="text" id="tipo" required placeholder="Ej: Cámara IP, DVR, NVR" maxlength="100">
                         </div>
                     </div>
-                </section>
-
-                <!-- Sección 3: Precios -->
-                <section class="form-section">
-                    <h2><i class="fas fa-dollar-sign"></i> Precios</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="precio"><i class="fas fa-tag"></i> Precio Base (MXN) *</label>
-                            <div class="input-with-icon">
-                                <span class="currency">$</span>
-                                <input type="number" id="precio" step="0.01" min="0" required placeholder="0.00">
-                            </div>
-                        </div>
+                </div>
+                
+                <!-- Precios -->
+                <div class="form-columns">
+                    <div class="form-column-full">
+                        <h2><i class="fas fa-money-bill-wave"></i> Información de precios</h2>
                         
-                        <div class="form-group">
-                            <label for="descuento"><i class="fas fa-percentage"></i> Descuento (%)</label>
-                            <div class="input-with-icon">
-                                <input type="number" id="descuento" step="1" min="0" max="100" value="0">
-                                <span class="percent">%</span>
+                        <div class="precios-group">
+                            <div class="form-group precio-input">
+                                <label for="precio"><i class="fas fa-dollar-sign"></i> Precio MXN *</label>
+                                <input type="number" id="precio" step="0.01" required placeholder="0.00" min="0" oninput="calcularPrecioFinal()">
                             </div>
-                            <small class="helper-text">0-100% de descuento</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-calculator"></i> Precio Final</label>
-                            <div class="price-display">
-                                <div class="price-row">
-                                    <span>Precio Base:</span>
-                                    <span id="basePriceDisplay">$0.00</span>
-                                </div>
-                                <div class="price-row">
-                                    <span>Descuento:</span>
-                                    <span id="discountDisplay">0% ($0.00)</span>
-                                </div>
-                                <div class="price-row final-price">
-                                    <span>Precio Final:</span>
-                                    <span id="finalPriceDisplay">$0.00</span>
-                                </div>
+                            
+                            <div class="form-group precio-input percentage">
+                                <label for="descuento"><i class="fas fa-percentage"></i> Descuento (%)</label>
+                                <input type="number" id="descuento" step="1" min="0" max="100" value="0" 
+                                       placeholder="0" oninput="calcularPrecioFinal()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-tags"></i> Precio Final</label>
+                                <div class="precio-final-display" id="precioFinalDisplay">$0.00 MXN</div>
                             </div>
                         </div>
                     </div>
-                </section>
-
-                <!-- Sección 4: Imágenes -->
-                <section class="form-section">
-                    <h2><i class="fas fa-images"></i> Imágenes del Producto</h2>
-                    <p class="section-info">Máximo 3 imágenes. Recomendado: 800x600px, formato JPG o PNG</p>
+                </div>
+                
+                <!-- Especificaciones adicionales -->
+                <div class="form-columns">
+                    <div class="form-column">
+                        <h2><i class="fas fa-layer-group"></i> Especificaciones técnicas</h2>
+                        
+                        <div class="form-group">
+                            <label for="estructura"><i class="fas fa-cube"></i> Estructura</label>
+                            <input type="text" id="estructura" placeholder="Ej: Cámara tipo bala, domo, PTZ" maxlength="100">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="resolucion"><i class="fas fa-tv"></i> Resolución</label>
+                            <input type="text" id="resolucion" placeholder="Ej: 4K (3840x2160), 1080p" maxlength="50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="conectividad"><i class="fas fa-wifi"></i> Conectividad</label>
+                            <input type="text" id="conectividad" placeholder="Ej: WiFi, Ethernet, PoE" maxlength="100">
+                        </div>
+                    </div>
                     
-                    <div class="upload-area" onclick="document.getElementById('imagenes').click()">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <h3>Arrastra o haz clic para subir imágenes</h3>
-                        <p>Haz clic o arrastra imágenes aquí</p>
-                    </div>
-                    <input type="file" id="imagenes" multiple accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-                    
-                    <div class="image-preview-grid" id="imagePreviews">
-                        <!-- Las previsualizaciones se agregarán aquí -->
-                    </div>
-                </section>
-
-                <!-- Sección 5: Inventario -->
-                <section class="form-section">
-                    <h2><i class="fas fa-boxes"></i> Inventario</h2>
-                    <div class="form-grid">
+                    <div class="form-column">
+                        <h2><i class="fas fa-link"></i> Enlaces y detalles</h2>
+                        
                         <div class="form-group">
-                            <label for="stock"><i class="fas fa-box"></i> Stock Disponible</label>
-                            <input type="number" id="stock" min="0" value="0">
+                            <label for="link"><i class="fas fa-link"></i> Enlace del producto *</label>
+                            <input type="url" id="link" required placeholder="https://ejemplo.com/producto" maxlength="500">
                         </div>
                         
                         <div class="form-group">
-                            <label for="minStock"><i class="fas fa-exclamation-triangle"></i> Stock Mínimo</label>
-                            <input type="number" id="minStock" min="0" value="5">
-                            <small class="helper-text">Alerta cuando el stock sea menor</small>
+                            <label for="especificaciones"><i class="fas fa-file-alt"></i> Especificaciones detalladas *</label>
+                            <textarea id="especificaciones" rows="6" required 
+                                      placeholder="Descripción completa del producto, características técnicas, funcionalidades, etc." 
+                                      maxlength="2000"></textarea>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Imágenes -->
+                <div class="form-columns">
+                    <div class="form-column-full">
+                        <h2><i class="fas fa-images"></i> Imágenes del producto</h2>
+                        <p class="upload-info">Puedes subir hasta 3 imágenes. Formatos: JPG, PNG, WebP. Tamaño máximo: 5MB por imagen.</p>
                         
-                        <div class="form-group">
-                            <label><i class="fas fa-toggle-on"></i> Estado</label>
-                            <div class="toggle-group">
-                                <label class="switch">
-                                    <input type="checkbox" id="activo" checked>
-                                    <span class="slider"></span>
+                        <div class="image-upload-container">
+                            <div class="image-preview-grid" id="imagePreviews">
+                                <!-- Las imágenes se cargarán aquí -->
+                            </div>
+                            
+                            <div class="upload-actions">
+                                <label class="btn-upload">
+                                    <i class="fas fa-cloud-upload-alt"></i> Seleccionar imágenes
+                                    <input type="file" id="imagenes" multiple accept="image/*" 
+                                           onchange="manejarImagenes(this)" style="display: none;">
                                 </label>
-                                <span class="toggle-label" id="statusLabel">Activo</span>
+                                <span class="upload-info" id="uploadInfo">0/3 imágenes seleccionadas</span>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+                
+                <!-- Configuración de descuento -->
+                <div class="form-columns">
+                    <div class="form-column-full">
+                        <div class="discount-options">
+                            <h3><i class="fas fa-tags"></i> Configuración de descuento</h3>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-bullseye"></i> Aplicar descuento a:</label>
+                                <select id="applyDiscountTo" class="form-select" onchange="alternarOpcionesDescuento()">
+                                    <option value="single">Solo este producto</option>
+                                    <option value="category">Todos los productos de esta categoría</option>
+                                </select>
+                            </div>
+                            
+                            <div id="categorySelection" class="form-group" style="display: none;">
+                                <label for="selectedCategory"><i class="fas fa-filter"></i> Seleccionar categoría:</label>
+                                <select id="selectedCategory" class="form-select">
+                                    <!-- Las categorías se cargarán dinámicamente -->
+                                </select>
+                            </div>
+                            
+                            <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">
+                                <i class="fas fa-info-circle"></i> 
+                                Si seleccionas "Todos los productos de esta categoría", el descuento se aplicará automáticamente 
+                                a todos los productos existentes en la categoría seleccionada.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Acciones del formulario -->
+                <div class="form-actions">
+                    <button type="submit" id="btnGuardar" class="btn-action btn-guardar">
+                        <i class="fas fa-save"></i> <span id="btnGuardarTexto">Guardar Producto</span>
+                    </button>
+                    <button type="button" onclick="cancelarEdicion()" class="btn-action btn-eliminar">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Vistas previas -->
+        <div class="vistas-previa" id="vistasPrevia" style="display: none;">
+            <h3><i class="fas fa-eye"></i> Vista previa del producto</h3>
+            <div class="preview-grid">
+                <div class="preview-card">
+                    <h4>En la tabla principal</h4>
+                    <p>El producto aparecerá en la tabla con toda su información y las acciones disponibles.</p>
+                </div>
+                <div class="preview-card">
+                    <h4>En vista móvil</h4>
+                    <p>Se mostrará como una tarjeta con la información esencial y las imágenes.</p>
+                </div>
+                <div class="preview-card">
+                    <h4>En el índice</h4>
+                    <p id="previewIndex">No aparecerá en el índice principal hasta que lo agregues.</p>
+                </div>
             </div>
-
-            <!-- Botones de acción -->
-            <div class="form-actions">
-                <button type="button" class="btn-cancel" onclick="cancel()">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
-                <button type="button" class="btn-save-draft" onclick="saveDraft()">
-                    <i class="fas fa-save"></i> Guardar Borrador
-                </button>
-                <button type="submit" class="btn-submit">
-                    <i class="fas fa-check"></i> <span id="submitText">Guardar Producto</span>
-                </button>
+        </div>
+    </div>
+    
+    <!-- Modal de confirmación para eliminación -->
+    <div id="modalConfirmacion" class="modal-confirmacion">
+        <div class="modal-contenido">
+            <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+            <h3 id="modalTitulo">Confirmar eliminación</h3>
+            <p id="modalMensaje">¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.</p>
+            <div class="modal-acciones">
+                <button id="btnConfirmarEliminar" class="btn-modal confirm">Eliminar</button>
+                <button onclick="cerrarModalConfirmacion()" class="btn-modal cancel">Cancelar</button>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+   <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+   <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script src="nuevo-producto.js"></script>
 </body>
 </html>

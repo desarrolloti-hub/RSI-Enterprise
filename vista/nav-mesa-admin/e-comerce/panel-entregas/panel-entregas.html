@@ -3,82 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Entregas</title>
+    <title>RSI Enterprise - Panel de Entregas</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="panel-entregas.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <link rel="stylesheet" href="./panel-entregas.css">
+    <!-- OpenPay JS -->
+    <script src="https://resources.openpay.mx/lib/openpay-js/1.2.39/openpay.v1.min.js"></script>
 </head>
 <body>
-
-    <br><br><br>
-
-    <div class="container container-custom mt-5">
+    <div class="entregas-container">
+        <div class="entregas-header">
+            <h1><i class="fas fa-clipboard-check"></i> Panel de Entregas RSI</h1>
+            <p>Historial de Pedidos Entregados</p>
+        </div>
         
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="titulo-pagina mb-0"><i class="fas fa-clipboard-check"></i> Panel de Entregas</h2>
-                <p class="text-muted small mb-0">Historial de pedidos entregados y estatus de pago</p>
+        <div class="entregas-content">
+            <!-- Botones de acción -->
+            <div class="entregas-actions">
+                <button class="btn-refresh-all" id="btnRefreshAll">
+                    <i class="fas fa-sync-alt"></i> Actualizar Todo
+                </button>
+                <button class="btn-export" id="btnExportExcel">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </button>
+                <button class="btn-filtros" id="btnMostrarFiltros">
+                    <i class="fas fa-filter"></i> Filtros
+                </button>
             </div>
-            <button id="refresh-all" class="btn btn-outline-primary mt-3 mt-md-0">
-                <i class="fas fa-sync-alt"></i> Actualizar Estados
-            </button>
-        </div>
-
-        <div class="table-responsive card p-0 mb-3">
-            <table class="table table-hover mb-0" id="deliveriesTable">
-                <thead>
-                    <tr>
-                        <th>ID Orden</th>
-                        <th>Fecha Pedido</th>
-                        <th>Fecha Entrega</th>
-                        <th>Cliente</th>
-                        <th>Productos</th>
-                        <th>Total</th>
-                        <th>Sucursal</th>
-                        <th>Estado Pago</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="entregas-body">
-                    <tr>
-                        <td colspan="9" class="text-center p-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="pagination-container card p-3 d-flex flex-row justify-content-between align-items-center">
-            <button id="btnAnterior" class="btn btn-outline-secondary btn-sm" disabled>
-                <i class="fas fa-chevron-left"></i> Anterior
-            </button>
-            <span id="paginaActual" class="fw-bold small">Página 1</span>
-            <button id="btnSiguiente" class="btn btn-outline-secondary btn-sm" disabled>
-                Siguiente <i class="fas fa-chevron-right"></i>
-            </button>
+            
+            <!-- Filtros (oculto por defecto) -->
+            <div class="filtros-container" id="filtrosContainer" style="display: none;">
+                <div class="filtros-content">
+                    <div class="filtro-group">
+                        <label><i class="fas fa-calendar"></i> Fecha Inicio</label>
+                        <input type="date" id="filtroFechaInicio" class="filtro-input">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-calendar"></i> Fecha Fin</label>
+                        <input type="date" id="filtroFechaFin" class="filtro-input">
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-store"></i> Sucursal</label>
+                        <select id="filtroSucursal" class="filtro-input">
+                            <option value="">Todas</option>
+                            <option value="Sucursal Centro">Centro</option>
+                            <option value="Sucursal Norte">Norte</option>
+                            <option value="Sucursal Sur">Sur</option>
+                        </select>
+                    </div>
+                    <div class="filtro-group">
+                        <label><i class="fas fa-credit-card"></i> Estado Pago</label>
+                        <select id="filtroEstadoPago" class="filtro-input">
+                            <option value="">Todos</option>
+                            <option value="completed">Completado</option>
+                            <option value="paid">Pagado</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="cancelled">Cancelado</option>
+                            <option value="failed">Fallido</option>
+                        </select>
+                    </div>
+                    <div class="filtro-acciones">
+                        <button class="btn-aplicar-filtros" id="btnAplicarFiltros">
+                            <i class="fas fa-check"></i> Aplicar
+                        </button>
+                        <button class="btn-limpiar-filtros" id="btnLimpiarFiltros">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contenedor para la tabla -->
+            <div class="entregas-list-container">
+                <table class="entregas-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID Orden</th>
+                            <th><i class="fas fa-calendar-alt"></i> Fecha Pedido</th>
+                            <th><i class="fas fa-truck"></i> Fecha Entrega</th>
+                            <th><i class="fas fa-user"></i> Email Cliente</th>
+                            <th><i class="fas fa-box"></i> Productos</th>
+                            <th><i class="fas fa-money-bill-wave"></i> Total</th>
+                            <th><i class="fas fa-store"></i> Sucursal</th>
+                            <th><i class="fas fa-credit-card"></i> Estado Pago</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entregas-lista">
+                        <tr>
+                            <td colspan="9" class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando entregas...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="entregas-stats">
+                <div class="stat-card">
+                    <i class="fas fa-clipboard-check"></i>
+                    <div class="stat-content">
+                        <h3 id="totalEntregas">0</h3>
+                        <p>Entregas totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <div class="stat-content">
+                        <h3 id="totalIngresos">$0</h3>
+                        <p>Ingresos totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="stat-content">
+                        <h3 id="entregasCompletadas">0</h3>
+                        <p>Completadas</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-content">
+                        <h3 id="entregasPendientes">0</h3>
+                        <p>Pendientes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Paginación -->
+            <div class="paginacion-container">
+                <button class="btn-paginacion" id="btnAnterior" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <span class="pagina-info" id="paginaInfo">Página 1 de 1</span>
+                <button class="btn-paginacion" id="btnSiguiente" disabled>
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script type="text/javascript" src="https://resources.openpay.mx/lib/openpay-js/1.2.38/openpay.v1.min.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <!-- Modal para detalles -->
+    <div class="modal-overlay" id="detalleModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-clipboard-list"></i> Detalles del Pedido Entregado</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-cancelar" id="closeModalBtn">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+                <button class="btn-modal btn-imprimir" id="printOrderBtn">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <button class="btn-modal btn-refresh" id="refreshModalBtn">
+                    <i class="fas fa-sync-alt"></i> Actualizar estado
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <script src="../js/firebase-init.js"></script>
-    <script src="../js/personalizacion-colores.js"></script>
-    <script src="../js/navegacion-admin.js"></script>
-    
-    <script src="./panel-entregas.js"></script>
-    <script src="../js/particulas.js"></script>
-
+    <!-- Scripts -->
+    <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="panel-entregas.js"></script>
 </body>
 </html>

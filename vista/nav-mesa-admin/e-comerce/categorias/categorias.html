@@ -30,11 +30,11 @@
         <div class="categorias-content">
             <!-- Botones de acción -->
             <div class="categorias-actions">
-                <a href="nuevaCategoria.html" class="btn-nueva-categoria">
+                <button class="btn-nueva-categoria" id="btnNuevaCategoria">
                     <i class="fas fa-plus"></i> Nueva Categoría
-                </a>
+                </button>
                 
-                <a href="categoriasPapelera.html" class="btn-papelera">
+                <a href="/vista/nav-mesa-admin/e-comerce/categorias-papelera/categorias-papelera.html" class="btn-papelera">
                     <i class="fas fa-trash-alt"></i> Ver Papelera
                 </a>
             </div>
@@ -61,8 +61,8 @@
                     </tbody>
                 </table>
                 
-                <!-- Vista Móvil: Tarjetas (visible en móvil, se crea dinámicamente) -->
-                <!-- El contenedor de tarjetas se creará automáticamente en JS -->
+                <!-- Vista Móvil: Tarjetas (visible en móvil) -->
+                <div id="categorias-cards" class="categorias-cards-container"></div>
             </div>
             
             <!-- Estadísticas -->
@@ -92,10 +92,14 @@
         </div>
     </div>
 
+    <!-- Input oculto para subir imagen -->
+    <input type="file" id="imagenUpload" accept="image/*" style="display: none;">
+
     <!-- Scripts -->
     <script src="/vista/nav-mesa-admin/js/firebase-init.js"></script>
     <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
     <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script src="categorias.js"></script>
 </body>

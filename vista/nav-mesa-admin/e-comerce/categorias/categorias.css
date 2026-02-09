@@ -58,9 +58,11 @@ body {
 }
 
 .btn-nueva-categoria {
-   
+    background: var(--primary-color, #6C43E0);
     color: white;
     border: 2px solid var(--primary-color, #6C43E0);
+    border: none;
+    cursor: pointer;
 }
 
 .btn-nueva-categoria:hover {
@@ -556,8 +558,6 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-
-
 .mobile-only {
     display: none;
 }
@@ -570,4 +570,641 @@ body {
     .mobile-only {
         display: block;
     }
+}
+
+/* =========================================== */
+/* AGREGAR DESDE AQUÍ - ESTILOS PARA MODALES SWEETALERT2 */
+/* =========================================== */
+
+/* Contenedor principal del modal - PERMITIR SCROLL */
+.modal-con-scroll {
+    overflow: visible !important;
+    max-height: 85vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.swal2-html-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    max-height: 60vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    scroll-behavior: smooth !important;
+    flex: 1 !important;
+}
+
+/* Scrollbar minimalista y estético */
+.swal2-html-container::-webkit-scrollbar {
+    width: 6px !important;
+    display: block !important;
+}
+
+.swal2-html-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 10px !important;
+    margin: 5px 0 !important;
+}
+
+.swal2-html-container::-webkit-scrollbar-thumb {
+    background: #6C43E0 !important;
+    border-radius: 10px !important;
+    transition: background 0.3s ease !important;
+}
+
+.swal2-html-container::-webkit-scrollbar-thumb:hover {
+    background: #5a35c7 !important;
+}
+
+/* Para Firefox */
+.swal2-html-container {
+    scrollbar-width: thin !important;
+    scrollbar-color: #6C43E0 rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Centrar el modal completamente */
+.modal-container-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px !important;
+}
+
+.swal2-popup {
+    margin: 0 !important;
+    position: relative !important;
+    border-radius: 12px !important;
+    background: #2d2d2d !important;
+    border: 2px solid #6C43E0 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Título fijo en la parte superior */
+.swal2-title {
+    color: #ffffff !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    margin-bottom: 15px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 2px solid #6C43E0 !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+}
+
+/* Botones fijos en la parte inferior */
+.swal2-actions {
+    margin: 15px 0 0 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    padding-top: 15px !important;
+    border-top: 1px solid rgba(108, 67, 224, 0.2) !important;
+}
+
+/* Contenedor principal del contenido del modal */
+.swal2-html-container > div {
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-bottom: 5px !important;
+}
+
+/* Grupos de formulario */
+.form-group {
+    width: 100% !important;
+    margin-bottom: 20px !important;
+}
+
+/* Labels con buen estilo */
+.form-group label {
+    display: block !important;
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    text-align: left !important;
+    font-size: 0.95rem !important;
+}
+
+
+.swal2-input:focus, .swal2-textarea:focus, .swal2-file:focus {
+    border-color: #6C43E0 !important;
+    box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.3) !important;
+    outline: none !important;
+}
+
+/* Textarea específico */
+.swal2-textarea {
+    min-height: 100px !important;
+    resize: vertical !important;
+    line-height: 1.5 !important;
+}
+
+/* File input específico */
+.swal2-file {
+    padding: 10px !important;
+    cursor: pointer !important;
+}
+
+/* Texto pequeño (helper text) */
+small {
+    color: #888 !important;
+    font-size: 0.8rem !important;
+    text-align: center !important;
+    display: block !important;
+    margin-top: 5px !important;
+    line-height: 1.4 !important;
+}
+
+/* Preview de imágenes */
+#imagen-preview {
+    margin-top: 15px !important;
+    text-align: center !important;
+    animation: fadeIn 0.3s ease !important;
+}
+
+#imagen-preview p {
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    font-size: 0.9rem !important;
+}
+
+#preview-img {
+    max-width: 150px !important;
+    max-height: 150px !important;
+    border-radius: 8px !important;
+    border: 2px solid #6C43E0 !important;
+    margin: 0 auto !important;
+    display: block !important;
+    object-fit: cover !important;
+}
+
+/* Checkbox para eliminar imagen */
+label[for="eliminar-imagen"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    color: #ffffff !important;
+    font-size: 0.9rem !important;
+    margin-top: 10px !important;
+}
+
+input[type="checkbox"] {
+    margin-right: 8px !important;
+    width: 16px !important;
+    height: 16px !important;
+    cursor: pointer !important;
+    accent-color: #6C43E0 !important;
+}
+
+/* Botones de SweetAlert */
+.swal2-confirm, .swal2-cancel {
+    flex: 1 !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    cursor: pointer !important;
+    min-height: 44px !important;
+}
+
+.swal2-confirm {
+    background: #6C43E0 !important;
+    color: white !important;
+}
+
+.swal2-confirm:hover {
+    background: #5a35c7 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(108, 67, 224, 0.3) !important;
+}
+
+.swal2-cancel {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.swal2-cancel:hover {
+    background: #5a6268 !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.swal2-show {
+    animation: fadeIn 0.3s ease !important;
+}
+
+/* =========================================== */
+/* RESPONSIVE PARA MODALES SWEETALERT2 */
+/* =========================================== */
+
+/* Tablet (768px - 992px) */
+@media (max-width: 992px) {
+    .swal2-popup {
+        width: 85% !important;
+        max-width: 600px !important;
+        padding: 20px !important;
+        max-height: 85vh !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.4rem !important;
+    }
+    
+    .swal2-html-container {
+        max-height: 55vh !important;
+    }
+    
+    .swal2-input, .swal2-textarea, .swal2-file {
+        padding: 11px 14px !important;
+        font-size: 0.93rem !important;
+    }
+    
+    .swal2-confirm, .swal2-cancel {
+        padding: 11px 18px !important;
+        font-size: 0.93rem !important;
+    }
+}
+
+/* Móvil (576px - 768px) */
+@media (max-width: 768px) {
+    .swal2-popup {
+        width: 90% !important;
+        max-width: 500px !important;
+        padding: 15px !important;
+        margin: 10px !important;
+        max-height: 90vh !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.3rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .swal2-html-container {
+        max-height: 65vh !important;
+    }
+    
+    .swal2-input, .swal2-textarea, .swal2-file {
+        padding: 10px 12px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .swal2-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-top: 12px !important;
+    }
+    
+    .swal2-confirm, .swal2-cancel {
+        width: 100% !important;
+        padding: 12px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem !important;
+    }
+    
+    #preview-img {
+        max-width: 120px !important;
+        max-height: 120px !important;
+    }
+}
+
+/* Móvil pequeño (menos de 576px) */
+@media (max-width: 576px) {
+    .swal2-popup {
+        width: 95% !important;
+        padding: 12px !important;
+        margin: 5px !important;
+        border-radius: 10px !important;
+        max-height: 95vh !important;
+    }
+    
+    .swal2-container {
+        padding: 5px !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.2rem !important;
+        margin-bottom: 10px !important;
+        padding-bottom: 8px !important;
+    }
+    
+    .swal2-html-container {
+        max-height: 70vh !important;
+    }
+    
+    .swal2-html-container::-webkit-scrollbar {
+        width: 4px !important;
+    }
+    
+    .swal2-input, .swal2-textarea, .swal2-file {
+        padding: 9px 10px !important;
+        font-size: 0.85rem !important;
+        border-radius: 6px !important;
+    }
+    
+    .swal2-textarea {
+        min-height: 80px !important;
+    }
+    
+    .swal2-confirm, .swal2-cancel {
+        padding: 10px !important;
+        font-size: 0.85rem !important;
+        min-height: 40px !important;
+    }
+    
+    .form-group {
+        margin-bottom: 15px !important;
+    }
+    
+    .form-group label {
+        font-size: 0.85rem !important;
+        margin-bottom: 6px !important;
+    }
+    
+    small {
+        font-size: 0.75rem !important;
+    }
+    
+    #preview-img {
+        max-width: 100px !important;
+        max-height: 100px !important;
+    }
+    
+    #imagen-preview p {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* Pantalla muy pequeña (menos de 400px) */
+@media (max-width: 400px) {
+    .swal2-popup {
+        width: 98% !important;
+        padding: 10px !important;
+        max-height: 98vh !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.1rem !important;
+    }
+    
+    .swal2-html-container {
+        max-height: 75vh !important;
+    }
+    
+    .swal2-input, .swal2-textarea, .swal2-file {
+        padding: 8px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .swal2-confirm, .swal2-cancel {
+        padding: 9px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    #preview-img {
+        max-width: 80px !important;
+        max-height: 80px !important;
+    }
+}
+
+/* Mejoras de accesibilidad */
+.swal2-input:focus-visible,
+.swal2-textarea:focus-visible,
+.swal2-file:focus-visible,
+.swal2-confirm:focus-visible,
+.swal2-cancel:focus-visible {
+    outline: 2px solid #6C43E0 !important;
+    outline-offset: 2px !important;
+}
+/* Agrega esto al FINAL de tu categorias.css existente */
+
+/* Estilos para SweetAlert2 modales */
+.swal2-popup {
+    font-family: 'Segoe UI', 'Arial', sans-serif !important;
+    background: #2d2d2d !important;
+    border-radius: 12px !important;
+    border: 2px solid #6C43E0 !important;
+    color: #ffffff !important;
+}
+
+.swal2-title {
+    color: #ffffff !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 20px !important;
+}
+
+.swal2-input, .swal2-file {
+    background: #3d3d3d !important;
+    color: white !important;
+    border: 1px solid #555 !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    margin: 10px auto !important;
+}
+
+.swal2-input:focus {
+    border-color: #6C43E0 !important;
+    box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.3) !important;
+}
+
+.swal2-actions {
+    margin-top: 20px !important;
+}
+
+.swal2-confirm {
+    background: #6C43E0 !important;
+    border: none !important;
+}
+
+.swal2-cancel {
+    background: #6c757d !important;
+    border: none !important;
+}
+
+/* Para que el contenido sea scrollable si es necesario */
+.swal2-html-container {
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+    padding: 0 10px !important;
+}
+
+.swal2-html-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.swal2-html-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.swal2-html-container::-webkit-scrollbar-thumb {
+    background: #6C43E0;
+    border-radius: 10px;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .swal2-popup {
+        width: 90% !important;
+        padding: 15px !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.3rem !important;
+    }
+    
+    .swal2-html-container {
+        max-height: 50vh !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .swal2-popup {
+        width: 95% !important;
+        padding: 10px !important;
+    }
+    
+    .swal2-actions {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .swal2-confirm, .swal2-cancel {
+        width: 100% !important;
+    }
+}
+/* OCULTAR COMPLETAMENTE INPUTS FILE EN SWEETALERT */
+.swal2-popup input[type="file"],
+.swal2-html-container input[type="file"],
+.swal2-file {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+}
+
+
+/* Estilos para imágenes en tabla */
+.celda-imagen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+}
+
+.imagen-tabla {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid rgba(108, 67, 224, 0.3);
+    background-color: #2d2d2d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.imagen-tabla:hover {
+    transform: scale(1.1);
+    border-color: #6C43E0;
+    box-shadow: 0 4px 8px rgba(108, 67, 224, 0.3);
+}
+
+.celda-sin-imagen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    color: #8B5FEB;
+    background: rgba(108, 67, 224, 0.1);
+    border-radius: 8px;
+    min-height: 60px;
+}
+
+.celda-sin-imagen i {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+.celda-sin-imagen span {
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+/* Asegurar que las columnas tengan suficiente espacio */
+.col-id {
+    width: 120px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.col-nombre {
+    min-width: 150px;
+}
+
+.col-imagen {
+    width: 100px;
+    text-align: center;
+}
+
+.col-acciones {
+    min-width: 200px;
+}
+
+/* Estilos para tarjetas (móvil) */
+.card-imagen-container {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.card-imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid rgba(108, 67, 224, 0.3);
+}
+
+/* Loading states */
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-state i {
+    font-size: 2rem;
+    color: #6C43E0;
+    margin-bottom: 15px;
+}
+
+.loading-state p {
+    color: #aaa;
+    font-size: 0.9rem;
 }

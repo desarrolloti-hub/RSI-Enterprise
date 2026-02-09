@@ -1,5 +1,5 @@
 // ============================================
-// VER-TICKET.JS - Adaptado a estructura existente
+// VER-TICKET.JS - Con validación automática de abandono
 // ============================================
 
 // ELEMENTOS DEL DOM
@@ -23,7 +23,16 @@ const AppState = {
     currentTicket: null,
     ticketId: null,
     isModalOpen: false,
-    db: null
+    db: null,
+    timerInterval: null,
+    abandonmentCheckInterval: null
+};
+
+// CONSTANTES DE TIEMPO
+const TimeConstants = {
+    MAX_TICKET_DURATION: 5 * 24 * 60 * 60 * 1000, // 5 días en milisegundos
+    PAUSE_DURATION: 3 * 24 * 60 * 60 * 1000, // 3 días adicionales para pausa
+    CHECK_INTERVAL: 60 * 1000 // Revisar cada minuto (60 segundos)
 };
 
 // UTILIDADES
@@ -106,7 +115,7 @@ const Utils = {
         try {
             if (creationTimestamp.toDate) {
                 creationTime = creationTimestamp.toDate().getTime();
-            } else if (creationTimestamp.seconds) {
+            } else if (timestamp.seconds) {
                 creationTime = creationTimestamp.seconds * 1000;
             } else {
                 return { expired: true };
@@ -116,14 +125,13 @@ const Utils = {
         }
         
         const now = Date.now();
-        const maxDuration = 5 * 24 * 60 * 60 * 1000; // 5 días
-        let remainingTime = creationTime + maxDuration - now;
-        
-        const pauseDuration = 3 * 24 * 60 * 60 * 1000; // 3 días adicionales para pausa
+        let maxDuration = TimeConstants.MAX_TICKET_DURATION;
         
         if (status === 'en_proceso') {
-            remainingTime = (creationTime + maxDuration + pauseDuration) - now;
+            maxDuration += TimeConstants.PAUSE_DURATION;
         }
+        
+        let remainingTime = creationTime + maxDuration - now;
         
         if (remainingTime <= 0) {
             return { expired: true };
@@ -137,8 +145,54 @@ const Utils = {
             expired: false,
             days: days,
             hours: hours,
-            minutes: minutes
+            minutes: minutes,
+            totalMs: remainingTime
         };
+    },
+    
+    checkAndUpdateAbandonmentStatus: async function(ticketId, ticketData) {
+        try {
+            // Solo verificar tickets que no estén en estado final
+            const finalStatuses = ['finalizado', 'cerrado', 'cancelado', 'completado', 'abandono_de_actividades'];
+            if (finalStatuses.includes(ticketData.estado)) {
+                return false; // No hacer nada con tickets finalizados
+            }
+            
+            const abandonmentTime = this.calculateAbandonmentTime(ticketData.fechaCreacion, ticketData.estado);
+            
+            if (abandonmentTime.expired) {
+                console.log(`Ticket ${ticketId} ha expirado. Cambiando a estado de abandono...`);
+                
+                // Actualizar el estado del ticket a "abandono_de_actividades"
+                const ticketRef = AppState.db.collection('ticketsmesa').doc(ticketId);
+                
+                await ticketRef.update({
+                    estado: 'abandono_de_actividades',
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    motivoAbandono: 'Cambio automático por tiempo de inactividad excedido'
+                });
+                
+                // Registrar en el historial
+                await AppState.db.collection('historialTicket').add({
+                    ticketId: ticketId,
+                    fechaCambio: firebase.firestore.FieldValue.serverTimestamp(),
+                    colaboradorId: 'sistema_automatico',
+                    colaboradorNombre: 'Sistema Automático',
+                    estadoAnterior: ticketData.estado,
+                    estadoNuevo: 'abandono_de_actividades',
+                    motivo: 'El ticket ha sido marcado como "Abandono de Actividades" automáticamente por exceder el tiempo máximo permitido sin actividad.'
+                });
+                
+                console.log(`Ticket ${ticketId} actualizado a estado de abandono.`);
+                return true;
+            }
+            
+            return false;
+            
+        } catch (error) {
+            console.error('Error verificando estado de abandono:', error);
+            return false;
+        }
     },
     
     getBadgeClass: (status) => {
@@ -213,6 +267,47 @@ const Utils = {
         if (DOM.imageModal) {
             DOM.imageModal.style.display = 'none';
         }
+    },
+    
+    // Función para iniciar la verificación periódica de abandono
+    startAbandonmentCheck: function(ticketId, ticketData) {
+        // Limpiar intervalo anterior si existe
+        if (AppState.abandonmentCheckInterval) {
+            clearInterval(AppState.abandonmentCheckInterval);
+        }
+        
+        // Verificar inmediatamente al cargar
+        this.checkAndUpdateAbandonmentStatus(ticketId, ticketData);
+        
+        // Configurar verificación periódica
+        AppState.abandonmentCheckInterval = setInterval(async () => {
+            try {
+                // Obtener datos actualizados del ticket
+                const ticketRef = AppState.db.collection('ticketsmesa').doc(ticketId);
+                const ticketDoc = await ticketRef.get();
+                
+                if (ticketDoc.exists) {
+                    const updatedData = ticketDoc.data();
+                    const changed = await this.checkAndUpdateAbandonmentStatus(ticketId, updatedData);
+                    
+                    // Si el estado cambió, recargar la página
+                    if (changed) {
+                        console.log('Estado cambiado a abandono, recargando página...');
+                        TicketController.loadTicketFromURL();
+                    }
+                }
+            } catch (error) {
+                console.error('Error en verificación periódica de abandono:', error);
+            }
+        }, TimeConstants.CHECK_INTERVAL);
+    },
+    
+    // Función para detener la verificación de abandono
+    stopAbandonmentCheck: function() {
+        if (AppState.abandonmentCheckInterval) {
+            clearInterval(AppState.abandonmentCheckInterval);
+            AppState.abandonmentCheckInterval = null;
+        }
     }
 };
 
@@ -270,6 +365,11 @@ const TicketController = {
             if (e.key === 'Escape' && AppState.isModalOpen) {
                 Utils.closeImageModal();
             }
+        });
+        
+        // Limpiar intervalos al salir de la página
+        window.addEventListener('beforeunload', () => {
+            Utils.stopAbandonmentCheck();
         });
     },
     
@@ -332,6 +432,9 @@ const TicketController = {
     
     loadTicketDetails: async function(ticketId) {
         try {
+            // Detener cualquier verificación previa
+            Utils.stopAbandonmentCheck();
+            
             const ticketRef = AppState.db.collection('ticketsmesa').doc(ticketId);
             const ticketDoc = await ticketRef.get();
             
@@ -347,11 +450,39 @@ const TicketController = {
                 DOM.pageTitle.textContent = `Ticket #${ticketId}`;
             }
             
-            // Cargar datos adicionales
-            await this.loadAdditionalData(data, ticketId);
+            // VERIFICAR SI EL TICKET HA EXPIRADO
+            const abandonmentTime = Utils.calculateAbandonmentTime(data.fechaCreacion, data.estado);
+            const finalStatuses = ['finalizado', 'cerrado', 'cancelado', 'completado', 'abandono_de_actividades'];
             
-            // Renderizar
-            this.renderTicketDetails(data, ticketId);
+            if (abandonmentTime.expired && !finalStatuses.includes(data.estado)) {
+                console.log('Ticket expirado detectado, actualizando estado...');
+                await Utils.checkAndUpdateAbandonmentStatus(ticketId, data);
+                
+                // Recargar datos después de la actualización
+                const updatedDoc = await ticketRef.get();
+                const updatedData = updatedDoc.data();
+                AppState.currentTicket = updatedData;
+                
+                // Cargar datos adicionales
+                await this.loadAdditionalData(updatedData, ticketId);
+                
+                // Renderizar
+                this.renderTicketDetails(updatedData, ticketId);
+                
+                // Iniciar verificación periódica (aunque ya esté en abandono, por si acaso)
+                Utils.startAbandonmentCheck(ticketId, updatedData);
+            } else {
+                // Cargar datos adicionales
+                await this.loadAdditionalData(data, ticketId);
+                
+                // Renderizar
+                this.renderTicketDetails(data, ticketId);
+                
+                // INICIAR VERIFICACIÓN PERIÓDICA DE ABANDONO
+                if (!finalStatuses.includes(data.estado)) {
+                    Utils.startAbandonmentCheck(ticketId, data);
+                }
+            }
             
             Utils.showContent();
             
@@ -419,6 +550,9 @@ const TicketController = {
         // HTML de razón de pausa
         const pauseReasonHTML = this.generatePauseReasonHTML(data);
         
+        // HTML de razón de abandono (si aplica)
+        const abandonmentReasonHTML = this.generateAbandonmentReasonHTML(data);
+        
         // HTML de evidencias del usuario
         const userEvidenceHTML = this.generateUserEvidenceHTML(userEvidence);
         
@@ -483,10 +617,18 @@ const TicketController = {
                         <span class="info-value">${Utils.formatDate(data.fechaFinalizacion)}</span>
                     </div>
                     ` : ''}
+                    
+                    ${data.fechaAbandono ? `
+                    <div class="info-item">
+                        <span class="info-label">Fecha de abandono</span>
+                        <span class="info-value">${Utils.formatDate(data.fechaAbandono)}</span>
+                    </div>
+                    ` : ''}
                 </div>
                 
                 ${timerHTML}
                 ${pauseReasonHTML}
+                ${abandonmentReasonHTML}
             </div>
             
             <!-- Colaboradores y aceptación -->
@@ -514,6 +656,12 @@ const TicketController = {
             <!-- Botones de acción -->
             <div class="action-buttons-container">
                 ${actionButtons}
+            </div>
+            
+            <!-- Nota de verificación automática -->
+            <div style="margin-top: 20px; padding: 10px; background-color: rgba(255, 255, 255, 0.05); border-radius: 8px; font-size: 0.85rem; color: #aaa; text-align: center;">
+                <i class="fas fa-robot"></i>
+                Los tickets inactivos por más de 5 días serán marcados como "Abandono de Actividades" en caso de requerir mas tiempo para el cierre de ticket comunicate con tu superior.
             </div>
         `;
         
@@ -665,7 +813,7 @@ const TicketController = {
     
     generateTimerHTML: function(data) {
         // SIEMPRE mostrar timer si el ticket no está finalizado
-        const ticketFinalizado = ['finalizado', 'cerrado', 'cancelado', 'completado'].includes(data.estado);
+        const ticketFinalizado = ['finalizado', 'cerrado', 'cancelado', 'completado', 'abandono_de_actividades'].includes(data.estado);
         
         if (ticketFinalizado) {
             return ''; // No mostrar timer para tickets finalizados
@@ -680,6 +828,9 @@ const TicketController = {
                     <div class="timer-display" style="color: #dc3545;">
                         ¡TICKET EN ABANDONO DE ACTIVIDADES!
                     </div>
+                    <div class="timer-subtext" style="font-size: 0.9rem; color: #dc3545; margin-top: 5px;">
+                        (Cambio automático por tiempo de inactividad excedido)
+                    </div>
                 </div>
             `;
         }
@@ -688,22 +839,48 @@ const TicketController = {
         const abandonmentTime = Utils.calculateAbandonmentTime(data.fechaCreacion, data.estado);
         
         let timerContent = '';
+        let timerClass = '';
+        
         if (abandonmentTime.expired) {
             timerContent = `
                 <div class="timer-display" style="color: #dc3545;">
                     <i class="fas fa-exclamation-circle"></i> Tiempo expirado
                 </div>
+                <div class="timer-subtext" style="color: #dc3545; font-size: 0.9rem;">
+                    El ticket será marcado como "Abandono de Actividades" en cualquier momento
+                </div>
             `;
+            timerClass = 'timer-expired';
         } else {
+            // Calcular porcentaje de tiempo restante
+            const totalDuration = data.estado === 'en_proceso' ? 
+                TimeConstants.MAX_TICKET_DURATION + TimeConstants.PAUSE_DURATION : 
+                TimeConstants.MAX_TICKET_DURATION;
+            const percentage = Math.max(0, Math.min(100, (abandonmentTime.totalMs / totalDuration) * 100));
+            
+            // Determinar color según tiempo restante
+            let barColor = '#28a745'; // Verde (mucho tiempo)
+            if (percentage < 30) barColor = '#ffc107'; // Amarillo (poco tiempo)
+            if (percentage < 10) barColor = '#dc3545'; // Rojo (muy poco tiempo)
+            
             timerContent = `
                 <div class="timer-display">
                     ${abandonmentTime.days} Días, ${abandonmentTime.hours} Horas, ${abandonmentTime.minutes} Minutos
+                </div>
+                <div class="progress" style="height: 8px; margin-top: 10px; background-color: rgba(255, 255, 255, 0.1); border-radius: 4px;">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: ${percentage}%; background-color: ${barColor}; border-radius: 4px;" 
+                         aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <div class="timer-subtext" style="margin-top: 5px; font-size: 0.85rem; color: #aaa;">
+                    Tiempo restante para cierre automático
                 </div>
             `;
         }
         
         return `
-            <div class="abandonment-timer">
+            <div class="abandonment-timer ${timerClass}">
                 <div class="timer-header">
                     <i class="fas fa-hourglass-half"></i> Cierre por Inactividad Automático
                 </div>
@@ -721,6 +898,24 @@ const TicketController = {
                     <i class="fas fa-pause-circle"></i> Razón de Pausa:
                 </p>
                 <p style="margin-top: 5px; font-style: italic;">${data.pauseComment}</p>
+            </div>
+        `;
+    },
+    
+    generateAbandonmentReasonHTML: function(data) {
+        if (data.estado !== 'abandono_de_actividades' || !data.motivoAbandono) return '';
+        
+        return `
+            <div style="margin-top: 20px; padding: 15px; border-left: 5px solid #dc3545; background-color: rgba(220, 53, 69, 0.1); border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; font-weight: 600; color: #dc3545;">
+                    <i class="fas fa-exclamation-triangle"></i> Razón de Abandono:
+                </p>
+                <p style="margin-top: 5px; font-style: italic;">${data.motivoAbandono}</p>
+                ${data.fechaAbandono ? `
+                    <p style="margin-top: 5px; font-size: 0.9rem; color: #aaa;">
+                        <i class="fas fa-calendar-alt"></i> Fecha de cambio automático: ${Utils.formatDate(data.fechaAbandono)}
+                    </p>
+                ` : ''}
             </div>
         `;
     },
