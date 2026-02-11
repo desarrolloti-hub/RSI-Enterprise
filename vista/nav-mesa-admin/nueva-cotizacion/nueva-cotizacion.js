@@ -698,6 +698,7 @@ async function verificarUltimoItemAntesDeAgregar() {
 }
 
 // === FUNCIÓN MEJORADA PARA AGREGAR ITEM ===
+// === FUNCIÓN MEJORADA PARA AGREGAR ITEM - CON DRAG & DROP ===
 function agregarItem() {
     const row = document.createElement('tr');
     row.draggable = true;
@@ -734,6 +735,11 @@ function agregarItem() {
     
     itemsTableBody.appendChild(row);
 
+    // Inicializar atributos de datos
+    row.setAttribute('data-producto-id', '');
+    row.setAttribute('data-precio-original', '0');
+    row.setAttribute('data-producto-nombre', '');
+
     // Configurar eventos para la nueva fila
     const categoriaSelect = row.querySelector('.item-categoria');
     const tipoTecnologiaSelect = row.querySelector('.item-tipo-tecnologia');
@@ -742,6 +748,72 @@ function agregarItem() {
     const cantidadInput = row.querySelector('.item-cantidad');
     const precioInput = row.querySelector('.item-precio');
     const eliminarBtn = row.querySelector('.eliminar-item');
+
+    // Variables para rastrear el producto seleccionado
+    let productoIdSeleccionado = null;
+    let precioOriginalProducto = null;
+    let nombreProductoSeleccionado = null;
+    
+    // === FUNCIÓN PARA VERIFICAR CAMBIO DE PRECIO EN PRODUCTO DE BASE DE DATOS ===
+    async function verificarCambioPrecioProducto() {
+        // Solo verificar si hay un producto seleccionado de la base de datos
+        if (!productoIdSeleccionado || !precioOriginalProducto) {
+            return false;
+        }
+        
+        const precioActual = parseFloat(precioInput.value) || 0;
+        
+        // Si el precio cambió significativamente (diferencia > 0.01)
+        if (Math.abs(precioActual - precioOriginalProducto) > 0.01) {
+            const result = await Swal.fire({
+                title: '¿Actualizar producto?',
+                html: `
+                    <div style="text-align: left; margin: 15px 0;">
+                        <p style="font-size: 1.1rem; margin-bottom: 10px;">
+                            <strong>${nombreProductoSeleccionado || 'Producto'}</strong>
+                        </p>
+                        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px;">
+                            <p style="margin: 5px 0;">
+                                <span style="color: #6b7280;">Precio original:</span> 
+                                <span style="font-weight: 600;">$${precioOriginalProducto.toFixed(2)}</span>
+                            </p>
+                            <p style="margin: 5px 0;">
+                                <span style="color: #6b7280;">Nuevo precio:</span> 
+                                <span style="font-weight: 600; color: #2563eb;">$${precioActual.toFixed(2)}</span>
+                            </p>
+                        </div>
+                        <p style="margin-top: 15px;">¿Desea actualizar el precio en la base de datos?</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '✅ Sí, actualizar',
+                cancelButtonText: '❌ No, mantener',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            });
+            
+            if (result.isConfirmed) {
+                mostrarLoading(true);
+                try {
+                    const actualizado = await actualizarProductoEnFirebase(productoIdSeleccionado, precioActual);
+                    if (actualizado) {
+                        mostrarAlerta('✅ Producto actualizado correctamente', 'success');
+                        // Actualizar el precio original al nuevo valor
+                        precioOriginalProducto = precioActual;
+                    }
+                } catch (error) {
+                    console.error('Error al actualizar producto:', error);
+                    mostrarAlerta('Error al actualizar el producto', 'error');
+                } finally {
+                    mostrarLoading(false);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 
     // === FUNCIÓN PARA BUSCAR Y MOSTRAR PRODUCTOS DE LA CATEGORÍA SELECCIONADA ===
     async function buscarProductosCategoriaSeleccionada() {
@@ -785,7 +857,7 @@ function agregarItem() {
         }
     });
 
-    // === ENTER EN EL ÚLTIMO CAMPO: VERIFICA SI ES NUEVO PRODUCTO Y AGREGA OTRO ITEM ===
+    // === ENTER EN EL ÚLTIMO CAMPO: VERIFICA CAMBIO DE PRECIO Y NUEVO PRODUCTO ===
     precioInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -793,14 +865,20 @@ function agregarItem() {
             // Calcular total primero
             calcularTotalItem(row);
             
-            // Verificar si es un producto nuevo que se debe guardar
+            // Verificar cambio de precio en producto de base de datos
+            await verificarCambioPrecioProductoEnFila(row);
+            
+            // Verificar si es un producto nuevo
             await verificarNuevoProducto(row);
             
             // Agregar nuevo item
-            agregarItem().querySelector('.item-categoria').focus();
+            const nuevaFila = agregarItem();
+            const primerCampoNuevaFila = nuevaFila.querySelector('.item-categoria');
+            if (primerCampoNuevaFila) {
+                primerCampoNuevaFila.focus();
+            }
             marcarFormularioModificado();
-        } else if (e.key === 'Tab') {
-            // Con Tab, ir al botón de eliminar
+        } else if (e.key === 'Tab' && !e.shiftKey) {
             e.preventDefault();
             eliminarBtn.focus();
         }
@@ -811,7 +889,6 @@ function agregarItem() {
         const categoriaId = this.value;
         if (categoriaId) {
             await cargarProductosPorCategoria(categoriaId);
-            // Si hay texto en la descripción, buscar productos de esta categoría
             if (descripcionInput.value.trim().length >= 2) {
                 buscarProductosCategoriaSeleccionada();
             }
@@ -819,7 +896,7 @@ function agregarItem() {
         marcarFormularioModificado();
     });
 
-    // Evento para búsqueda de productos - SOLO DE LA CATEGORÍA SELECCIONADA
+    // Evento para búsqueda de productos
     let searchTimeout;
     descripcionInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
@@ -838,7 +915,7 @@ function agregarItem() {
         marcarFormularioModificado();
     });
 
-    // Evento para clic en el campo de descripción - mostrar productos de la categoría si existe
+    // Evento para clic en el campo de descripción
     descripcionInput.addEventListener('click', function() {
         const categoriaId = categoriaSelect.value;
         const searchText = this.value.trim();
@@ -855,9 +932,8 @@ function agregarItem() {
         }
     });
 
-    // Eventos para cálculos con seguimiento de modificaciones
+    // Eventos para cálculos
     cantidadInput.addEventListener('input', () => {
-        // Forzar número entero
         if (cantidadInput.value.includes('.')) {
             cantidadInput.value = Math.floor(parseFloat(cantidadInput.value));
         }
@@ -866,26 +942,15 @@ function agregarItem() {
     });
     
     precioInput.addEventListener('input', function() {
-        const descripcion = descripcionInput.value.trim();
-        const precioOriginal = productos.find(p => p.nombre === descripcion)?.precioUnitario;
-        const precioActual = parseFloat(this.value);
-        
-        // Si hay un producto cargado y el precio es diferente, registrar la modificación
-        if (precioOriginal && precioActual !== precioOriginal) {
-            // Buscar el producto en la lista
-            const producto = productos.find(p => p.nombre === descripcion);
-            if (producto && !productosModificados.has(producto.id)) {
-                productosModificados.set(producto.id, {
-                    productoId: producto.id,
-                    productoNombre: producto.nombre,
-                    precioOriginal: precioOriginal,
-                    precioModificado: precioActual
-                });
-            }
-        }
-        
         calcularTotalItem(row);
         marcarFormularioModificado();
+    });
+    
+    // Evento para cuando el campo de precio pierde el foco - verificar cambio
+    precioInput.addEventListener('blur', async function() {
+        if (productoIdSeleccionado) {
+            await verificarCambioPrecioProducto();
+        }
     });
     
     // Prevenir entrada de decimales en cantidad
@@ -897,16 +962,91 @@ function agregarItem() {
     
     eliminarBtn.addEventListener('click', () => eliminarItem(row));
 
-    // Eventos para drag and drop
-    row.addEventListener('dragstart', () => { 
-        setTimeout(() => row.classList.add('dragging'), 0); 
+    // === EVENTOS PARA DRAG AND DROP - RESTAURADOS ===
+    row.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', '');
+        this.classList.add('dragging');
     });
-    row.addEventListener('dragend', () => row.classList.remove('dragging'));
+    
+    row.addEventListener('dragend', function() {
+        this.classList.remove('dragging');
+    });
+    
+    row.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+    
+    row.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const draggingRow = document.querySelector('.dragging');
+        if (draggingRow && draggingRow !== this) {
+            const parent = this.parentNode;
+            const rows = Array.from(parent.children);
+            const draggingIndex = rows.indexOf(draggingRow);
+            const targetIndex = rows.indexOf(this);
+            
+            if (draggingIndex < targetIndex) {
+                parent.insertBefore(draggingRow, this.nextSibling);
+            } else {
+                parent.insertBefore(draggingRow, this);
+            }
+            
+            // Recalcular totales después de reordenar
+            calcularTotales();
+            marcarFormularioModificado();
+        }
+    });
 
     calcularTotalItem(row);
+    
+    // Sobrescribir la función mostrarProductosDropdown para esta fila específica
+    const originalMostrarProductosDropdown = mostrarProductosDropdown;
+    window.mostrarProductosDropdown = function(dropdown, productosList, descInput, priceInput) {
+        if (productosList.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        dropdown.innerHTML = productosList.map(producto => `
+            <div class="producto-option" 
+                 data-id="${producto.id}"
+                 data-nombre="${producto.nombre}" 
+                 data-precio="${producto.precioUnitario}">
+                ${producto.nombre} - $${producto.precioUnitario.toFixed(2)}
+            </div>
+        `).join('');
+
+        dropdown.style.display = 'block';
+
+        dropdown.querySelectorAll('.producto-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const nombre = this.getAttribute('data-nombre');
+                const precio = parseFloat(this.getAttribute('data-precio'));
+                
+                descInput.value = nombre;
+                priceInput.value = precio;
+                
+                // Guardar información del producto seleccionado
+                productoIdSeleccionado = id;
+                precioOriginalProducto = precio;
+                nombreProductoSeleccionado = nombre;
+                descInput.setAttribute('data-producto-id', id);
+                
+                dropdown.style.display = 'none';
+                marcarFormularioModificado();
+                
+                const row = descInput.closest('tr');
+                calcularTotalItem(row);
+                priceInput.focus();
+            });
+        });
+    };
+    
     return row;
 }
 
+// === FUNCIÓN GLOBAL PARA MOSTRAR PRODUCTOS EN DROPDOWN ===
 function mostrarProductosDropdown(dropdown, productosList, descripcionInput, precioInput) {
     if (productosList.length === 0) {
         dropdown.style.display = 'none';
@@ -924,7 +1064,6 @@ function mostrarProductosDropdown(dropdown, productosList, descripcionInput, pre
 
     dropdown.style.display = 'block';
 
-    // Configurar eventos para las opciones
     dropdown.querySelectorAll('.producto-option').forEach(option => {
         option.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -932,18 +1071,39 @@ function mostrarProductosDropdown(dropdown, productosList, descripcionInput, pre
             const precio = parseFloat(this.getAttribute('data-precio'));
             
             descripcionInput.value = nombre;
-            descripcionInput.setAttribute('data-producto-id', id); // Guardar ID para referencia
             precioInput.value = precio;
+            
+            // Guardar información del producto seleccionado en la fila
+            const row = descripcionInput.closest('tr');
+            row.setAttribute('data-producto-id', id);
+            row.setAttribute('data-precio-original', precio);
+            row.setAttribute('data-producto-nombre', nombre);
+            
             dropdown.style.display = 'none';
             marcarFormularioModificado();
             
-            // Calcular total automáticamente
-            const row = descripcionInput.closest('tr');
             calcularTotalItem(row);
-            
-            // Mover foco al siguiente campo
             precioInput.focus();
         });
+    });
+}
+
+// === FUNCIÓN PARA INICIALIZAR DRAG AND DROP EN TODA LA TABLA ===
+function inicializarDragDropTabla() {
+    const tableBody = document.getElementById('itemsTableBody');
+    
+    tableBody.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+    
+    tableBody.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const draggingRow = document.querySelector('.dragging');
+        if (draggingRow) {
+            draggingRow.classList.remove('dragging');
+            calcularTotales();
+            marcarFormularioModificado();
+        }
     });
 }
 
@@ -1579,6 +1739,14 @@ async function cargarCotizacionParaEdicion(id) {
                     lastRow.querySelector('.item-descripcion').value = item.descripcion;
                     lastRow.querySelector('.item-cantidad').value = item.cantidad;
                     lastRow.querySelector('.item-precio').value = item.precio;
+                    
+                    // Restaurar información del producto si existe
+                    if (item.productoId) {
+                        lastRow.setAttribute('data-producto-id', item.productoId);
+                        lastRow.setAttribute('data-precio-original', item.precio);
+                        lastRow.setAttribute('data-producto-nombre', item.descripcion);
+                    }
+                    
                     calcularTotalItem(lastRow);
                 });
             } else {
@@ -1897,10 +2065,74 @@ async function getBase64ImageFromURL(url) {
         img.src = url;
     });
 }
+
+// === NUEVA FUNCIÓN PARA VERIFICAR CAMBIO DE PRECIO EN UNA FILA ESPECÍFICA ===
+async function verificarCambioPrecioProductoEnFila(row) {
+    if (!row) return false;
+    
+    const productoId = row.getAttribute('data-producto-id');
+    const nombreProducto = row.getAttribute('data-producto-nombre');
+    const precioOriginal = parseFloat(row.getAttribute('data-precio-original')) || 0;
+    const precioInput = row.querySelector('.item-precio');
+    const precioActual = parseFloat(precioInput.value) || 0;
+    
+    // Solo verificar si hay un producto seleccionado de la base de datos y el precio cambió
+    if (!productoId || !precioOriginal || Math.abs(precioActual - precioOriginal) <= 0.01) {
+        return false;
+    }
+    
+    const result = await Swal.fire({
+        title: '¿Actualizar producto?',
+        html: `
+            <div style="text-align: left; margin: 15px 0;">
+                <p style="font-size: 1.1rem; margin-bottom: 10px;">
+                    <strong>${nombreProducto || 'Producto'}</strong>
+                </p>
+                <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px;">
+                    <p style="margin: 5px 0;">
+                        <span style="color: #6b7280;">Precio original:</span> 
+                        <span style="font-weight: 600;">$${precioOriginal.toFixed(2)}</span>
+                    </p>
+                    <p style="margin: 5px 0;">
+                        <span style="color: #6b7280;">Nuevo precio:</span> 
+                        <span style="font-weight: 600; color: #2563eb;">$${precioActual.toFixed(2)}</span>
+                    </p>
+                </div>
+                <p style="margin-top: 15px;">¿Desea actualizar el precio en la base de datos?</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '✅ Sí, actualizar',
+        cancelButtonText: '❌ No, mantener',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true
+    });
+    
+    if (result.isConfirmed) {
+        mostrarLoading(true);
+        try {
+            const actualizado = await actualizarProductoEnFirebase(productoId, precioActual);
+            if (actualizado) {
+                mostrarAlerta('✅ Producto actualizado correctamente', 'success');
+                // Actualizar el precio original en la fila
+                row.setAttribute('data-precio-original', precioActual);
+            }
+        } catch (error) {
+            console.error('Error al actualizar producto:', error);
+            mostrarAlerta('Error al actualizar el producto', 'error');
+        } finally {
+            mostrarLoading(false);
+        }
+        return true;
+    }
+    return false;
+}
 // === EVENT LISTENERS PRINCIPALES ===
 document.addEventListener('DOMContentLoaded', () => {
     inicializarFormulario();
-    
+    inicializarDragDropTabla(); // Agregar esta línea
     // Configurar navegación después de inicializar
     setTimeout(configurarNavegacionFormulario, 500);
 });
@@ -1908,9 +2140,29 @@ document.addEventListener('DOMContentLoaded', () => {
 cotizacionForm.addEventListener('submit', manejarSubmitFormulario);
 
 // === MODIFICACIÓN PRINCIPAL: EL EVENT LISTENER DEL BOTÓN "AGREGAR ITEM" ===
+// === MODIFICACIÓN PRINCIPAL: EL EVENT LISTENER DEL BOTÓN "AGREGAR ITEM" ===
 agregarItemBtn.addEventListener('click', async () => {
-    // Primero verificar si el último item tiene un producto nuevo
-    await verificarUltimoItemAntesDeAgregar();
+    // Verificar si hay items en la tabla
+    const rows = itemsTableBody.children;
+    if (rows.length > 0) {
+        const ultimaFila = rows[rows.length - 1];
+        
+        // Verificar cambio de precio en el último item
+        const categoriaSelect = ultimaFila.querySelector('.item-categoria');
+        const descripcionInput = ultimaFila.querySelector('.item-descripcion');
+        const precioInput = ultimaFila.querySelector('.item-precio');
+        const productoId = ultimaFila.getAttribute('data-producto-id');
+        const precioOriginal = parseFloat(ultimaFila.getAttribute('data-precio-original')) || 0;
+        const precioActual = parseFloat(precioInput.value) || 0;
+        
+        // Si tiene producto seleccionado y el precio cambió
+        if (productoId && precioOriginal > 0 && Math.abs(precioActual - precioOriginal) > 0.01) {
+            await verificarCambioPrecioProductoEnFila(ultimaFila);
+        }
+        
+        // Luego verificar si es un producto nuevo
+        await verificarNuevoProducto(ultimaFila);
+    }
     
     // Luego agregar el nuevo item
     const nuevaFila = agregarItem();
