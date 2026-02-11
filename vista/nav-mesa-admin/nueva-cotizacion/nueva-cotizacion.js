@@ -1166,16 +1166,26 @@ function resetearFormulario() {
 async function generarPDF(data) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
-    
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 15;
+    
+    // ÁREAS RESERVADAS PARA ENCABEZADO Y PIE DE PÁGINA
+    const headerHeight = 70;      // Altura reservada para el encabezado (logo + info empresa)
+    const footerHeight = 15;     // Altura reservada para el pie de página
+    const contentStartY = headerHeight;  // Y donde comienza el contenido
+    const contentMaxY = pageHeight - footerHeight - 10;  // Y máximo para contenido (reserva pie)
+    
     const textColor = '#000000';
     const gray = '#6b7280';
     const navy = '#0d2c54';
     const lightGray = '#f5f5f5';
     
-    const formatearNumero = (num) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num).replace('MX', '').trim();
+    const formatearNumero = (num) => new Intl.NumberFormat('es-MX', { 
+        style: 'currency', 
+        currency: 'MXN' 
+    }).format(num).replace('MX', '').trim();
+    
     const colX = { 
         desc: margin, 
         unidad: margin + 90, 
@@ -1185,230 +1195,284 @@ async function generarPDF(data) {
     };
     
     let page = 1;
-    let y = 20;
+    let y = contentStartY;  // Iniciar después del encabezado reservado
     
-    const nuevaPagina = () => { 
-        pdf.addPage(); 
-        page++; 
-        y = 20; 
+    // ============================================
+    // FUNCIÓN PARA DIBUJAR ENCABEZADO EN CADA PÁGINA
+    // ============================================
+    const dibujarEncabezado = async () => {
+        // Logo
+        try {
+            const logoData = await getBase64ImageFromURL(LOGO_URL);
+            pdf.addImage(logoData, 'PNG', pageWidth - margin - 40, margin, 40, 40);
+        } catch (e) { 
+            console.warn('No se pudo cargar el logo:', e); 
+        }
+        
+        // Información de la empresa
+        pdf.setFontSize(10).setTextColor(navy)
+            .text(data.empresaNombre || "RSI ENTERPRISE", margin, margin + 5);
+        pdf.setFontSize(8).setTextColor(gray)
+            .text(data.empresaDireccion || "", margin, margin + 10)
+            .text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, margin + 15);
+        
+        // Título de cotización
+        pdf.setFontSize(14).setTextColor(navy)
+            .text("COTIZACIÓN", pageWidth / 2, margin + 25, { align: 'center' });
+        pdf.setFontSize(9).setTextColor(gray)
+            .text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, 
+                  pageWidth / 2, margin + 32, { align: 'center' });
     };
     
-    const piePagina = () => {
+    // ============================================
+    // FUNCIÓN PARA DIBUJAR PIE DE PÁGINA EN CADA PÁGINA
+    // ============================================
+    const dibujarPiePagina = () => {
         pdf.setFontSize(8)
-           .setTextColor(gray)
-           .text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            .setTextColor(gray)
+            .text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, 
+                  pageWidth / 2, pageHeight - footerHeight, { align: 'center' });
+        
+        // Línea separadora opcional
+        pdf.setDrawColor(200, 200, 200)
+            .line(margin, pageHeight - footerHeight - 3, pageWidth - margin, pageHeight - footerHeight - 3);
     };
     
-    // Mapa de nombres de categoría para mostrar en el PDF
-    const categoriaDisplayMap = {
-        'CCTV': '📹 CCTV', 
-        'DH': '🏠 DETECTOR DE HUMO', 
-        'CA': '🔐 CONTROL DE ACCESOS',
-        'ALARMA INTRUSION': '🚨 ALARMA INTRUSIÓN', 
-        'ALARMA': '🚨 ALARMA INTRUSIÓN',
-        'MULTIMEDIA': '📺 MULTIMEDIA', 
-        'REDES': '🛜 REDES TRANSPORTE DE DATOS', 
-        'OTRO': '📦 OTRO',
-        'AI': '🚨 ALARMA INTRUSIÓN'
+    // ============================================
+    // FUNCIÓN PARA NUEVA PÁGINA CON ENCABEZADO Y PIE
+    // ============================================
+    const nuevaPagina = async () => {
+        pdf.addPage();
+        page++;
+        y = contentStartY;  // Reiniciar Y al inicio del área de contenido
+        
+        await dibujarEncabezado();  // Dibujar encabezado en nueva página
+        dibujarPiePagina();         // Dibujar pie de página en nueva página
     };
     
-    try { 
-        pdf.addImage('../../css/img/Logo-RSI-OFICIAL.png', 'PNG', pageWidth - margin - 40, margin, 40, 40);
-    } catch (e) { 
-        console.warn('No se pudo cargar el logo.'); 
-    }
+    // Dibujar encabezado y pie en la primera página
+    await dibujarEncabezado();
+    dibujarPiePagina();
     
-    pdf.setFontSize(10)
-       .setTextColor(navy)
-       .text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
-    
-    pdf.setFontSize(8)
-       .setTextColor(gray)
-       .text(data.empresaDireccion || "", margin, y + 10)
-       .text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, y + 15);
-    
-    y += 25;
-    
-    pdf.setFontSize(14)
-       .setTextColor(navy)
-       .text("COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
-    
-    pdf.setFontSize(9)
-       .setTextColor(gray)
-       .text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, pageWidth / 2, y + 7, { align: 'center' });
-    
-    y += 20;
-    
+    // Descripción (si existe)
     if (data.cotizacionDescripcion && data.cotizacionDescripcion.trim().length > 0) {
-        pdf.setFontSize(9)
-           .setTextColor(navy)
-           .setFont('helvetica', 'bold')
-           .text("DESCRIPCIÓN:", margin, y); 
+        // Verificar espacio disponible
+        if (y + 15 > contentMaxY) {
+            await nuevaPagina();
+        }
+        
+        pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'bold')
+            .text("DESCRIPCIÓN:", margin, y); 
         y += 5;
-        
-        pdf.setFontSize(9)
-           .setTextColor(textColor)
-           .setFont('helvetica', 'normal');
-        
+        pdf.setFontSize(9).setTextColor(textColor).setFont('helvetica', 'normal');
         const descLines = pdf.splitTextToSize(data.cotizacionDescripcion.trim(), pageWidth - 2 * margin);
         descLines.forEach(line => { 
-            pdf.text(line, margin, y); 
-            y += 5; 
+            // Verificar espacio antes de cada línea
+            if (y + 5 > contentMaxY) {
+                // No podemos esperar async aquí, necesitamos manejar de forma diferente
+                // Por simplicidad, si no hay espacio, cortamos la descripción
+                pdf.text(line.substring(0, 50) + "...", margin, y);
+                y += 5;
+            } else {
+                pdf.text(line, margin, y); 
+                y += 5;
+            }
         });
         y += 5;
     }
     
-    pdf.setFontSize(9)
-       .setTextColor(textColor)
-       .text(`Cliente: ${data.clienteNombre}`, margin, y); 
-    y += 5;
+    // Información del cliente
+    if (y + 30 > contentMaxY) {
+        await nuevaPagina();
+    }
     
+    pdf.setFontSize(9).setTextColor(textColor)
+        .text(`Cliente: ${data.clienteNombre}`, margin, y); 
+    y += 5;
     pdf.text(`RFC: ${data.clienteRFC || 'N/E'}`, margin, y); 
     y += 5; 
-    
     pdf.text(`Dirección: ${data.clienteDireccion}`, margin, y); 
     y += 10;
     
+    // Información de la cotización
     const tipoCotizacionMap = { 
         'implementacion': 'Implementación', 
         'proyecto': 'Proyecto', 
         'servicio': 'Servicio' 
     };
-    
     let infoPago = `Pago: ${data.tipoCredito || 'N/E'}`;
     if (data.tipoCredito === 'credito' && data.diasCredito) {
         infoPago += ` (${data.diasCredito} días)`;
     }
-    
     const info = [
         `Tipo: ${tipoCotizacionMap[data.tipoCotizacion] || 'N/E'}`,
         `Vigencia: ${data.cotizacionVigencia} días`,
         `Moneda: ${data.cotizacionMoneda}`,
         infoPago
     ].join(" | ");
-    
     pdf.text(info, margin, y); 
     y += 10;
     
-    // Usar el nombre de la categoría del item en lugar del ID
-    const grupos = agruparTecnologias(data.items);
-    Object.entries(grupos).forEach(([categoria, items]) => {
-        const nombreCategoria = categoriaDisplayMap[categoria] || categoria;
-        const displayCategoria = nombreCategoria.replace(/^(.*?)\s/, '').trim();
-        
-        if (y > pageHeight - 70) { 
-            piePagina(); 
-            nuevaPagina(); 
+    // Mapa de nombres de categoría para mostrar en el PDF
+    const categoriaDisplayMap = {
+        'CCTV': '📹 CCTV', 
+        'DETECTOR DE HUMO': '🏠 DETECTOR DE HUMO',
+        'DH': '🏠 DETECTOR DE HUMO',
+        'CONTROL DE ACCESOS': '🔐 CONTROL DE ACCESOS',
+        'CA': '🔐 CONTROL DE ACCESOS',
+        'ALARMA INTRUSION': '🚨 ALARMA INTRUSIÓN', 
+        'ALARMA INTRUSIÓN': '🚨 ALARMA INTRUSIÓN',
+        'ALARMA': '🚨 ALARMA INTRUSIÓN',
+        'MULTIMEDIA': '📺 MULTIMEDIA', 
+        'REDES': '🛜 REDES TRANSPORTE DE DATOS', 
+        'OTRO': '📦 OTRO',
+        'AI': '🚨 ALARMA INTRUSIÓN',
+        'SIN CATEGORÍA': '📦 OTRO'
+    };
+    
+    // Items agrupados por categoría
+    const grupos = agruparTecnologias(data.items); 
+    
+    for (const [categoriaNombre, items] of Object.entries(grupos)) {
+        // Verificar espacio para el encabezado de categoría
+        if (y + 25 > contentMaxY) {
+            await nuevaPagina();
         }
         
-        pdf.setFillColor(navy)
-           .rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+        // Usar el mapa de categorías o el nombre directamente
+        const textoCompleto = categoriaDisplayMap[categoriaNombre] || categoriaNombre;
+        const displayCategoria = textoCompleto.replace(/^(.*?)\s/, '').trim();
         
-        pdf.setFontSize(12)
-           .setTextColor('#FFFFFF')
-           .setFont('helvetica', 'bold')
-           .text(displayCategoria, pageWidth / 2, y + 8, { align: 'center' });
-        
+        // Encabezado de categoría
+        pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 12, 'F');
+        pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold')
+            .text(displayCategoria, pageWidth / 2, y + 6, { align: 'center' });
         y += 14;
         
-        pdf.setFillColor(navy)
-           .rect(margin, y, pageWidth - 2 * margin, 8, 'F');
-        
-        pdf.setFontSize(8)
-           .setFont('helvetica', 'normal')
-           .text("DESCRIPCIÓN", colX.desc, y + 5)
-           .text("UNIDAD", colX.unidad, y + 5, { align: 'center' })
-           .text("CANT.", colX.cant, y + 5, { align: 'right' })
-           .text("P. UNIT.", colX.precio, y + 5, { align: 'right' })
-           .text("TOTAL", colX.total, y + 5, { align: 'right' });
-        
+        // Encabezado de tabla
+        pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 8, 'F');
+        pdf.setFontSize(8).setFont('helvetica', 'normal').setTextColor('#FFFFFF')
+            .text("DESCRIPCIÓN", colX.desc, y + 3)
+            .text("UNIDAD", colX.unidad, y + 3, { align: 'center' })
+            .text("CANT.", colX.cant, y + 3, { align: 'right' })
+            .text("P. UNIT.", colX.precio, y + 3, { align: 'right' })
+            .text("TOTAL", colX.total, y + 3, { align: 'right' });
         y += 10;
         
-        items.forEach((item, index) => {
-            const descLines = pdf.splitTextToSize(item.descripcion, colX.unidad - colX.desc - 5);
-            const itemHeight = Math.max(descLines.length * 5, 10) + 2;
-            
-            if (y + itemHeight > pageHeight - 20) { 
-                piePagina(); 
-                nuevaPagina(); 
+        // Items de la categoría
+        for (const item of items) {
+            // Asegurar que tenemos el nombre completo de la categoría en el item
+            if (!item.categoriaNombre && item.categoria) {
+                item.categoriaNombre = obtenerNombreCategoria(item.categoria);
             }
             
-            if (index % 2 === 0) {
-                pdf.setFillColor(lightGray)
-                   .rect(margin, y, pageWidth - 2 * margin, itemHeight, 'F');
+            const descLines = pdf.splitTextToSize(item.descripcion, colX.unidad - colX.desc - 5);
+            const itemHeight = Math.max(descLines.length * 5, 10) + 4;
+            
+            // Verificar si hay espacio para el item completo
+            if (y + itemHeight + 5 > contentMaxY) {
+                await nuevaPagina();
+                // Redibujar encabezado de categoría en la nueva página si es necesario
+                pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 12, 'F');
+                pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold')
+                    .text(displayCategoria, pageWidth / 2, y + 6, { align: 'center' });
+                y += 14;
+                
+                // Redibujar encabezado de tabla
+                pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 8, 'F');
+                pdf.setFontSize(8).setFont('helvetica', 'normal').setTextColor('#FFFFFF')
+                    .text("DESCRIPCIÓN", colX.desc, y + 3)
+                    .text("UNIDAD", colX.unidad, y + 3, { align: 'center' })
+                    .text("CANT.", colX.cant, y + 3, { align: 'right' })
+                    .text("P. UNIT.", colX.precio, y + 3, { align: 'right' })
+                    .text("TOTAL", colX.total, y + 3, { align: 'right' });
+                y += 10;
+            }
+            
+            // Dibujar fondo alternado
+            if (items.indexOf(item) % 2 === 0) {
+                pdf.setFillColor(lightGray).rect(margin, y - 2, pageWidth - 2 * margin, itemHeight, 'F');
             }
             
             pdf.setTextColor(textColor);
+            // Descripción
             descLines.forEach((line, i) => {
-                pdf.text(line, colX.desc, y + 5 + (i * 5));
+                if (y + 3 + (i * 5) < contentMaxY) {
+                    pdf.text(line, colX.desc, y + 3 + (i * 5));
+                }
             });
             
-            pdf.text(item.tipoTecnologia.slice(0, 4), colX.unidad, y + 5, { align: 'center' });
-            pdf.text(item.cantidad.toString(), colX.cant, y + 5, { align: 'right' });
-            pdf.text(formatearNumero(item.precio), colX.precio, y + 5, { align: 'right' });
-            pdf.text(formatearNumero(item.total), colX.total, y + 5, { align: 'right' });
+            // Unidad, cantidad, precio, total
+            pdf.text(item.tipoTecnologia ? item.tipoTecnologia.slice(0, 4) : '', colX.unidad, y + 3, { align: 'center' });
+            pdf.text(item.cantidad ? item.cantidad.toString() : '0', colX.cant, y + 3, { align: 'right' });
+            pdf.text(formatearNumero(item.precio || 0), colX.precio, y + 3, { align: 'right' });
+            pdf.text(formatearNumero(item.total || 0), colX.total, y + 3, { align: 'right' });
             
-            pdf.setDrawColor(200, 200, 200)
-               .line(margin, y + itemHeight, pageWidth - margin, y + itemHeight);
-            
+            // Línea separadora
+            pdf.setDrawColor(200, 200, 200).line(margin, y + itemHeight - 2, pageWidth - margin, y + itemHeight - 2);
             y += itemHeight;
-        });
-        y += 2;
-    });
+        }
+        
+        y += 4;
+    }
+    
+    // Totales
+    if (y + 40 > contentMaxY) {
+        await nuevaPagina();
+    }
     
     const tableStartX = colX.total - 82;
     const valueColX = tableStartX + 70;
     
-    pdf.setFontSize(9)
-       .setTextColor(textColor)
-       .text("Subtotal:", tableStartX, y + 5, { align: 'left' })
-       .text(formatearNumero(data.subtotal), valueColX, y + 5, { align: 'left' }); 
-    y += 5;
+    pdf.setFontSize(9).setTextColor(textColor)
+        .text("Subtotal:", tableStartX, y, { align: 'left' })
+        .text(formatearNumero(data.subtotal || 0), valueColX, y, { align: 'left' });
+    y += 6;
     
     if (data.descuentoMonto > 0) { 
-        pdf.text(`Descuento (${data.descuento}%):`, tableStartX, y + 5, { align: 'left' })
-           .text(`-${formatearMoneda(data.descuentoMonto)}`, valueColX, y + 5, { align: 'left' }); 
-        y += 5; 
+        pdf.text(`Descuento (${data.descuento || 0}%):`, tableStartX, y, { align: 'left' })
+            .text(`-${formatearNumero(data.descuentoMonto || 0)}`, valueColX, y, { align: 'left' });
+        y += 6; 
     }
     
-    pdf.text(`IVA (${data.impuesto}%):`, tableStartX, y + 5, { align: 'left' })
-       .text(formatearNumero(data.impuestoMonto), valueColX, y + 5, { align: 'left' }); 
-    y += 7;
+    pdf.text(`IVA (${data.impuesto || 16}%):`, tableStartX, y, { align: 'left' })
+        .text(formatearNumero(data.impuestoMonto || 0), valueColX, y, { align: 'left' });
+    y += 8;
     
-    pdf.setFont('helvetica', 'bold')
-       .setTextColor(navy)
-       .text("TOTAL:", tableStartX, y + 5, { align: 'left' })
-       .text(`${formatearNumero(data.totalFinal)} ${data.cotizacionMoneda}`, valueColX, y + 5, { align: 'left' });
+    pdf.setFont('helvetica', 'bold').setTextColor(navy)
+        .text("TOTAL:", tableStartX, y, { align: 'left' })
+        .text(`${formatearNumero(data.totalFinal || 0)} ${data.cotizacionMoneda || 'MXN'}`, valueColX, y, { align: 'left' });
+    y += 15;
     
+    // Términos y condiciones
     if (data.terminos) {
-        y += 20;
-        if (y > pageHeight - 50) { 
-            piePagina(); 
-            nuevaPagina(); 
+        if (y + 15 > contentMaxY) {
+            await nuevaPagina();
         }
         
-        pdf.setFontSize(9)
-           .setTextColor(navy)
-           .setFont('helvetica', 'normal')
-           .text("TÉRMINOS Y CONDICIONES", margin, y); 
+        pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'normal')
+            .text("TÉRMINOS Y CONDICIONES", margin, y); 
         y += 5;
-        
         pdf.setTextColor(textColor);
-        data.terminos.split('\n').forEach(term => {
+        
+        const terminosLines = data.terminos.split('\n');
+        for (const term of terminosLines) {
             if (term.trim()) {
-                pdf.splitTextToSize(term, pageWidth - 2 * margin).forEach(line => {
-                    if (y > pageHeight - 20) { 
-                        piePagina(); 
-                        nuevaPagina(); 
+                const lines = pdf.splitTextToSize(term, pageWidth - 2 * margin);
+                for (const line of lines) {
+                    if (y + 5 > contentMaxY) {
+                        await nuevaPagina();
                     }
                     pdf.text(line, margin, y); 
                     y += 5;
-                });
+                }
             }
-        });
+        }
     }
     
-    piePagina();
+    // Asegurar que el pie de página esté en la última página
+    dibujarPiePagina();
+    
     return pdf.output('blob');
 }
 
@@ -1801,7 +1865,38 @@ function configurarNavegacionFormulario() {
         }
     });
 }
+// =================================================================================
+// CONSTANTES Y CONFIGURACIÓN
+// =================================================================================
+const LOGO_URL = '../../css/img/Logo-RSI-OFICIAL.png';
+let logoBase64Cache = null;
+// =================================================================================
+// FUNCIONES DE UTILIDAD
+// =================================================================================
 
+async function getBase64ImageFromURL(url) {
+    if (logoBase64Cache) return logoBase64Cache;
+    
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous'; 
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            logoBase64Cache = dataURL; 
+            resolve(dataURL);
+        };
+        img.onerror = (e) => {
+            console.error("Error al cargar la imagen:", e);
+            reject(new Error('No se pudo cargar la imagen del logo.'));
+        };
+        img.src = url;
+    });
+}
 // === EVENT LISTENERS PRINCIPALES ===
 document.addEventListener('DOMContentLoaded', () => {
     inicializarFormulario();
