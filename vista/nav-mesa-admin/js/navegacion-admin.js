@@ -971,30 +971,47 @@
     <div class="menu-nav-section-content" id="section-ecommerce">
      
    
-        <a href="/404.html" class="menu-nav-btn">
-            <i class="fas fa-store"></i> Gestión de Tienda
-        </a>
-        <a href="/vista/nav-mesa-admin/e-comerce/p" class="menu-nav-btn">
-            <i class="fas fa-boxes"></i> Inventario de Productos
-        </a>
+       <a href="/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html" class="menu-nav-btn">
+    <i class="fas fa-map-marked-alt"></i> Áreas
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html" class="menu-nav-btn">
+    <i class="fas fa-images"></i> Carrusel
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/categorias/categorias.html" class="menu-nav-btn">
+    <i class="fas fa-th-list"></i> Categorías
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/contactos/contactos.html" class="menu-nav-btn">
+    <i class="fas fa-address-book"></i> Contactos
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html" class="menu-nav-btn">
+    <i class="fas fa-truck-loading"></i> Entregas
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html" class="menu-nav-btn">
+    <i class="fas fa-star"></i> Opiniones
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html" class="menu-nav-btn">
+    <i class="fas fa-check-double"></i> Pedidos Finalizados
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/productos/productos.html" class="menu-nav-btn">
+    <i class="fas fa-boxes"></i> Productos
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html" class="menu-nav-btn">
+    <i class="fas fa-users-cog"></i> Usuarios
+</a>
+
+<a href="/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html" class="menu-nav-btn">
+    <i class="fas fa-chart-line"></i> Ventas
+</a>
+       
         
-        <a href="/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html" class="menu-nav-btn">
-            <i class="fas fa-images"></i> Carrusel (Slider)
-        </a>
-        
-        <a href="/404.html" class="menu-nav-btn">
-            <i class="fas fa-users"></i> Mis Clientes
-        </a>
-        <a href="/404.html" class="menu-nav-btn">
-            <i class="fas fa-address-book"></i> Lista de Contactos
-        </a>
-        
-        <a href="/404.html" class="menu-nav-btn">
-            <i class="fas fa-file-invoice-dollar"></i> Facturación
-        </a>
-        <a href="/404.html" class="menu-nav-btn">
-            <i class="fas fa-chart-line"></i> Ventas y Métricas
-        </a>
 
     </div>
 </div>
