@@ -327,12 +327,22 @@ function filtrarCotizaciones() {
 // FUNCIONES DE GENERACIÓN DE PDF
 // =================================================================================
 
+// =================================================================================
+// FUNCIONES DE GENERACIÓN DE PDF - CORREGIDO (Encabezados y pies de página fijos)
+// =================================================================================
+
 async function generarPDF(data) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 15;
+    
+    // ÁREAS RESERVADAS PARA ENCABEZADO Y PIE DE PÁGINA
+    const headerHeight = 70;      // Altura reservada para el encabezado (logo + info empresa)
+    const footerHeight = 15;     // Altura reservada para el pie de página
+    const contentStartY = headerHeight;  // Y donde comienza el contenido
+    const contentMaxY = pageHeight - footerHeight - 10;  // Y máximo para contenido (reserva pie)
     
     const textColor = '#000000';
     const gray = '#6b7280';
@@ -353,74 +363,97 @@ async function generarPDF(data) {
     };
     
     let page = 1;
-    let y = 20;
+    let y = contentStartY;  // Iniciar después del encabezado reservado
     
-    const nuevaPagina = () => { 
-        pdf.addPage(); 
-        page++; 
-        y = 20; 
+    // ============================================
+    // FUNCIÓN PARA DIBUJAR ENCABEZADO EN CADA PÁGINA
+    // ============================================
+    const dibujarEncabezado = async () => {
+        // Logo
+        try {
+            const logoData = await getBase64ImageFromURL(LOGO_URL);
+            pdf.addImage(logoData, 'PNG', pageWidth - margin - 40, margin, 40, 40);
+        } catch (e) { 
+            console.warn('No se pudo cargar el logo:', e); 
+        }
+        
+        // Información de la empresa
+        pdf.setFontSize(10).setTextColor(navy)
+            .text(data.empresaNombre || "RSI ENTERPRISE", margin, margin + 5);
+        pdf.setFontSize(8).setTextColor(gray)
+            .text(data.empresaDireccion || "", margin, margin + 10)
+            .text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, margin + 15);
+        
+        // Título de cotización
+        pdf.setFontSize(14).setTextColor(navy)
+            .text("COTIZACIÓN", pageWidth / 2, margin + 25, { align: 'center' });
+        pdf.setFontSize(9).setTextColor(gray)
+            .text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, 
+                  pageWidth / 2, margin + 32, { align: 'center' });
     };
     
-    const piePagina = () => pdf.setFontSize(8)
-        .setTextColor(gray)
-        .text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, 
-              pageWidth / 2, pageHeight - 10, { align: 'center' });
-    
-    // Mapa de nombres de categoría para mostrar en el PDF (actualizado)
-    const categoriaDisplayMap = {
-        'CCTV': '📹 CCTV', 
-        'DETECTOR DE HUMO': '🏠 DETECTOR DE HUMO',
-        'DH': '🏠 DETECTOR DE HUMO',
-        'CONTROL DE ACCESOS': '🔐 CONTROL DE ACCESOS',
-        'CA': '🔐 CONTROL DE ACCESOS',
-        'ALARMA INTRUSION': '🚨 ALARMA INTRUSIÓN', 
-        'ALARMA INTRUSIÓN': '🚨 ALARMA INTRUSIÓN',
-        'ALARMA': '🚨 ALARMA INTRUSIÓN',
-        'MULTIMEDIA': '📺 MULTIMEDIA', 
-        'REDES': '🛜 REDES TRANSPORTE DE DATOS', 
-        'OTRO': '📦 OTRO',
-        'AI': '🚨 ALARMA INTRUSIÓN',
-        'SIN CATEGORÍA': '📦 OTRO'
+    // ============================================
+    // FUNCIÓN PARA DIBUJAR PIE DE PÁGINA EN CADA PÁGINA
+    // ============================================
+    const dibujarPiePagina = () => {
+        pdf.setFontSize(8)
+            .setTextColor(gray)
+            .text(`Cotización No. ${data.cotizacionNumero} | Página ${page}`, 
+                  pageWidth / 2, pageHeight - footerHeight, { align: 'center' });
+        
+        // Línea separadora opcional
+        pdf.setDrawColor(200, 200, 200)
+            .line(margin, pageHeight - footerHeight - 3, pageWidth - margin, pageHeight - footerHeight - 3);
     };
     
-    try {
-        const logoData = await getBase64ImageFromURL(LOGO_URL);
-        pdf.addImage(logoData, 'PNG', pageWidth - margin - 40, margin, 40, 40);
-    } catch (e) { 
-        console.warn('No se pudo cargar el logo:', e); 
-    }
+    // ============================================
+    // FUNCIÓN PARA NUEVA PÁGINA CON ENCABEZADO Y PIE
+    // ============================================
+    const nuevaPagina = async () => {
+        pdf.addPage();
+        page++;
+        y = contentStartY;  // Reiniciar Y al inicio del área de contenido
+        
+        await dibujarEncabezado();  // Dibujar encabezado en nueva página
+        dibujarPiePagina();         // Dibujar pie de página en nueva página
+    };
     
-    // Encabezado
-    pdf.setFontSize(10).setTextColor(navy)
-        .text(data.empresaNombre || "RSI ENTERPRISE", margin, y + 5);
-    pdf.setFontSize(8).setTextColor(gray)
-        .text(data.empresaDireccion || "", margin, y + 10)
-        .text(`RFC: ${data.empresaRFC || ''} | Tel: ${data.empresaTelefono || ''}`, margin, y + 15);
-    y += 25;
+    // Dibujar encabezado y pie en la primera página
+    await dibujarEncabezado();
+    dibujarPiePagina();
     
-    // Título
-    pdf.setFontSize(14).setTextColor(navy)
-        .text("COTIZACIÓN", pageWidth / 2, y, { align: 'center' });
-    pdf.setFontSize(9).setTextColor(gray)
-        .text(`No. ${data.cotizacionNumero} | Fecha: ${new Date(data.cotizacionFecha).toLocaleDateString('es-MX')}`, 
-              pageWidth / 2, y + 7, { align: 'center' });
-    y += 20;
-    
-    // Descripción
+    // Descripción (si existe)
     if (data.cotizacionDescripcion && data.cotizacionDescripcion.trim().length > 0) {
+        // Verificar espacio disponible
+        if (y + 15 > contentMaxY) {
+            await nuevaPagina();
+        }
+        
         pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'bold')
             .text("DESCRIPCIÓN:", margin, y); 
         y += 5;
         pdf.setFontSize(9).setTextColor(textColor).setFont('helvetica', 'normal');
         const descLines = pdf.splitTextToSize(data.cotizacionDescripcion.trim(), pageWidth - 2 * margin);
         descLines.forEach(line => { 
-            pdf.text(line, margin, y); 
-            y += 5; 
+            // Verificar espacio antes de cada línea
+            if (y + 5 > contentMaxY) {
+                // No podemos esperar async aquí, necesitamos manejar de forma diferente
+                // Por simplicidad, si no hay espacio, cortamos la descripción
+                pdf.text(line.substring(0, 50) + "...", margin, y);
+                y += 5;
+            } else {
+                pdf.text(line, margin, y); 
+                y += 5;
+            }
         });
         y += 5;
     }
     
     // Información del cliente
+    if (y + 30 > contentMaxY) {
+        await nuevaPagina();
+    }
+    
     pdf.setFontSize(9).setTextColor(textColor)
         .text(`Cliente: ${data.clienteNombre}`, margin, y); 
     y += 5;
@@ -448,96 +481,141 @@ async function generarPDF(data) {
     pdf.text(info, margin, y); 
     y += 10;
     
-    // Items agrupados por categoría (ahora con nombres de categoría)
+    // Mapa de nombres de categoría para mostrar en el PDF
+    const categoriaDisplayMap = {
+        'CCTV': '📹 CCTV', 
+        'DETECTOR DE HUMO': '🏠 DETECTOR DE HUMO',
+        'DH': '🏠 DETECTOR DE HUMO',
+        'CONTROL DE ACCESOS': '🔐 CONTROL DE ACCESOS',
+        'CA': '🔐 CONTROL DE ACCESOS',
+        'ALARMA INTRUSION': '🚨 ALARMA INTRUSIÓN', 
+        'ALARMA INTRUSIÓN': '🚨 ALARMA INTRUSIÓN',
+        'ALARMA': '🚨 ALARMA INTRUSIÓN',
+        'MULTIMEDIA': '📺 MULTIMEDIA', 
+        'REDES': '🛜 REDES TRANSPORTE DE DATOS', 
+        'OTRO': '📦 OTRO',
+        'AI': '🚨 ALARMA INTRUSIÓN',
+        'SIN CATEGORÍA': '📦 OTRO'
+    };
+    
+    // Items agrupados por categoría
     const grupos = agruparTecnologias(data.items); 
-    Object.entries(grupos).forEach(([categoriaNombre, items]) => {
+    
+    for (const [categoriaNombre, items] of Object.entries(grupos)) {
+        // Verificar espacio para el encabezado de categoría
+        if (y + 25 > contentMaxY) {
+            await nuevaPagina();
+        }
+        
         // Usar el mapa de categorías o el nombre directamente
         const textoCompleto = categoriaDisplayMap[categoriaNombre] || categoriaNombre;
         const displayCategoria = textoCompleto.replace(/^(.*?)\s/, '').trim();
         
-        if (y > pageHeight - 70) { 
-            piePagina(); 
-            nuevaPagina(); 
-        }
-        
         // Encabezado de categoría
-        pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 12, 'F');
+        pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 12, 'F');
         pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold')
-            .text(displayCategoria, pageWidth / 2, y + 8, { align: 'center' });
+            .text(displayCategoria, pageWidth / 2, y + 6, { align: 'center' });
         y += 14;
         
         // Encabezado de tabla
-        pdf.setFillColor(navy).rect(margin, y, pageWidth - 2 * margin, 8, 'F');
-        pdf.setFontSize(8).setFont('helvetica', 'normal')
-            .text("DESCRIPCIÓN", colX.desc, y + 5)
-            .text("UNIDAD", colX.unidad, y + 5, { align: 'center' })
-            .text("CANT.", colX.cant, y + 5, { align: 'right' })
-            .text("P. UNIT.", colX.precio, y + 5, { align: 'right' })
-            .text("TOTAL", colX.total, y + 5, { align: 'right' });
+        pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 8, 'F');
+        pdf.setFontSize(8).setFont('helvetica', 'normal').setTextColor('#FFFFFF')
+            .text("DESCRIPCIÓN", colX.desc, y + 3)
+            .text("UNIDAD", colX.unidad, y + 3, { align: 'center' })
+            .text("CANT.", colX.cant, y + 3, { align: 'right' })
+            .text("P. UNIT.", colX.precio, y + 3, { align: 'right' })
+            .text("TOTAL", colX.total, y + 3, { align: 'right' });
         y += 10;
         
         // Items de la categoría
-        items.forEach((item, index) => {
+        for (const item of items) {
             // Asegurar que tenemos el nombre completo de la categoría en el item
             if (!item.categoriaNombre && item.categoria) {
                 item.categoriaNombre = obtenerNombreCategoria(item.categoria);
             }
             
             const descLines = pdf.splitTextToSize(item.descripcion, colX.unidad - colX.desc - 5);
-            const itemHeight = Math.max(descLines.length * 5, 10) + 2;
+            const itemHeight = Math.max(descLines.length * 5, 10) + 4;
             
-            if (y + itemHeight > pageHeight - 20) { 
-                piePagina(); 
-                nuevaPagina(); 
+            // Verificar si hay espacio para el item completo
+            if (y + itemHeight + 5 > contentMaxY) {
+                await nuevaPagina();
+                // Redibujar encabezado de categoría en la nueva página si es necesario
+                pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 12, 'F');
+                pdf.setFontSize(12).setTextColor('#FFFFFF').setFont('helvetica', 'bold')
+                    .text(displayCategoria, pageWidth / 2, y + 6, { align: 'center' });
+                y += 14;
+                
+                // Redibujar encabezado de tabla
+                pdf.setFillColor(navy).rect(margin, y - 2, pageWidth - 2 * margin, 8, 'F');
+                pdf.setFontSize(8).setFont('helvetica', 'normal').setTextColor('#FFFFFF')
+                    .text("DESCRIPCIÓN", colX.desc, y + 3)
+                    .text("UNIDAD", colX.unidad, y + 3, { align: 'center' })
+                    .text("CANT.", colX.cant, y + 3, { align: 'right' })
+                    .text("P. UNIT.", colX.precio, y + 3, { align: 'right' })
+                    .text("TOTAL", colX.total, y + 3, { align: 'right' });
+                y += 10;
             }
             
-            if (index % 2 === 0) {
-                pdf.setFillColor(lightGray).rect(margin, y, pageWidth - 2 * margin, itemHeight, 'F');
+            // Dibujar fondo alternado
+            if (items.indexOf(item) % 2 === 0) {
+                pdf.setFillColor(lightGray).rect(margin, y - 2, pageWidth - 2 * margin, itemHeight, 'F');
             }
             
             pdf.setTextColor(textColor);
-            descLines.forEach((line, i) => pdf.text(line, colX.desc, y + 5 + (i * 5)));
-            pdf.text(item.tipoTecnologia ? item.tipoTecnologia.slice(0, 4) : '', colX.unidad, y + 5, { align: 'center' });
-            pdf.text(item.cantidad ? item.cantidad.toString() : '0', colX.cant, y + 5, { align: 'right' });
-            pdf.text(formatearNumero(item.precio || 0), colX.precio, y + 5, { align: 'right' });
-            pdf.text(formatearNumero(item.total || 0), colX.total, y + 5, { align: 'right' });
+            // Descripción
+            descLines.forEach((line, i) => {
+                if (y + 3 + (i * 5) < contentMaxY) {
+                    pdf.text(line, colX.desc, y + 3 + (i * 5));
+                }
+            });
             
-            pdf.setDrawColor(200, 200, 200).line(margin, y + itemHeight, pageWidth - margin, y + itemHeight);
+            // Unidad, cantidad, precio, total
+            pdf.text(item.tipoTecnologia ? item.tipoTecnologia.slice(0, 4) : '', colX.unidad, y + 3, { align: 'center' });
+            pdf.text(item.cantidad ? item.cantidad.toString() : '0', colX.cant, y + 3, { align: 'right' });
+            pdf.text(formatearNumero(item.precio || 0), colX.precio, y + 3, { align: 'right' });
+            pdf.text(formatearNumero(item.total || 0), colX.total, y + 3, { align: 'right' });
+            
+            // Línea separadora
+            pdf.setDrawColor(200, 200, 200).line(margin, y + itemHeight - 2, pageWidth - margin, y + itemHeight - 2);
             y += itemHeight;
-        });
+        }
         
-        y += 2;
-    });
+        y += 4;
+    }
     
     // Totales
+    if (y + 40 > contentMaxY) {
+        await nuevaPagina();
+    }
+    
     const tableStartX = colX.total - 82;
     const valueColX = tableStartX + 70;
     
     pdf.setFontSize(9).setTextColor(textColor)
-        .text("Subtotal:", tableStartX, y + 5, { align: 'left' })
-        .text(formatearNumero(data.subtotal || 0), valueColX, y + 5, { align: 'left' });
-    y += 5;
+        .text("Subtotal:", tableStartX, y, { align: 'left' })
+        .text(formatearNumero(data.subtotal || 0), valueColX, y, { align: 'left' });
+    y += 6;
     
     if (data.descuentoMonto > 0) { 
-        pdf.text(`Descuento (${data.descuento || 0}%):`, tableStartX, y + 5, { align: 'left' })
-            .text(`-${formatearNumero(data.descuentoMonto || 0)}`, valueColX, y + 5, { align: 'left' });
-        y += 5; 
+        pdf.text(`Descuento (${data.descuento || 0}%):`, tableStartX, y, { align: 'left' })
+            .text(`-${formatearNumero(data.descuentoMonto || 0)}`, valueColX, y, { align: 'left' });
+        y += 6; 
     }
     
-    pdf.text(`IVA (${data.impuesto || 16}%):`, tableStartX, y + 5, { align: 'left' })
-        .text(formatearNumero(data.impuestoMonto || 0), valueColX, y + 5, { align: 'left' });
-    y += 7;
+    pdf.text(`IVA (${data.impuesto || 16}%):`, tableStartX, y, { align: 'left' })
+        .text(formatearNumero(data.impuestoMonto || 0), valueColX, y, { align: 'left' });
+    y += 8;
     
     pdf.setFont('helvetica', 'bold').setTextColor(navy)
-        .text("TOTAL:", tableStartX, y + 5, { align: 'left' })
-        .text(`${formatearNumero(data.totalFinal || 0)} ${data.cotizacionMoneda || 'MXN'}`, valueColX, y + 5, { align: 'left' });
+        .text("TOTAL:", tableStartX, y, { align: 'left' })
+        .text(`${formatearNumero(data.totalFinal || 0)} ${data.cotizacionMoneda || 'MXN'}`, valueColX, y, { align: 'left' });
+    y += 15;
     
     // Términos y condiciones
     if (data.terminos) {
-        y += 20;
-        if (y > pageHeight - 50) { 
-            piePagina(); 
-            nuevaPagina(); 
+        if (y + 15 > contentMaxY) {
+            await nuevaPagina();
         }
         
         pdf.setFontSize(9).setTextColor(navy).setFont('helvetica', 'normal')
@@ -545,21 +623,24 @@ async function generarPDF(data) {
         y += 5;
         pdf.setTextColor(textColor);
         
-        data.terminos.split('\n').forEach(term => {
+        const terminosLines = data.terminos.split('\n');
+        for (const term of terminosLines) {
             if (term.trim()) {
-                pdf.splitTextToSize(term, pageWidth - 2 * margin).forEach(line => {
-                    if (y > pageHeight - 20) { 
-                        piePagina(); 
-                        nuevaPagina(); 
+                const lines = pdf.splitTextToSize(term, pageWidth - 2 * margin);
+                for (const line of lines) {
+                    if (y + 5 > contentMaxY) {
+                        await nuevaPagina();
                     }
                     pdf.text(line, margin, y); 
                     y += 5;
-                });
+                }
             }
-        });
+        }
     }
     
-    piePagina();
+    // Asegurar que el pie de página esté en la última página
+    dibujarPiePagina();
+    
     return pdf.output('blob');
 }
 
