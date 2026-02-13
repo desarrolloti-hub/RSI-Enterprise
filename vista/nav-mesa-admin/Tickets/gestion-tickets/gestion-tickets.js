@@ -475,7 +475,7 @@ const TicketsController = {
         handleViewClick: function(event) {
             const ticketId = event.currentTarget.dataset.id;
             // Redirigir a la nueva página de visualización de ticket
-            window.location.href = '/vista/nav-mesa-admin/ver-ticket/ver-ticket.html?ticketId=' + ticketId;
+            window.location.href = '/vista/nav-mesa-admin/Tickets/ver-ticket/ver-ticket.html?ticketId=' + ticketId;
         },
 
     async loadUserTickets() {

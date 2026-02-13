@@ -395,7 +395,7 @@
             await showSuccess('¡Ticket creado exitosamente!', `El ticket ${ticketId} ha sido registrado en el sistema.`);
             
             setTimeout(() => {
-                window.location.href = '/vista/nav-mesa-admin/gestion-tickets-admin/gestion-tickets-admin.html';
+                window.location.href = '/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html';
             }, 3000);
             
         } catch (error) {
@@ -665,7 +665,7 @@
             cancelButtonColor: '#dc3545'
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = '../gestion-tickets-admin/gestion-tickets-admin.html';
+                window.location.href = '/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html';
             }
         });
     }

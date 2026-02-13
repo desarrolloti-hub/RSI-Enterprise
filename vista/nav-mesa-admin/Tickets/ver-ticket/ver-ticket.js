@@ -696,13 +696,13 @@ const TicketController = {
             if (isAccepted) {
                 if (!userEvidence) {
                     buttons += `
-                        <a href="../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}" class="action-btn-ticket btn-success">
+                        <a href="/vista/nav-mesa-admin/Tickets/finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}" class="action-btn-ticket btn-success">
                             <i class="fas fa-check-circle"></i> Finalizar Ticket
                         </a>
                     `;
                 } else {
                     buttons += `
-                        <a href="../finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}&edit=true" class="action-btn-ticket btn-info">
+                        <a href="/vista/nav-mesa-admin/Tickets/finalizar-ticket/finalizar-ticket.html?ticketId=${ticketId}&edit=true" class="action-btn-ticket btn-info">
                             <i class="fas fa-edit"></i> Modificar Finalización
                         </a>
                     `;
