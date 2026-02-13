@@ -553,9 +553,46 @@
                     }
                 }
 
-                return rol;
+                return { rol, userData }; // Devolvemos también userData para verificar notificaciones
             } catch (error) {
                 throw error;
+            }
+        }
+
+        // Nueva función para redirigir según rol y estado de notificaciones
+        function redirectAfterLogin(rol, userData) {
+            // Verificar si existe el campo notificacionesHabilitadas
+            const tieneNotificacionesConfiguradas = userData && userData.hasOwnProperty('notificacionesHabilitadas');
+            
+            console.log(`🔔 Usuario ${rol} - notificaciones configuradas: ${tieneNotificacionesConfiguradas}`);
+            
+            // Rutas base según el rol
+            const rutas = {
+                'colaborador': {
+                    permisos: '/vista/nav-mesa-operadores/permisos/permisos.html',
+                    asistencia: '/vista/nav-mesa-operadores/asistencia/asistencia.html'
+                },
+                'admincolaborador': {
+                    permisos: '/vista/nav-mesa-admin/permisos/permisos.html',
+                    asistencia: '/vista/nav-mesa-admin/asistencia/asistencia.html'
+                }
+            };
+            
+            // Si es colaborador o admin colaborador
+            if (rol === 'colaborador' || rol === 'admincolaborador') {
+                const ruta = rutas[rol];
+                
+                if (tieneNotificacionesConfiguradas) {
+                    console.log(`✅ Redirigiendo a asistencia (${rol}) - notificaciones ya configuradas`);
+                    window.location.href = ruta.asistencia;
+                } else {
+                    console.log(`⚠️ Redirigiendo a permisos (${rol}) - notificaciones no configuradas`);
+                    window.location.href = ruta.permisos;
+                }
+            } else {
+                // Para otros roles, usar la redirección original
+                console.log(`🔄 Redirigiendo según rol original: ${rol}`);
+                redirectByRole(rol);
             }
         }
 
@@ -619,67 +656,286 @@
             });
 
             // Manejar el formulario de login
-            document.getElementById('loginFormElement')?.addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Función para manejar el login (actualizada)
+async function handleLogin(email, password) {
+    try {
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+            await firebase.auth().signOut();
+            clearSessionFromLocalStorage();
+            throw new Error('Por favor verifica tu correo electrónico antes de iniciar sesión');
+        }
+
+        const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+            throw new Error('No se encontró información del usuario');
+        }
+
+        const userData = userDoc.data();
+        const rol = userData.rol;
+
+        // Guardar en localStorage inmediatamente
+        const sessionUserData = {
+            uid: user.uid,
+            email: user.email,
+            nombreCompleto: userData.nombreCompleto || 'Usuario',
+            rol: rol,
+            emailVerified: user.emailVerified
+        };
+        saveSessionToLocalStorage(sessionUserData);
+
+        // Verificar estado del colaborador si aplica
+        if (rol === 'colaborador' || rol === 'admincolaborador') {
+            const colaboradorDoc = await firebase.firestore().collection('colaboradores').doc(user.uid).get();
+            
+            if (colaboradorDoc.exists) {
+                const colaboradorData = colaboradorDoc.data();
                 
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-
-                try {
-                    Swal.showLoading();
-                    
-                    const rol = await handleLogin(email, password);
-                    
-                    try {
-                        const { subscribeUser } = await import("/push-subscribe.js");
-
-                        // Obtenemos UID del usuario logueado
-                        const user = firebase.auth().currentUser;
-                        if (user) {
-                            await subscribeUser(user.uid);
-                            console.log("🔔 Push subscribe completado para:", user.uid);
-                        }
-                    } catch (err) {
-                        console.error("❌ Error en push subscribe:", err);
-                    }
-
-                    Swal.fire({
-                        title: '¡Bienvenido!',
-                        text: 'Redirigiendo...',
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-
-                    // Redirección basada en el rol
-                    setTimeout(() => {
-                        redirectByRole(rol);
-                    }, 1500);
-
-                } catch (error) {
-                    let errorMessage = 'Error al iniciar sesión';
-                    
-                    switch(error.code) {
-                        case 'auth/user-not-found':
-                        case 'auth/wrong-password':
-                            errorMessage = 'Correo o contraseña incorrectos';
-                            break;
-                        default:
-                            errorMessage = error.message;
-                    }
-                    
-                    Swal.fire({
-                        title: 'Error',
-                        text: errorMessage,
-                        icon: 'error'
-                    });
-                    
-                    // Limpiar localStorage en caso de error
+                if (colaboradorData.trabajo !== 'Activo') {
+                    await firebase.auth().signOut();
                     clearSessionFromLocalStorage();
+                    throw new Error('Su cuenta ha sido deshabilitada. Por favor, póngase en contacto con el administrador.');
                 }
+                
+                // Guardar datos de colaborador en localStorage
+                saveColaboradorDataToLocalStorage(colaboradorData);
+            }
+        }
+
+        return { rol, userData }; // Devolvemos también userData para verificar notificaciones
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Nueva función para redirigir según rol y estado de notificaciones
+function redirectAfterLogin(rol, userData) {
+    // Verificar si existe el campo notificacionesHabilitadas
+    const tieneNotificacionesConfiguradas = userData && userData.hasOwnProperty('notificacionesHabilitadas');
+    
+    console.log(`🔔 Usuario ${rol} - notificaciones configuradas: ${tieneNotificacionesConfiguradas}`);
+    
+    // Rutas base según el rol
+    const rutas = {
+        'colaborador': {
+            permisos: '/vista/nav-mesa-operadores/permisos/permisos.html',
+            asistencia: '/vista/nav-mesa-operadores/asistencia/asistencia.html'
+        },
+        'admincolaborador': {
+            permisos: '/vista/nav-mesa-admin/permisos/permisos.html',
+            asistencia: '/vista/nav-mesa-admin/asistencia/asistencia.html'
+        }
+    };
+    
+    // Si es colaborador o admin colaborador
+    if (rol === 'colaborador' || rol === 'admincolaborador') {
+        const ruta = rutas[rol];
+        
+        if (tieneNotificacionesConfiguradas) {
+            console.log(`✅ Redirigiendo a asistencia (${rol}) - notificaciones ya configuradas`);
+            window.location.href = ruta.asistencia;
+        } else {
+            console.log(`⚠️ Redirigiendo a permisos (${rol}) - notificaciones no configuradas`);
+            window.location.href = ruta.permisos;
+        }
+    } else {
+        // Para otros roles, usar la redirección original
+        console.log(`🔄 Redirigiendo según rol original: ${rol}`);
+        redirectByRole(rol);
+    }
+}
+
+    // Actualizar el evento submit del login
+    document.getElementById('loginFormElement')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            Swal.showLoading();
+            
+            const { rol, userData } = await handleLogin(email, password);
+            
+            try {
+                const { subscribeUser } = await import("/push-subscribe.js");
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    await subscribeUser(user.uid);
+                    console.log("🔔 Push subscribe completado para:", user.uid);
+                }
+            } catch (err) {
+                console.error("❌ Error en push subscribe:", err);
+            }
+
+            Swal.fire({
+                title: '¡Bienvenido!',
+                text: 'Redirigiendo...',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            // Usar la nueva función de redirección
+            setTimeout(() => {
+                redirectAfterLogin(rol, userData);
+            }, 1500);
+
+        } catch (error) {
+            let errorMessage = 'Error al iniciar sesión';
+            
+            switch(error.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                    errorMessage = 'Correo o contraseña incorrectos';
+                    break;
+                default:
+                    errorMessage = error.message;
+            }
+            
+            Swal.fire({
+                title: 'Error',
+                text: errorMessage,
+                icon: 'error'
             });
             
-            // Verificar si ya hay sesión en localStorage al cargar la página
+            clearSessionFromLocalStorage();
+        }
+    });
+
+    // También actualizar la función checkActiveSession para manejar la redirección automática
+    // Actualizar la parte donde se muestra el SweetAlert de sesión detectada
+    function showSessionDetectedAlert(rol, nombreCompleto, email, uid, userData) {
+        const rolNames = {
+            'admin': 'Administrador',
+            'puntoVenta': 'Punto de Venta',
+            'facturas': 'Operador de Facturas',
+            'colaborador': 'Colaborador',
+            'user': 'Usuario',
+            'admincolaborador': 'Administrador de Colaboradores'
+        };
+        
+        const rolDisplay = rolNames[rol] || rol;
+        const tieneNotificaciones = userData && userData.hasOwnProperty('notificacionesHabilitadas');
+        
+        let timerInterval;
+        Swal.fire({
+            title: 'Sesión activa detectada',
+            html: `
+                <div style="text-align: left; margin-bottom: 1rem;">
+                    <p><strong>Nombre:</strong> ${nombreCompleto}</p>
+                    <p><strong>Correo:</strong> ${email}</p>
+                    <p><strong>Rol:</strong> ${rolDisplay}</p>
+                    <p><strong>Estado:</strong> <span style="color: #28a745;">Sesión activa</span></p>
+                    ${rol === 'colaborador' || rol === 'admincolaborador' ? `
+                        <p><strong>Notificaciones:</strong> 
+                            <span style="color: ${tieneNotificaciones ? '#28a745' : '#ffc107'};">
+                                ${tieneNotificaciones ? '✓ Configuradas' : '⚠️ Pendientes de configurar'}
+                            </span>
+                        </p>
+                    ` : ''}
+                </div>
+                <p>Serás redirigido automáticamente en <strong id="countdown">3</strong> segundos...</p>
+            `,
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            timer: 3000,
+            didOpen: () => {
+                const timer = Swal.getPopup().querySelector("strong#countdown");
+                let timeLeft = 3;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timer.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                    }
+                }, 1000);
+                
+                const sessionUserData = {
+                    uid: uid,
+                    email: email,
+                    nombreCompleto: nombreCompleto,
+                    rol: rol,
+                    emailVerified: true
+                };
+                saveSessionToLocalStorage(sessionUserData);
+            },
+            willClose: () => {
+                clearInterval(timerInterval);
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.timer) {
+                // Usar la nueva función de redirección
+                redirectAfterLogin(rol, userData);
+            }
+        });
+    }
+    // Actualizar la función checkActiveSession para pasar userData
+    function checkActiveSession() {
+        showSessionLoading();
+        
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user && user.emailVerified) {
+                try {
+                    const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+                    
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        const rol = userData.rol;
+                        const nombreCompleto = userData.nombreCompleto || 'Usuario';
+                        const email = user.email;
+                        
+                        if (rol === 'colaborador' || rol === 'admincolaborador') {
+                            const colaboradorDoc = await firebase.firestore().collection('colaboradores').doc(user.uid).get();
+                            
+                            if (colaboradorDoc.exists) {
+                                const colaboradorData = colaboradorDoc.data();
+                                
+                                if (colaboradorData.trabajo === 'Activo') {
+                                    saveColaboradorDataToLocalStorage(colaboradorData);
+                                    hideSessionLoading();
+                                    showSessionDetectedAlert(rol, nombreCompleto, email, user.uid, userData);
+                                } else {
+                                    await firebase.auth().signOut();
+                                    clearSessionFromLocalStorage();
+                                    hideSessionLoading();
+                                    Swal.fire({
+                                        title: 'Cuenta deshabilitada',
+                                        text: 'Su cuenta ha sido deshabilitada. Por favor, póngase en contacto con el administrador.',
+                                        icon: 'warning',
+                                        confirmButtonText: 'Aceptar'
+                                    });
+                                }
+                            } else {
+                                hideSessionLoading();
+                                showSessionDetectedAlert(rol, nombreCompleto, email, user.uid, userData);
+                            }
+                        } else {
+                            hideSessionLoading();
+                            showSessionDetectedAlert(rol, nombreCompleto, email, user.uid, userData);
+                        }
+                    } else {
+                        hideSessionLoading();
+                    }
+                } catch (error) {
+                    console.error('Error al verificar sesión activa:', error);
+                    hideSessionLoading();
+                }
+            } else {
+                hideSessionLoading();
+                if (hasActiveSessionInLocalStorage()) {
+                    console.log('⚠️ Hay sesión en localStorage pero no en Firebase');
+                    clearSessionFromLocalStorage();
+                }
+            }
+        });
+    }
+    // Verificar si ya hay sesión en localStorage al cargar la página
             const savedSession = getSessionFromLocalStorage();
             if (savedSession) {
                 console.log('📱 Sesión encontrada en localStorage:', savedSession.email);
