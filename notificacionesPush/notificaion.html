@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel de Notificaciones - RSI</title>
+
+<style>
+  body{
+    font-family: Arial, sans-serif;
+    background:#002855;
+    color:white;
+    padding:40px;
+  }
+
+  .card{
+    background:white;
+    color:#002855;
+    padding:30px;
+    border-radius:10px;
+    max-width:600px;
+    margin:auto;
+  }
+
+  h2{
+    text-align:center;
+  }
+
+  label{
+    font-weight:bold;
+  }
+
+  input, textarea{
+    width:100%;
+    padding:10px;
+    margin:10px 0 20px 0;
+    border-radius:5px;
+    border:1px solid #ccc;
+    font-size:14px;
+  }
+
+  button{
+    width:100%;
+    padding:12px;
+    background:#00a8ff;
+    border:none;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    border-radius:5px;
+    font-size:15px;
+  }
+
+  button:hover{
+    opacity:0.9;
+  }
+
+  .resultado{
+    margin-top:20px;
+    padding:10px;
+    background:#f1f1f1;
+    border-radius:5px;
+    font-size:13px;
+    word-break:break-all;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Enviar Notificación Push</h2>
+
+  <label>FCM Token</label>
+  <textarea id="token" rows="3" placeholder="Pega aquí el token del usuario"></textarea>
+
+  <label>Título</label>
+  <input type="text" id="titulo" placeholder="Título de la notificación">
+
+  <label>Mensaje</label>
+  <textarea id="mensaje" rows="3" placeholder="Mensaje de la notificación"></textarea>
+
+  <button onclick="enviarNotificacion()">Enviar Notificación</button>
+
+  <div class="resultado" id="resultado"></div>
+</div>
+
+<script>
+async function enviarNotificacion(){
+
+  const token = document.getElementById("token").value.trim();
+  const titulo = document.getElementById("titulo").value.trim();
+  const mensaje = document.getElementById("mensaje").value.trim();
+  const resultado = document.getElementById("resultado");
+
+  if(!token || !titulo || !mensaje){
+    resultado.innerHTML = "⚠️ Todos los campos son obligatorios.";
+    return;
+  }
+
+  resultado.innerHTML = "Enviando notificación...";
+
+  try{
+
+    const response = await fetch("https://us-central1-rsienterprise.cloudfunctions.net/enviarNotificacion", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        token: token,
+        titulo: titulo,
+        mensaje: mensaje
+      })
+    });
+
+    const data = await response.json();
+
+    if(response.ok){
+      resultado.innerHTML = "✅ Notificación enviada correctamente.<br><br>" + JSON.stringify(data);
+    }else{
+      resultado.innerHTML = "❌ Error:<br><br>" + JSON.stringify(data);
+    }
+
+  }catch(error){
+    resultado.innerHTML = "❌ Error de conexión:<br><br>" + error.message;
+  }
+}
+</script>
+
+</body>
+</html>

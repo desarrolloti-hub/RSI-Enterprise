@@ -1,42 +1,31 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const webpush = require("web-push");
 
 admin.initializeApp();
 
-webpush.setVapidDetails(
-    "mailto:soporte@rsi.com",
-    "BAJbrpPYPfdMPToBY-FF_Y_yQP6h8TdAyiLOsQW02-ujvLRE5ppsGHieYkkF22uKj4muKSbDkj_FaPyP15VG_rE",
-    "Qr_U-lOC4zjyuz4Z73kE4GZWdHA7MTcPSg1JRGe_p6E"
-);
+exports.enviarNotificacion = functions.https.onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "POST");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
 
-// 🔥 Esta función se llama desde tu frontend
-exports.sendTicketNotification = functions.https.onCall(async (data, context) => {
-    const { colaboradorId, titulo, ticketId } = data;
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
 
-    // Obtener la suscripción guardada del colaborador
-    const tokenDoc = await admin.firestore()
-        .collection("pushTokens")
-        .doc(colaboradorId)
-        .get();
+  try {
+    const { token, titulo, mensaje } = req.body;
 
-    if (!tokenDoc.exists) {
-        console.log("❌ No hay token guardado para este colaborador");
-        return;
-    }
+    const response = await admin.messaging().send({
+      token: token,
+      notification: {
+        title: titulo,
+        body: mensaje
+      }
+    });
 
-    const subscription = tokenDoc.data().subscription;
+    res.json({ success: true, response });
 
-    const payload = {
-        title: "🎫 Nuevo Ticket Asignado",
-        body: titulo,
-        data: { ticketId }
-    };
-
-    try {
-        await webpush.sendNotification(subscription, JSON.stringify(payload));
-        console.log("Notificación enviada correctamente");
-    } catch (error) {
-        console.error("Error enviando notificación:", error);
-    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
