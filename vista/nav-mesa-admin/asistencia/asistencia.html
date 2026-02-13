@@ -570,16 +570,14 @@
                 const tipoAsistencia = getAttendanceTypeName(attendanceType);
                 
                 const mensajeExito = `
-                    <div style="text-align: left;">
-                        <strong>¡Asistencia registrada exitosamente!</strong><br><br>
-                        • Tipo: ${tipoAsistencia}<br>
-                        • Hora: ${datetime.timeString}<br>
-                        • Fecha: ${datetime.dateString}<br><br>
-                        <small style="color: #4CAF50;">
-                        <i class="fas fa-check-circle"></i> ¡Recuerda que solo puedes registrar asistencia una vez por día!
-                        </small><br>
-                        <small>Serás redirigido en 3 segundos...</small>
-                    </div>
+                    
+                        ¡Asistencia registrada exitosamente!
+                        • Tipo: ${tipoAsistencia}
+                        • Hora: ${datetime.timeString}
+                        • Fecha: ${datetime.dateString}
+                        ¡Recuerda que solo puedes registrar asistencia una vez por día!
+                        Serás redirigido en 3 segundos...
+                    
                 `;
                 
                 await showAlert('success', '✅ Asistencia registrada', mensajeExito);
