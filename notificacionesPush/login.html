@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise</title>
+    <!-- Estilos para las alertas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Estilos para el inicio de sesion -->
+    <link rel="stylesheet" href="inicio-de-sesion.css"> 
+    <!-- Scripts para la funcionalidad del login Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
+</head>
+<body>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-38F2DBG9HE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-38F2DBG9HE');
+    </script>
+    
+    <!-- Overlay de carga para sesión detectada -->
+    <div id="sessionLoadingOverlay" class="session-loading-overlay" style="display: none;">
+        <div class="session-loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Verificando sesión...</h3>
+            <p>Espera un momento por favor</p>
+        </div>
+    </div>
+
+    <!-- Contenedor principal -->
+    <div class="auth-container-wrapper">
+        <div class="auth-container">
+            <div class="form-section">
+                <!-- Formulario de Login -->
+                <div id="loginForm" class="containerForm active">
+                    <div class="form-header">
+                        <div class="form-title-container">
+                            <div class="icon-circle">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h2>Iniciar Sesión</h2>
+                        </div>
+                    </div>
+                    <form id="loginFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="forgot-password">
+                            <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+                        </div>
+                        <button type="submit" class="btn-primary">Ingresar</button>
+                    </form>
+                    <a href="#" class="form-link" id="goToSignup">¿No tienes cuenta? Regístrate</a>
+                </div>
+
+                <!-- Formulario de Registro -->
+                <div id="signupForm" class="containerForm">
+                    <div class="form-header">
+                        <div class="form-title-container">
+                            <div class="icon-circle">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h2>Crear Cuenta</h2>
+                        </div>
+                    </div>
+                    <form id="signupFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="fullName" placeholder="Nombre completo" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="signupEmail" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="signupPassword" placeholder="Contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('signupPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" name="rol" value="user">
+                        <button type="submit" class="btn-primary">Registrarse</button>
+                    </form>
+                    <a href="#" class="form-link" id="goToLogin">¿Ya tienes cuenta? Inicia sesión</a>
+                </div>
+            </div>
+            
+            <div class="image-section"></div>
+        </div>
+    </div>
+
+    <!-- DIV PARA MOSTRAR EL ESTADO DEL PROCESO -->
+    <div id="procesoStatus" style="position: fixed; bottom: 20px; left: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 10000; max-width: 400px; display: none;">
+        <h4 style="margin-top: 0; color: #002855;">Estado del registro de notificaciones</h4>
+        <div id="procesoMensaje" style="margin-bottom: 15px; color: #333;"></div>
+        <div style="background: #f0f0f0; height: 10px; border-radius: 5px; overflow: hidden;">
+            <div id="procesoBarra" style="background: #00509e; height: 100%; width: 0%; transition: width 0.3s;"></div>
+        </div>
+        <div id="procesoDetalle" style="margin-top: 15px; font-size: 12px; color: #666; font-family: monospace;"></div>
+        <button id="cerrarProcesoBtn" style="margin-top: 20px; background: #00509e; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; display: none;">Cerrar</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+    
+    <script>
+        // Variable para controlar si estamos en proceso de token
+        let enProcesoToken = false;
+        
+        // Función para mostrar/ocultar contraseña
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.appspot.com",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        let messaging = null;
+        
+        // Inicializar messaging
+        try {
+            messaging = firebase.messaging();
+            console.log("✅ Firebase Messaging inicializado");
+        } catch (e) {
+            console.log("⚠️ Firebase Messaging no soportado:", e);
+        }
+
+        // ============ FUNCIÓN PARA ACTUALIZAR ESTADO VISUAL ============
+        function actualizarEstado(mensaje, progreso = null, detalle = null) {
+            console.log(`📊 [${progreso || '?'}%] ${mensaje}`, detalle || '');
+            
+            const div = document.getElementById('procesoStatus');
+            const mensajeEl = document.getElementById('procesoMensaje');
+            const barraEl = document.getElementById('procesoBarra');
+            const detalleEl = document.getElementById('procesoDetalle');
+            const cerrarBtn = document.getElementById('cerrarProcesoBtn');
+            
+            if (div.style.display === 'none') {
+                div.style.display = 'block';
+            }
+            
+            mensajeEl.innerHTML = mensaje;
+            
+            if (progreso !== null) {
+                barraEl.style.width = progreso + '%';
+            }
+            
+            if (detalle) {
+                detalleEl.innerHTML = detalle;
+            }
+            
+            // Si el progreso es 100%, mostrar botón de cerrar
+            if (progreso === 100) {
+                cerrarBtn.style.display = 'inline-block';
+                cerrarBtn.onclick = function() {
+                    div.style.display = 'none';
+                    enProcesoToken = false;
+                };
+            }
+        }
+
+        // ============ FUNCIÓN PARA REGISTRAR TOKEN - SIN REDIRECCIONES ============
+        async function registerAndSaveFCMToken(userId) {
+            console.log("🔵 INICIANDO REGISTRO DE TOKEN - SIN REDIRECCIONES");
+            enProcesoToken = true;
+            
+            actualizarEstado("🔵 Iniciando registro de dispositivo...", 5, "Paso 1/6: Verificando soporte");
+            
+            // Verificar soporte
+            if (!('serviceWorker' in navigator)) {
+                actualizarEstado("❌ Error: Service Worker no soportado", 0, "Tu navegador no soporta esta función");
+                throw new Error("Service Worker no soportado");
+            }
+            if (!('Notification' in window)) {
+                actualizarEstado("❌ Error: Notificaciones no soportadas", 0, "Tu navegador no soporta notificaciones");
+                throw new Error("Notificaciones no soportadas");
+            }
+            if (!messaging) {
+                actualizarEstado("❌ Error: Messaging no inicializado", 0, "Error de configuración");
+                throw new Error("Messaging no inicializado");
+            }
+
+            try {
+                // PASO 1: REGISTRAR SERVICE WORKER
+                actualizarEstado("🔄 Registrando Service Worker...", 15, "Paso 2/6: Configurando service worker");
+                
+                let registration;
+                
+                // Intentar registrar SW
+                try {
+                    registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    console.log("✅ Service Worker registrado:", registration.scope);
+                    actualizarEstado("✅ Service Worker registrado", 25, "Scope: " + registration.scope);
+                } catch (regError) {
+                    console.log("⚠️ Error registrando SW, intentando obtener ready:", regError);
+                    registration = await navigator.serviceWorker.ready;
+                    console.log("✅ Service Worker ready:", registration.scope);
+                    actualizarEstado("✅ Service Worker listo", 25, "Scope: " + registration.scope);
+                }
+
+                // Esperar activación si es necesario
+                if (registration.installing) {
+                    actualizarEstado("⏳ Activando Service Worker...", 30, "Esperando activación...");
+                    console.log("⏳ Esperando activación del SW...");
+                    await new Promise((resolve) => {
+                        registration.installing.addEventListener('statechange', (e) => {
+                            if (e.target.state === 'activated') {
+                                console.log("✅ Service Worker activado");
+                                resolve();
+                            }
+                        });
+                    });
+                    actualizarEstado("✅ Service Worker activado", 35, "Listo para recibir notificaciones");
+                }
+
+                // Limpiar suscripciones anteriores
+                try {
+                    const existingSubscription = await registration.pushManager.getSubscription();
+                    if (existingSubscription) {
+                        actualizarEstado("🧹 Limpiando configuraciones anteriores...", 40, "Eliminando token previo");
+                        console.log("🔄 Eliminando suscripción anterior...");
+                        await existingSubscription.unsubscribe();
+                        console.log("✅ Suscripción anterior eliminada");
+                        actualizarEstado("✅ Configuraciones anteriores limpiadas", 45, "Listo para nuevo registro");
+                    }
+                } catch (subError) {
+                    console.log("⚠️ No se pudo limpiar suscripción:", subError);
+                }
+
+                // PASO 2: SOLICITAR PERMISO
+                actualizarEstado("🔔 Solicitando permiso de notificaciones...", 50, "Paso 3/6: Permiso del usuario");
+                console.log("🔄 PASO 2: Solicitando permiso de notificaciones...");
+                
+                const permission = await Notification.requestPermission();
+                console.log("📝 Permiso de notificaciones:", permission);
+                
+                if (permission !== 'granted') {
+                    actualizarEstado("❌ Permiso de notificaciones denegado", 0, "El usuario no permitió las notificaciones");
+                    throw new Error("Permiso de notificaciones denegado");
+                }
+                
+                actualizarEstado("✅ Permiso de notificaciones concedido", 60, "Paso 4/6: Obteniendo token");
+
+                // PASO 3: OBTENER TOKEN
+                actualizarEstado("🔄 Obteniendo token del dispositivo...", 65, "Comunicándose con Firebase...");
+                console.log("🔄 PASO 3: Obteniendo token FCM...");
+                
+                let token = null;
+                let tokenAttempts = 0;
+                
+                while (!token && tokenAttempts < 5) {
+                    tokenAttempts++;
+                    try {
+                        token = await messaging.getToken({
+                            vapidKey: "BN1Y5vuRqbNdqQOFkpo2QQlAirqwej101NKdLwdP-bOtXS-EpsycPpNfPqZKnCK8EQ7ai1IvqMAZRA9pCvLIXA4",
+                            serviceWorkerRegistration: registration
+                        });
+                        
+                        if (token) {
+                            console.log(`✅ Token obtenido (intento ${tokenAttempts}):`, token);
+                            actualizarEstado("✅ Token obtenido", 75, `Token: ${token.substring(0, 20)}...`);
+                            break;
+                        }
+                    } catch (tokenError) {
+                        console.log(`⏳ Intento ${tokenAttempts} falló:`, tokenError);
+                        if (tokenAttempts < 5) {
+                            actualizarEstado(`⏳ Reintentando obtener token (${tokenAttempts}/5)...`, 65, tokenError.message);
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                    }
+                }
+
+                if (!token) {
+                    actualizarEstado("❌ Error: No se pudo obtener el token", 0, "Máximo de intentos alcanzado");
+                    throw new Error("No se pudo obtener el token FCM");
+                }
+
+                // PASO 4: GUARDAR EN FIRESTORE
+                actualizarEstado("💾 Guardando token en el servidor...", 80, "Paso 5/6: Escribiendo en base de datos");
+                console.log("🔄 PASO 4: Guardando token en Firestore...");
+                
+                const userRef = db.collection('usuarios').doc(userId);
+                
+                // Intentar guardar hasta 5 veces
+                let saved = false;
+                for (let i = 1; i <= 5; i++) {
+                    try {
+                        console.log(`📤 Intento ${i} de guardar token...`);
+                        await userRef.set({
+                            fcmToken: token,
+                            notificacionesHabilitadas: true,
+                            ultimaActualizacionToken: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        console.log(`✅ Token guardado (intento ${i})`);
+                        actualizarEstado(`✅ Token guardado (intento ${i})`, 85, "Escritura exitosa");
+                        saved = true;
+                        break;
+                    } catch (writeError) {
+                        console.error(`❌ Error intento ${i}:`, writeError);
+                        if (i < 5) {
+                            actualizarEstado(`⏳ Reintentando guardar (${i}/5)...`, 80, writeError.message);
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                    }
+                }
+
+                if (!saved) {
+                    actualizarEstado("❌ Error: No se pudo guardar el token", 0, "Error de escritura en base de datos");
+                    throw new Error("No se pudo guardar el token en el servidor");
+                }
+
+                // PASO 5: VERIFICAR GUARDADO
+                actualizarEstado("🔍 Verificando token guardado...", 90, "Paso 6/6: Confirmando escritura");
+                console.log("🔄 PASO 5: Verificando token en Firestore...");
+                
+                let verified = false;
+                for (let i = 1; i <= 10; i++) {
+                    try {
+                        const doc = await userRef.get();
+                        if (doc.exists && doc.data().fcmToken === token) {
+                            console.log(`✅ Token verificado (intento ${i})`);
+                            actualizarEstado(`✅ Token verificado (intento ${i})`, 95, "Confirmación exitosa");
+                            verified = true;
+                            break;
+                        }
+                    } catch (readError) {
+                        console.error(`❌ Error verificando:`, readError);
+                    }
+                    
+                    if (!verified && i < 10) {
+                        actualizarEstado(`🔍 Verificando (${i}/10)...`, 90, "Esperando confirmación...");
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                }
+
+                if (!verified) {
+                    actualizarEstado("⚠️ No se pudo verificar el token", 95, "El token puede estar guardado pero no se pudo confirmar");
+                    // No lanzamos error, solo advertimos
+                }
+
+                // PASO 6: COMPLETADO
+                console.log("🎉 PROCESO COMPLETADO EXITOSAMENTE");
+                actualizarEstado("✅ ¡PROCESO COMPLETADO EXITOSAMENTE!", 100, 
+                    `Usuario: ${userId}\nToken registrado y verificado\nNotificaciones configuradas correctamente`);
+                
+                enProcesoToken = false;
+                return true;
+
+            } catch (error) {
+                console.error("❌ ERROR:", error);
+                actualizarEstado("❌ Error: " + error.message, 0, error.stack || error.message);
+                enProcesoToken = false;
+                throw error;
+            }
+        }
+
+        // Función para mostrar overlay de carga
+        function showSessionLoading() {
+            const overlay = document.getElementById('sessionLoadingOverlay');
+            if (overlay) overlay.style.display = 'flex';
+        }
+
+        function hideSessionLoading() {
+            const overlay = document.getElementById('sessionLoadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        // Función para redirigir según el rol - NO SE USA EN ESTA VERSIÓN
+        function redirectByRole(rol) {
+            console.log("⚠️ Redirección bloqueada - Modo demostración");
+            actualizarEstado("🔒 Redirección bloqueada", 100, "Modo demostración - No se redirige");
+        }
+
+        // Función para mostrar SweetAlert de sesión detectada
+        function showSessionDetectedAlert(rol, nombreCompleto, email) {
+            const rolNames = {
+                'admin': 'Administrador',
+                'puntoVenta': 'Punto de Venta',
+                'facturas': 'Operador de Facturas',
+                'colaborador': 'Colaborador',
+                'user': 'Usuario',
+                'admincolaborador': 'Administrador de Colaboradores'
+            };
+            
+            const rolDisplay = rolNames[rol] || rol;
+            
+            Swal.fire({
+                title: 'Sesión activa detectada',
+                html: `
+                    <div style="text-align: left; margin-bottom: 1rem;">
+                        <p><strong>Nombre:</strong> ${nombreCompleto}</p>
+                        <p><strong>Correo:</strong> ${email}</p>
+                        <p><strong>Rol:</strong> ${rolDisplay}</p>
+                        <p><strong>Estado:</strong> <span style="color: #28a745;">Sesión activa</span></p>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Aceptar',
+                allowOutsideClick: false
+            });
+        }
+
+        // Función para verificar sesión activa - MODIFICADA PARA NO REDIRIGIR
+        function checkActiveSession() {
+            showSessionLoading();
+            
+            auth.onAuthStateChanged(async (user) => {
+                if (user && user.emailVerified && !enProcesoToken) {
+                    try {
+                        const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                        
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            const rol = userData.rol;
+                            const nombreCompleto = userData.nombreCompleto || 'Usuario';
+                            const email = user.email;
+                            
+                            hideSessionLoading();
+                            showSessionDetectedAlert(rol, nombreCompleto, email);
+                        } else {
+                            hideSessionLoading();
+                        }
+                    } catch (error) {
+                        console.error('Error al verificar sesión activa:', error);
+                        hideSessionLoading();
+                    }
+                } else {
+                    hideSessionLoading();
+                }
+            });
+        }
+
+        // Configurar navegación entre formularios
+        function setupFormNavigation() {
+            document.getElementById('goToLogin')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('signupForm').classList.remove('active');
+                document.getElementById('loginForm').classList.add('active');
+            });
+
+            document.getElementById('goToSignup')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('loginForm').classList.remove('active');
+                document.getElementById('signupForm').classList.add('active');
+            });
+        }
+
+        // Configurar recuperación de contraseña
+        function setupPasswordRecovery() {
+            document.getElementById('forgotPasswordLink')?.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: 'Recuperar contraseña',
+                    input: 'email',
+                    inputPlaceholder: 'Ingresa tu correo electrónico',
+                    showCancelButton: true,
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    preConfirm: async (email) => {
+                        if (!email) {
+                            Swal.showValidationMessage('Por favor, ingresa un correo válido');
+                            return false;
+                        }
+                        try {
+                            await auth.sendPasswordResetEmail(email);
+                            return email;
+                        } catch (error) {
+                            Swal.showValidationMessage(`Error: ${error.message}`);
+                            return false;
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Correo enviado',
+                            text: 'Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.',
+                            icon: 'success'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Función para manejar el registro
+        async function handleSignup(fullName, email, password, confirmPassword, rol) {
+            try {
+                if (password !== confirmPassword) {
+                    throw new Error('Las contraseñas no coinciden');
+                }
+
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                await db.collection('usuarios').doc(user.uid).set({
+                    nombreCompleto: fullName,
+                    email: user.email,
+                    rol: rol,
+                    fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await user.sendEmailVerification();
+                return user;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Función para manejar el login
+        async function handleLogin(email, password) {
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                if (!user.emailVerified) {
+                    await auth.signOut();
+                    throw new Error('Por favor verifica tu correo electrónico antes de iniciar sesión');
+                }
+
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    throw new Error('No se encontró información del usuario');
+                }
+
+                const userData = userDoc.data();
+                const rol = userData.rol;
+
+                if (rol === 'colaborador' || rol === 'admincolaborador') {
+                    const colaboradorDoc = await db.collection('colaboradores').doc(user.uid).get();
+                    
+                    if (colaboradorDoc.exists) {
+                        const colaboradorData = colaboradorDoc.data();
+                        
+                        if (colaboradorData.trabajo !== 'Activo') {
+                            await auth.signOut();
+                            throw new Error('Su cuenta ha sido deshabilitada. Por favor, póngase en contacto con el administrador.');
+                        }
+                    }
+                }
+
+                return { user, rol };
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // ============ MANEJADOR DE LOGIN - SIN REDIRECCIONES ============
+        document.addEventListener('DOMContentLoaded', function() {
+            checkActiveSession();
+            setupFormNavigation();
+            setupPasswordRecovery();
+
+            // Manejar registro
+            document.getElementById('signupFormElement')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const rol = document.querySelector('input[name="rol"]').value;
+
+                try {
+                    Swal.fire({
+                        title: 'Registrando...',
+                        text: 'Por favor espera',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+                    
+                    await handleSignup(fullName, email, password, confirmPassword, rol);
+                    
+                    Swal.fire({
+                        title: '¡Registro exitoso!',
+                        text: 'Se ha enviado un correo de verificación. Por favor verifica tu cuenta.',
+                        icon: 'success'
+                    });
+
+                    this.reset();
+                    document.getElementById('signupForm').classList.remove('active');
+                    document.getElementById('loginForm').classList.add('active');
+
+                } catch (error) {
+                    let errorMessage = 'Error al registrar';
+                    switch(error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'El correo ya está registrado';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+                            break;
+                        default:
+                            errorMessage = error.message;
+                    }
+                    Swal.fire({ title: 'Error', text: errorMessage, icon: 'error' });
+                }
+            });
+
+            // ============ MANEJADOR DE LOGIN - SIN REDIRECCIONES ============
+            document.getElementById('loginFormElement')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Prevenir cualquier comportamiento por defecto
+                e.stopPropagation();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                try {
+                    // 1. Login
+                    console.log("🔐 Iniciando proceso de login...");
+                    const { user, rol } = await handleLogin(email, password);
+                    console.log("✅ Usuario autenticado:", user.uid);
+                    console.log("👤 Rol:", rol);
+
+                    // 2. REGISTRO OBLIGATORIO DEL TOKEN - SIN REDIRECCIONES
+                    console.log("🔔 INICIANDO REGISTRO DE TOKEN - SIN REDIRECCIONES");
+                    
+                    await registerAndSaveFCMToken(user.uid);
+                    
+                    console.log("✅ PROCESO COMPLETADO - TOKEN REGISTRADO Y VERIFICADO");
+                    
+                    // 3. NO HAY REDIRECCIÓN - SOLO MOSTRAMOS QUE TERMINÓ
+                    Swal.fire({
+                        title: '✅ Proceso completado',
+                        html: `
+                            <div style="text-align: center;">
+                                <i class="fas fa-check-circle" style="color: #28a745; font-size: 48px; margin-bottom: 15px;"></i>
+                                <p style="font-size: 16px; margin-bottom: 10px;">El token FCM se registró exitosamente.</p>
+                                <p style="color: #666; font-size: 14px; margin-bottom: 5px;"><strong>Usuario:</strong> ${user.uid}</p>
+                                <p style="color: #666; font-size: 14px; margin-bottom: 5px;"><strong>Rol:</strong> ${rol}</p>
+                                <p style="color: #28a745; font-size: 14px; margin-top: 10px;">✓ Notificaciones configuradas</p>
+                                <p style="color: #666; font-size: 12px; margin-top: 20px;">El proceso ha terminado. NO se redirigió a ninguna página.</p>
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonText: 'Ver detalles',
+                        confirmButtonColor: '#1c1948',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cerrar',
+                        cancelButtonColor: '#6c757d',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Solo mostramos más detalles, NO redirigimos
+                            Swal.fire({
+                                title: 'Detalles del registro',
+                                html: `
+                                    <div style="text-align: left; font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 15px; border-radius: 5px;">
+                                        <p><strong>User ID:</strong> ${user.uid}</p>
+                                        <p><strong>Email:</strong> ${user.email}</p>
+                                        <p><strong>Rol:</strong> ${rol}</p>
+                                        <p><strong>Estado:</strong> Token registrado y verificado</p>
+                                        <p><strong>Hora:</strong> ${new Date().toLocaleString()}</p>
+                                    </div>
+                                `,
+                                confirmButtonText: 'Cerrar',
+                                confirmButtonColor: '#1c1948'
+                            });
+                        }
+                    });
+
+                } catch (error) {
+                    // 4. SI HAY ERROR, MOSTRAR Y NO REDIRIGIR
+                    console.error("❌ ERROR:", error);
+                    
+                    Swal.fire({
+                        title: '❌ Error en el proceso',
+                        html: `
+                            <div style="text-align: center;">
+                                <i class="fas fa-exclamation-triangle" style="color: #ffc107; font-size: 48px; margin-bottom: 15px;"></i>
+                                <p style="font-size: 16px; margin-bottom: 10px;">${error.message || 'Error desconocido'}</p>
+                                <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                                    No se pudo completar el registro del token.
+                                </p>
+                            </div>
+                        `,
+                        icon: 'error',
+                        confirmButtonText: 'Reintentar',
+                        confirmButtonColor: '#1c1948',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cancelar',
+                        cancelButtonColor: '#6c757d'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script src="../recursosDinamicos/footer.js"></script>
+</body>
+</html>

@@ -117,6 +117,112 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
     <script>
+        // ============ FUNCIONES DE LOCAL STORAGE ============
+        
+        // Guardar datos de sesión en localStorage
+        function saveSessionToLocalStorage(userData) {
+            try {
+                // Crear objeto con la información del usuario
+                const sessionData = {
+                    uid: userData.uid,
+                    email: userData.email,
+                    nombreCompleto: userData.nombreCompleto || userData.nombre || 'Usuario',
+                    rol: userData.rol || 'user',
+                    fechaInicioSesion: new Date().toISOString(),
+                    emailVerified: userData.emailVerified || false,
+                    // Guardar timestamp para expiración (24 horas)
+                    expiresAt: new Date().getTime() + (24 * 60 * 60 * 1000)
+                };
+                
+                // Guardar en localStorage
+                localStorage.setItem('rsi_session', JSON.stringify(sessionData));
+                
+                // También guardar datos individuales para fácil acceso
+                localStorage.setItem('userUID', userData.uid);
+                localStorage.setItem('userEmail', userData.email);
+                localStorage.setItem('userName', userData.nombreCompleto || userData.nombre || 'Usuario');
+                localStorage.setItem('userRole', userData.rol || 'user');
+                localStorage.setItem('sessionStart', new Date().toISOString());
+                
+                console.log('✅ Sesión guardada en localStorage');
+                return true;
+            } catch (error) {
+                console.error('❌ Error al guardar en localStorage:', error);
+                return false;
+            }
+        }
+
+        // Obtener datos de sesión de localStorage
+        function getSessionFromLocalStorage() {
+            try {
+                const sessionData = localStorage.getItem('rsi_session');
+                if (sessionData) {
+                    const parsedData = JSON.parse(sessionData);
+                    
+                    // Verificar si la sesión ha expirado (24 horas)
+                    const now = new Date().getTime();
+                    if (parsedData.expiresAt && now > parsedData.expiresAt) {
+                        console.log('⚠️ Sesión expirada en localStorage');
+                        clearSessionFromLocalStorage();
+                        return null;
+                    }
+                    
+                    return parsedData;
+                }
+                return null;
+            } catch (error) {
+                console.error('❌ Error al obtener de localStorage:', error);
+                return null;
+            }
+        }
+
+        // Limpiar datos de sesión de localStorage
+        function clearSessionFromLocalStorage() {
+            try {
+                localStorage.removeItem('rsi_session');
+                localStorage.removeItem('userUID');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('sessionStart');
+                console.log('✅ Sesión eliminada de localStorage');
+                return true;
+            } catch (error) {
+                console.error('❌ Error al limpiar localStorage:', error);
+                return false;
+            }
+        }
+
+        // Verificar si hay sesión activa en localStorage
+        function hasActiveSessionInLocalStorage() {
+            const session = getSessionFromLocalStorage();
+            return session !== null;
+        }
+
+        // Obtener un valor específico de localStorage
+        function getUserFromLocalStorage(key) {
+            try {
+                return localStorage.getItem(key) || null;
+            } catch (error) {
+                console.error(`❌ Error al obtener ${key} de localStorage:`, error);
+                return null;
+            }
+        }
+
+        // Función para guardar datos adicionales del colaborador
+        function saveColaboradorDataToLocalStorage(colaboradorData) {
+            try {
+                if (colaboradorData) {
+                    localStorage.setItem('colaboradorData', JSON.stringify(colaboradorData));
+                    console.log('✅ Datos de colaborador guardados en localStorage');
+                }
+            } catch (error) {
+                console.error('❌ Error al guardar datos de colaborador:', error);
+            }
+        }
+
+        // ============ FUNCIONES DE FIREBASE Y AUTENTICACIÓN ============
+
         // Función para mostrar/ocultar contraseña
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
@@ -159,7 +265,7 @@
         }
 
         // Función para mostrar SweetAlert de sesión detectada
-        function showSessionDetectedAlert(rol, nombreCompleto, email) {
+        function showSessionDetectedAlert(rol, nombreCompleto, email, uid) {
             const rolNames = {
                 'admin': 'Administrador',
                 'puntoVenta': 'Punto de Venta',
@@ -198,14 +304,22 @@
                             clearInterval(timerInterval);
                         }
                     }, 1000);
+                    
+                    // Guardar en localStorage cuando se detecta sesión activa
+                    const userData = {
+                        uid: uid,
+                        email: email,
+                        nombreCompleto: nombreCompleto,
+                        rol: rol,
+                        emailVerified: true
+                    };
+                    saveSessionToLocalStorage(userData);
                 },
                 willClose: () => {
                     clearInterval(timerInterval);
                 }
             }).then((result) => {
-                // Esta función se ejecuta cuando el SweetAlert se cierra
                 if (result.dismiss === Swal.DismissReason.timer) {
-                    // Redirigir cuando el timer termine
                     redirectByRole(rol);
                 }
             });
@@ -260,12 +374,16 @@
                                     const colaboradorData = colaboradorDoc.data();
                                     
                                     if (colaboradorData.trabajo === 'Activo') {
+                                        // Guardar datos de colaborador en localStorage
+                                        saveColaboradorDataToLocalStorage(colaboradorData);
+                                        
                                         // Ocultar loading y mostrar SweetAlert
                                         hideSessionLoading();
-                                        showSessionDetectedAlert(rol, nombreCompleto, email);
+                                        showSessionDetectedAlert(rol, nombreCompleto, email, user.uid);
                                     } else {
                                         // Si está inactivo, cerrar sesión y mostrar mensaje
                                         await firebase.auth().signOut();
+                                        clearSessionFromLocalStorage();
                                         hideSessionLoading();
                                         Swal.fire({
                                             title: 'Cuenta deshabilitada',
@@ -277,12 +395,12 @@
                                 } else {
                                     // Si no existe en colaboradores, mostrar SweetAlert normalmente
                                     hideSessionLoading();
-                                    showSessionDetectedAlert(rol, nombreCompleto, email);
+                                    showSessionDetectedAlert(rol, nombreCompleto, email, user.uid);
                                 }
                             } else {
                                 // Para otros roles, mostrar SweetAlert normalmente
                                 hideSessionLoading();
-                                showSessionDetectedAlert(rol, nombreCompleto, email);
+                                showSessionDetectedAlert(rol, nombreCompleto, email, user.uid);
                             }
                         } else {
                             hideSessionLoading();
@@ -293,11 +411,15 @@
                     }
                 } else {
                     hideSessionLoading(); // Ocultar loading si no hay sesión
+                    // Verificar si hay sesión en localStorage pero no en Firebase
+                    if (hasActiveSessionInLocalStorage()) {
+                        console.log('⚠️ Hay sesión en localStorage pero no en Firebase');
+                        clearSessionFromLocalStorage();
+                    }
                 }
             });
         }
 
-        // Resto del código se mantiene igual...
         // Función para navegar entre formularios
         function setupFormNavigation() {
             // De registro a login
@@ -390,6 +512,7 @@
 
                 if (!user.emailVerified) {
                     await firebase.auth().signOut();
+                    clearSessionFromLocalStorage();
                     throw new Error('Por favor verifica tu correo electrónico antes de iniciar sesión');
                 }
 
@@ -402,6 +525,16 @@
                 const userData = userDoc.data();
                 const rol = userData.rol;
 
+                // Guardar en localStorage inmediatamente
+                const sessionUserData = {
+                    uid: user.uid,
+                    email: user.email,
+                    nombreCompleto: userData.nombreCompleto || 'Usuario',
+                    rol: rol,
+                    emailVerified: user.emailVerified
+                };
+                saveSessionToLocalStorage(sessionUserData);
+
                 // Verificar estado del colaborador si aplica
                 if (rol === 'colaborador' || rol === 'admincolaborador') {
                     const colaboradorDoc = await firebase.firestore().collection('colaboradores').doc(user.uid).get();
@@ -411,8 +544,12 @@
                         
                         if (colaboradorData.trabajo !== 'Activo') {
                             await firebase.auth().signOut();
+                            clearSessionFromLocalStorage();
                             throw new Error('Su cuenta ha sido deshabilitada. Por favor, póngase en contacto con el administrador.');
                         }
+                        
+                        // Guardar datos de colaborador en localStorage
+                        saveColaboradorDataToLocalStorage(colaboradorData);
                     }
                 }
 
@@ -493,7 +630,7 @@
                     
                     const rol = await handleLogin(email, password);
                     
-                     try {
+                    try {
                         const { subscribeUser } = await import("/push-subscribe.js");
 
                         // Obtenemos UID del usuario logueado
@@ -505,7 +642,6 @@
                     } catch (err) {
                         console.error("❌ Error en push subscribe:", err);
                     }
-
 
                     Swal.fire({
                         title: '¡Bienvenido!',
@@ -537,14 +673,19 @@
                         text: errorMessage,
                         icon: 'error'
                     });
+                    
+                    // Limpiar localStorage en caso de error
+                    clearSessionFromLocalStorage();
                 }
             });
+            
+            // Verificar si ya hay sesión en localStorage al cargar la página
+            const savedSession = getSessionFromLocalStorage();
+            if (savedSession) {
+                console.log('📱 Sesión encontrada en localStorage:', savedSession.email);
+            }
         });
-
-        
     </script>
-
-    
 
     <!-- Scripts para la funcionalidad del login Firebase -->
      <script src="../recursosDinamicos/footer.js"></script>

@@ -377,7 +377,7 @@ function establecerFechaActual() {
 function agregarItem() {
     const row = document.createElement('tr');
     row.draggable = true;
-    row.innerHTML = `
+    row.innerHTML = /*html*/`
         <td><span class="drag-handle" title="Arrastrar para reordenar">⠿</span></td>
         <td>
             <select class="item-categoria" required>
