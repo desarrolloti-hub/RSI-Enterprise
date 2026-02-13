@@ -1037,6 +1037,9 @@
                         <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                             <i class="fas fa-palette"></i> Personalizar interfaz
                         </a>
+                        <a href="../permisos/permisos.html" class="menu-nav-btn">
+                            <i class="fas fa-shield-alt"></i> Persmisos
+                        </a>
                         <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
                             <a href="../fin-asistencia/fin-asistencia.html">
                             <i class="fas fa-flag-checkered"></i> Terminar asistencia
