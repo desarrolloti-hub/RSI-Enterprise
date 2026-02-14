@@ -52,9 +52,9 @@ self.addEventListener('notificationclick', function(event) {
     let url = '/';
     if (data && data.ticketId) {
         if (data.tipo === 'operativo') {
-            url = `/vista/nav-mesa-admin/Tickets/detalle-ticket-operativo.html?id=${data.ticketId}`;
+            url = `/vista/nav-mesa-operativos/gestion-tickets/gestion-tickets.html`;
         } else {
-            url = `/vista/nav-mesa-admin/Tickets/detalle-ticket-admin.html?id=${data.ticketId}`;
+            url = `/vista/nav-mesa-admin/gestion-tickets/gestion-tickets.html`;
         }
     }
     
