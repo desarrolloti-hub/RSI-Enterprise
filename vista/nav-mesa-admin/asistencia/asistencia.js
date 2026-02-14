@@ -25,11 +25,6 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// 📌 MANEJADOR DE ERRORES GLOBAL
-window.manejarErrorGlobal = function(error) {
-    console.error("Error global:", error);
-};
-
 const AppState = {
     currentUser: null,
     userData: null,
@@ -46,42 +41,38 @@ const AppState = {
 
 // --- FUNCIONES DE UTILIDAD ---
 async function showAlert(type, title, message) {
-    try {
-        if (typeof window.showCustomAlert === 'function') {
-            switch(type) {
-                case 'success':
-                    if (typeof window.showCustomSuccess === 'function') {
-                        return await window.showCustomSuccess(title, message);
-                    }
-                    break;
-                case 'error':
-                    if (typeof window.showCustomError === 'function') {
-                        return await window.showCustomError(title, message);
-                    }
-                    break;
-                case 'info':
-                    if (typeof window.showCustomWarning === 'function') {
-                        return await window.showCustomWarning(title, message, 'Entendido');
-                    }
-                    break;
-            }
-            return await window.showCustomAlert({ title, text: message, icon: type });
-        } else {
-            return await Swal.fire({ 
-                icon: type, 
-                title: title, 
-                html: message, 
-                confirmButtonColor: '#4e54c8',
-                allowOutsideClick: false
-            });
+    if (typeof window.showCustomAlert === 'function') {
+        switch(type) {
+            case 'success':
+                if (typeof window.showCustomSuccess === 'function') {
+                    return await window.showCustomSuccess(title, message);
+                }
+                break;
+            case 'error':
+                if (typeof window.showCustomError === 'function') {
+                    return await window.showCustomError(title, message);
+                }
+                break;
+            case 'info':
+                if (typeof window.showCustomWarning === 'function') {
+                    return await window.showCustomWarning(title, message, 'Entendido');
+                }
+                break;
         }
-    } catch (error) {
-        console.error("Error mostrando alerta:", error);
+        return await window.showCustomAlert({ title, text: message, icon: type });
+    } else {
+        return await Swal.fire({ 
+            icon: type, 
+            title: title, 
+            html: message, 
+            confirmButtonColor: '#4e54c8',
+            allowOutsideClick: false
+        });
     }
 }
 
 async function showLocationAlert() {
-    return await Swal.fire({
+     return await Swal.fire({
         title: 'Ubicación Requerida',
         html: 'Para registrar tu asistencia, necesitamos acceder a tu ubicación actual. Esto nos ayuda a verificar tu presencia en el lugar de trabajo.',
         icon: 'info',
@@ -102,29 +93,6 @@ function getFormattedDateTime() {
         timeString24: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
         fullDateTime: now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'})
     };
-}
-
-// 📌 Formato 12 horas para mostrar
-function formatTo12Hour(timeString) {
-    if (!timeString) return 'Hora no disponible';
-    
-    let hours, minutes;
-    if (typeof timeString === 'string') {
-        const parts = timeString.split(':');
-        hours = parseInt(parts[0], 10);
-        minutes = parts[1] ? parseInt(parts[1], 10) : 0;
-    } else {
-        return 'Hora no disponible';
-    }
-    
-    if (isNaN(hours)) return 'Hora no disponible';
-    
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    let hours12 = hours % 12;
-    hours12 = hours12 === 0 ? 12 : hours12;
-    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-    
-    return `${hours12}:${minutesStr} ${ampm}`;
 }
 
 // --- FUNCIONES PARA VERIFICAR ASISTENCIA DEL DÍA ---
@@ -239,7 +207,7 @@ async function getUserRole(email) {
         const querySnapshot = await db.collection('usuarios').where('email', '==', email).limit(1).get();
         return !querySnapshot.empty ? querySnapshot.docs[0].data().rol : null;
     } catch (error) {
-        if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+        window.manejarErrorGlobal(error);
         return null;
     }
 }
@@ -254,7 +222,7 @@ async function getUserData(email) {
         
         return !querySnapshot.empty ? { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } : null;
     } catch (error) { 
-        if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+        window.manejarErrorGlobal(error);
         return null; 
     }
 }
@@ -273,7 +241,7 @@ function displayUserInfo(user, existingAttendance = null) {
     
     let attendanceStatus = '';
     if (existingAttendance) {
-        const fechaRegistro = existingAttendance.fecha ? existingAttendance.fecha.toDate() : new Date();
+        const fechaRegistro = existingAttendance.fecha.toDate();
         const horaRegistro = fechaRegistro.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
         const tipoAsistencia = existingAttendance.tipo ? getAttendanceTypeName(existingAttendance.tipo) : 'No especificado';
         
@@ -315,7 +283,7 @@ function displayUserInfo(user, existingAttendance = null) {
 function updateDateTime() {
     const currentDateElement = document.getElementById('currentDate');
     if (currentDateElement) {
-        currentDateElement.innerHTML = getFormattedDateTime().fullDateTime;
+        currentDateElement.textContent = getFormattedDateTime().fullDateTime;
     }
 }
 
@@ -333,15 +301,11 @@ function setupAttendanceOptions() {
     });
 }
 
-// Redirección para colaborador
 function redirectByRole(role) {
     const rolePaths = {
-        'colaborador': '../gestion-tickets/gestion-tickets.html',
-        'admincolaborador': '../gestion-tickets/gestion-tickets.html',
-        'puntoVenta': '../nav-puntoVenta/inicio.html',
-        'facturas': '../nav-facturas/facturas.html'
+        'admincolaborador': '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html'
     };
-    const redirectPath = rolePaths[role] || "../gestion-tickets/gestion-tickets.html";
+    const redirectPath = rolePaths[role] || "../nav-operadores/gestion_Tickets.html";
     window.location.href = redirectPath;
 }
 
@@ -407,7 +371,12 @@ async function getFallbackLocation() {
     try {
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
-        return { latitude: data.latitude || 0, longitude: data.longitude || 0, accuracy: FALLBACK_ACCURACY, source: 'ip' };
+        return { 
+            latitude: data.latitude || 0, 
+            longitude: data.longitude || 0, 
+            accuracy: FALLBACK_ACCURACY, 
+            source: 'ip' 
+        };
     } catch (error) {
         return null;
     }
@@ -440,7 +409,7 @@ async function showLocationPermissionModal() {
                     console.warn("Error de geolocalización controlado:", error.message);
                     await showAlert('error', 'Problema de Ubicación', error.message);
                 } else {
-                    if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+                    window.manejarErrorGlobal(error);
                     await showAlert('error', 'Error Crítico', 'Ha ocurrido un error inesperado.');
                 }
                 return false;
@@ -450,11 +419,12 @@ async function showLocationPermissionModal() {
             return false;
         }
     } catch (error) {
-        if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+        window.manejarErrorGlobal(error);
         return false;
     }
 }
 
+// Función para validar si ya tiene asistencia hoy
 async function validateNoDuplicateAttendanceBeforeRegister(userId, email) {
     try {
         if (hasAttendanceInLocalStorage(userId)) {
@@ -482,7 +452,7 @@ async function validateNoDuplicateAttendanceBeforeRegister(userId, email) {
     }
 }
 
-// 📌 FUNCIÓN PRINCIPAL CORREGIDA - SIN ERROR FALSO
+// 📌 ÚNICO CAMBIO: horaRegistro → horaEntradaRegistrada
 async function registerAttendance(attendanceType, userData) {
     try {
         const validationResult = await validateNoDuplicateAttendanceBeforeRegister(userData.id, userData['CORREO ELECTRÓNICO EMPRESARIAL']);
@@ -504,13 +474,12 @@ async function registerAttendance(attendanceType, userData) {
             AppState.userCoordinates = await getUserLocation();
         }
         
-        // Actualizar en colaboradores
         await db.collection('colaboradores').doc(userData.id).update({
             asistencia: { estado: true, tipo: attendanceType, fecha: datetime.timestamp },
             ultimaAsistencia: datetime.timestamp
         });
         
-        // Crear registro en asistencias con horaEntradaRegistrada
+        // 📌 CAMBIO AQUÍ: horaRegistro → horaEntradaRegistrada
         const attendanceData = {
             userId: userData.id, 
             email: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
@@ -519,31 +488,29 @@ async function registerAttendance(attendanceType, userData) {
             tipo: attendanceType, 
             fecha: datetime.timestamp, 
             dia: datetime.dateString,
-            horaEntradaRegistrada: datetime.timeString24,
+            horaEntradaRegistrada: datetime.timeString24, // ✅ AHORA USA ESTE CAMPO
             activo: true, 
             ubicacion: AppState.userCoordinates,
             detalles: { 
-                correoPersonal: userData['CORREO ELECTRONICO PERSONAL'] || '', 
-                correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'] || '', 
-                rfc: userData.RFC || ''
+                correoPersonal: userData['CORREO ELECTRONICO PERSONAL'], 
+                correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'], 
+                rfc: userData.RFC 
             }
         };
         
         await db.collection('asistencias').add(attendanceData);
         
-        // GUARDAR EN LOCALSTORAGE
         saveAttendanceToLocalStorage(userData.id);
         
         const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
         const tipoAsistencia = getAttendanceTypeName(attendanceType);
-        const horaFormateada = formatTo12Hour(datetime.timeString24);
         
         const mensajeExito = `
-            ✅ ¡Asistencia registrada exitosamente!
+            ¡Asistencia registrada exitosamente!
             • Tipo: ${tipoAsistencia}
-            • Hora: ${horaFormateada}
+            • Hora: ${datetime.timeString}
             • Fecha: ${datetime.dateString}
-            
+            ¡Recuerda que solo puedes registrar asistencia una vez por día!
             Serás redirigido en 3 segundos...
         `;
         
@@ -554,41 +521,8 @@ async function registerAttendance(attendanceType, userData) {
         }, REDIRECT_DELAY);
         
         return true;
-        
-    } catch (error) {
-        // 📌 VERIFICAR SI ES ERROR DEL ARCHIVO partículas.js
-        if (error.message && error.message.includes('particulas.js')) {
-            console.warn("⚠️ Error no crítico de archivo ignorado - La asistencia se guardó correctamente");
-            
-            // La asistencia YA SE GUARDÓ, así que mostramos éxito igual
-            const userRole = await getUserRole(userData['CORREO ELECTRÓNICO EMPRESARIAL']);
-            const tipoAsistencia = getAttendanceTypeName(attendanceType);
-            const horaFormateada = formatTo12Hour(getFormattedDateTime().timeString24);
-            
-            const mensajeExito = `
-                ✅ ¡Asistencia registrada exitosamente!
-                • Tipo: ${tipoAsistencia}
-                • Hora: ${horaFormateada}
-                • Fecha: ${getFormattedDateTime().dateString}
-                
-                Serás redirigido en 3 segundos...
-            `;
-            
-            await showAlert('success', '✅ Asistencia registrada', mensajeExito);
-            
-            setTimeout(() => { 
-                redirectByRole(userRole); 
-            }, REDIRECT_DELAY);
-            
-            return true;
-        }
-        
-        // Si es otro error REAL, lo mostramos
-        console.error("Error en registerAttendance:", error);
-        if (window.manejarErrorGlobal) {
-            window.manejarErrorGlobal(error);
-        }
-        
+    } catch (error) { 
+        window.manejarErrorGlobal(error);
         await showAlert('error', 'Error', 'No se pudo registrar la asistencia. Intenta nuevamente.');
         return false; 
     }
@@ -656,8 +590,7 @@ function setupSubmitButton(userData) {
                 AppState.isSubmitting = false;
             }
         } catch (error) {
-            console.error("Error en submit:", error);
-            if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+            window.manejarErrorGlobal(error);
             await showAlert('error', 'Error', 'Ocurrió un error inesperado. Intenta nuevamente.');
             submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Asistencia';
             submitBtn.disabled = false;
@@ -689,7 +622,9 @@ async function handleAuthenticatedUser(user) {
         if (doubleCheck.exists) {
             AppState.hasAttendanceToday = true;
             AppState.existingAttendanceData = doubleCheck.firebaseData || doubleCheck.collaboratorData;
+            
             saveAttendanceToLocalStorage(AppState.userData.id);
+            
             displayUserInfo(AppState.userData, AppState.existingAttendanceData);
             
             const fechaRegistro = AppState.existingAttendanceData.fecha ? 
@@ -726,8 +661,7 @@ async function handleAuthenticatedUser(user) {
         displayUserInfo(AppState.userData, null);
         return true;
     } catch (error) {
-        console.error("Error en handleAuthenticatedUser:", error);
-        if (window.manejarErrorGlobal) window.manejarErrorGlobal(error);
+        window.manejarErrorGlobal(error);
         await showAlert('error', 'Error', error.message);
         setTimeout(() => {
             auth.signOut().then(() => {

@@ -1016,16 +1016,6 @@
     </div>
 </div>
               
-
-
-
-
-
-
-
-
-
-
                 <!-- SECCIÓN CONFIGURACIÓN -->
                 <div class="menu-nav-section">
                     <button class="menu-nav-section-header" data-section="configuracion">
@@ -1041,7 +1031,7 @@
                             <i class="fas fa-shield-alt"></i> Persmisos
                         </a>
                         <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
-                            <a href="../fin-asistencia/fin-asistencia.html">
+                            <a href="/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html">
                             <i class="fas fa-flag-checkered"></i> Terminar asistencia
                             </a>
                         </button>

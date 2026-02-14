@@ -16,11 +16,11 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // Variables globales
-let attendanceRecords = [];
+let attendanceRecords = []; // Aquí guardaremos los documentos de 'asistencias'
 let currentDate = new Date();
 let currentMonth = currentDate.getMonth();
 let currentYear = currentDate.getFullYear();
-let selectedQuincena = 1;
+let selectedQuincena = 1; // 1 = Primera, 2 = Segunda
 let allEmployees = [];
 let activeEmployees = [];
 let currentUser = null;
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     checkViewMode();
 });
 
+// Manejador de errores global
 window.manejadorErrorGlobal = function(error) {
     console.error('Error:', error);
     if (error && error.message) {
@@ -46,8 +47,7 @@ function checkAuthState() {
         if (user) {
             currentUser = user;
             loadUserProfile();
-            loadEmployees();
-            setupFirebaseListener();
+            loadEmployees(); // Carga colaboradores y luego configura el listener de asistencias
         } else {
             window.location.href = '../nav-visitantes/inicio-de-sesion.html';
         }
@@ -60,7 +60,7 @@ async function loadUserProfile() {
         const querySnapshot = await db.collection("colaboradores")
             .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", currentUser.email)
             .get();
-        
+
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
             const userData = doc.data();
@@ -70,7 +70,7 @@ async function loadUserProfile() {
                 area: userData.ÁREA,
                 imagen: userData.imagen || 'https://randomuser.me/api/portraits/men/32.jpg'
             };
-            
+
             const nameElement = document.querySelector('.user-info .name');
             const roleElement = document.querySelector('.user-info .role');
             const avatarImg = document.querySelector('.avatar img');
@@ -90,11 +90,11 @@ async function loadEmployees() {
         const snapshot = await db.collection('colaboradores').get();
         allEmployees = [];
         activeEmployees = [];
-        
+
         snapshot.docs.forEach(doc => {
             const data = doc.data();
             const trabajo = data['trabajo'] || 'Activo';
-            
+
             const employee = {
                 id: doc.id,
                 name: data.NOMBRE || 'Sin nombre',
@@ -102,21 +102,19 @@ async function loadEmployees() {
                 email: data['CORREO ELECTRÓNICO EMPRESARIAL'] || 'Sin email',
                 trabajo: trabajo
             };
-            
+
             allEmployees.push(employee);
             if (trabajo === 'Activo') activeEmployees.push(employee);
         });
-        
+
         activeEmployees.sort((a, b) => a.name.localeCompare(b.name));
-        
+
         const weeklyAttendance = document.getElementById('weekly-attendance');
         if (weeklyAttendance) weeklyAttendance.textContent = activeEmployees.length;
-        
-        if (window.innerWidth <= 992) {
-            renderMobileCards(activeEmployees);
-        } else {
-            renderCalendar(activeEmployees);
-        }
+
+        // Después de cargar empleados, configurar el listener de asistencias
+        setupFirebaseListener();
+
     } catch (error) {
         console.error('Error al cargar empleados:', error);
         window.manejadorErrorGlobal(error);
@@ -128,10 +126,10 @@ function initializeDateSelectors() {
     const monthSelect = document.getElementById('month');
     const yearSelect = document.getElementById('year');
     if (!monthSelect || !yearSelect) return;
-    
+
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    
+
     months.forEach((month, index) => {
         const option = document.createElement('option');
         option.value = index;
@@ -139,7 +137,7 @@ function initializeDateSelectors() {
         if (index === currentMonth) option.selected = true;
         monthSelect.appendChild(option);
     });
-    
+
     const currentYearNow = new Date().getFullYear();
     for (let year = 2025; year <= currentYearNow; year++) {
         const option = document.createElement('option');
@@ -154,7 +152,7 @@ function initializeDateSelectors() {
 function setupEventListeners() {
     const applyFiltersBtn = document.getElementById('applyFilters');
     if (applyFiltersBtn) applyFiltersBtn.addEventListener('click', applyFilters);
-    
+
     const quincenaSelect = document.getElementById('quincena');
     if (quincenaSelect) {
         quincenaSelect.addEventListener('change', function() {
@@ -162,7 +160,7 @@ function setupEventListeners() {
             renderActiveEmployees();
         });
     }
-    
+
     const searchButton = document.getElementById('search-button');
     const searchInput = document.getElementById('search-input');
     if (searchButton && searchInput) {
@@ -171,7 +169,7 @@ function setupEventListeners() {
             if (e.key === 'Enter') searchEmployees();
         });
     }
-    
+
     const showAllBtn = document.getElementById('show-all-btn');
     if (showAllBtn) {
         showAllBtn.addEventListener('click', function() {
@@ -186,20 +184,20 @@ function setupEventListeners() {
 function searchEmployees() {
     const searchInput = document.getElementById('search-input');
     if (!searchInput) return;
-    
+
     const searchTerm = searchInput.value.toLowerCase();
     if (!searchTerm) {
         renderActiveEmployees();
         return;
     }
-    
-    let searchResults = activeEmployees.filter(employee => 
-        employee.name.toLowerCase().includes(searchTerm) || 
+
+    let searchResults = activeEmployees.filter(employee =>
+        employee.name.toLowerCase().includes(searchTerm) ||
         employee.area.toLowerCase().includes(searchTerm)
     );
-    
+
     searchResults.sort((a, b) => a.name.localeCompare(b.name));
-    
+
     if (window.innerWidth <= 992) {
         renderMobileCards(searchResults);
     } else {
@@ -229,7 +227,7 @@ function checkViewMode() {
     const calendarContainer = document.getElementById('calendarContainer');
     const mobileCardsView = document.getElementById('mobileCardsView');
     if (!calendarContainer || !mobileCardsView) return;
-    
+
     if (isMobile) {
         calendarContainer.style.display = 'none';
         mobileCardsView.style.display = 'block';
@@ -243,7 +241,7 @@ function checkViewMode() {
 
 function formatTo12Hour(timeString) {
     if (!timeString || timeString === 'Sin hora') return 'Sin hora';
-    
+
     let hours, minutes;
     if (typeof timeString === 'string') {
         const parts = timeString.split(':');
@@ -252,90 +250,79 @@ function formatTo12Hour(timeString) {
     } else {
         return 'Sin hora';
     }
-    
+
     if (isNaN(hours)) return 'Sin hora';
-    
+
     const ampm = hours >= 12 ? 'PM' : 'AM';
     let hours12 = hours % 12;
     hours12 = hours12 === 0 ? 12 : hours12;
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-    
+
     return `${hours12}:${minutesStr} ${ampm}`;
 }
 
 /**
- * ============================================
- * CORREGIDO: AMBAS ENTRADA Y SALIDA TIENEN EL MISMO CAMPO horaRegistro
- * DIFERENCIAMOS POR LA HORA DEL DÍA
- * ============================================
- */
-
-/**
- * Obtiene TODOS los registros del día para un empleado
- * Los ordena por hora
- * El MÁS TEMPRANO = ENTRADA
- * El MÁS TARDÍO = SALIDA
+ * Obtiene la entrada y salida del documento de un empleado en una fecha específica.
+ * @param {string} employeeName - Nombre del empleado.
+ * @param {string} fecha - Fecha en formato YYYY-MM-DD.
+ * @returns {object} - Objeto con las propiedades 'entrada' y 'salida'.
  */
 function getRegistrosDelDia(employeeName, fecha) {
-    // Filtrar todos los registros del empleado en esa fecha
-    const registrosDelDia = attendanceRecords.filter(record => 
-        record.nombre === employeeName && 
-        record.fecha === fecha &&
-        record.rawData?.horaRegistro // TODOS tienen horaRegistro
+    // Busca el documento que coincida con el nombre y la fecha
+    const registro = attendanceRecords.find(record =>
+        record.nombre === employeeName && record.fecha === fecha
     );
-    
-    if (registrosDelDia.length === 0) {
-        return { entrada: null, salida: null, totalRegistros: 0 };
+
+    if (!registro) {
+        return { entrada: null, salida: null };
     }
-    
-    // Ordenar por horaRegistro (de más temprano a más tarde)
-    const ordenados = [...registrosDelDia].sort((a, b) => {
-        const horaA = a.rawData?.horaRegistro || '00:00:00';
-        const horaB = b.rawData?.horaRegistro || '00:00:00';
-        return horaA.localeCompare(horaB); // Ascendente (temprano → tarde)
-    });
-    
-    // El PRIMERO (más temprano) = ENTRADA
-    const entrada = ordenados[0];
-    
-    // El ÚLTIMO (más tarde) = SALIDA
-    const salida = ordenados.length > 1 ? ordenados[ordenados.length - 1] : null;
-    
-    return { 
-        entrada, 
-        salida, 
-        totalRegistros: registrosDelDia.length 
-    };
+
+    const data = registro.rawData;
+    let entrada = null;
+    let salida = null;
+
+    if (data.horaEntradaRegistrada) {
+        entrada = {
+            hora: data.horaEntradaRegistrada,
+            rawData: data
+        };
+    }
+
+    if (data.horaSalidaRegistrada) {
+        salida = {
+            hora: data.horaSalidaRegistrada,
+            rawData: data
+        };
+    }
+
+    return { entrada, salida };
 }
 
-// Renderizar calendario (DESKTOP) - VERSIÓN FINAL CORREGIDA
+// Renderizar calendario (DESKTOP)
 function renderCalendar(employeesToShow) {
     const calendarGrid = document.getElementById('calendarGrid');
     const currentMonthYear = document.getElementById('currentMonthYear');
-    
+
     if (!calendarGrid || !currentMonthYear) return;
-    
+
     calendarGrid.innerHTML = '';
-    
+
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const quincenaText = selectedQuincena === 1 ? '1ra Quincena' : '2da Quincena';
     currentMonthYear.textContent = `${monthNames[currentMonth]} ${currentYear} - ${quincenaText}`;
-    
+
     if (!employeesToShow || employeesToShow.length === 0) {
-        const noDataRow = document.createElement('div');
-        noDataRow.className = 'no-data-row';
-        noDataRow.innerHTML = '<div class="no-data-message">No hay colaboradores activos</div>';
-        calendarGrid.appendChild(noDataRow);
+        calendarGrid.innerHTML = '<div class="no-data-row"><div class="no-data-message">No hay colaboradores activos</div></div>';
         updateStats(0, 0, 0, 0);
         return;
     }
-    
+
     const sortedEmployees = [...employeesToShow].sort((a, b) => a.name.localeCompare(b.name));
-    
+
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let startDay, endDay;
-    
+
     if (selectedQuincena === 1) {
         startDay = 1;
         endDay = Math.min(15, daysInMonth);
@@ -343,26 +330,27 @@ function renderCalendar(employeesToShow) {
         startDay = 16;
         endDay = daysInMonth;
     }
-    
+
+    // Filtrar días domingo (0)
     const workDays = [];
     for (let day = startDay; day <= endDay; day++) {
         const date = new Date(currentYear, currentMonth, day);
-        if (date.getDay() !== 0) {
+        if (date.getDay() !== 0) { // 0 = Domingo
             workDays.push({ day, dayOfWeek: date.getDay() });
         }
     }
-    
+
     calendarGrid.style.gridTemplateColumns = `250px repeat(${workDays.length}, 1fr) 100px 100px 100px 120px`;
-    
-    // HEADER ROW
+
+    // --- HEADER ROW ---
     const headerRow = document.createElement('div');
     headerRow.className = 'calendar-row';
-    
+
     const employeeHeader = document.createElement('div');
     employeeHeader.className = 'calendar-cell header-cell employee-header';
     employeeHeader.textContent = 'Colaborador / Área';
     headerRow.appendChild(employeeHeader);
-    
+
     workDays.forEach(({ day, dayOfWeek }) => {
         const dayHeader = document.createElement('div');
         dayHeader.className = 'calendar-cell header-cell';
@@ -370,7 +358,7 @@ function renderCalendar(employeesToShow) {
         dayHeader.textContent = `${dayNames[dayOfWeek]} ${day}`;
         headerRow.appendChild(dayHeader);
     });
-    
+
     const summaryHeaders = ['Asistencias', 'Faltas', 'Retardos', 'Horas Trab.'];
     summaryHeaders.forEach(header => {
         const summaryHeader = document.createElement('div');
@@ -378,19 +366,19 @@ function renderCalendar(employeesToShow) {
         summaryHeader.textContent = header;
         headerRow.appendChild(summaryHeader);
     });
-    
+
     calendarGrid.appendChild(headerRow);
-    
+
+    // --- EMPLOYEE ROWS ---
     let totalPresent = 0;
     let totalAbsent = 0;
     let totalLate = 0;
     let totalHours = 0;
-    
-    // EMPLOYEE ROWS - CORREGIDO: Entrada = más temprano, Salida = más tarde
+
     sortedEmployees.forEach(employee => {
         const employeeRow = document.createElement('div');
         employeeRow.className = 'calendar-row';
-        
+
         const employeeCell = document.createElement('div');
         employeeCell.className = 'calendar-cell employee-cell';
         employeeCell.innerHTML = `
@@ -398,80 +386,57 @@ function renderCalendar(employeesToShow) {
             <div class="employee-area">${employee.area}</div>
         `;
         employeeRow.appendChild(employeeCell);
-        
+
         let employeePresent = 0;
         let employeeAbsent = 0;
         let employeeLate = 0;
         let employeeHours = 0;
-        
+
         workDays.forEach(({ day }) => {
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
-            // ===== CORRECCIÓN DEFINITIVA =====
-            // Obtener TODOS los registros del día y separar por hora
+
+            // Obtener los registros del día para este empleado
             const { entrada, salida } = getRegistrosDelDia(employee.name, dateStr);
-            
+
             const dayCell = document.createElement('div');
             dayCell.className = 'calendar-cell';
-            
             const attendanceInfo = document.createElement('div');
             attendanceInfo.className = 'attendance-info';
-            
-            // ===== 1. MOSTRAR ENTRADA (el registro MÁS TEMPRANO) =====
+
+            // Procesar ENTRADA
             if (entrada) {
-                const horaEntrada = entrada.rawData?.horaRegistro;
-                
-                if (horaEntrada) {
-                    const isLate = isRetardo(horaEntrada);
-                    const entryElement = document.createElement('p');
-                    entryElement.textContent = `E: ${formatTo12Hour(horaEntrada)}`;
-                    entryElement.className = isLate ? 'late' : 'present';
-                    attendanceInfo.appendChild(entryElement);
-                    
-                    if (isLate) {
-                        employeeLate++;
-                    } else {
-                        employeePresent++;
-                    }
+                const horaEntrada = entrada.hora;
+                const isLate = isRetardo(horaEntrada);
+                const entryElement = document.createElement('p');
+                entryElement.textContent = `E: ${formatTo12Hour(horaEntrada)}`;
+                entryElement.className = isLate ? 'late' : 'present';
+                attendanceInfo.appendChild(entryElement);
+
+                if (isLate) {
+                    employeeLate++;
+                } else {
+                    employeePresent++;
                 }
             }
-            
-            // ===== 2. MOSTRAR SALIDA (el registro MÁS TARDÍO, si es diferente al de entrada) =====
-            if (salida && salida !== entrada) {
-                const horaSalida = salida.rawData?.horaRegistro;
-                
-                if (horaSalida) {
-                    const exitElement = document.createElement('p');
-                    exitElement.textContent = `S: ${formatTo12Hour(horaSalida)}`;
-                    exitElement.className = 'present';
-                    attendanceInfo.appendChild(exitElement);
+
+            // Procesar SALIDA
+            if (salida) {
+                const horaSalida = salida.hora;
+                const exitElement = document.createElement('p');
+                exitElement.textContent = `S: ${formatTo12Hour(horaSalida)}`;
+                exitElement.className = 'present';
+                attendanceInfo.appendChild(exitElement);
+            }
+
+            // Calcular horas si hay ambos registros
+            if (entrada && salida) {
+                const hoursWorked = calculateHoursWorked(entrada.hora, salida.hora);
+                if (hoursWorked > 0) {
+                    employeeHours += hoursWorked;
                 }
             }
-            
-            // ===== 3. CALCULAR HORAS TRABAJADAS =====
-            if (entrada && salida && salida !== entrada) {
-                const horaEntrada = entrada.rawData?.horaRegistro;
-                const horaSalida = salida.rawData?.horaRegistro;
-                
-                if (horaEntrada && horaSalida) {
-                    try {
-                        const entryTime = parseTimeString(horaEntrada);
-                        const exitTime = parseTimeString(horaSalida);
-                        
-                        if (!isNaN(entryTime) && !isNaN(exitTime)) {
-                            let hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60);
-                            if (hoursWorked < 0) hoursWorked += 24;
-                            if (hoursWorked > 0 && hoursWorked < 24) {
-                                employeeHours += hoursWorked;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Error calculando horas:', e);
-                    }
-                }
-            }
-            
-            // ===== 4. SI NO HAY ENTRADA = FALTA =====
+
+            // Si no hay entrada, es falta
             if (!entrada) {
                 const absentElement = document.createElement('p');
                 absentElement.textContent = 'Falta';
@@ -479,42 +444,45 @@ function renderCalendar(employeesToShow) {
                 attendanceInfo.appendChild(absentElement);
                 employeeAbsent++;
             }
-            
+
             dayCell.appendChild(attendanceInfo);
             employeeRow.appendChild(dayCell);
         });
-        
+
+        // Celdas de resumen para el empleado
         const summaryData = [
             { value: employeePresent, className: 'asistencias' },
             { value: employeeAbsent, className: 'faltas' },
             { value: employeeLate, className: 'retardos' },
             { value: employeeHours.toFixed(1), className: 'horas' }
         ];
-        
+
         summaryData.forEach(data => {
             const summaryCell = document.createElement('div');
             summaryCell.className = `calendar-cell summary-cell ${data.className}`;
             summaryCell.textContent = data.value;
             employeeRow.appendChild(summaryCell);
         });
-        
+
         calendarGrid.appendChild(employeeRow);
-        
+
+        // Acumular totales
         totalPresent += employeePresent;
         totalAbsent += employeeAbsent;
         totalLate += employeeLate;
         totalHours += employeeHours;
     });
-    
+
     updateStats(totalPresent, totalAbsent, totalLate, totalHours);
-    
+
+    // Event listeners para redirigir al detalle del empleado
     document.querySelectorAll('.employee-name').forEach(name => {
         name.addEventListener('click', function() {
             const employeeId = this.getAttribute('data-id');
             const month = currentMonth + 1;
             const year = currentYear;
             const quincena = selectedQuincena;
-            
+
             window.location.href = `../asistenciaUsuarioEspecifico/asistenciaUsuarioEspecifico.html?id=${employeeId}&month=${month}&year=${year}&quincena=${quincena}`;
         });
     });
@@ -524,20 +492,20 @@ function renderCalendar(employeesToShow) {
 function renderMobileCards(employeesToShow) {
     const mobileCardsView = document.getElementById('mobileCardsView');
     if (!mobileCardsView) return;
-    
+
     mobileCardsView.innerHTML = '';
-    
+
     if (!employeesToShow || employeesToShow.length === 0) {
         mobileCardsView.innerHTML = '<div class="no-results">No hay colaboradores activos</div>';
         updateStats(0, 0, 0, 0);
         return;
     }
-    
+
     const sortedEmployees = [...employeesToShow].sort((a, b) => a.name.localeCompare(b.name));
-    
+
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let startDay, endDay;
-    
+
     if (selectedQuincena === 1) {
         startDay = 1;
         endDay = Math.min(15, daysInMonth);
@@ -545,68 +513,51 @@ function renderMobileCards(employeesToShow) {
         startDay = 16;
         endDay = daysInMonth;
     }
-    
+
+    // Obtener días laborales (sin domingo)
     const workDays = [];
     for (let day = startDay; day <= endDay; day++) {
         const date = new Date(currentYear, currentMonth, day);
         if (date.getDay() !== 0) {
-            workDays.push({ day, dayOfWeek: date.getDay() });
+            workDays.push(day);
         }
     }
-    
+
     let totalPresent = 0;
     let totalAbsent = 0;
     let totalLate = 0;
     let totalHours = 0;
-    
+
     sortedEmployees.forEach(employee => {
         let employeePresent = 0;
         let employeeAbsent = 0;
         let employeeLate = 0;
         let employeeHours = 0;
-        
-        workDays.forEach(({ day }) => {
+
+        workDays.forEach(day => {
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
             const { entrada, salida } = getRegistrosDelDia(employee.name, dateStr);
-            
+
             if (entrada) {
-                const horaEntrada = entrada.rawData?.horaRegistro;
-                
-                if (horaEntrada) {
-                    const isLate = isRetardo(horaEntrada);
-                    if (isLate) {
-                        employeeLate++;
-                    } else {
-                        employeePresent++;
-                    }
+                const isLate = isRetardo(entrada.hora);
+                if (isLate) {
+                    employeeLate++;
+                } else {
+                    employeePresent++;
                 }
-                
-                if (salida && salida !== entrada) {
-                    const horaSalida = salida.rawData?.horaRegistro;
-                    
-                    if (horaEntrada && horaSalida) {
-                        try {
-                            const entryTime = parseTimeString(horaEntrada);
-                            const exitTime = parseTimeString(horaSalida);
-                            
-                            if (!isNaN(entryTime) && !isNaN(exitTime)) {
-                                let hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60);
-                                if (hoursWorked < 0) hoursWorked += 24;
-                                if (hoursWorked > 0 && hoursWorked < 24) {
-                                    employeeHours += hoursWorked;
-                                }
-                            }
-                        } catch (e) {
-                            console.error('Error calculando horas:', e);
-                        }
+
+                if (salida) {
+                    const hoursWorked = calculateHoursWorked(entrada.hora, salida.hora);
+                    if (hoursWorked > 0) {
+                        employeeHours += hoursWorked;
                     }
                 }
             } else {
                 employeeAbsent++;
             }
         });
-        
+
+        // Crear tarjeta
         const card = document.createElement('div');
         card.className = 'mobile-card';
         card.innerHTML = `
@@ -633,71 +584,77 @@ function renderMobileCards(employeesToShow) {
                 </div>
             </div>
         `;
-        
+
         mobileCardsView.appendChild(card);
-        
+
         totalPresent += employeePresent;
         totalAbsent += employeeAbsent;
         totalLate += employeeLate;
         totalHours += employeeHours;
     });
-    
+
     updateStats(totalPresent, totalAbsent, totalLate, totalHours);
 }
 
-function parseTimeString(timeStr) {
-    if (!timeStr) return NaN;
-    
-    let hours = 0, minutes = 0;
-    if (typeof timeStr === 'string') {
+/**
+ * Calcula las horas trabajadas entre dos horas en formato "HH:MM:SS".
+ * @param {string} entrada - Hora de entrada.
+ * @param {string} salida - Hora de salida.
+ * @returns {number} - Horas trabajadas (ej. 8.5 para 8 horas 30 minutos).
+ */
+function calculateHoursWorked(entrada, salida) {
+    if (!entrada || !salida) return 0;
+
+    const parseTime = (timeStr) => {
         const parts = timeStr.split(':');
-        hours = parseInt(parts[0], 10) || 0;
-        minutes = parts[1] ? parseInt(parts[1], 10) || 0 : 0;
-    }
-    
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date.getTime();
+        return new Date(1970, 0, 1, parseInt(parts[0]), parseInt(parts[1] || 0), parseInt(parts[2] || 0)).getTime();
+    };
+
+    const entryTime = parseTime(entrada);
+    const exitTime = parseTime(salida);
+
+    if (isNaN(entryTime) || isNaN(exitTime)) return 0;
+
+    let diffMs = exitTime - entryTime;
+    if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; // Cruzó la medianoche
+
+    return diffMs / (1000 * 60 * 60); // Convertir a horas
 }
 
 // Configurar listener de Firebase para asistencias
 function setupFirebaseListener() {
     db.collection("asistencias").onSnapshot((querySnapshot) => {
         attendanceRecords = [];
-        
+
         querySnapshot.forEach((doc) => {
             const registro = doc.data();
+
+            // Formatear la fecha del documento a YYYY-MM-DD
             let fecha = 'Sin fecha';
-            let dateObj = new Date(0);
-            
             if (registro.fecha) {
                 if (registro.fecha.toDate) {
-                    dateObj = registro.fecha.toDate();
+                    const dateObj = registro.fecha.toDate();
                     const year = dateObj.getFullYear();
                     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                     const day = String(dateObj.getDate()).padStart(2, '0');
                     fecha = `${year}-${month}-${day}`;
+                } else if (typeof registro.fecha === 'string') {
+                    // Intentar parsear si es string (por si acaso)
+                    fecha = registro.fecha.split('T')[0];
                 }
             }
-            
-            // SOLO GUARDAMOS SI TIENE horaRegistro (todos los registros)
-            if (registro.horaRegistro) {
-                attendanceRecords.push({
-                    id: doc.id,
-                    nombre: registro.nombre || registro.colaboradorNombre || "Sin nombre",
-                    email: registro.email || 'Sin email',
-                    area: registro.area || 'Sin área',
-                    tipo: registro.tipo || 'office',
-                    fecha: fecha,
-                    hora: registro.horaRegistro,
-                    rawData: registro,
-                    dateObj: dateObj
-                });
-            }
+
+            attendanceRecords.push({
+                id: doc.id,
+                nombre: registro.nombre || "Sin nombre",
+                fecha: fecha,
+                rawData: registro
+            });
         });
-        
+
+        // Volver a renderizar la vista actual
         renderActiveEmployees();
-        updateStatsCards();
+        updateStatsCards(); // Actualiza las tarjetas de tipo (office, iztapaluca, etc.)
     }, (error) => {
         console.error("Error al leer datos de asistencias:", error);
         window.manejadorErrorGlobal(error);
@@ -706,7 +663,7 @@ function setupFirebaseListener() {
 
 function isRetardo(hora) {
     if (!hora) return false;
-    
+
     let hours, minutes;
     if (typeof hora === 'string') {
         const parts = hora.split(':');
@@ -715,9 +672,10 @@ function isRetardo(hora) {
     } else {
         return false;
     }
-    
+
     if (isNaN(hours)) return false;
-    
+
+    // Considera retardo si es después de las 8:45
     return hours > 8 || (hours === 8 && minutes > 45);
 }
 
@@ -726,7 +684,7 @@ function updateStats(totalPresent, totalAbsent, totalLate, totalHours) {
     const summaryAbsent = document.getElementById('summary-absent');
     const summaryLate = document.getElementById('summary-late');
     const summaryHours = document.getElementById('summary-hours');
-    
+
     if (summaryPresent) summaryPresent.textContent = totalPresent;
     if (summaryAbsent) summaryAbsent.textContent = totalAbsent;
     if (summaryLate) summaryLate.textContent = totalLate;
@@ -734,5 +692,17 @@ function updateStats(totalPresent, totalAbsent, totalLate, totalHours) {
 }
 
 function updateStatsCards() {
-    // No necesitamos esto realmente, pero lo dejamos
+    // Esto depende de cómo quieras contar los tipos (office, iztapaluca, site)
+    // Asumiendo que cada documento de asistencia tiene un campo 'tipo'
+    const officeCount = attendanceRecords.filter(record => record.rawData.tipo === 'office').length;
+    const iztapalucaCount = attendanceRecords.filter(record => record.rawData.tipo === 'iztapaluca').length;
+    const onsiteCount = attendanceRecords.filter(record => record.rawData.tipo === 'site').length;
+
+    const officeElement = document.getElementById('office-attendance');
+    const iztapalucaElement = document.getElementById('iztapaluca-attendance');
+    const onsiteElement = document.getElementById('onsite-attendance');
+
+    if (officeElement) officeElement.textContent = officeCount;
+    if (iztapalucaElement) iztapalucaElement.textContent = iztapalucaCount;
+    if (onsiteElement) onsiteElement.textContent = onsiteCount;
 }

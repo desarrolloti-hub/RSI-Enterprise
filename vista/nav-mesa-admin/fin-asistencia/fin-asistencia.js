@@ -3,9 +3,9 @@ const GEOLOCATION_TIMEOUT = 15000;
 const REDIRECT_DELAY = 3000;
 const FALLBACK_ACCURACY = 5000;
 
-// HORARIOS BASE (9:00 AM entrada, 6:00 PM salida)
+// HORARIOS BASE
 const START_HOUR = 9;
-const END_HOUR = 18; // 6:00 PM
+const END_HOUR = 18;
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -19,7 +19,6 @@ const firebaseConfig = {
     measurementId: "G-38F2DBG9HE"
 };
 
-// Inicializar Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -27,7 +26,6 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Estado de la aplicación
 const AppState = {
     currentUser: null,
     userData: null,
@@ -35,12 +33,11 @@ const AppState = {
     userCoordinates: null,
     isLocationRequested: false,
     isSubmitting: false,
-    entryInfo: null
+    entryDocument: null
 };
 
 // --- FUNCIONES DE UTILIDAD ---
 
-// Obtener parámetros de fecha formateada - CORREGIDO con timeString24
 function getFormattedDateTime() {
     const now = new Date();
     return {
@@ -51,8 +48,8 @@ function getFormattedDateTime() {
             month: 'long',
             day: 'numeric'
         }),
-        timeString: now.toLocaleTimeString('es-ES'), // "6:30:45 PM" (solo para mostrar)
-        timeString24: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`, // "18:30:45" (para GUARDAR)
+        timeString: now.toLocaleTimeString('es-ES'),
+        timeString24: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
         fullDateTime: now.toLocaleDateString('es-ES', {
             weekday: 'long',
             year: 'numeric',
@@ -65,12 +62,9 @@ function getFormattedDateTime() {
     };
 }
 
-// Formato 12 horas para mostrar en UI
 function formatTo12Hour(timeString) {
     if (!timeString) return 'Hora no disponible';
-
     let hours, minutes;
-
     if (typeof timeString === 'string') {
         const parts = timeString.split(':');
         hours = parseInt(parts[0], 10);
@@ -78,19 +72,14 @@ function formatTo12Hour(timeString) {
     } else {
         return 'Hora no disponible';
     }
-
     if (isNaN(hours)) return 'Hora no disponible';
-
     const ampm = hours >= 12 ? 'PM' : 'AM';
     let hours12 = hours % 12;
     hours12 = hours12 === 0 ? 12 : hours12;
-
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-
     return `${hours12}:${minutesStr} ${ampm}`;
 }
 
-// Mostrar alertas
 function showAlert(type, title, message) {
     if (typeof window.showCustomAlert === 'function') {
         switch(type) {
@@ -118,45 +107,70 @@ function showAlert(type, title, message) {
 
 // --- FUNCIONES DE DATOS ---
 
-// Buscar la hora de entrada del día - CORREGIDO
-async function getEntryTimeForToday(userId) {
+// 📌 VERSIÓN SIN ÍNDICES - Primero por userId, luego filtramos por fecha
+async function getEntryDocumentForToday(userId) {
     try {
+        console.log("Buscando documento para userId:", userId);
+        
+        // 🔴 PRIMERO: Obtener TODOS los documentos del usuario (sin filtro de fecha)
+        // Esto usa SOLO el índice de userId que ya existe
+        const snapshot = await db.collection('asistencias')
+            .where('userId', '==', userId)
+            .get();
+
+        console.log("Total documentos del usuario:", snapshot.size);
+
+        if (snapshot.empty) {
+            console.log("No hay documentos para este usuario");
+            return null;
+        }
+
+        // 🔴 SEGUNDO: Filtramos por fecha HOY en JavaScript
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayTimestamp = firebase.firestore.Timestamp.fromDate(today);
+        const tomorrowTimestamp = firebase.firestore.Timestamp.fromDate(tomorrow);
 
-        const entrySnapshot = await db.collection('asistencias')
-            .where('userId', '==', userId)
-            .where('horaEntradaRegistrada', '!=', null)
-            .where('fecha', '>=', firebase.firestore.Timestamp.fromDate(today))
-            .where('fecha', '<', firebase.firestore.Timestamp.fromDate(tomorrow))
-            .orderBy('fecha', 'desc')
-            .limit(1)
-            .get();
+        // Buscar documentos de HOY que tengan entrada activa
+        let entryDoc = null;
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const fechaDoc = data.fecha;
+            
+            // Verificar si la fecha está entre hoy y mañana
+            if (fechaDoc && fechaDoc.toDate) {
+                const fecha = fechaDoc.toDate();
+                if (fecha >= today && fecha < tomorrow) {
+                    console.log("Documento de hoy:", doc.id, 
+                        "horaEntradaRegistrada:", data.horaEntradaRegistrada, 
+                        "horaSalidaRegistrada:", data.horaSalidaRegistrada);
+                    
+                    // Si tiene horaEntradaRegistrada y NO tiene horaSalidaRegistrada
+                    if (data.horaEntradaRegistrada && !data.horaSalidaRegistrada) {
+                        entryDoc = {
+                            id: doc.id,
+                            data: data
+                        };
+                    }
+                }
+            }
+        });
 
-        if (!entrySnapshot.empty) {
-            const entryData = entrySnapshot.docs[0].data();
-            return {
-                date: entryData.fecha.toDate(),
-                horaEntrada: entryData.horaEntradaRegistrada || `${START_HOUR}:00:00`,
-                tipo: entryData.tipo || 'office',
-                id: entrySnapshot.docs[0].id
-            };
+        if (entryDoc) {
+            console.log("✅ Documento de entrada encontrado:", entryDoc.id);
+        } else {
+            console.log("❌ No se encontró documento de entrada activo para hoy");
         }
-    } catch (error) {
-        console.error("Error obteniendo hora de entrada:", error);
-    }
 
-    // Fallback: 9:00 AM
-    const fallbackEntry = new Date();
-    fallbackEntry.setHours(START_HOUR, 0, 0, 0);
-    return {
-        date: fallbackEntry,
-        horaEntrada: `${String(START_HOUR).padStart(2, '0')}:00:00`,
-        tipo: 'office',
-        id: null
-    };
+        return entryDoc;
+    } catch (error) {
+        console.error("Error buscando documento de entrada:", error);
+        return null;
+    }
 }
 
 // Obtener rol del usuario
@@ -202,7 +216,6 @@ async function getUserData(email) {
 
 // --- FUNCIONES DE UI ---
 
-// Actualizar fecha y hora
 function updateDateTime() {
     const currentDateElement = document.getElementById('currentDate');
     if (currentDateElement) {
@@ -210,8 +223,7 @@ function updateDateTime() {
     }
 }
 
-// Mostrar información del usuario con hora de entrada
-function displayUserInfo(user, entryInfo = null) {
+function displayUserInfo(user, entryDoc = null) {
     const employeeDetails = document.getElementById('employeeDetails');
     const employeeAvatar = document.getElementById('employeeAvatar');
 
@@ -221,19 +233,19 @@ function displayUserInfo(user, entryInfo = null) {
     const errorColor = 'var(--secondary-color, #F44336)';
 
     let horaEntradaHTML = '';
-    if (entryInfo && entryInfo.horaEntrada) {
-        const horaFormateada = formatTo12Hour(entryInfo.horaEntrada);
-        horaEntradaHTML = `Hora de entrada: ${horaFormateada}`;
+    if (entryDoc && entryDoc.data?.horaEntradaRegistrada) {
+        const horaFormateada = formatTo12Hour(entryDoc.data.horaEntradaRegistrada);
+        horaEntradaHTML = `<p><strong>Hora de entrada:</strong> <span style="color: ${successColor};">${horaFormateada}</span></p>`;
     }
 
     employeeDetails.innerHTML = `
-        ${user.NOMBRE || 'Nombre no disponible'}
-        Área: ${user['ÁREA'] || 'No especificado'}
-        ID Empleado: ${user.NIT || 'ID no disponible'}
+        <h3>${user.NOMBRE || 'Nombre no disponible'}</h3>
+        <p><strong>Área:</strong> ${user['ÁREA'] || 'No especificado'}</p>
+        <p><strong>ID Empleado:</strong> ${user.NIT || 'ID no disponible'}</p>
         ${horaEntradaHTML}
-       Asistencia: ${user.asistencia?.estado ?
+        <p><strong>Asistencia:</strong> ${user.asistencia?.estado ?
             `<span style="color: ${successColor};">Activa desde hoy</span>` :
-            `<span style="color: ${errorColor};">No iniciada hoy</span>`}
+            `<span style="color: ${errorColor};">No iniciada hoy</span>`}</p>
     `;
 
     if (user.imagen) {
@@ -245,7 +257,6 @@ function displayUserInfo(user, entryInfo = null) {
     }
 }
 
-// Configurar opciones de selección
 function setupAttendanceOptions() {
     const attendanceOptions = document.querySelectorAll('.attendance-option');
     if (attendanceOptions.length > 0) {
@@ -253,14 +264,12 @@ function setupAttendanceOptions() {
     }
 }
 
-// Redirigir al index
 function redirectByRole(role) {
     window.location.href = "/index.html";
 }
 
 // --- FUNCIONES DE GEOLOCALIZACIÓN ---
 
-// Obtener ubicación precisa
 function getLocation() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
@@ -303,7 +312,6 @@ function getLocation() {
     });
 }
 
-// Obtener ubicación por IP (fallback)
 async function getFallbackLocation() {
     try {
         const response = await fetch('https://ipapi.co/json/');
@@ -324,7 +332,6 @@ async function getFallbackLocation() {
     }
 }
 
-// Mostrar modal de ubicación
 async function showLocationModal() {
     const result = await Swal.fire({
         title: 'Ubicación Requerida',
@@ -352,7 +359,6 @@ async function showLocationModal() {
     return false;
 }
 
-// Obtener ubicación con fallback
 async function getUserLocation() {
     try {
         return await getLocation();
@@ -364,18 +370,14 @@ async function getUserLocation() {
 
 // --- FUNCIONES DE ASISTENCIA ---
 
-// Calcular tiempo trabajado y horas extra
 function calculateWorkTime(entryDate, exitDate) {
-    // Tiempo total trabajado
     const totalWorkedMs = exitDate.getTime() - entryDate.getTime();
     let totalWorkedMins = Math.floor(totalWorkedMs / (1000 * 60));
     if (totalWorkedMins < 0) totalWorkedMins = 0;
 
-    // Hora de salida estándar (6:00 PM)
     const standardEndTime = new Date(exitDate);
     standardEndTime.setHours(END_HOUR, 0, 0, 0);
 
-    // Calcular horas extra (DESPUÉS DE LAS 6:00 PM)
     let extraHoursMins = 0;
     let isExtra = false;
 
@@ -385,7 +387,6 @@ function calculateWorkTime(entryDate, exitDate) {
         isExtra = true;
     }
 
-    // Formateo a HH:MM
     const formatMinutes = (minutes) => {
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
@@ -401,95 +402,79 @@ function calculateWorkTime(entryDate, exitDate) {
     };
 }
 
-// Validar si el usuario puede registrar salida
 function validateUserForExit(userData) {
     if (!userData || !userData.id) {
         throw new Error("Datos de usuario incompletos.");
     }
-
     if (!userData.asistencia?.estado) {
         throw new Error("No tienes una asistencia activa hoy.");
     }
-
     return true;
 }
 
-// Registrar salida en Firebase - CORREGIDO
-async function registerExit(exitType, userData) {
+// Registrar salida - SOBREESCRIBE EL MISMO DOCUMENTO
+async function registerExit(exitType, userData, entryDoc) {
     validateUserForExit(userData);
 
     const datetime = getFormattedDateTime();
     const exitDate = new Date();
 
-    // 1. Obtener la hora de entrada REAL
-    const entryInfo = await getEntryTimeForToday(userData.id);
-    const entryDate = entryInfo.date;
+    const horaEntrada = entryDoc.data.horaEntradaRegistrada || `${START_HOUR}:00:00`;
+    
+    const [hours, minutes, seconds] = horaEntrada.split(':').map(Number);
+    const entryDate = new Date(exitDate);
+    entryDate.setHours(hours, minutes, seconds || 0, 0);
 
-    // 2. Calcular tiempo trabajado y horas extra
     const timeCalculations = calculateWorkTime(entryDate, exitDate);
-
-    // 3. Obtener ubicación
     AppState.userCoordinates = await getUserLocation();
 
-    // 4. Actualizar el estado en colaboradores
-    const collaboratorRef = db.collection('colaboradores').doc(userData.id);
-    await collaboratorRef.update({
+    await db.collection('colaboradores').doc(userData.id).update({
         'asistencia.estado': false,
         'asistencia.ultimoCierre': datetime.timestamp
     });
 
-    // 5. Determinar el tipo de salida (salida_extra si es después de las 6 PM)
     const finalExitType = timeCalculations.isExtra ? 'salida_extra' : 'salida';
 
-    // 6. CORREGIDO: Guardar horaRegistro en FORMATO 24 HORAS
-    const exitData = {
-        userId: userData.id,
-        email: userData['CORREO ELECTRÓNICO EMPRESARIAL'] || '',
-        nombre: userData.NOMBRE || '',
-        area: userData['ÁREA'] || '',
-        tipo: finalExitType,
+    const entryDocRef = db.collection('asistencias').doc(entryDoc.id);
+    
+    const updatedData = {
+        userId: entryDoc.data.userId,
+        email: entryDoc.data.email,
+        nombre: entryDoc.data.nombre,
+        area: entryDoc.data.area,
         fecha: datetime.timestamp,
         dia: datetime.dateString,
-        horaRegistro: datetime.timeString24, // ✅ AHORA GUARDA "18:30:45"
+        horaEntradaRegistrada: entryDoc.data.horaEntradaRegistrada,
         activo: false,
         ubicacion: AppState.userCoordinates,
-
-        // Datos de tiempo
+        detalles: entryDoc.data.detalles || {},
+        tipo: finalExitType,
+        horaSalidaRegistrada: datetime.timeString24,
         horasTrabajadasTotal: timeCalculations.totalWorkedFormat,
         minutosTrabajadosTotal: timeCalculations.totalWorkedMins,
         horasExtra: timeCalculations.extraHoursFormat,
-        minutosExtra: timeCalculations.extraHoursMins,
-        horaEntradaRegistrada: entryInfo.horaEntrada,
-
-        detalles: {
-            correoPersonal: userData['CORREO ELECTRÓNICO PERSONAL'] || '',
-            correoEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'] || '',
-            rfc: userData.RFC || '',
-            nss: userData.NSS || '',
-            curp: userData.CURP || '',
-            entryId: entryInfo.id
-        }
+        minutosExtra: timeCalculations.extraHoursMins
     };
 
-    await db.collection('asistencias').add(exitData);
+    console.log("📝 SOBREESCRIBIENDO documento:", entryDoc.id);
+    await entryDocRef.set(updatedData);
 
-    return { timeCalculations, entryInfo, exitDate };
+    return { timeCalculations, horaEntrada };
 }
 
-// Finalizar asistencia
-async function endAttendance(exitType, userData) {
-    const { timeCalculations, entryInfo, exitDate } = await registerExit(exitType, userData);
+async function endAttendance(exitType, userData, entryDoc) {
+    const { timeCalculations, horaEntrada } = await registerExit(exitType, userData, entryDoc);
 
-    const horaEntradaFormateada = formatTo12Hour(entryInfo.horaEntrada);
+    const horaEntradaFormateada = formatTo12Hour(horaEntrada);
     const horaSalidaFormateada = formatTo12Hour(getFormattedDateTime().timeString24);
 
     const successMessage = `
         ✅ ¡Salida registrada exitosamente!
         📅 Fecha: ${getFormattedDateTime().dateString}
-        ⏰ Hora de entrada:${horaEntradaFormateada}
+        ⏰ Hora de entrada: ${horaEntradaFormateada}
         ⏰ Hora de salida: ${horaSalidaFormateada}
         ⏱️ Tiempo trabajado: ${timeCalculations.totalWorkedFormat}
-        ${timeCalculations.isExtra ? `✨Horas extra:${timeCalculations.extraHoursFormat}` : ''}
+        ${timeCalculations.isExtra ? `✨ Horas extra: ${timeCalculations.extraHoursFormat}` : ''}
         
         Serás redirigido en ${REDIRECT_DELAY / 1000} segundos...
     `;
@@ -503,7 +488,6 @@ async function endAttendance(exitType, userData) {
     return true;
 }
 
-// Configurar botón de envío
 function setupSubmitButton() {
     const submitBtn = document.getElementById('submitAttendance');
 
@@ -518,7 +502,7 @@ function setupSubmitButton() {
         submitBtn.disabled = true;
 
         try {
-            await endAttendance(exitType, AppState.userData);
+            await endAttendance(exitType, AppState.userData, AppState.entryDocument);
         } catch (error) {
             console.error("Error al finalizar asistencia:", error);
             showAlert('error', 'Error', error.message || 'Hubo un problema al registrar tu salida.');
@@ -530,34 +514,28 @@ function setupSubmitButton() {
     });
 }
 
-// --- VALIDACIONES Y FLUJO PRINCIPAL ---
+// --- FLUJO PRINCIPAL ---
 
-// Validar permisos de usuario
 function validateUserPermissions(userRole) {
     const deniedRoles = ['user', 'admin'];
     return !deniedRoles.includes(userRole);
 }
 
-// Manejar usuario autenticado
 async function handleAuthenticatedUser(user) {
     try {
         AppState.userData = await getUserData(user.email);
-
         if (!AppState.userData) {
             throw new Error('No se encontraron datos para este usuario');
         }
 
         AppState.userRole = await getUserRole(user.email);
-
         if (!validateUserPermissions(AppState.userRole)) {
             throw new Error('No tienes permisos para acceder a esta función');
         }
 
-        // Verificar si ya tiene asistencia activa
         if (!AppState.userData.asistencia?.estado) {
-            showAlert('info', 'Sin asistencia activa',
-                `No tienes una asistencia activa para hoy.
-                Serás redirigido en ${REDIRECT_DELAY / 1000} segundos...`
+            showAlert('info', 'Asistencia activa',
+                `tienes una asistencia activa para hoy.\nSerás redirigido en ${REDIRECT_DELAY / 1000} segundos...`
             );
             setTimeout(() => {
                 redirectByRole(AppState.userRole);
@@ -565,12 +543,20 @@ async function handleAuthenticatedUser(user) {
             return false;
         }
 
-        // Obtener información de la entrada de hoy
-        const entryInfo = await getEntryTimeForToday(AppState.userData.id);
-        AppState.entryInfo = entryInfo;
+        const entryDocument = await getEntryDocumentForToday(AppState.userData.id);
+        
+        if (!entryDocument) {
+            showAlert('error', 'Error',
+                `No se encontró el registro de entrada para hoy.\nDebes registrar entrada primero.`
+            );
+            setTimeout(() => {
+                redirectByRole(AppState.userRole);
+            }, REDIRECT_DELAY);
+            return false;
+        }
 
-        // Mostrar información del usuario con la hora de entrada
-        displayUserInfo(AppState.userData, entryInfo);
+        AppState.entryDocument = entryDocument;
+        displayUserInfo(AppState.userData, entryDocument);
 
         return true;
     } catch (error) {
@@ -587,7 +573,6 @@ async function handleAuthenticatedUser(user) {
     }
 }
 
-// Inicializar flujo de ubicación
 async function initializeLocationFlow() {
     if (AppState.userData.asistencia?.estado && !AppState.isLocationRequested) {
         const locationConfirmed = await showLocationModal();
@@ -599,9 +584,6 @@ async function initializeLocationFlow() {
     return true;
 }
 
-// --- INICIALIZACIÓN DE LA APLICACIÓN ---
-
-// Configurar listeners de autenticación
 function setupAuthListener() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -620,7 +602,6 @@ function setupAuthListener() {
     });
 }
 
-// Inicializar aplicación
 function initApp() {
     updateDateTime();
     setInterval(updateDateTime, 1000);
@@ -636,5 +617,4 @@ function initApp() {
     }, 100);
 }
 
-// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', initApp);
