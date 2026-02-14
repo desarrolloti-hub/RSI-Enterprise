@@ -806,7 +806,9 @@
                 <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                     <i class="fas fa-palette"></i> Personalizar Interfaz
                 </a>
-                
+                <a href="../permisos/permisos.html" class="menu-nav-btn">
+                            <i class="fas fa-shield-alt"></i> Persmisos
+                        </a>
                 <a href="../fin-asistencia/fin-asistencia.html" class="menu-nav-btn">
                     <i class="fas fa-flag-checkered"></i> Terminar Asistencia
                 </a>

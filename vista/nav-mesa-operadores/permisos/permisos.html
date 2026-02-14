@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Notificaciones - RSI Enterprise</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
+    <link rel="stylesheet" href="permisos.css">
+</head>
+<body>
+    <div class="permisos-container">
+        <div class="permisos-header">
+            <i class="fas fa-bell"></i>
+            <h1>Configurando Notificaciones</h1>
+            <p>Por favor espera mientras configuramos tu dispositivo</p>
+        </div>
+
+        <div class="permisos-content">
+            <div class="loader"></div>
+            <div class="message">Inicializando configuración...</div>
+            <div class="submessage">
+                <i class="fas fa-info-circle"></i>
+                Estamos configurando las notificaciones push para tu dispositivo.
+                <br><br>
+                <small>Este proceso es automático y solo tomará unos segundos.</small>
+            </div>
+            
+            <div class="redirect-info">
+                <i class="fas fa-sync-alt"></i>
+                Serás redirigido automáticamente al completar el proceso
+            </div>
+        </div>
+    </div>
+
+    <!-- Script separado -->
+    <script src="permisos.js"></script>
+</body>
+</html>

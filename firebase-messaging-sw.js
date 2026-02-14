@@ -1,56 +1,31 @@
 // firebase-messaging-sw.js
-// Versión simplificada y robusta
+// Compatible con Firebase 8.10.0
 
-// Importar Firebase de forma correcta
-importScripts('https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-// Configuración de Firebase
-const firebaseConfig = {
+firebase.initializeApp({
     apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
     authDomain: "rsienterprise.firebaseapp.com",
     projectId: "rsienterprise",
     storageBucket: "rsienterprise.appspot.com",
     messagingSenderId: "1063117165770",
     appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
-};
+});
 
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Obtener instancia de messaging
 const messaging = firebase.messaging();
 
-// Eventos del Service Worker
-self.addEventListener('install', (event) => {
-    console.log('[SW] Instalado');
-    self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-    console.log('[SW] Activado');
-    event.waitUntil(clients.claim());
-});
-
-// Manejar mensajes en segundo plano
-messaging.onBackgroundMessage((payload) => {
-    console.log('[SW] Mensaje:', payload);
+messaging.onBackgroundMessage(function(payload) {
+    console.log('Mensaje en segundo plano:', payload);
     
     const notificationTitle = payload.notification?.title || 'RSI Enterprise';
     const notificationOptions = {
-        body: payload.notification?.body || 'Nueva notificación',
+        body: payload.notification?.body || 'Tienes una nueva notificación',
         icon: '/vista/css/img/logoApp.png',
         badge: '/vista/css/img/logoApp.png',
-        data: payload.data || {},
-        actions: [{ action: 'open', title: 'Ver' }]
+        vibrate: [200, 100, 200],
+        data: payload.data || {}
     };
 
-    return self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
-// Manejar clics
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    const urlToOpen = '/';
-    event.waitUntil(clients.openWindow(urlToOpen));
+    self.registration.showNotification(notificationTitle, notificationOptions);
 });
