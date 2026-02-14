@@ -1,6 +1,4 @@
 // firebase-messaging-sw.js
-// Compatible con Firebase 8.10.0
-
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
@@ -15,8 +13,9 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Manejar notificaciones en segundo plano
 messaging.onBackgroundMessage(function(payload) {
-    console.log('Mensaje en segundo plano:', payload);
+    console.log('📨 Mensaje en segundo plano:', payload);
     
     const notificationTitle = payload.notification?.title || 'RSI Enterprise';
     const notificationOptions = {
@@ -24,8 +23,50 @@ messaging.onBackgroundMessage(function(payload) {
         icon: '/vista/css/img/logoApp.png',
         badge: '/vista/css/img/logoApp.png',
         vibrate: [200, 100, 200],
-        data: payload.data || {}
+        data: payload.data || {},
+        actions: [
+            {
+                action: 'open',
+                title: 'Ver ticket'
+            },
+            {
+                action: 'close',
+                title: 'Cerrar'
+            }
+        ]
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Manejar clic en la notificación
+self.addEventListener('notificationclick', function(event) {
+    console.log('🔔 Notificación clickeada:', event);
+    
+    event.notification.close();
+    
+    // Obtener datos de la notificación
+    const data = event.notification.data;
+    
+    // Definir URL según el tipo de ticket
+    let url = '/';
+    if (data && data.ticketId) {
+        if (data.tipo === 'operativo') {
+            url = `/vista/nav-mesa-admin/Tickets/detalle-ticket-operativo.html?id=${data.ticketId}`;
+        } else {
+            url = `/vista/nav-mesa-admin/Tickets/detalle-ticket-admin.html?id=${data.ticketId}`;
+        }
+    }
+    
+    // Abrir/enfocar la ventana
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+            for (let client of clientList) {
+                if (client.url === url && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            return clients.openWindow(url);
+        })
+    );
 });

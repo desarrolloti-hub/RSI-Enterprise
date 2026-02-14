@@ -16,6 +16,101 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    async function sendPushNotification(colaboradorIds, ticketData, tipoTicket) {
+    try {
+        console.log('📤 Preparando envío de notificaciones...');
+        
+        if (!colaboradorIds || colaboradorIds.length === 0) {
+            console.log('No hay colaboradores para notificar');
+            return;
+        }
+
+        const tokens = await getFCMTokens(colaboradorIds);
+        
+        if (!tokens || tokens.length === 0) {
+            console.log('No hay tokens FCM disponibles');
+            return;
+        }
+
+        // Preparar los datos
+        let titulo, mensaje, data;
+        
+        if (tipoTicket === 'operativo') {
+            titulo = '🎫 Nuevo Ticket Operativo';
+            mensaje = `${ticketData.titulo} - Cliente: ${ticketData.cuentaNombre}`;
+            data = {
+                ticketId: ticketData.idTicket,
+                tipo: 'operativo',
+                prioridad: ticketData.prioridad
+            };
+        } else {
+            titulo = 'Nuevo Ticket Administración';
+            mensaje = `${ticketData.titulo} - Prioridad: ${ticketData.prioridad}`;
+            data = {
+                ticketId: ticketData.idTicket,
+                tipo: 'administracion',
+                prioridad: ticketData.prioridad
+            };
+        }
+
+        // URL de la Cloud Function (verifica que sea correcta)
+        const functionUrl = 'https://us-central1-rsienterprise.cloudfunctions.net/enviarNotificacion';
+        
+        console.log('📡 Enviando a Cloud Function:', functionUrl);
+        console.log('📦 Payload:', {
+            tokens: tokens,
+            titulo: titulo,
+            mensaje: mensaje,
+            data: data
+        });
+
+        const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tokens: tokens,
+                titulo: titulo,
+                mensaje: mensaje,
+                data: data
+            })
+        });
+
+        console.log('📬 Respuesta status:', response.status);
+        
+        // Intentar leer el cuerpo de la respuesta aunque sea error
+        const responseText = await response.text();
+        console.log('📄 Respuesta completa:', responseText);
+
+        if (!response.ok) {
+            let errorDetail;
+            try {
+                errorDetail = JSON.parse(responseText);
+            } catch {
+                errorDetail = responseText;
+            }
+            throw new Error(`Error HTTP: ${response.status} - ${JSON.stringify(errorDetail)}`);
+        }
+
+        const result = JSON.parse(responseText);
+        console.log('✅ Notificaciones enviadas:', result);
+
+    } catch (error) {
+        console.error('❌ Error enviando notificaciones:', error);
+        // Mostrar error más detallado al usuario
+        Swal.fire({
+            icon: 'warning',
+            title: 'Error en notificaciones',
+            text: 'El ticket se guardó pero hubo un problema al enviar notificaciones: ' + error.message,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000
+        });
+    }
+}
+
     const appState = {
         currentUser: null,
         colaboradores: [],
@@ -209,6 +304,7 @@
 
     async function loadCollaborators() {
         try {
+            // Cargar colaboradores
             const snapshot = await db.collection('colaboradores').get();
             appState.colaboradores = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -216,6 +312,9 @@
                 area: doc.data().ÁREA
             }));
 
+            // También podríamos precargar información de usuarios para tener los tokens disponibles
+            // pero no es necesario para el funcionamiento principal
+            
             $('#colaboradores').select2({
                 data: appState.colaboradores.map(col => ({ id: col.id, text: col.nombre })),
                 placeholder: 'Seleccione colaboradores',
@@ -227,6 +326,9 @@
                 placeholder: 'Seleccione responsable y copias',
                 width: '100%'
             });
+            
+            console.log(`✅ ${appState.colaboradores.length} colaboradores cargados`);
+            
         } catch (error) {
             console.error("Error al cargar colaboradores:", error);
         }
@@ -459,7 +561,7 @@
         
         await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
         
-        // NUEVO: Actualizar la cotización con el ID del ticket asociado
+        // Actualizar la cotización con el ID del ticket asociado
         if (asociarCotizacion === 'si' && cotizacionId) {
             try {
                 await db.collection('cotizacionPdf').doc(cotizacionId).update({
@@ -469,53 +571,169 @@
                 console.log(`✅ Ticket ${idTicket} asociado a cotización ${cotizacionId}`);
             } catch (error) {
                 console.error("❌ Error al asociar ticket a cotización:", error);
-                // No lanzamos error aquí para no interrumpir el flujo principal
             }
         }
         
+        // ENVIAR NOTIFICACIONES A LOS COLABORADORES ASIGNADOS
         if (selectedCollaboratorsIds.length > 0) {
-            await sendPushNotification(selectedCollaboratorsIds, ticketData);
+            await sendPushNotification(selectedCollaboratorsIds, ticketData, 'operativo');
         }
 
         return idTicket;
     }
 
-    async function sendPushNotification(colaboradorIds, ticketData) {
-        try {
-            console.log('📤 Enviando notificaciones...');
 
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'SHOW_NOTIFICATION',
-                    notification: {
-                        title: '🎫 Nuevo Ticket - RSI',
-                        body: `Ticket: ${ticketData.titulo}`,
-                        icon: '/vista/css/img/logoApp-192.png',
-                        badge: '/vista/css/img/logoApp-192.png',
-                        data: { 
-                            ticketId: ticketData.idTicket,
-                            type: 'new_ticket'
-                        },
-                        actions: [
-                            {
-                                action: 'open',
-                                title: 'Abrir Ticket'
-                            }
-                        ]
-                    }
-                });
-                console.log('✅ Notificación enviada al Service Worker');
-            } else {
-                new Notification('🎫 Nuevo Ticket', {
-                    body: `Ticket ${ticketData.idTicket} creado: ${ticketData.titulo}`,
-                    icon: '/vista/css/img/logoApp-192.png'
+
+    async function sendPushNotification(colaboradorIds, ticketData, tipoTicket) {
+    try {
+        console.log('📤 Preparando envío de notificaciones a colaboradores:', colaboradorIds);
+        
+        if (!colaboradorIds || colaboradorIds.length === 0) {
+            console.log('No hay colaboradores para notificar');
+            return;
+        }
+
+        // Obtener los tokens FCM de los colaboradores
+        const tokens = await getFCMTokens(colaboradorIds);
+        
+        if (!tokens || tokens.length === 0) {
+            console.log('No hay tokens FCM disponibles para los colaboradores seleccionados');
+            return;
+        }
+
+        console.log(`✅ Se encontraron ${tokens.length} tokens para notificar`);
+
+        // Preparar los datos según el tipo de ticket
+        let titulo, mensaje, data;
+        
+        if (tipoTicket === 'operativo') {
+            titulo = '🎫 Nuevo Ticket Operativo';
+            mensaje = `${ticketData.titulo} - Cliente: ${ticketData.cuentaNombre}`;
+            data = {
+                ticketId: ticketData.idTicket,
+                tipo: 'operativo',
+                prioridad: ticketData.prioridad,
+                cliente: ticketData.cuentaNombre || '',
+                click_action: 'FLUTTER_NOTIFICATION_CLICK'
+            };
+        } else {
+            titulo = '📋 Nuevo Ticket Administración';
+            mensaje = `${ticketData.titulo} - Prioridad: ${ticketData.prioridad}`;
+            data = {
+                ticketId: ticketData.idTicket,
+                tipo: 'administracion',
+                prioridad: ticketData.prioridad,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK'
+            };
+        }
+
+        // Llamar a la Cloud Function
+        const response = await fetch('https://us-central1-rsienterprise.cloudfunctions.net/enviarNotificacion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tokens: tokens,
+                titulo: titulo,
+                mensaje: mensaje,
+                data: data
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('📬 Respuesta de la Cloud Function:', result);
+
+        if (result.success) {
+            console.log(`✅ Notificaciones enviadas: ${result.successCount} exitosas, ${result.failureCount} fallidas`);
+            
+            // Mostrar un resumen al usuario si hubo fallos
+            if (result.failureCount > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Notificaciones parciales',
+                    text: `Se notificó a ${result.successCount} colaboradores. ${result.failureCount} no pudieron ser notificados.`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
                 });
             }
-
-        } catch (error) {
-            console.error('❌ Error enviando notificación:', error);
+        } else {
+            console.error('Error en la respuesta de la Cloud Function:', result.error);
         }
+
+    } catch (error) {
+        console.error('❌ Error enviando notificaciones:', error);
+        // No interrumpimos el flujo principal, solo registramos el error
     }
+}
+
+async function getFCMTokens(colaboradorIds) {
+    try {
+        const tokens = [];
+        
+        // Primero obtenemos los emails de los colaboradores seleccionados
+        for (const colaboradorId of colaboradorIds) {
+            try {
+                // 1. Buscar el colaborador en la colección 'colaboradores' para obtener su email
+                const colaboradorDoc = await db.collection('colaboradores').doc(colaboradorId).get();
+                
+                if (!colaboradorDoc.exists) {
+                    console.log(`⚠️ No se encontró colaborador con ID: ${colaboradorId}`);
+                    continue;
+                }
+                
+                const colaboradorData = colaboradorDoc.data();
+                const emailColaborador = colaboradorData['CORREO ELECTRÓNICO EMPRESARIAL'];
+                
+                if (!emailColaborador) {
+                    console.log(`⚠️ El colaborador ${colaboradorId} no tiene email registrado`);
+                    continue;
+                }
+                
+                console.log(`🔍 Buscando usuario con email: ${emailColaborador}`);
+                
+                // 2. Buscar en la colección 'usuarios' por el email
+                const usuarioSnapshot = await db.collection('usuarios')
+                    .where('email', '==', emailColaborador)
+                    .limit(1)
+                    .get();
+                
+                if (usuarioSnapshot.empty) {
+                    console.log(`⚠️ No se encontró usuario en 'usuarios' con email: ${emailColaborador}`);
+                    continue;
+                }
+                
+                // 3. Obtener el token del primer documento encontrado
+                const usuarioData = usuarioSnapshot.docs[0].data();
+                
+                // Verificar si tiene token y notificaciones habilitadas
+                if (usuarioData.fcmToken && usuarioData.notificacionesHabilitadas !== false) {
+                    tokens.push(usuarioData.fcmToken);
+                    console.log(`✅ Token encontrado para ${emailColaborador} (${usuarioData.nombreCompleto || 'Sin nombre'})`);
+                } else {
+                    console.log(`⚠️ Usuario ${emailColaborador} no tiene token o notificaciones deshabilitadas`);
+                }
+                
+            } catch (error) {
+                console.error(`Error al procesar colaborador ${colaboradorId}:`, error);
+            }
+        }
+        
+        console.log(`📊 Total de tokens obtenidos: ${tokens.length}`);
+        return tokens;
+        
+    } catch (error) {
+        console.error('Error en getFCMTokens:', error);
+        return [];
+    }
+}
+
 
     async function saveAdminTicket() {
         if (!validateAdminForm()) {
@@ -558,35 +776,38 @@
             tipo: 'administracion'
         };
         
-        
-        //SISTEMA DE REPORTES
+        // Sistema de reportes
         if (appState.origenReporteId) {
             ticketData.origenReporteId = appState.origenReporteId;
         }
 
         await db.collection('ticketsmesa').doc(idTicket).set(ticketData);
 
-
         if (appState.origenReporteId) {
             try {
                 console.log(`🔗 Vinculando Ticket ${idTicket} con Reporte ${appState.origenReporteId}`);
                 
                 await db.collection('reportesSistema').doc(appState.origenReporteId).update({
-                    estado: 'En Proceso', // REQUERIMIENTO: Cambiar estado
+                    estado: 'En Proceso',
                     ticketAsociado: idTicket,
                     responsableAsignado: ticketData.responsableNombre
                 });
                 
             } catch (error) {
                 console.error("Error actualizando reporte original:", error);
-                // No detenemos el flujo, el ticket ya se creó
             }
         }
         
-
+        // ENVIAR NOTIFICACIONES A LOS COLABORADORES ASIGNADOS
+        if (selectedCollaboratorsIds.length > 0) {
+            await sendPushNotification(selectedCollaboratorsIds, ticketData, 'administracion');
+        }
 
         return idTicket;
     }
+
+
+
 
     async function obtenerYActualizarContador() {
         const contadorRef = db.collection('contadorTickets').doc('contadorTicketsMesa');
