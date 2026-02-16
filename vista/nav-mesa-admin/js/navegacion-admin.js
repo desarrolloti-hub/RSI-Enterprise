@@ -876,13 +876,13 @@
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="menu-nav-section-content" id="section-tickets">
-                        <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
                             <i class="fas fa-list-alt"></i> Gestionar tickets
                         </a>
-                        <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                             <i class="fas fa-ticket-alt"></i> Ver mis tickets
                         </a>
-                        <a href="../graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Tickets/graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
                             <i class="fas fa-chart-bar"></i> Ver estadísticas
                         </a>
                     </div>
@@ -934,7 +934,7 @@
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="menu-nav-section-content" id="section-finanzas">
-                        <a href="/vista/nav-mesa-admin/cotizaciones/coti.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html" class="menu-nav-btn">
                             <i class="fas fa-file-invoice-dollar"></i> Cotizar
                         </a>
                         <a href="/vista/nav-mesa-admin/clientes/clientes.html" class="menu-nav-btn">
@@ -1823,7 +1823,6 @@
                     timestamp: new Date()
                 });
                 
-                alert('Asistencia registrada correctamente');
             } else {
                 alert('Usuario no encontrado en colaboradores');
             }
