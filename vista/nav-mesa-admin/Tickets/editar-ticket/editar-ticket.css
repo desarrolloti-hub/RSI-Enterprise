@@ -479,3 +479,208 @@ body {
         padding: 12px;
     }
 }
+
+        /* Estilos para el buscador de clientes */
+        .client-search-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        .client-search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .client-search-input:focus {
+            border-color: #6C43E0;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.1);
+        }
+        
+        .client-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .client-search-results.show {
+            display: block;
+        }
+        
+        .client-result-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        .client-result-item:hover {
+            background: #f8f4ff;
+        }
+        
+        .client-result-item .client-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .client-result-item .client-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .client-result-item .client-details span {
+            margin-right: 10px;
+        }
+        
+        .client-result-item .client-rfc {
+            color: #6C43E0;
+            font-weight: 500;
+        }
+        
+        .selected-client-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #6C43E0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Estilos para colaboradores */
+        .collaborators-container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-result-item:hover {
+            background: #f0f0f0;
+        }
+
+        .search-no-results {
+            padding: 10px;
+            text-align: center;
+            color: #999;
+        }
+
+        .selected-collaborators {
+            margin-top: 10px;
+        }
+
+        .selected-collaborator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .collaborator-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .collaborator-name {
+            font-weight: 600;
+        }
+
+        .collaborator-area {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .remove-collaborator {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .remove-collaborator:hover {
+            color: #dc3545;
+        }
+
+        .loading-collaborators, .no-collaborators {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .collaborators-help {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .collaborators-help i {
+            margin-right: 5px;
+            color: #6C43E0;
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: #6C43E0;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-link:hover {
+            color: #5436b3;
+        }

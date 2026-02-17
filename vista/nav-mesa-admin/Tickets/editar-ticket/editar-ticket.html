@@ -68,7 +68,6 @@
                                 <option value="baja">Baja</option>
                             </select>
                         </div>
-                        <!-- Se ha eliminado el campo Área de esta sección -->
                         <div class="form-group">
                             <label for="ticketType">Tipo:</label>
                             <select id="ticketType" class="form-control" required>
@@ -129,31 +128,51 @@
                     </div>
                 </div>
 
-                <!-- Información del Cliente -->
+                <!-- Información del Cliente (MEJORADA CON BUSCADOR) -->
                 <div class="form-section" id="clientInfoSection">
                     <h3>Información del Cliente</h3>
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label for="ticketAccount">Cuenta:</label>
-                            <select id="ticketAccount" class="form-control">
-                                <option value="">Seleccionar cuenta</option>
-                            </select>
+                        <div class="form-group full-width">
+                            <label for="clientSearch">Buscar Cliente:</label>
+                            <div class="client-search-container">
+                                <input type="text" id="clientSearch" class="client-search-input" 
+                                       placeholder="Escribe para buscar por nombre, RFC o teléfono...">
+                                <div class="client-search-results" id="clientSearchResults"></div>
+                            </div>
+                            <small class="text-muted">Escribe al menos 2 caracteres para buscar</small>
                         </div>
+                        
+                        <!-- Cliente seleccionado (oculto inicialmente) -->
+                        <div class="form-group full-width selected-client-info" id="selectedClientInfo" style="display: none;">
+                            <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                            <div style="flex: 1;">
+                                <strong>Cliente seleccionado:</strong> 
+                                <span id="selectedClientName"></span>
+                                <small>(<span id="selectedClientRFC"></span>)</small>
+                            </div>
+                            <button type="button" class="btn-link" onclick="clearClientSelection()">
+                                <i class="fas fa-times"></i> Cambiar
+                            </button>
+                        </div>
+                        
+                        <!-- Campos ocultos para almacenar IDs -->
+                        <input type="hidden" id="ticketAccount" value="">
+                        
                         <div class="form-group">
                             <label for="ticketDireccionFiscal">Dirección Fiscal:</label>
-                            <input type="text" id="ticketDireccionFiscal" class="form-control">
+                            <input type="text" id="ticketDireccionFiscal" class="form-control" readonly>
                         </div>
                         <div class="form-group">
                             <label for="ticketRFC">RFC:</label>
-                            <input type="text" id="ticketRFC" class="form-control">
+                            <input type="text" id="ticketRFC" class="form-control" readonly>
                         </div>
                         <div class="form-group">
                             <label for="ticketAtencionA">Atención A:</label>
-                            <input type="text" id="ticketAtencionA" class="form-control">
+                            <input type="text" id="ticketAtencionA" class="form-control" readonly>
                         </div>
                         <div class="form-group">
                             <label for="ticketCorreo">Correo:</label>
-                            <input type="text" id="ticketCorreo" class="form-control">
+                            <input type="text" id="ticketCorreo" class="form-control" readonly>
                         </div>
                     </div>
                 </div>
@@ -228,16 +247,128 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Estado de la aplicación - COMPATIBLE CON PERSONALIZACIÓN DE COLORES
+    // Estado de la aplicación
     const appState = {
         currentUser: null,
         currentTicketId: null,
         colaboradores: [],
         clientes: [],
         ticketData: null,
-        selectedCollaborators: [], // NUEVO: Para gestionar colaboradores seleccionados
-        collaboratorsLoaded: false // NUEVO: Para saber cuándo están cargados
+        selectedCollaborators: [],
+        collaboratorsLoaded: false,
+        filteredClients: [],
+        selectedClientId: null
     };
+
+    // =================================================================================
+    // FUNCIONES PARA GESTIÓN DE CLIENTES CON BUSCADOR
+    // =================================================================================
+
+    /**
+     * Busca clientes en tiempo real mientras se escribe
+     */
+    function searchClients(searchTerm) {
+        const resultsContainer = document.getElementById('clientSearchResults');
+        
+        if (searchTerm.length < 2) {
+            resultsContainer.classList.remove('show');
+            return;
+        }
+        
+        // Filtrar clientes localmente
+        const term = searchTerm.toLowerCase();
+        appState.filteredClients = appState.clientes.filter(cliente => {
+            // Convertir cada campo a string de manera segura
+            const searchableFields = [
+                cliente.nombreComercial,
+                cliente.rfc,
+                cliente.telefono,
+                cliente.correo,
+                cliente.contacto
+            ].map(f => {
+                // Si el valor es null o undefined, convertir a string vacío
+                // Si no, convertir a string y luego a minúsculas
+                return f ? String(f).toLowerCase() : '';
+            });
+            
+            return searchableFields.some(field => field.includes(term));
+        });
+        
+        // Mostrar resultados
+        resultsContainer.innerHTML = '';
+        
+        if (appState.filteredClients.length === 0) {
+            resultsContainer.innerHTML = '<div class="no-results">No se encontraron clientes</div>';
+        } else {
+            appState.filteredClients.forEach(cliente => {
+                const div = document.createElement('div');
+                div.className = 'client-result-item';
+                
+                const nombre = cliente.nombreComercial || 'Sin nombre';
+                const rfc = cliente.rfc ? `RFC: ${cliente.rfc}` : '';
+                const telefono = cliente.telefono ? `Tel: ${cliente.telefono}` : '';
+                
+                div.innerHTML = `
+                    <div class="client-name">${nombre}</div>
+                    <div class="client-details">
+                        ${rfc ? `<span class="client-rfc">${rfc}</span>` : ''}
+                        ${telefono ? `<span>${telefono}</span>` : ''}
+                    </div>
+                `;
+                
+                div.addEventListener('click', () => selectClient(cliente));
+                resultsContainer.appendChild(div);
+            });
+        }
+        
+        resultsContainer.classList.add('show');
+    }
+
+    /**
+     * Selecciona un cliente y carga sus datos
+     */
+    function selectClient(cliente) {
+        appState.selectedClientId = cliente.id;
+        
+        // Actualizar campos ocultos y visibles
+        document.getElementById('ticketAccount').value = cliente.id;
+        document.getElementById('selectedClientName').textContent = cliente.nombreComercial || 'Sin nombre';
+        document.getElementById('selectedClientRFC').textContent = cliente.rfc || 'RFC no disponible';
+        document.getElementById('selectedClientInfo').style.display = 'flex';
+        
+        // Ocultar resultados de búsqueda
+        document.getElementById('clientSearchResults').classList.remove('show');
+        document.getElementById('clientSearch').value = '';
+        
+        // Cargar datos del cliente en el formulario
+        loadClientData(cliente.id);
+    }
+
+    /**
+     * Limpia la selección de cliente
+     */
+    function clearClientSelection() {
+        appState.selectedClientId = null;
+        document.getElementById('ticketAccount').value = '';
+        document.getElementById('selectedClientInfo').style.display = 'none';
+        document.getElementById('ticketDireccionFiscal').value = '';
+        document.getElementById('ticketRFC').value = '';
+        document.getElementById('ticketAtencionA').value = '';
+        document.getElementById('ticketCorreo').value = '';
+    }
+
+    /**
+     * Carga los datos de un cliente en el formulario
+     */
+    function loadClientData(clientId) {
+        const cliente = appState.clientes.find(c => c.id === clientId);
+        if (cliente) {
+            document.getElementById('ticketDireccionFiscal').value = cliente.direccion || '';
+            document.getElementById('ticketRFC').value = cliente.rfc || '';
+            document.getElementById('ticketAtencionA').value = cliente.contacto || '';
+            document.getElementById('ticketCorreo').value = cliente.correo || '';
+        }
+    }
 
     // =================================================================================
     // FUNCIONES MEJORADAS PARA GESTIÓN DE COLABORADORES
@@ -391,10 +522,11 @@
     function hideAllResults() {
         document.getElementById('responsableResults').style.display = 'none';
         document.getElementById('collaboratorResults').style.display = 'none';
+        document.getElementById('clientSearchResults').classList.remove('show');
     }
 
     // =================================================================================
-    // FUNCIONES PRINCIPALES (COMPATIBLES CON PERSONALIZACIÓN)
+    // FUNCIONES PRINCIPALES
     // =================================================================================
 
     async function initialLoad() {
@@ -402,7 +534,7 @@
             console.log('🔍 Iniciando carga de datos...');
             await loadUserProfile();
             await loadCollaborators();
-            await loadClientes();
+            await loadClientes(); // Carga clientes con la estructura correcta
             await loadTicketData();
             setupEventListeners();
             console.log('✅ Todos los datos cargados correctamente');
@@ -472,10 +604,8 @@
 
     async function loadClientes() {
         try {
-            console.log('🏢 Cargando lista de clientes...');
+            console.log('🏢 Cargando lista de clientes (estructura clientes.html)...');
             const snapshot = await db.collection('clientes').get();
-            const selectCuenta = document.getElementById('ticketAccount');
-            selectCuenta.innerHTML = '<option value="">Seleccione un cliente</option>';
             
             if (snapshot.empty) {
                 console.warn('⚠️ No se encontraron clientes en la base de datos');
@@ -483,21 +613,32 @@
             } else {
                 appState.clientes = snapshot.docs.map(doc => {
                     const data = doc.data();
-                    const direccionCompleta = [data.Calle, data['No.Exterior'], data.Colonia, data['Codigo Postal'], data.Pais].filter(Boolean).join(', ');
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = data['Nombre Comercial'] || 'Cliente sin nombre comercial';
-                    selectCuenta.appendChild(option);
+                    
+                    // Convertir todos los campos a string de manera segura
+                    const nombreComercial = data.Nombre ? String(data.Nombre) : 'Cliente sin nombre';
+                    const rfc = data.RFC ? String(data.RFC) : '';
+                    const telefono = data.Telefono ? String(data.Telefono) : (data.Movil ? String(data.Movil) : '');
+                    const correo = data.Email ? String(data.Email) : '';
+                    const contacto = data.Nombre ? String(data.Nombre) : '';
+                    const direccion = data.DireccionCompleta ? String(data.DireccionCompleta) : '';
+                    
+                    console.log('📄 Cliente cargado:', {
+                        id: doc.id,
+                        nombre: nombreComercial,
+                        rfc: rfc
+                    });
+                    
                     return {
                         id: doc.id,
-                        nombreComercial: data['Nombre Comercial'] || '',
-                        rfc: data.RFC || '',
-                        correo: data.Correo || '',
-                        contacto: data.Nombre || '',
-                        direccion: direccionCompleta
+                        nombreComercial: nombreComercial,
+                        rfc: rfc,
+                        telefono: telefono,
+                        correo: correo,
+                        contacto: contacto,
+                        direccion: direccion
                     };
                 });
-                console.log(`✅ ${appState.clientes.length} clientes cargados`);
+                console.log(`✅ ${appState.clientes.length} clientes cargados correctamente`);
             }
 
         } catch (error) {
@@ -516,21 +657,6 @@
         } else {
             clientInfoSection.style.display = 'none';
             serviceInfoSection.style.display = 'none';
-        }
-    }
-
-    function loadClientData(clientId) {
-        const cliente = appState.clientes.find(c => c.id === clientId);
-        if (cliente) {
-            document.getElementById('ticketDireccionFiscal').value = cliente.direccion || '';
-            document.getElementById('ticketRFC').value = cliente.rfc || '';
-            document.getElementById('ticketAtencionA').value = cliente.contacto || '';
-            document.getElementById('ticketCorreo').value = cliente.correo || '';
-        } else {
-            document.getElementById('ticketDireccionFiscal').value = '';
-            document.getElementById('ticketRFC').value = '';
-            document.getElementById('ticketAtencionA').value = '';
-            document.getElementById('ticketCorreo').value = '';
         }
     }
 
@@ -599,10 +725,9 @@
         document.getElementById('ticketTitle').value = ticket.titulo || '';
         document.getElementById('ticketStatus').value = ticket.estado || '';
         document.getElementById('ticketPriority').value = ticket.prioridad || '';
-        // Se ha eliminado el campo Área de esta sección
         document.getElementById('ticketType').value = ticket.tipo || 'operativo';
         
-        // Asignación - Cargar colaboradores (USANDO LA NUEVA GESTIÓN)
+        // Asignación - Cargar colaboradores
         if (ticket.colaboradores && ticket.colaboradores.length > 0) {
             console.log('🔄 Cargando colaboradores del ticket:', ticket.colaboradores);
             
@@ -634,15 +759,22 @@
         
         document.getElementById('ticketRaisedBy').value = ticket.levantadoPor || '';
         
-        // Información del Cliente
+        // Información del Cliente - Usar la nueva selección
         if (ticket.cuentaId) {
-            document.getElementById('ticketAccount').value = ticket.cuentaId;
-            loadClientData(ticket.cuentaId);
+            const cliente = appState.clientes.find(c => c.id === ticket.cuentaId);
+            if (cliente) {
+                appState.selectedClientId = ticket.cuentaId;
+                document.getElementById('ticketAccount').value = ticket.cuentaId;
+                document.getElementById('selectedClientName').textContent = cliente.nombreComercial || 'Sin nombre';
+                document.getElementById('selectedClientRFC').textContent = cliente.rfc || 'RFC no disponible';
+                document.getElementById('selectedClientInfo').style.display = 'flex';
+                
+                document.getElementById('ticketDireccionFiscal').value = ticket.direccionFiscal || '';
+                document.getElementById('ticketRFC').value = ticket.rfc || '';
+                document.getElementById('ticketAtencionA').value = ticket.atencionA || '';
+                document.getElementById('ticketCorreo').value = ticket.correo || '';
+            }
         }
-        document.getElementById('ticketDireccionFiscal').value = ticket.direccionFiscal || '';
-        document.getElementById('ticketRFC').value = ticket.rfc || '';
-        document.getElementById('ticketAtencionA').value = ticket.atencionA || '';
-        document.getElementById('ticketCorreo').value = ticket.correo || '';
         
         // Información del Servicio
         document.getElementById('ticketFecha').value = ticket.fecha || '';
@@ -674,18 +806,18 @@
                 return;
             }
             
-            // Obtener valores del formulario (USANDO LA NUEVA GESTIÓN DE COLABORADORES)
+            // Obtener valores del formulario
             const updatedData = {
                 titulo: document.getElementById('ticketTitle').value,
                 estado: document.getElementById('ticketStatus').value,
                 prioridad: document.getElementById('ticketPriority').value,
-                // Se ha eliminado el campo Área de esta sección
                 tipo: document.getElementById('ticketType').value,
                 levantadoPor: document.getElementById('ticketRaisedBy').value,
-                colaboradores: appState.selectedCollaborators.map(c => c.id), // USAR LOS COLABORADORES SELECCIONADOS
+                colaboradores: appState.selectedCollaborators.map(c => c.id),
                 responsableNombre: getResponsableName(),
-                cuentaId: document.getElementById('ticketAccount').value || null,
-                cuentaNombre: document.getElementById('ticketAccount').options[document.getElementById('ticketAccount').selectedIndex]?.text || '',
+                cuentaId: appState.selectedClientId || null,
+                cuentaNombre: appState.selectedClientId ? 
+                    (appState.clientes.find(c => c.id === appState.selectedClientId)?.nombreComercial || '') : '',
                 direccionFiscal: document.getElementById('ticketDireccionFiscal').value,
                 rfc: document.getElementById('ticketRFC').value,
                 atencionA: document.getElementById('ticketAtencionA').value,
@@ -758,6 +890,12 @@
             return false;
         }
         
+        // Validar cliente solo para tickets operativos
+        if (document.getElementById('ticketType').value === 'operativo' && !appState.selectedClientId) {
+            showError('Debe seleccionar un cliente para el ticket operativo.');
+            return false;
+        }
+        
         return true;
     }
 
@@ -781,7 +919,7 @@
     }
 
     // =================================================================================
-    // EVENT LISTENERS (COMPATIBLES CON PERSONALIZACIÓN)
+    // EVENT LISTENERS
     // =================================================================================
 
     function setupEventListeners() {
@@ -803,16 +941,16 @@
             searchCollaborators(e.target.value, 'collaborator');
         });
 
-        // Cerrar resultados al hacer clic fuera
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.search-container')) {
-                hideAllResults();
-            }
+        // Búsqueda de clientes
+        document.getElementById('clientSearch').addEventListener('input', function(e) {
+            searchClients(e.target.value);
         });
 
-        // Cargar datos del cliente cuando se selecciona
-        document.getElementById('ticketAccount').addEventListener('change', function() {
-            loadClientData(this.value);
+        // Cerrar resultados al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container') && !e.target.closest('.client-search-container')) {
+                hideAllResults();
+            }
         });
 
         // Mostrar/ocultar secciones según el tipo de ticket
@@ -820,7 +958,7 @@
             toggleSectionsByTicketType(this.value);
         });
 
-        // Botones de acción (COMPATIBLES CON PERSONALIZACIÓN)
+        // Botones de acción
         document.getElementById('saveTicketBtn').addEventListener('click', saveTicketChanges);
         document.getElementById('cancelEditBtn').addEventListener('click', () => {
             window.location.href = `../verTicket/verTicket.html?id=${appState.currentTicketId}`;
@@ -828,7 +966,7 @@
     }
 
     // =================================================================================
-    // INICIALIZACIÓN (COMPATIBLE CON PERSONALIZACIÓN)
+    // INICIALIZACIÓN
     // =================================================================================
 
     document.addEventListener('DOMContentLoaded', function() {
