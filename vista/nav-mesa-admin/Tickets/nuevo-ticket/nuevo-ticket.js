@@ -215,26 +215,38 @@
 
     async function loadClientes() {
         try {
+            console.log('Cargando clientes de la colección "clientes"...');
             const snapshot = await db.collection('clientes').get();
             const selectCuenta = document.getElementById('cuenta');
             selectCuenta.innerHTML = '<option value="">Seleccione un cliente</option>';
             
             appState.clientes = snapshot.docs.map(doc => {
                 const data = doc.data();
-                const direccionCompleta = [data.Calle, data['No.Exterior'], data.Colonia, data['Codigo Postal'], data.Pais].filter(Boolean).join(', ');
+                console.log('Cliente cargado:', data); // Para depuración
+                
+                // Construir dirección completa a partir de los campos disponibles
+                // En clientes.html solo guardamos DireccionCompleta como un campo unificado
+                const direccionCompleta = data.DireccionCompleta || '';
+                
+                // Para mostrar en el select, usamos el Nombre (que es el nombre/razón social)
+                const nombreCliente = data.Nombre || 'Cliente sin nombre';
+                
                 const option = document.createElement('option');
                 option.value = doc.id;
-                option.textContent = data['Nombre Comercial'] || 'Cliente sin nombre comercial';
+                option.textContent = nombreCliente;
                 selectCuenta.appendChild(option);
+                
                 return {
                     id: doc.id,
-                    nombreComercial: data['Nombre Comercial'] || '',
+                    nombreComercial: nombreCliente, // Usamos el mismo campo
                     rfc: data.RFC || '',
-                    correo: data.Correo || '',
-                    contacto: data.Nombre || '',
+                    correo: data.Email || '', // En clientes.html se llama Email
+                    contacto: data.Nombre || '', // Para atención a
                     direccion: direccionCompleta
                 };
             });
+            
+            console.log(`✅ ${appState.clientes.length} clientes cargados correctamente`);
         } catch (error) {
             console.error("Error al cargar clientes:", error);
         }
@@ -372,7 +384,7 @@
         if (cliente) {
             document.getElementById('direccionFiscal').value = cliente.direccion || '';
             document.getElementById('rfc').value = cliente.rfc || '';
-            document.getElementById('atencionA').value = cliente.contacto || '';
+            document.getElementById('atencionA').value = cliente.contacto || ''; // Usamos el nombre como contacto
             document.getElementById('correo').value = cliente.correo || '';
             
             loadTodasLasCotizaciones();
