@@ -91,15 +91,27 @@ async function loadUserProfile() {
 async function loadCollaborators() {
     try {
         const snapshot = await db.collection('colaboradores').get();
-        appState.colaboradores = snapshot.docs.map(doc => ({
+        
+        // Obtener los colaboradores y ordenarlos alfabéticamente por nombre (A a Z)
+        const colaboradoresData = snapshot.docs.map(doc => ({
             id: doc.id,
             nombre: doc.data().NOMBRE,
             area: doc.data().ÁREA
         }));
+        
+        // Ordenar alfabéticamente de la A a la Z por nombre
+        appState.colaboradores = colaboradoresData.sort((a, b) => {
+            const nombreA = a.nombre || '';
+            const nombreB = b.nombre || '';
+            return nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+        });
+
+        console.log('Colaboradores ordenados alfabéticamente (A-Z):', appState.colaboradores.length);
 
         // Popular el select del filtro
         const filterSelect = document.getElementById('collaboratorFilter');
         filterSelect.innerHTML = '<option value="">Todos los Colaboradores</option>';
+        
         appState.colaboradores.forEach(col => {
             const option = document.createElement('option');
             option.value = col.id;
@@ -110,8 +122,6 @@ async function loadCollaborators() {
         console.error("Error al cargar colaboradores:", error);
     }
 }
-
-
 
 function loadTicketsPage(pageNumber) {
     if (appState.unsubscribeTickets) {
