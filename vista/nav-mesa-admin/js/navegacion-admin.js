@@ -876,18 +876,21 @@
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="menu-nav-section-content" id="section-tickets">
-                        <a href="../gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html" class="menu-nav-btn">
                             <i class="fas fa-list-alt"></i> Gestionar tickets
                         </a>
-                        <a href="../gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html" class="menu-nav-btn">
                             <i class="fas fa-ticket-alt"></i> Ver mis tickets
                         </a>
-                        <a href="../graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Tickets/graficas-tickets/graficas-tickets.html" class="menu-nav-btn">
                             <i class="fas fa-chart-bar"></i> Ver estadísticas
                         </a>
                     </div>
                 </div>
                 
+
+
+
                 <!-- SECCIÓN ADMINISTRATIVO -->
                 <div class="menu-nav-section">
                     <button class="menu-nav-section-header" data-section="administrativo">
@@ -896,32 +899,32 @@
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="menu-nav-section-content" id="section-administrativo">
-                        <a href="../notas/notas.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/notas/notas.html" class="menu-nav-btn">
                             <i class="fas fa-sticky-note"></i> Notas
                         </a>
-                        <a href="../asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html" class="menu-nav-btn">
                             <i class="fas fa-calendar-check"></i> Ver asistencias
                         </a>
-                        <a href="../Rembolsos/rembolso.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/Rembolsos/rembolso.html" class="menu-nav-btn">
                             <i class="fas fa-money-bill-wave"></i> Gestión de reembolsos
                         </a>
-                        <a href="../sistema-reportes/sistema-reportes.html" class="menu-nav-btn">
-                            <i class="fas fa-bug"></i> Gestión de errores
-                        </a>
-                        <a href="../manuales/manuales.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/manuales/manuales.html" class="menu-nav-btn">
                             <i class="fas fa-file-alt"></i> Ver manuales
                         </a>
-                        <a href="../gestion-colaboradores/gestion-colaboradores.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html" class="menu-nav-btn">
                             <i class="fas fa-users-cog"></i> Colaboradores
                         </a>
-                        <a href="../checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html" class="menu-nav-btn">
                             <i class="fas fa-car"></i> Chekclist automoviles
                         </a>
-                        <a href="../multas/multas.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/multas/multas.html" class="menu-nav-btn">
                             <i class="fas fa-file-alt"></i> Multas e imprevistos
                         </a>
                     </div>
                 </div>
+
+
+
 
                 <!-- SECCIÓN FINANZAS -->
                 <div class="menu-nav-section">
@@ -931,90 +934,68 @@
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="menu-nav-section-content" id="section-finanzas">
-                        <a href="../consultar-cotizaciones/consultar-cotizaciones.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html" class="menu-nav-btn">
                             <i class="fas fa-file-invoice-dollar"></i> Cotizar
                         </a>
-                        <a href="../clientes/clientes.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/clientes/clientes.html" class="menu-nav-btn">
                             <i class="fas fa-users"></i> Clientes
-                        </a>
-                        <a href="/404.html" class="menu-nav-btn">
-                            <i class="fas fa-calculator"></i> Presupuestos
-                        </a>
-                        <a href="/404.html" class="menu-nav-btn">
-                            <i class="fas fa-money-check-alt"></i> Control de Gastos
                         </a>
                     </div>
                 </div>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <!-- SECCIÓN ECOMMERCE -->
+                                <!-- SECCIÓN ECOMMERCE -->
                 <div class="menu-nav-section">
-    <button class="menu-nav-section-header" data-section="ecommerce">
-        <i class="fas fa-shopping-cart"></i>
-        <span>Ecommerce</span>
-        <i class="fas fa-chevron-down"></i>
-    </button>
-    <div class="menu-nav-section-content" id="section-ecommerce">
-     
-   
-       <a href="/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html" class="menu-nav-btn">
-    <i class="fas fa-map-marked-alt"></i> Áreas
-</a>
+                <button class="menu-nav-section-header" data-section="ecommerce">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Ecommerce</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="menu-nav-section-content" id="section-ecommerce">
+                    
+                
+                <a href="/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html" class="menu-nav-btn">
+                    <i class="fas fa-map-marked-alt"></i> Áreas
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html" class="menu-nav-btn">
-    <i class="fas fa-images"></i> Carrusel
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html" class="menu-nav-btn">
+                    <i class="fas fa-images"></i> Carrusel
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/categorias/categorias.html" class="menu-nav-btn">
-    <i class="fas fa-th-list"></i> Categorías
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/categorias/categorias.html" class="menu-nav-btn">
+                    <i class="fas fa-th-list"></i> Categorías
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/contactos/contactos.html" class="menu-nav-btn">
-    <i class="fas fa-address-book"></i> Contactos
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/contactos/contactos.html" class="menu-nav-btn">
+                    <i class="fas fa-address-book"></i> Contactos
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html" class="menu-nav-btn">
-    <i class="fas fa-truck-loading"></i> Entregas
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html" class="menu-nav-btn">
+                    <i class="fas fa-truck-loading"></i> Entregas
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html" class="menu-nav-btn">
-    <i class="fas fa-star"></i> Opiniones
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html" class="menu-nav-btn">
+                    <i class="fas fa-star"></i> Opiniones
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html" class="menu-nav-btn">
-    <i class="fas fa-check-double"></i> Pedidos Finalizados
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html" class="menu-nav-btn">
+                    <i class="fas fa-check-double"></i> Pedidos Finalizados
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/productos/productos.html" class="menu-nav-btn">
-    <i class="fas fa-boxes"></i> Productos
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/productos/productos.html" class="menu-nav-btn">
+                    <i class="fas fa-boxes"></i> Productos
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html" class="menu-nav-btn">
-    <i class="fas fa-users-cog"></i> Usuarios
-</a>
+                <a href="/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html" class="menu-nav-btn">
+                    <i class="fas fa-users-cog"></i> Usuarios
+                </a>
 
-<a href="/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html" class="menu-nav-btn">
-    <i class="fas fa-chart-line"></i> Ventas
-</a>
-       
-        
-
-    </div>
-</div>
+                <a href="/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html" class="menu-nav-btn">
+                    <i class="fas fa-chart-line"></i> Ventas
+                </a>
+                    </div>
+                </div>
               
                 <!-- SECCIÓN CONFIGURACIÓN -->
                 <div class="menu-nav-section">
@@ -1024,10 +1005,10 @@
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="menu-nav-section-content" id="section-configuracion">
-                        <a href="../personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html" class="menu-nav-btn">
                             <i class="fas fa-palette"></i> Personalizar interfaz
                         </a>
-                        <a href="../permisos/permisos.html" class="menu-nav-btn">
+                        <a href="/vista/nav-mesa-admin/permisos/permisos.html" class="menu-nav-btn">
                             <i class="fas fa-shield-alt"></i> Persmisos
                         </a>
                         <button class="menu-nav-btn menu-nav-btn-finish" id="menuNavFinishAttendanceBtn">
@@ -1842,7 +1823,6 @@
                     timestamp: new Date()
                 });
                 
-                alert('Asistencia registrada correctamente');
             } else {
                 alert('Usuario no encontrado en colaboradores');
             }
