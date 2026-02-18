@@ -24,6 +24,9 @@ body {
     background-color: var(--background-color);
     color: var(--text-color);
     transition: all 0.3s ease;
+    overflow-x: hidden;
+    width: 100%; /* ← AÑADE ESTO */
+    margin: 0; /* ← AÑADE ESTO (por si acaso) */
 }
 
 .dashboard {
@@ -137,12 +140,13 @@ body {
     text-align: center;
 }
 
-/* Main Content Styles */
 .main-content {
     flex-grow: 1;
     padding: 30px;
-    background-color: var(--background-color);
     transition: margin-left 0.3s ease;
+    /* max-width: calc(100% - 250px); */ /* ← ELIMINA ESTA LÍNEA */
+    width: 100%; /* ← AÑADE ESTO */
+    overflow-x: auto;
 }
 
 header {
@@ -378,13 +382,16 @@ header h1 {
     box-shadow: 0 0 0 2px rgba(108, 67, 224, 0.2);
 }
 
-/* Calendar Container */
 .calendar-container {
     background-color: var(--card-bg);
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 20px;
     box-shadow: var(--card-shadow);
+    position: relative;
+    max-height: 70vh;
+    overflow: auto;
+    width: 100%; /* ← AÑADE ESTO */
 }
 
 .calendar-header {
@@ -394,6 +401,9 @@ header h1 {
     display: flex;
     justify-content: center;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 30;
 }
 
 .calendar-nav {
@@ -401,15 +411,16 @@ header h1 {
 }
 
 .calendar-wrapper {
-    overflow-x: auto;
+    overflow: visible;
     position: relative;
 }
 
 .calendar-grid {
     display: grid;
     min-width: max-content;
-    background-color: var(--border-color);
+
     gap: 1px;
+    position: relative;
 }
 
 .calendar-row {
@@ -425,42 +436,53 @@ header h1 {
     justify-content: flex-start;
     font-size: 11px;
     border-bottom: 1px solid var(--border-color);
+    position: relative;
 }
 
+/* Estilos para la columna fija (empleados) */
 .calendar-cell.employee-cell {
     position: sticky;
     left: 0;
-    z-index: 20;
+    z-index: 10;
     background-color: var(--card-bg);
     min-width: 250px;
     border-right: 2px solid var(--primary-color);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
+/* Estilos para el encabezado de días */
 .calendar-cell.header-cell {
     background-color: var(--primary-color);
     color: white;
     font-weight: bold;
     text-align: center;
     position: sticky;
-    top: 0;
+    top: 60px; /* Altura del header del calendario */
     z-index: 15;
     min-width: 80px;
 }
 
+/* Estilos para la celda de encabezado de empleados (esquina superior izquierda) */
 .calendar-cell.header-cell.employee-header {
     background-color: var(--secondary-color);
     position: sticky;
     left: 0;
+    top: 60px; /* Altura del header del calendario */
     z-index: 25;
     min-width: 250px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
 }
 
+/* Ajuste para las celdas de resumen */
 .calendar-cell.summary-cell {
     font-weight: bold;
     font-size: 14px;
     justify-content: center;
     align-items: center;
     min-width: 80px;
+    position: sticky;
+    top: 60px;
+    z-index: 5;
 }
 
 .calendar-cell.summary-cell.asistencias {
@@ -477,6 +499,11 @@ header h1 {
 
 .calendar-cell.summary-cell.horas {
     color: var(--primary-color);
+}
+
+/* Ajuste para que las celdas de resumen también tengan sticky cuando sea necesario */
+.calendar-cell.summary-cell {
+    background-color: var(--card-bg);
 }
 
 .attendance-info {
@@ -711,6 +738,7 @@ header h1 {
     
     .main-content {
         margin-left: 0;
+        max-width: 100%;
     }
     
     .stats-cards {
@@ -968,7 +996,8 @@ header h1 {
 
 /* Ajustar el contenido principal para el nuevo navbar */
 .dashboard {
-    padding-top: 70px;
+    padding-top: 70px; /* ← Mantén esto */
+    width: 100%; /* ← AÑADE ESTO */
 }
 
 /* Eliminar el menú toggle anterior */
@@ -979,7 +1008,6 @@ header h1 {
 .main-content {
     flex-grow: 1;
     padding: 20px 30px;
-    background-color: var(--background-color);
     transition: margin-left 0.3s ease;
     margin-left: 0;
 }

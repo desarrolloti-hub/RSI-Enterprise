@@ -319,7 +319,7 @@ function getRegistrosDelDia(employeeName, fecha) {
     return { entrada, salida };
 }
 
-// ===== FUNCIÓN RENDER CALENDAR CORREGIDA - SOLO CAMBIÉ UNA LÍNEA =====
+// Renderizar calendario (DESKTOP)
 function renderCalendar(employeesToShow) {
     const calendarGrid = document.getElementById('calendarGrid');
     const currentMonthYear = document.getElementById('currentMonthYear');
@@ -372,9 +372,9 @@ function renderCalendar(employeesToShow) {
 
     calendarGrid.style.gridTemplateColumns = `250px repeat(${workDays.length}, 1fr) 100px 100px 100px 120px`;
 
-    // --- HEADER ROW - ÚNICA LÍNEA QUE CAMBIÉ: añadí la clase 'sticky-header' ---
+    // --- HEADER ROW ---
     const headerRow = document.createElement('div');
-    headerRow.className = 'calendar-row sticky-header'; // <-- ESTA ES LA ÚNICA MODIFICACIÓN
+    headerRow.className = 'calendar-row';
 
     const employeeHeader = document.createElement('div');
     employeeHeader.className = 'calendar-cell header-cell employee-header';
