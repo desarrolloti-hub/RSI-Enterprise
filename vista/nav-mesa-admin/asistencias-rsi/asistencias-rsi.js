@@ -41,6 +41,14 @@ window.manejadorErrorGlobal = function(error) {
     }
 };
 
+// Función para determinar la quincena actual basada en el día
+function getCurrentQuincena() {
+    const today = new Date();
+    const day = today.getDate();
+    // Si es día 15 o antes, es primera quincena, si no, segunda
+    return day <= 15 ? 1 : 2;
+}
+
 // Verificar autenticación
 function checkAuthState() {
     auth.onAuthStateChanged(user => {
@@ -125,7 +133,9 @@ async function loadEmployees() {
 function initializeDateSelectors() {
     const monthSelect = document.getElementById('month');
     const yearSelect = document.getElementById('year');
-    if (!monthSelect || !yearSelect) return;
+    const quincenaSelect = document.getElementById('quincena');
+    
+    if (!monthSelect || !yearSelect || !quincenaSelect) return;
 
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -146,6 +156,10 @@ function initializeDateSelectors() {
         if (year === currentYearNow) option.selected = true;
         yearSelect.appendChild(option);
     }
+
+    // Establecer la quincena actual
+    selectedQuincena = getCurrentQuincena();
+    quincenaSelect.value = selectedQuincena;
 }
 
 // Configurar event listeners
@@ -157,6 +171,7 @@ function setupEventListeners() {
     if (quincenaSelect) {
         quincenaSelect.addEventListener('change', function() {
             selectedQuincena = parseInt(this.value);
+            console.log('Quincena cambiada a:', selectedQuincena);
             renderActiveEmployees();
         });
     }
@@ -210,10 +225,16 @@ function applyFilters() {
     const yearSelect = document.getElementById('year');
     if (monthSelect) currentMonth = parseInt(monthSelect.value);
     if (yearSelect) currentYear = parseInt(yearSelect.value);
+    
+    console.log('Filtros aplicados - Mes:', currentMonth + 1, 'Año:', currentYear, 'Quincena:', selectedQuincena);
     renderActiveEmployees();
 }
 
 function renderActiveEmployees() {
+    console.log('Renderizando empleados - Quincena:', selectedQuincena);
+    console.log('Mes/Año:', currentMonth + 1, currentYear);
+    console.log('Total empleados activos:', activeEmployees.length);
+    
     const sortedEmployees = [...activeEmployees].sort((a, b) => a.name.localeCompare(b.name));
     if (window.innerWidth <= 992) {
         renderMobileCards(sortedEmployees);
@@ -323,6 +344,7 @@ function renderCalendar(employeesToShow) {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let startDay, endDay;
 
+    // Calcular días de la quincena seleccionada
     if (selectedQuincena === 1) {
         startDay = 1;
         endDay = Math.min(15, daysInMonth);
@@ -330,6 +352,14 @@ function renderCalendar(employeesToShow) {
         startDay = 16;
         endDay = daysInMonth;
     }
+
+    // Validar que los días sean números válidos
+    if (startDay > daysInMonth) {
+        startDay = 1;
+        endDay = daysInMonth;
+    }
+
+    console.log('Días a mostrar en calendario:', startDay, 'a', endDay);
 
     // Filtrar días domingo (0)
     const workDays = [];
@@ -506,6 +536,7 @@ function renderMobileCards(employeesToShow) {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let startDay, endDay;
 
+    // Calcular días de la quincena seleccionada
     if (selectedQuincena === 1) {
         startDay = 1;
         endDay = Math.min(15, daysInMonth);
@@ -513,6 +544,14 @@ function renderMobileCards(employeesToShow) {
         startDay = 16;
         endDay = daysInMonth;
     }
+
+    // Validar que los días sean números válidos
+    if (startDay > daysInMonth) {
+        startDay = 1;
+        endDay = daysInMonth;
+    }
+
+    console.log('Días a mostrar en móvil:', startDay, 'a', endDay);
 
     // Obtener días laborales (sin domingo)
     const workDays = [];
@@ -594,6 +633,18 @@ function renderMobileCards(employeesToShow) {
     });
 
     updateStats(totalPresent, totalAbsent, totalLate, totalHours);
+
+    // Event listeners para redirigir al detalle del empleado en móvil
+    document.querySelectorAll('.employee-name-mobile').forEach(name => {
+        name.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-id');
+            const month = currentMonth + 1;
+            const year = currentYear;
+            const quincena = selectedQuincena;
+
+            window.location.href = `../asistenciaUsuarioEspecifico/asistenciaUsuarioEspecifico.html?id=${employeeId}&month=${month}&year=${year}&quincena=${quincena}`;
+        });
+    });
 }
 
 /**
@@ -652,6 +703,8 @@ function setupFirebaseListener() {
             });
         });
 
+        console.log('Registros de asistencia cargados:', attendanceRecords.length);
+        
         // Volver a renderizar la vista actual
         renderActiveEmployees();
         updateStatsCards(); // Actualiza las tarjetas de tipo (office, iztapaluca, etc.)
