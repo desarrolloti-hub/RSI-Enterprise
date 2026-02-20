@@ -740,7 +740,7 @@ async function editTicket(ticketId) {
 }
 
 async function generatePdfPage(ticketId) {
-    window.location.href = `../generar-pdf/generar-pdf.html?id=${ticketId}`;
+    window.location.href = `/vista/nav-mesa-admin/Tickets/generar-pdf/generar-pdf.html?id=${ticketId}`;
 }
 
 async function deleteTicket(ticketId) {

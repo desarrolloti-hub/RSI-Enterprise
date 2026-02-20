@@ -419,7 +419,6 @@ textarea.form-control {
     align-items: center;
     gap: 5px;
     padding: 8px 12px;
-    background: #f8f9fa;
     border-radius: 5px;
     border: 1px solid var(--border-color);
 }
@@ -896,7 +895,6 @@ textarea.form-control {
 
 /* Información del ticket */
 .ticket-info {
-    background: var(--background-color);
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
