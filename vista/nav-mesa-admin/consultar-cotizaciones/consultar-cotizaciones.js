@@ -1018,10 +1018,18 @@ async function verPDF(id) {
         const pdfUrl = URL.createObjectURL(pdfBlob);
         
         const pdfViewer = document.getElementById('pdfViewer');
-        pdfViewer.innerHTML = `<iframe src="${pdfUrl}" width="100%" height="600" frameborder="0"></iframe>`;
-        
-        const modalPDF = document.getElementById('modalPDF');
-        modalPDF.style.display = 'flex';
+        // Si está en una PWA o en pantalla móvil, abrir en nueva pestaña
+        if (window.matchMedia('(display-mode: standalone)').matches || window.innerWidth < 768) {
+            const newTab = window.open(pdfUrl, '_blank');
+            if (!newTab) {
+                mostrarAlerta('Por favor permite las ventanas emergentes para ver el PDF', 'info');
+            }
+        } else {
+            // Modo escritorio: mostrar en el modal
+            pdfViewer.innerHTML = `<iframe src="${pdfUrl}" width="100%" height="600" frameborder="0"></iframe>`;
+            const modalPDF = document.getElementById('modalPDF');
+            modalPDF.style.display = 'flex';
+        }
         
     } catch (error) {
         console.error('Error al generar vista previa del PDF:', error);
