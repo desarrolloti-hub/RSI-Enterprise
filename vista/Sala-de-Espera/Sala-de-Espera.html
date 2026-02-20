@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Espera | RSI Enterprise</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="Sala-de-Espera.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <!-- MAIN CONTENT -->
+    <div class="dashboard">
+        <div class="main-content">
+            
+            <!-- PANTALLA 1: MENSAJE MOTIVACIONAL -->
+            <div id="motivationalScreen" class="motivational-container">
+                <div class="motivational-card">
+                    <div class="motivational-icon">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    
+                    <h1 class="motivational-title">✨ GRACIAS POR ✨</h1>
+                    <h2 class="motivational-subtitle">🚀 TU TRABAJO Y DEDICACIÓN</h2>
+                    
+                    <div class="motivational-message">
+                        <p>🙌 <strong>RSI ENTERPRISE</strong></p>
+                        <p>TE DESEA UNA LINDA NOCHE</p>
+                    </div>
+                    
+                    <div class="motivational-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    
+                    <p class="motivational-footer">⭐ DESCANSA, NOS VEMOS MAÑANA ⭐</p>
+                    
+                    <button class="btn-motivational" id="verEficienciaBtn">
+                        VER MI EFICIENCIA <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Partículas decorativas -->
+                <div class="particles">
+                    <div class="particle" style="--x: 10%; --y: 20%; --delay: 0s;"></div>
+                    <div class="particle" style="--x: 30%; --y: 70%; --delay: 0.5s;"></div>
+                    <div class="particle" style="--x: 70%; --y: 40%; --delay: 1s;"></div>
+                    <div class="particle" style="--x: 85%; --y: 80%; --delay: 1.5s;"></div>
+                </div>
+            </div>
+            
+            <!-- PANTALLA 2: SALA DE ESPERA -->
+            <div id="waitingRoomScreen" class="waiting-room-container" style="display: none;">
+                
+                <!-- PERFIL DEL USUARIO -->
+                <div class="profile-card" id="profileCard">
+                    <div class="profile-avatar">
+                        <img src="/vista/css/img/Logo-RSI-OFICIAL.png" alt="Avatar" id="userAvatar">
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="userName">Cargando...</h2>
+                        <p id="userRole">Colaborador</p>
+                        <p id="userEmail">cargando@email.com</p>
+                    </div>
+                </div>
+                
+                <!-- PRÓXIMA ASISTENCIA -->
+                <div class="next-attendance-card">
+                    <div class="next-attendance-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="next-attendance-info">
+                        <h3>Próxima asistencia</h3>
+                        <div class="countdown-timer" id="countdownTimer">
+                            <span id="hoursUntil">08</span>:<span id="minutesUntil">30</span>:<span id="secondsUntil">00</span>
+                        </div>
+                        <p class="attendance-time">(8:30 AM)</p>
+                    </div>
+                    <a href="/vista/nav-mesa-operadores/asistencia/asistencia.html" class="btn-attendance" id="attendanceBtn">
+                        <i class="fas fa-camera"></i> Tomar Asistencia
+                    </a>
+                    <a href="/index.html" class="btn-attendance" id="attendanceBtn">
+                        <i class="fas fa-home"></i> Rsi enterprise
+                    </a>
+                </div>
+                
+                <!-- MÉTRICAS DE PRODUCTIVIDAD -->
+                <div class="metrics-grid">
+                    <!-- Eficiencia -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>Eficiencia</h3>
+                        </div>
+                        <div class="metric-value" id="efficiencyValue">0%</div>
+                        <div class="metric-progress">
+                            <div class="progress-bar" style="width: 0%" id="efficiencyBar"></div>
+                        </div>
+                        <div class="metric-footer">
+                            <span>Meta: 80%</span>
+                            <span id="efficiencyVsGoal">0%</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Horas trabajadas -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-hourglass-half"></i>
+                            <h3>Horas Hoy</h3>
+                        </div>
+                        <div class="metric-value" id="hoursToday">0</div>
+                        <div class="metric-progress">
+                            <div class="progress-bar" style="width: 0%" id="hoursBar"></div>
+                        </div>
+                        <div class="metric-footer">
+                            <span>Jornada: 8h</span>
+                            <span id="hoursRemaining">Restan 8h</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tickets Pendientes -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-ticket-alt"></i>
+                            <h3>Pendientes</h3>
+                        </div>
+                        <div class="metric-value" id="pendingTickets">0</div>
+                        <div class="metric-chart-mini">
+                            <canvas id="pendingMiniChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Tickets Cerrados -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>Cerrados Hoy</h3>
+                        </div>
+                        <div class="metric-value" id="closedTickets">0</div>
+                        <div class="metric-chart-mini">
+                            <canvas id="closedMiniChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- GRÁFICAS -->
+                <div class="charts-section">
+                    <div class="chart-card wide-chart">
+                        <div class="chart-header">
+                            <i class="fas fa-chart-pie"></i>
+                            <h3>Estado de Tickets</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <i class="fas fa-chart-bar"></i>
+                            <h3>Distribución</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <i class="fas fa-radar"></i>
+                            <h3>Rendimiento</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TICKETS RECIENTES (TABLA ESCRITORIO) -->
+                <div class="recent-tickets-card">
+                    <div class="card-header">
+                        <i class="fas fa-history"></i>
+                        <h3>Tickets Recientes</h3>
+               
+                    </div>
+                    <div class="table-responsive">
+                        <table class="recent-tickets-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTicketsBody">
+                                <tr>
+                                    <td colspan="5" class="loading-row">
+                                        <div class="loading-spinner-small"></div>
+                                        Cargando tickets...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- CONTENEDOR PARA TARJETAS MÓVILES -->
+                    <div id="mobileTicketsContainer" class="mobile-tickets-container"></div>
+                </div>
+                
+                <!-- BOTÓN DE CERRAR SESIÓN -->
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn-attendance" id="logoutBtn" style="background: #dc3545;">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="Sala-de-Espera.js"></script>
+    
+    <!-- Scripts de personalización -->
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+</body>
+</html>

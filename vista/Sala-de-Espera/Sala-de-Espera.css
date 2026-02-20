@@ -1,0 +1,772 @@
+/* ============================================
+   Sala-de-Espera.css - Solo estructura, sin colores fijos
+   Los colores vienen de :root y personalizacion-colores.js
+============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    overflow-x: hidden;
+    width: 100%;
+}
+
+.dashboard {
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ========== PANTALLA MOTIVACIONAL ========== */
+.motivational-container {
+    min-height: calc(100vh - 40px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.motivational-card {
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: clamp(30px, 5vw, 50px);
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: var(--card-shadow);
+    animation: fadeInUp 1s ease;
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.motivational-icon {
+    margin-bottom: 20px;
+}
+
+.motivational-icon i {
+    font-size: clamp(30px, 5vw, 40px);
+    color: #ffd700; /* Este sí puede ser fijo porque son estrellas */
+    margin: 0 10px;
+    animation: starPulse 2s infinite;
+}
+
+.motivational-title {
+    font-size: clamp(24px, 5vw, 32px);
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.motivational-subtitle {
+    font-size: clamp(20px, 4vw, 28px);
+    color: var(--secondary-color);
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.motivational-message p {
+    font-size: clamp(18px, 3vw, 24px);
+    margin: 10px 0;
+    color: var(--text-color);
+}
+
+.motivational-message strong {
+    color: var(--primary-color);
+}
+
+.motivational-stars i {
+    color: #ffd700; /* Estrellas doradas fijas */
+    font-size: 30px;
+    margin: 0 10px;
+    animation: starTwinkle 1.5s infinite;
+}
+
+.motivational-footer {
+    font-size: clamp(16px, 3vw, 20px);
+    color: var(--accent-color);
+    margin: 20px 0;
+    font-weight: 500;
+}
+
+.btn-motivational {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    border: none;
+    padding: clamp(12px, 3vw, 15px) clamp(30px, 5vw, 40px);
+    border-radius: 50px;
+    font-size: clamp(16px, 3vw, 18px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* ========== SALA DE ESPERA ========== */
+.waiting-room-container {
+    animation: fadeIn 0.5s ease;
+    width: 100%;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Tarjeta de perfil */
+.profile-card {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    border-radius: 15px;
+    padding: clamp(20px, 3vw, 25px);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: clamp(15px, 3vw, 25px);
+    color: white;
+    box-shadow: var(--card-shadow);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+.profile-avatar {
+    width: clamp(60px, 10vw, 80px);
+    height: clamp(60px, 10vw, 80px);
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid white;
+    background: white;
+    flex-shrink: 0;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.profile-info h2 {
+    font-size: clamp(20px, 4vw, 24px);
+    margin-bottom: 5px;
+    word-break: break-word;
+    color: white;
+}
+
+.profile-info p {
+    opacity: 0.9;
+    margin: 2px 0;
+    word-break: break-word;
+    color: white;
+}
+
+/* Próxima asistencia */
+.next-attendance-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: clamp(15px, 3vw, 20px);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: clamp(15px, 3vw, 20px);
+    box-shadow: var(--card-shadow);
+    border-left: 5px solid var(--primary-color);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .next-attendance-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+.next-attendance-icon {
+    width: clamp(40px, 8vw, 50px);
+    height: clamp(40px, 8vw, 50px);
+    border-radius: 50%;
+    background: rgba(108, 67, 224, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: clamp(20px, 4vw, 24px);
+    flex-shrink: 0;
+}
+
+.next-attendance-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.next-attendance-info h3 {
+    color: var(--text-color);
+    margin-bottom: 5px;
+}
+
+.countdown-timer {
+    font-size: clamp(28px, 6vw, 36px);
+    font-weight: 700;
+    color: var(--primary-color);
+    font-family: monospace;
+}
+
+.attendance-time {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 14px;
+}
+
+.btn-attendance {
+    background: var(--primary-color);
+    color: white;
+    padding: clamp(10px, 2vw, 12px) clamp(20px, 4vw, 25px);
+    border-radius: 30px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: clamp(14px, 2.5vw, 16px);
+}
+
+.btn-attendance:hover {
+    background: var(--secondary-color);
+}
+
+@media (max-width: 768px) {
+    .btn-attendance {
+        width: 100%;
+        justify-content: center;
+        white-space: normal;
+    }
+}
+
+/* Grid de métricas */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+.metric-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: clamp(15px, 2vw, 20px);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.metric-header i {
+    font-size: clamp(18px, 3vw, 20px);
+    color: var(--primary-color);
+}
+
+.metric-header h3 {
+    font-size: clamp(14px, 2.5vw, 16px);
+    color: var(--text-color);
+}
+
+.metric-value {
+    font-size: clamp(28px, 5vw, 32px);
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.metric-progress {
+    height: 8px;
+    background: rgba(108, 67, 224, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.metric-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: clamp(11px, 2vw, 12px);
+    flex-wrap: wrap;
+    gap: 5px;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+.metric-chart-mini {
+    height: 60px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* Sección de gráficas */
+.charts-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+    .charts-section {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .wide-chart {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .charts-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .wide-chart {
+        grid-column: span 1;
+    }
+}
+
+.chart-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: clamp(15px, 2vw, 20px);
+    box-shadow: var(--card-shadow);
+    width: 100%;
+    overflow: hidden;
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.chart-header i {
+    font-size: clamp(18px, 3vw, 20px);
+    color: var(--primary-color);
+}
+
+.chart-header h3 {
+    font-size: clamp(14px, 2.5vw, 16px);
+    color: var(--text-color);
+    flex: 1;
+}
+
+.chart-container {
+    height: clamp(200px, 40vw, 250px);
+    width: 100%;
+    position: relative;
+}
+
+/* ========== TABLA DE TICKETS ========== */
+.recent-tickets-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: clamp(15px, 2vw, 20px);
+    box-shadow: var(--card-shadow);
+    width: 100%;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.card-header i {
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+.card-header h3 {
+    font-size: 18px;
+    color: var(--text-color);
+    flex: 1;
+}
+
+.view-all-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+
+/* Tabla escritorio */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    display: block;
+}
+
+.recent-tickets-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.recent-tickets-table th {
+    text-align: left;
+    padding: 12px;
+    background: rgba(108, 67, 224, 0.05);
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.recent-tickets-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.recent-tickets-table tr:hover {
+    background: rgba(108, 67, 224, 0.02);
+}
+
+/* ========== TARJETAS PARA MÓVIL ========== */
+.mobile-tickets-container {
+    display: none;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    width: 100%;
+}
+
+.ticket-mobile-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--card-shadow);
+    border-left: 4px solid var(--primary-color);
+    transition: transform 0.2s ease;
+}
+
+.ticket-mobile-card:hover {
+    transform: translateX(5px);
+}
+
+.ticket-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ticket-mobile-id {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 14px;
+    background: rgba(108, 67, 224, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.ticket-mobile-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-color);
+    word-break: break-word;
+}
+
+.ticket-mobile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ticket-mobile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.ticket-mobile-label {
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.ticket-mobile-value {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+    max-width: 60%;
+    color: var(--text-color);
+}
+
+/* Badges (usan las variables de color) */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-success {
+    background: rgba(40, 167, 69, 0.15);
+    color: var(--success-color);
+}
+
+.badge-warning {
+    background: rgba(255, 193, 7, 0.15);
+    color: var(--warning-color);
+}
+
+.badge-danger {
+    background: rgba(220, 53, 69, 0.15);
+    color: var(--danger-color);
+}
+
+.badge-info {
+    background: rgba(23, 162, 184, 0.15);
+    color: var(--info-color);
+}
+
+.badge-primary {
+    background: rgba(108, 67, 224, 0.15);
+    color: var(--primary-color);
+}
+
+/* Prioridades */
+.priority-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.priority-high {
+    background: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.priority-medium {
+    background: var(--warning-color);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
+}
+
+.priority-low {
+    background: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .recent-tickets-table {
+        display: none;
+    }
+    
+    .mobile-tickets-container {
+        display: grid;
+    }
+    
+    .table-responsive {
+        overflow-x: visible;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-tickets-container {
+        display: none;
+    }
+}
+
+/* ========== LOADING ========== */
+.loading-row {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-color);
+}
+
+.loading-spinner-small {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(108, 67, 224, 0.3);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========== UTILIDADES ========== */
+.text-center {
+    text-align: center;
+}
+
+.w-100 {
+    width: 100%;
+}
+/* Forzar texto blanco en el perfil */
+.profile-card,
+.profile-card *,
+.profile-info,
+.profile-info h2,
+.profile-info p,
+.profile-info span {
+    color: white !important;
+}
+
+/* Para el avatar, mantener normal */
+.profile-avatar {
+    background: white;
+}
+
+/* Forzar estilos del botón de asistencia */
+.btn-attendance,
+.btn-attendance:link,
+.btn-attendance:visited,
+.btn-attendance:hover,
+.btn-attendance:active,
+.btn-attendance *,
+.btn-attendance i,
+.btn-attendance span {
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.btn-attendance {
+    background: var(--primary-color) !important;
+    padding: clamp(10px, 2vw, 12px) clamp(20px, 4vw, 25px) !important;
+    border-radius: 30px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    transition: all 0.3s ease !important;
+    white-space: nowrap !important;
+    font-size: clamp(14px, 2.5vw, 16px) !important;
+    border: none !important;
+}
+
+.btn-attendance:hover {
+    background: var(--secondary-color) !important;
+    transform: translateY(-2px) !important;
+}
+
+@media (max-width: 768px) {
+    .btn-attendance {
+        width: 100% !important;
+        justify-content: center !important;
+        white-space: normal !important;
+    }
+}
+@media (max-width: 768px) {
+    .recent-tickets-table {
+        display: none;
+    }
+    
+    .mobile-tickets-container {
+        display: grid;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-tickets-container {
+        display: none;
+    }
+}

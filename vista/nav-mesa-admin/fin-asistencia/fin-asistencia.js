@@ -265,7 +265,7 @@ function setupAttendanceOptions() {
 }
 
 function redirectByRole(role) {
-    window.location.href = "/index.html";
+    window.location.href = "/vista/Sala-de-Espera/Sala-de-Espera.html";
 }
 
 // --- FUNCIONES DE GEOLOCALIZACIÓN ---

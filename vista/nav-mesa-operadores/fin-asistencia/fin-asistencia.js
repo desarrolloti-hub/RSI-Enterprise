@@ -260,9 +260,9 @@ function setupAttendanceOptions() {
 // Redirección para colaborador
 function redirectByRole(role) {
     const rolePaths = {
-        'colaborador': '/index.html'
+        'colaborador': '/vista/Sala-de-Espera/Sala-de-Espera.html'
     };
-    const redirectPath = rolePaths[role] || "/index.html";
+    const redirectPath = rolePaths[role] || "/vista/Sala-de-Espera/Sala-de-Espera.html";
     window.location.href = redirectPath;
 }
 
@@ -569,7 +569,7 @@ async function handleAuthenticatedUser(user) {
         
         setTimeout(() => {
             auth.signOut().then(() => {
-                window.location.href = "/index.html";
+                window.location.href = "/vista/Sala-de-Espera/Sala-de-Espera.html";
             });
         }, REDIRECT_DELAY);
         
@@ -601,7 +601,7 @@ function setupAuthListener() {
                 setupSubmitButton();
             }
         } else {
-            window.location.href = "/index.html";
+            window.location.href = "/vista/Sala-de-Espera/Sala-de-Espera.html";
         }
     });
 }
