@@ -472,11 +472,11 @@ const TicketsController = {
             Utils.showError("Error al mostrar los tickets");
         }
     },
-
-    handleViewClick: function(event) {
-        const ticketId = event.currentTarget.dataset.id;
-        TicketsController.showTicketDetails(ticketId);
-    },
+        handleViewClick: function(event) {
+            const ticketId = event.currentTarget.dataset.id;
+            // Redirigir a la nueva página de visualización de ticket
+            window.location.href = '/vista/nav-mesa-operadores/ver-ticket/ver-ticket.html?ticketId=' + ticketId;
+        },
 
     async loadUserTickets() {
         try {
