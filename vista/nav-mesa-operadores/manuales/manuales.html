@@ -250,12 +250,31 @@
             const modalTitle = document.getElementById('modalTitle');
             const pdfViewer = document.getElementById('pdfViewer');
 
+            // Detectar si la app está en modo PWA o en pantalla pequeña
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isMobile = window.innerWidth < 768;
+
+            if (isStandalone || isMobile) {
+                // Abrir el PDF en una nueva pestaña (más seguro en PWA/móvil)
+                const newTab = window.open(pdfUrl, '_blank');
+                if (!newTab) {
+                    Swal.fire({
+                        title: 'Aviso',
+                        text: 'Por favor permite las ventanas emergentes para ver el PDF.',
+                        icon: 'info',
+                        confirmButtonColor: '#6C43E0'
+                    });
+                }
+                return;
+            }
+
+            // Modo escritorio: mostrar en el modal
             modalTitle.textContent = manualName;
             pdfViewer.src = pdfUrl;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-
+        
         async function deleteManual(manualId, manualName) {
             try {
                 const result = await Swal.fire({
