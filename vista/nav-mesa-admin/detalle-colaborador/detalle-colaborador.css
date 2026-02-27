@@ -25,7 +25,6 @@
         }
 
         .main-c {
-            background: var(--card-bg);
             border-radius: 15px;
             box-shadow: var(--card-shadow);
             overflow: hidden;

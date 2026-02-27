@@ -3,105 +3,938 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Carrusel</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" />
-    
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    
-    <!-- CSS personalizados -->
-    <link rel="stylesheet" href="carrusel.css">
+    <title>Carrusel CRUD - Carpetas con Imágenes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.2em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .upload-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: #f0f0f0;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-upload-label:hover {
+            background: #e8e8e8;
+            border-color: #764ba2;
+        }
+
+        #file-name {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f0fe;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            width: auto;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .folders-section {
+            margin-top: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .refresh-btn:hover {
+            background: #2d3748;
+        }
+
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .folder-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #f0f0f0;
+        }
+
+        .folder-preview {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-images {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .preview-images img {
+            width: 33.333%;
+            height: 100%;
+            object-fit: cover;
+            border-right: 2px solid white;
+        }
+
+        .preview-images img:last-child {
+            border-right: none;
+        }
+
+        .folder-icon-large {
+            font-size: 4em;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .folder-content {
+            padding: 20px;
+        }
+
+        .folder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .folder-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .folder-stats {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .folder-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .images-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .image-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: move;
+            background: white;
+        }
+
+        .image-item:last-child {
+            border-bottom: none;
+        }
+
+        .image-item.dragging {
+            opacity: 0.5;
+            background: #e3f2fd;
+        }
+
+        .image-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-details {
+            flex: 1;
+        }
+
+        .image-name {
+            font-size: 0.9em;
+            color: #333;
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+
+        .image-date {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .icon-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .icon-btn.delete:hover {
+            color: #dc3545;
+        }
+
+        .drag-handle {
+            cursor: move;
+            color: #999;
+            font-size: 1.2em;
+            padding: 0 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            grid-column: 1/-1;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 60px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .order-controls {
+            display: flex;
+            gap: 5px;
+            flex-direction: column;
+        }
+
+        .order-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .order-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
 </head>
-
 <body>
-   
-
-    <!-- Contenido principal -->
-    <main class="main-content">
-        <div class="container mt-5 pt-5">
-            <h1 class="text-center mb-4"><i class="bi bi-images"></i> Administrador de Carrusel</h1>
-            
-            <button id="toggleBtn" class="btn btn-primary mb-4">
-                <i class="bi bi-plus-circle"></i> Nuevo Carrusel
-            </button>
-
-            <div id="formContainer" class="form-section" style="display:none;">
-                <h3><i class="bi bi-pencil-square"></i> Editar Carrusel</h3>
-                <form id="carouselForm">
-                    <input type="hidden" id="editId">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Nombre (Se usará como ID)</label>
-                        <input type="text" id="carouselName" class="form-control" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Imágenes (Máx. 5)</label>
-                        <input type="file" id="imageUpload" class="form-control" multiple accept="image/*" style="display: none;">
-                        <div id="imagePreviewContainer" class="image-preview-container">
-                            <div class="add-more-container" id="addMoreBtn">
-                                <i class="bi bi-plus-circle add-more-icon"></i>
-                            </div>
+    <div class="container">
+        <div class="header">
+            <h1>📸 Carrusel CRUD</h1>
+            <p>Administra carpetas e imágenes con orden personalizado</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-form">
+                <h3 style="margin-bottom: 20px;">➕ Crear Nueva Carpeta</h3>
+                <div class="form-group">
+                    <label for="folderName">📁 Nombre de la carpeta</label>
+                    <input type="text" id="folderName" placeholder="Ej: productos-verano-2024" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>📸 Seleccionar imágenes</label>
+                    <div class="file-upload">
+                        <input type="file" id="imageInput" accept="image/*" multiple>
+                        <div class="file-upload-label">
+                            <span style="font-size: 2em;">📁</span>
+                            <span>Haz clic o arrastra imágenes aquí</span>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" id="cancelBtn" class="btn btn-secondary">
-                            <i class="bi bi-x"></i> Cancelar
-                        </button>
-                        <button type="submit" id="saveBtn" class="btn btn-success">
-                            <i class="bi bi-save"></i> Guardar
-                        </button>
+                    <div id="file-name"></div>
+                </div>
+                
+                <button class="btn" id="uploadBtn">
+                    <span>🚀</span> Crear Carpeta y Subir Imágenes
+                </button>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
                     </div>
-                </form>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                
+                <div class="message" id="message"></div>
             </div>
-
-            <div class="carousel-container">
-                <h3><i class="bi bi-eye"></i> Vista Previa</h3>
-                <div id="previewCarousel" class="carousel slide">
-                    <div class="carousel-inner" id="carouselItems">
-                        <div class="carousel-item active">
-                            <div class="placeholder-image">
-                                <i class="bi bi-image" style="font-size: 3rem;"></i>
-                                <p>Agrega imágenes para previsualizar</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#previewCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#previewCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon"></span>
+            
+            <div class="folders-section">
+                <div class="section-header">
+                    <h2>
+                        <span>📂 Carpetas del Carrusel</span>
+                    </h2>
+                    <button class="refresh-btn" onclick="loadAllFolders()">
+                        <span>↻</span> Actualizar Todo
                     </button>
                 </div>
+                
+                <div class="folders-grid" id="foldersGrid">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando carpetas...</p>
+                    </div>
+                </div>
             </div>
-
-            <h3 class="mt-5"><i class="bi bi-collection"></i> Carruseles Guardados</h3>
-            <div id="carouselsList" class="row mt-3"></div>
         </div>
-    </main>
+    </div>
 
-    <!-- Scripts externos -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.all.min.js"></script>
-    
-    <!-- Scripts del sistema -->
-    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
-    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
-    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
-    
-    <!-- Scripts específicos del carrusel -->
-    <script src="carrusel.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+            authDomain: "rsienterprise.firebaseapp.com",
+            projectId: "rsienterprise",
+            storageBucket: "rsienterprise.firebasestorage.app",
+            messagingSenderId: "1063117165770",
+            appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Inicializar Storage
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        const carouselsRef = storageRef.child('carousels');
+
+        // Elementos del DOM
+        const folderNameInput = document.getElementById('folderName');
+        const imageInput = document.getElementById('imageInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const messageDiv = document.getElementById('message');
+        const fileNameDiv = document.getElementById('file-name');
+        const foldersGrid = document.getElementById('foldersGrid');
+
+        // Estado global
+        let allFolders = [];
+        let draggingItem = null;
+
+        // Mostrar nombres de archivos seleccionados
+        imageInput.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                const files = Array.from(this.files);
+                let html = '<strong>📸 Imágenes seleccionadas:</strong><br>';
+                files.forEach((file, index) => {
+                    html += `${index + 1}. ${file.name} (${(file.size / 1024).toFixed(2)} KB)<br>`;
+                });
+                fileNameDiv.innerHTML = html;
+            } else {
+                fileNameDiv.innerHTML = '';
+            }
+        });
+
+        // Función para mostrar mensajes
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Función para subir imágenes a una carpeta
+        async function uploadImages() {
+            const folderName = folderNameInput.value.trim();
+            if (!folderName) {
+                showMessage('Ingresa el nombre de la carpeta', 'error');
+                return;
+            }
+
+            const sanitizedFolder = folderName.replace(/[^a-zA-Z0-9-_]/g, '_');
+            if (sanitizedFolder !== folderName) {
+                showMessage('La carpeta solo puede contener letras, números, guiones y guiones bajos', 'error');
+                return;
+            }
+
+            if (!imageInput.files || imageInput.files.length === 0) {
+                showMessage('Selecciona al menos una imagen', 'error');
+                return;
+            }
+
+            const files = Array.from(imageInput.files);
+            
+            // Validar que sean imágenes
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) {
+                    showMessage(`${file.name} no es una imagen válida`, 'error');
+                    return;
+                }
+            }
+
+            uploadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            
+            let uploaded = 0;
+            let errors = 0;
+
+            // Subir cada imagen a la carpeta
+            for (let file of files) {
+                try {
+                    const timestamp = Date.now();
+                    const fileName = `${timestamp}_${file.name}`;
+                    const filePath = `carousels/${sanitizedFolder}/${fileName}`;
+                    const fileRef = storageRef.child(filePath);
+
+                    await fileRef.put(file);
+                    
+                    uploaded++;
+                    
+                    const progress = (uploaded / files.length) * 100;
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = Math.round(progress) + '%';
+                    
+                } catch (error) {
+                    console.error('Error subiendo:', file.name, error);
+                    errors++;
+                }
+            }
+
+            if (errors === 0) {
+                showMessage(`✅ ${uploaded} imágenes subidas a "${sanitizedFolder}"`, 'success');
+                folderNameInput.value = '';
+                imageInput.value = '';
+                fileNameDiv.innerHTML = '';
+            } else {
+                showMessage(`⚠️ Subidas: ${uploaded}, Errores: ${errors}`, 'error');
+            }
+
+            uploadBtn.disabled = false;
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressText.textContent = '0%';
+            }, 2000);
+
+            await loadAllFolders();
+        }
+
+        // Función para cargar todas las carpetas con sus imágenes
+        async function loadAllFolders() {
+            foldersGrid.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Cargando carpetas...</p></div>';
+            
+            try {
+                const result = await carouselsRef.listAll();
+                
+                if (result.prefixes.length === 0) {
+                    foldersGrid.innerHTML = `
+                        <div class="empty-state">
+                            <span style="font-size: 4em;">📂</span>
+                            <h3 style="margin: 20px 0; color: #666;">No hay carpetas</h3>
+                            <p style="color: #999;">Crea una carpeta usando el formulario</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Cargar información de cada carpeta
+                allFolders = await Promise.all(
+                    result.prefixes.map(async (folder) => {
+                        try {
+                            const folderRef = carouselsRef.child(folder.name);
+                            const folderResult = await folderRef.listAll();
+                            
+                            // Obtener URLs y metadata de todas las imágenes
+                            const images = await Promise.all(
+                                folderResult.items.map(async (item) => {
+                                    const url = await item.getDownloadURL();
+                                    const metadata = await item.getMetadata();
+                                    return {
+                                        name: item.name,
+                                        fullPath: item.fullPath,
+                                        url: url,
+                                        timeCreated: metadata.timeCreated,
+                                        size: metadata.size
+                                    };
+                                })
+                            );
+                            
+                            // Ordenar por fecha (más recientes primero)
+                            images.sort((a, b) => new Date(b.timeCreated) - new Date(a.timeCreated));
+                            
+                            return {
+                                name: folder.name,
+                                path: folder.fullPath,
+                                images: images,
+                                imageCount: images.length
+                            };
+                        } catch (error) {
+                            console.error('Error con carpeta:', folder.name, error);
+                            return {
+                                name: folder.name,
+                                path: folder.fullPath,
+                                images: [],
+                                imageCount: 0
+                            };
+                        }
+                    })
+                );
+
+                displayAllFolders();
+
+            } catch (error) {
+                console.error('Error cargando carpetas:', error);
+                foldersGrid.innerHTML = `
+                    <div class="empty-state" style="background: #f8d7da; color: #721c24;">
+                        <h3>Error al cargar carpetas</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Función para mostrar todas las carpetas
+        function displayAllFolders() {
+            foldersGrid.innerHTML = allFolders.map(folder => `
+                <div class="folder-card" data-folder="${folder.name}">
+                    <div class="folder-preview">
+                        ${folder.images.length > 0 ? `
+                            <div class="preview-images">
+                                ${folder.images.slice(0, 3).map(img => `
+                                    <img src="${img.url}" alt="preview" loading="lazy">
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="folder-icon-large">📁</div>
+                        `}
+                    </div>
+                    <div class="folder-content">
+                        <div class="folder-header">
+                            <span class="folder-name">${folder.name}</span>
+                            <button class="btn-small btn-danger" onclick="deleteFolder('${folder.name}')">🗑️</button>
+                        </div>
+                        <div class="folder-stats">
+                            <span>📸 ${folder.imageCount} imágenes</span>
+                        </div>
+                        
+                        <div class="images-list" id="images-${folder.name}">
+                            ${folder.images.map((img, index) => `
+                                <div class="image-item" draggable="true" 
+                                     data-folder="${folder.name}" 
+                                     data-image="${img.name}"
+                                     data-index="${index}"
+                                     ondragstart="dragStart(event)"
+                                     ondragover="dragOver(event)"
+                                     ondrop="drop(event)"
+                                     ondragend="dragEnd(event)">
+                                    <span class="drag-handle">⋮⋮</span>
+                                    <div class="image-preview">
+                                        <img src="${img.url}" alt="${img.name}">
+                                    </div>
+                                    <div class="image-details">
+                                        <div class="image-name">${img.name}</div>
+                                        <div class="image-date">${new Date(img.timeCreated).toLocaleString()}</div>
+                                    </div>
+                                    <div class="image-actions">
+                                        <button class="icon-btn" onclick="moveImage('${folder.name}', ${index}, 'up')" title="Subir">⬆️</button>
+                                        <button class="icon-btn" onclick="moveImage('${folder.name}', ${index}, 'down')" title="Bajar">⬇️</button>
+                                        <button class="icon-btn delete" onclick="deleteImage('${folder.name}', '${img.name}')" title="Eliminar">🗑️</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Funciones para drag & drop
+        function dragStart(event) {
+            draggingItem = event.target.closest('.image-item');
+            event.dataTransfer.setData('text/plain', JSON.stringify({
+                folder: draggingItem.dataset.folder,
+                image: draggingItem.dataset.image,
+                index: draggingItem.dataset.index
+            }));
+            draggingItem.classList.add('dragging');
+        }
+
+        function dragOver(event) {
+            event.preventDefault();
+            const dropTarget = event.target.closest('.image-item');
+            if (dropTarget && dropTarget !== draggingItem) {
+                const bounding = dropTarget.getBoundingClientRect();
+                const offset = bounding.y + bounding.height / 2;
+                if (event.clientY - offset > 0) {
+                    dropTarget.style.borderBottom = '2px solid #667eea';
+                    dropTarget.style.borderTop = 'none';
+                } else {
+                    dropTarget.style.borderTop = '2px solid #667eea';
+                    dropTarget.style.borderBottom = 'none';
+                }
+            }
+        }
+
+        async function drop(event) {
+            event.preventDefault();
+            const dropTarget = event.target.closest('.image-item');
+            if (!dropTarget || !draggingItem) return;
+
+            dropTarget.style.borderTop = 'none';
+            dropTarget.style.borderBottom = 'none';
+
+            const dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+            const dropData = {
+                folder: dropTarget.dataset.folder,
+                image: dropTarget.dataset.image,
+                index: parseInt(dropTarget.dataset.index)
+            };
+
+            if (dragData.folder !== dropData.folder) {
+                showMessage('No puedes mover imágenes entre diferentes carpetas', 'error');
+                return;
+            }
+
+            // Reordenar imágenes
+            const folder = allFolders.find(f => f.name === dragData.folder);
+            const [movedImage] = folder.images.splice(parseInt(dragData.index), 1);
+            folder.images.splice(dropData.index, 0, movedImage);
+            
+            displayAllFolders();
+            draggingItem.classList.remove('dragging');
+            draggingItem = null;
+        }
+
+        function dragEnd(event) {
+            if (draggingItem) {
+                draggingItem.classList.remove('dragging');
+                draggingItem = null;
+            }
+            document.querySelectorAll('.image-item').forEach(item => {
+                item.style.borderTop = 'none';
+                item.style.borderBottom = 'none';
+            });
+        }
+
+        // Función para mover imagen (arriba/abajo)
+        function moveImage(folderName, currentIndex, direction) {
+            const folder = allFolders.find(f => f.name === folderName);
+            if (!folder) return;
+
+            const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+            
+            if (newIndex < 0 || newIndex >= folder.images.length) return;
+
+            // Intercambiar posiciones
+            [folder.images[currentIndex], folder.images[newIndex]] = 
+            [folder.images[newIndex], folder.images[currentIndex]];
+
+            displayAllFolders();
+        }
+
+        // Función para eliminar imagen
+        async function deleteImage(folderName, imageName) {
+            if (!confirm('¿Eliminar esta imagen?')) return;
+
+            try {
+                const imageRef = storageRef.child(`carousels/${folderName}/${imageName}`);
+                await imageRef.delete();
+                
+                showMessage('✅ Imagen eliminada', 'success');
+                await loadAllFolders();
+                
+            } catch (error) {
+                console.error('Error eliminando imagen:', error);
+                showMessage('Error al eliminar: ' + error.message, 'error');
+            }
+        }
+
+        // Función para eliminar carpeta completa
+        async function deleteFolder(folderName) {
+            if (!confirm(`¿Eliminar toda la carpeta "${folderName}" y su contenido?`)) return;
+
+            try {
+                const folderRef = carouselsRef.child(folderName);
+                const result = await folderRef.listAll();
+
+                // Eliminar todas las imágenes de la carpeta
+                await Promise.all(result.items.map(item => item.delete()));
+
+                showMessage(`✅ Carpeta "${folderName}" eliminada`, 'success');
+                await loadAllFolders();
+
+            } catch (error) {
+                console.error('Error eliminando carpeta:', error);
+                showMessage('Error al eliminar carpeta: ' + error.message, 'error');
+            }
+        }
+
+        // Event listener
+        uploadBtn.addEventListener('click', uploadImages);
+
+        // Cargar todo al iniciar
+        loadAllFolders();
+
+        // Hacer funciones globales
+        window.loadAllFolders = loadAllFolders;
+        window.deleteImage = deleteImage;
+        window.deleteFolder = deleteFolder;
+        window.moveImage = moveImage;
+        window.dragStart = dragStart;
+        window.dragOver = dragOver;
+        window.drop = drop;
+        window.dragEnd = dragEnd;
+    </script>
 </body>
 </html>

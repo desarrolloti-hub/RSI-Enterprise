@@ -1,4 +1,4 @@
-// Sala-de-Espera.js - VERSIÓN FINAL CON ROLES
+// Sala-de-Espera.js - VERSIÓN FINAL CON ROLES Y REDIRECCIÓN AUTOMÁTICA
 
 // ============================================
 // CONFIGURACIÓN FIREBASE
@@ -15,7 +15,9 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -36,7 +38,7 @@ const AppState = {
         completed: 0
     },
     charts: {},
-    attendanceTime: { hours: 8, minutes: 30 }
+    attendanceTime: { hours: 12, minutes: 0 } // Meta configurada a las 12:00 hrs
 };
 
 // ============================================
@@ -461,22 +463,28 @@ function calculateMetrics() {
 function renderMetrics() {
     const m = AppState.metrics;
     
-    DOM.efficiencyValue.textContent = m.efficiency + '%';
-    DOM.efficiencyBar.style.width = m.efficiency + '%';
+    if(DOM.efficiencyValue) DOM.efficiencyValue.textContent = m.efficiency + '%';
+    if(DOM.efficiencyBar) DOM.efficiencyBar.style.width = m.efficiency + '%';
     
-    const vsGoal = m.efficiency - 80;
-    DOM.efficiencyVsGoal.textContent = vsGoal >= 0 ? `+${vsGoal}%` : `${vsGoal}%`;
-    DOM.efficiencyVsGoal.style.color = vsGoal >= 0 ? '#28a745' : '#dc3545';
+    if(DOM.efficiencyVsGoal) {
+        const vsGoal = m.efficiency - 80;
+        DOM.efficiencyVsGoal.textContent = vsGoal >= 0 ? `+${vsGoal}%` : `${vsGoal}%`;
+        DOM.efficiencyVsGoal.style.color = vsGoal >= 0 ? '#28a745' : '#dc3545';
+    }
     
-    DOM.hoursToday.textContent = m.hoursToday.toFixed(1);
-    const hoursPercent = (m.hoursToday / 8) * 100;
-    DOM.hoursBar.style.width = hoursPercent + '%';
+    if(DOM.hoursToday) DOM.hoursToday.textContent = m.hoursToday.toFixed(1);
+    if(DOM.hoursBar) {
+        const hoursPercent = (m.hoursToday / 8) * 100;
+        DOM.hoursBar.style.width = hoursPercent + '%';
+    }
     
-    const remaining = 8 - m.hoursToday;
-    DOM.hoursRemaining.textContent = `Restan ${remaining.toFixed(1)}h`;
+    if(DOM.hoursRemaining) {
+        const remaining = 8 - m.hoursToday;
+        DOM.hoursRemaining.textContent = `Restan ${remaining.toFixed(1)}h`;
+    }
     
-    DOM.pendingTickets.textContent = m.pendingTickets;
-    DOM.closedTickets.textContent = m.closedTickets;
+    if(DOM.pendingTickets) DOM.pendingTickets.textContent = m.pendingTickets;
+    if(DOM.closedTickets) DOM.closedTickets.textContent = m.closedTickets;
 }
 
 // ============================================
@@ -737,24 +745,34 @@ function initCharts() {
 }
 
 // ============================================
-// COUNTDOWN
+// COUNTDOWN (ESTA ES LA ÚNICA PARTE QUE CAMBIÉ)
 // ============================================
 function startCountdown() {
     const updateCountdown = () => {
         const now = new Date();
         const target = new Date();
-        target.setHours(8, 30, 0);
+        
+        // Lo pusimos a las 12:00 PM (Mediodía)
+        target.setHours(AppState.attendanceTime.hours, AppState.attendanceTime.minutes, 0, 0);
         
         if (now > target) target.setDate(target.getDate() + 1);
         
         const diff = target - now;
+        
+        // REDIRECCIÓN CUANDO EL TIEMPO LLEGA A CERO
+        if (diff <= 0 || diff < 1000) {
+            console.log('⏰ ¡Tiempo cumplido! Redireccionando...');
+            window.location.href = getAsistenciaUrl();
+            return;
+        }
+
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
         
-        DOM.hoursUntil.textContent = String(hours).padStart(2, '0');
-        DOM.minutesUntil.textContent = String(minutes).padStart(2, '0');
-        DOM.secondsUntil.textContent = String(seconds).padStart(2, '0');
+        if(DOM.hoursUntil) DOM.hoursUntil.textContent = String(hours).padStart(2, '0');
+        if(DOM.minutesUntil) DOM.minutesUntil.textContent = String(minutes).padStart(2, '0');
+        if(DOM.secondsUntil) DOM.secondsUntil.textContent = String(seconds).padStart(2, '0');
     };
     
     updateCountdown();

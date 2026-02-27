@@ -1,0 +1,388 @@
+/* ==========================================================================
+   VARIABLES GLOBALES
+   ========================================================================== */
+:root {
+    --sidebar-width: 280px;
+    --sidebar-width-collapsed: 80px;
+    --border-radius: 16px;
+    --transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   ESTRUCTURA PRINCIPAL
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.main-c {
+    margin-left: var(--sidebar-width);
+    padding: 25px 30px;
+    min-height: 100vh;
+    transition: var(--transition);
+}
+
+.main-c.expanded {
+    margin-left: var(--sidebar-width-collapsed);
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.header {
+    margin-bottom: 30px;
+}
+
+.header-title-container {
+    flex: 1;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: white !important;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+/* ==========================================================================
+   FORMULARIO
+   ========================================================================== */
+.form-container {
+    background: white;
+    border-radius: 28px;
+    padding: 35px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Grupos de formulario */
+.form-group {
+    margin-bottom: 28px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 10px;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    outline: none;
+    background: white;
+    color: #1e293b;
+    transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color, #6C43E0);
+    box-shadow: 0 0 0 4px rgba(108,67,224,0.1);
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* ==========================================================================
+   SUBIDA DE IMÁGENES
+   ========================================================================== */
+.file-upload-container {
+    border: 2px dashed #e2e8f0;
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: #f8fafc;
+    margin-bottom: 20px;
+}
+
+.file-upload-container:hover {
+    border-color: var(--primary-color, #6C43E0);
+    background: #f1f4f9;
+}
+
+.file-upload-container.dragover {
+    border-color: var(--primary-color, #6C43E0);
+    background: #ede9fe;
+    transform: scale(1.01);
+}
+
+.file-upload-icon {
+    font-size: 3.5rem;
+    color: var(--primary-color, #6C43E0);
+    margin-bottom: 15px;
+}
+
+.file-upload-icon i {
+    filter: drop-shadow(0 4px 6px rgba(108,67,224,0.2));
+}
+
+.file-upload-text {
+    color: #1e293b;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.file-upload-hint {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.file-input {
+    display: none;
+}
+
+/* ==========================================================================
+   GALERÍA DE PREVIEWS
+   ========================================================================== */
+.images-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 16px;
+    margin: 20px 0 15px;
+}
+
+.gallery-item {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    animation: fadeInUp 0.3s ease;
+    border: 2px solid white;
+    transition: var(--transition);
+}
+
+.gallery-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.1);
+}
+
+/* Botón de eliminar imagen */
+.gallery-item-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    box-shadow: 0 4px 8px rgba(239,68,68,0.3);
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.gallery-item:hover .gallery-item-remove {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.gallery-item-remove:hover {
+    background: #dc2626;
+    transform: scale(1.1) !important;
+}
+
+/* Estado de carga de imagen */
+.gallery-item-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.gallery-item-loading i {
+    color: var(--primary-color, #6C43E0);
+    font-size: 2rem;
+}
+
+/* Contador de imágenes */
+.images-counter {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #f1f4f9;
+    border-radius: 40px;
+    color: #1e293b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-top: 5px;
+}
+
+/* ==========================================================================
+   BOTONES
+   ========================================================================== */
+.buttons-container {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 35px;
+    padding-top: 20px;
+    border-top: 1.5px solid #eef2f6;
+}
+
+.btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 40px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+}
+
+.btn i {
+    font-size: 1.1rem;
+}
+
+/* Botón primario */
+.btn-primary {
+    background: var(--primary-color, #6C43E0);
+    color: white;
+    box-shadow: 0 8px 20px rgba(108,67,224,0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-dark, #5335b3);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(108,67,224,0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #94a3b8;
+    box-shadow: none;
+}
+
+/* Botón secundario */
+.btn-secondary {
+    background: white;
+    color: #64748b;
+    border: 1.5px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+    background: #f8fafc;
+    color: #1e293b;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 768px) {
+    .main-c {
+        margin-left: 0;
+        padding: 20px;
+    }
+    
+    .main-c.expanded {
+        margin-left: 0;
+    }
+    
+    .form-container {
+        padding: 25px;
+        border-radius: 24px;
+    }
+    
+    .buttons-container {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .images-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px;
+    }
+    
+    .file-upload-container {
+        padding: 30px 20px;
+    }
+    
+    .file-upload-text {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .images-gallery {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+}

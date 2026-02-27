@@ -1,459 +1,372 @@
+/* ==========================================================================
+   RSI ENTERPRISE - ULTRA PREMIUM DESIGN SYSTEM
+   Diseño de Alta Gama: Glassmorphism + Neo-Dark Mode
+========================================================================== 
+*/
+
 :root {
-    --color-primary: #000000;
-    --color-secondary: #FFD700;
-    --color-accent: #C0A062;
-    --color-light: #F8F9FA;
-    --color-dark: #212529;
+    /* Paleta de Colores Dinámica */
+    --primary-color: #ff4d4d; /* Tu color base del personalizador */
+    --primary-rgb: 255, 77, 77;
+    --accent-color: #6c5ce7;
+    
+    /* Escala de Grises Premium */
+    --bg-main: #0f172a;
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-header: rgba(15, 23, 42, 0.8);
+    
+    /* Tipografía y Espaciado */
+    --font-main: 'Inter', -apple-system, system-ui, sans-serif;
+    --sidebar-width: 0px !important; /* Eliminamos el desplazamiento lateral */
+    --border-radius-lg: 24px;
+    --border-radius-md: 16px;
+    
+    /* Sombras y Luces */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   1. RESET & LAYOUT CORE
+========================================================================== 
+*/
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--color-primary);
-    color: var(--color-light);
-    padding: 20px;
+    background: radial-gradient(circle at top right, #1e293b, #0f172a) !important;
+    font-family: var(--font-main);
+    color: #f8fafc;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
-.navbar {
-    background: rgba(0, 0, 0, 0.95) !important;
-    border-bottom: 2px solid var(--color-secondary);
-    backdrop-filter: blur(10px);
+.main-c {
+    margin-left: 0 !important; /* Fix desplazamiento */
+    padding: 0 !important;
+    width: 100% !important;
+    animation: fadeInPage 0.8s ease-out;
 }
 
-.navbar-brand {
-    color: var(--color-secondary) !important;
-    font-weight: bold;
-    font-size: 1.2rem;
+@keyframes fadeInPage {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.btn-outline-warning {
-    color: var(--color-secondary);
-    border-color: var(--color-secondary);
-}
+/* ==========================================================================
+   2. HEADER & NAVIGATION (LA BARRA ROJA MODERNIZADA)
+========================================================================== 
+*/
 
-.btn-outline-warning:hover {
-    background-color: var(--color-secondary);
-    color: var(--color-primary);
-}
-
-.container {
-    max-width: 1000px;
-    background: rgba(0, 0, 0, 0.85);
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 2px 15px rgba(255, 215, 0, 0.2);
-    border: 1px solid var(--color-accent);
-}
-
-h1, h2, h3, h4, h5, h6 {
-    color: var(--color-secondary);
-}
-
-.carousel-container {
-    margin: 30px 0;
-    border-radius: 10px;
+.header {
+    background-color: var(--primary-color) !important;
+    background-image: linear-gradient(135deg, var(--primary-color) 0%, #cc3d3d 100%) !important;
+    min-height: 280px !important;
+    padding: 40px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
-    border: 1px solid var(--color-accent);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
 }
 
-.carousel-item {
-    height: 400px;
-    background-color: var(--color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.placeholder-image {
-    text-align: center;
-    color: var(--color-accent);
-}
-
-.placeholder-image i {
-    display: block;
-    margin-bottom: 10px;
-}
-
-.carousel-item img {
-    object-fit: cover;
-    height: 100%;
-    width: 100%;
-}
-
-.card-carousel {
-    border: 1px solid var(--color-accent);
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.2);
-    transition: transform 0.3s;
-    background-color: rgba(0, 0, 0, 0.7);
-    overflow: hidden;
-}
-
-.card-carousel:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
-}
-
-.card-carousel .card-img-top {
-    height: 150px;
-    object-fit: cover;
-    background-color: var(--color-dark);
-}
-
-.form-section {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 25px;
-    border: 1px solid var(--color-accent);
-}
-
-.form-control, .form-control:focus {
-    background-color: var(--color-dark);
-    color: var(--color-light);
-    border: 1px solid var(--color-accent);
-}
-
-.form-control:focus {
-    box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25);
-}
-
-.form-label {
-    color: var(--color-secondary);
-    font-weight: 500;
-}
-
-.image-preview-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 15px;
-    position: relative;
-}
-
-.image-preview {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: 5px;
-    overflow: hidden;
-    transition: all 0.3s;
-    border: 1px solid var(--color-accent);
-    background-color: var(--color-dark);
-}
-
-.image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.image-preview .delete-img {
+/* Decoración abstracta de fondo en el Header */
+.header::before {
+    content: "";
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(0, 0, 0, 0.8);
-    color: var(--color-secondary);
-    border: 1px solid var(--color-secondary);
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s;
-    font-size: 12px;
+    width: 200%;
+    height: 200%;
+    background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+    opacity: 0.1;
+    top: -50%;
+    left: -50%;
+    transform: rotate(15deg);
 }
 
-.image-preview:hover .delete-img {
-    opacity: 1;
+.title {
+    font-size: 3.5rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -2px !important;
+    color: white !important;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    margin-bottom: 35px !important;
+    z-index: 2;
 }
 
-.add-more-container {
-    width: 100px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed var(--color-accent);
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-    background-color: rgba(0, 0, 0, 0.3);
+.header-controls {
+    display: flex !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 1000px !important;
+    z-index: 2;
+    padding: 0 20px;
 }
 
-.add-more-container:hover {
-    border-color: var(--color-secondary);
-    background-color: rgba(255, 215, 0, 0.1);
+/* ==========================================================================
+   3. BUSCADOR & BOTONES (ESTILO NEÓN-GLASS)
+========================================================================== 
+*/
+
+.search-container {
+    flex: 1 !important;
+    position: relative !important;
 }
 
-.add-more-icon {
-    font-size: 24px;
-    color: var(--color-accent);
+.search-container input {
+    width: 100% !important;
+    height: 60px !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--border-radius-md) !important;
+    padding: 0 20px 0 60px !important;
+    color: white !important;
+    font-size: 1.1rem !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1) !important;
+    transition: var(--transition) !important;
 }
 
-.add-more-container:hover .add-more-icon {
-    color: var(--color-secondary);
+.search-container input:focus {
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-color: white !important;
+    box-shadow: 0 0 20px rgba(255,255,255,0.1) !important;
+    outline: none !important;
 }
 
-.btn-primary {
-    background-color: var(--color-secondary);
-    border-color: var(--color-secondary);
-    color: var(--color-primary);
-    font-weight: bold;
-}
-
-.btn-primary:hover {
-    background-color: #E6C200;
-    border-color: #E6C200;
-}
-
-.btn-secondary {
-    background-color: var(--color-dark);
-    border-color: var(--color-accent);
-    color: var(--color-secondary);
-}
-
-.btn-secondary:hover {
-    background-color: #2C3034;
-    border-color: var(--color-secondary);
-}
-
-.btn-success {
-    background-color: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-primary);
-    font-weight: bold;
-}
-
-.btn-success:hover {
-    background-color: #B08D3E;
-    border-color: #B08D3E;
-}
-
-.btn-danger {
-    background-color: #8B0000;
-    border-color: #8B0000;
-}
-
-.btn-danger:hover {
-    background-color: #A52A2A;
-    border-color: #A52A2A;
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    background-color: var(--color-secondary);
-    border-radius: 50%;
-    padding: 15px;
-    background-size: 50%;
-}
-
-.text-muted {
-    color: var(--color-accent) !important;
-}
-
-.main-content {
-    min-height: calc(100vh - 200px);
-}
-
-@media (max-width: 768px) {
-    .carousel-item { 
-        height: 300px; 
-    }
-    
-    .container {
-        padding: 15px;
-    }
-    
-    .image-preview {
-        width: 80px;
-        height: 80px;
-    }
-    
-    .add-more-container {
-        width: 80px;
-        height: 80px;
-    }
-}
-
-@media (max-width: 576px) {
-    .carousel-item { 
-        height: 250px; 
-    }
-    
-    body {
-        padding: 10px;
-    }
-    
-    .navbar-brand {
-        font-size: 1rem;
-    }
-}
-/* Agregar al final de tu carrusel.css existente */
-
-/* Transiciones suaves para el carrusel */
-.carousel-item {
-    transition: transform 0.6s ease-in-out !important;
-}
-
-.carousel-item-next,
-.carousel-item-prev,
-.carousel-item.active {
-    display: block;
-}
-
-.carousel-fade .carousel-item {
-    opacity: 0;
-    transition-property: opacity;
-    transform: none;
-}
-
-.carousel-fade .carousel-item.active,
-.carousel-fade .carousel-item-next.carousel-item-left,
-.carousel-fade .carousel-item-prev.carousel-item-right {
-    opacity: 1;
-}
-
-.carousel-fade .active.carousel-item-left,
-.carousel-fade .active.carousel-item-right {
-    opacity: 0;
-}
-
-.carousel-fade .carousel-item-next,
-.carousel-fade .carousel-item-prev,
-.carousel-fade .carousel-item.active,
-.carousel-fade .active.carousel-item-left,
-.carousel-fade .active.carousel-item-prev {
-    transform: translateX(0);
-    transform: translate3d(0, 0, 0);
-}
-
-/* Mejoras visuales para los controles */
-.carousel-control-prev,
-.carousel-control-next {
-    width: 5%;
-    opacity: 0.7;
-    transition: opacity 0.3s;
-}
-
-.carousel-control-prev:hover,
-.carousel-control-next:hover {
-    opacity: 1;
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    background-size: 100%, 100%;
-    border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-/* Indicadores del carrusel */
-.carousel-indicators {
-    margin-bottom: 1rem;
-}
-
-.carousel-indicators button {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin: 0 3px;
-    background-color: var(--color-accent);
-    border: none;
-    opacity: 0.5;
-}
-
-.carousel-indicators button.active {
-    opacity: 1;
-    background-color: var(--color-secondary);
-}
-
-/* Para pantallas pequeñas */
-@media (max-width: 768px) {
-    .carousel-control-prev-icon,
-    .carousel-control-next-icon {
-        width: 2rem;
-        height: 2rem;
-    }
-}
-/* Carrusel sin wrap inmediato */
-#previewCarousel {
-    position: relative;
-}
-
-#previewCarousel .carousel-inner {
-    overflow: visible !important;
-}
-
-#previewCarousel .carousel-item {
-    transition: transform 0.8s ease-in-out !important;
-    opacity: 1 !important;
-}
-
-#previewCarousel .carousel-item-next:not(.carousel-item-start),
-#previewCarousel .active.carousel-item-end {
-    transform: translateX(100%) !important;
-}
-
-#previewCarousel .carousel-item-prev:not(.carousel-item-end),
-#previewCarousel .active.carousel-item-start {
-    transform: translateX(-100%) !important;
-}
-
-#previewCarousel .carousel-item.active {
-    transform: translateX(0) !important;
-}
-
-/* Asegurar que solo un item esté activo */
-#previewCarousel .carousel-item {
-    display: none;
-}
-
-#previewCarousel .carousel-item.active {
-    display: block;
-}
-
-/* Controles más visibles */
-#previewCarousel .carousel-control-prev,
-#previewCarousel .carousel-control-next {
-    width: 50px;
-    height: 50px;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    border-radius: 50%;
+.search-container i {
+    position: absolute !important;
+    left: 20px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: white !important;
+    font-size: 1.4rem !important;
     opacity: 0.8;
 }
 
-#previewCarousel .carousel-control-prev:hover,
-#previewCarousel .carousel-control-next:hover {
-    opacity: 1;
-    background-color: rgba(0, 0, 0, 0.9);
+.btn-primary {
+    background: white !important;
+    color: var(--primary-color) !important;
+    height: 60px !important;
+    padding: 0 35px !important;
+    border-radius: var(--border-radius-md) !important;
+    font-weight: 800 !important;
+    font-size: 1rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    transition: var(--transition) !important;
 }
 
-#previewCarousel .carousel-control-prev {
-    left: 20px;
+.btn-primary:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+    background: #f8fafc !important;
 }
 
-#previewCarousel .carousel-control-next {
-    right: 20px;
+/* ==========================================================================
+   4. ESTADO VACÍO (LA TARJETA CENTRAL PREMIUM)
+========================================================================== 
+*/
+
+.carousels-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 500px !important;
+    padding: 40px !important;
+    position: relative !important;
 }
 
-/* Para debugging: muestra el estado del carrusel */
-.carousel-debug-info {
+.empty-state {
+    background: var(--bg-card) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    border: var(--glass-border) !important;
+    border-radius: var(--border-radius-lg) !important;
+    padding: 80px 50px !important;
+    max-width: 550px !important;
+    text-align: center !important;
+    box-shadow: var(--shadow-xl) !important;
+    position: relative !important;
+    overflow: hidden;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Efecto de brillo que pasa por la tarjeta */
+.empty-state::after {
+    content: "";
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.7);
-    color: #FFD700;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 12px;
-    z-index: 10;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+    transform: rotate(45deg);
+    animation: shine 6s infinite linear;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.empty-state i.icon-lg {
+    font-size: 6rem !important;
+    background: linear-gradient(135deg, #fff 0%, var(--primary-color) 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin-bottom: 30px !important;
+    display: inline-block !important;
+}
+
+.empty-state h3 {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    color: white !important;
+    margin-bottom: 15px !important;
+}
+
+.empty-state p {
+    font-size: 1.1rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.6 !important;
+    margin-bottom: 40px !important;
+}
+
+/* ==========================================================================
+   5. TARJETAS DE CARRUSEL (CUANDO HAY DATOS)
+========================================================================== 
+*/
+
+.carousels-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+    gap: 30px !important;
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+}
+
+.carousel-card {
+    background: var(--bg-card) !important;
+    border: var(--glass-border) !important;
+    border-radius: var(--border-radius-md) !important;
+    overflow: hidden !important;
+    transition: var(--transition) !important;
+}
+
+.carousel-card:hover {
+    transform: translateY(-10px) !important;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.carousel-preview {
+    height: 220px !important;
+    background: #000 !important;
+    position: relative !important;
+}
+
+.carousel-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+    transition: var(--transition);
+}
+
+.carousel-card:hover .carousel-preview img {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.carousel-info {
+    padding: 25px !important;
+}
+
+.carousel-title {
+    color: white !important;
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 10px !important;
+}
+
+.carousel-actions {
+    display: flex !important;
+    gap: 12px !important;
+    margin-top: 20px !important;
+}
+
+.btn-view, .btn-delete {
+    flex: 1 !important;
+    height: 45px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+}
+
+.btn-view {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+.btn-delete:hover {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+/* ==========================================================================
+   6. RESPONSIVE Y ACCESIBILIDAD
+========================================================================== 
+*/
+
+@media (max-width: 768px) {
+    .header { min-height: 400px !important; }
+    .title { font-size: 2.2rem !important; }
+    .header-controls { flex-direction: column !important; }
+    .search-container, .btn-primary { width: 100% !important; }
+    .empty-state { padding: 40px 20px !important; margin: 20px !important; }
+}
+
+/* Scrollbar Personalizado (Estilo Apple) */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
 }
