@@ -5,7 +5,7 @@ const firebaseConfig = {
     authDomain: "rsienterprise.firebaseapp.com",
     databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
     projectId: "rsienterprise",
-    storageBucket: "rsienterprise.appspot.com",
+    storageBucket: "rsienterprise.firebasestorage.app",
     messagingSenderId: "1063117165770",
     appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
     measurementId: "G-38F2DBG9HE"

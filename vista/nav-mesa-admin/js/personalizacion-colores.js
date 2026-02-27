@@ -8,7 +8,7 @@
     apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
     authDomain: "rsienterprise.firebaseapp.com",
     projectId: "rsienterprise",
-    storageBucket: "rsienterprise.appspot.com",
+    storageBucket: "rsienterprise.firebasestorage.app",
     messagingSenderId: "1063117165770",
     appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
 };
