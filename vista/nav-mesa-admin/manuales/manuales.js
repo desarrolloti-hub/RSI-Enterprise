@@ -1,0 +1,436 @@
+// manuales.js - Lógica separada para la gestión de manuales técnicos
+import { db, auth } from '/config/firebase-config.js';
+
+// Estado de la aplicación
+const appState = {
+    currentUser: null,
+    manuals: [],
+    filteredManuals: [],
+    currentPage: 1,
+    manualsPerPage: 12,
+    searchTerm: ''
+};
+
+// =================================================================================
+// FUNCIONES PRINCIPALES
+// =================================================================================
+
+/**
+ * Carga inicial de la aplicación
+ */
+async function initialLoad() {
+    try {
+        await loadUserProfile();
+        setupEventListeners();
+        loadManuals();
+    } catch (error) {
+        console.error("Error en la carga inicial:", error);
+        showError('No se pudieron cargar los manuales.');
+    }
+}
+
+/**
+ * Carga el perfil del usuario actual
+ */
+async function loadUserProfile() {
+    const user = auth.currentUser;
+    if (!user) {
+        window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+        return;
+    }
+    
+    try {
+        const querySnapshot = await db.collection("colaboradores")
+            .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
+            .get();
+        
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            const userData = doc.data();
+            appState.currentUser = {
+                id: doc.id,
+                nombre: userData.NOMBRE,
+                area: userData.ÁREA
+            };
+        }
+    } catch (error) {
+        console.error("Error al cargar perfil:", error);
+    }
+}
+
+/**
+ * Carga los manuales desde Firestore
+ */
+async function loadManuals() {
+    try {
+        const querySnapshot = await db.collection('manualesTecnicosPDF')
+            .orderBy('fechaCreacion', 'desc')
+            .get();
+
+        appState.manuals = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        applySearchFilter();
+        displayManuals();
+        
+    } catch (error) {
+        console.error("Error al cargar manuales:", error);
+        showError('No se pudieron cargar los manuales.');
+    }
+}
+
+/**
+ * Aplica el filtro de búsqueda a los manuales
+ */
+function applySearchFilter() {
+    const searchTerm = appState.searchTerm.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        appState.filteredManuals = [...appState.manuals];
+    } else {
+        appState.filteredManuals = appState.manuals.filter(manual => 
+            manual.nombre.toLowerCase().includes(searchTerm) ||
+            manual.descripcion.toLowerCase().includes(searchTerm) ||
+            manual.creadoPor.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    appState.currentPage = 1;
+    updatePagination();
+}
+
+/**
+ * Muestra los manuales en la interfaz
+ */
+function displayManuals() {
+    const manualsGrid = document.getElementById('manualsGrid');
+    
+    if (!appState.filteredManuals || appState.filteredManuals.length === 0) {
+        manualsGrid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-file-pdf"></i>
+                <h3>No hay manuales para mostrar</h3>
+                <p>${appState.searchTerm ? 
+                    'No se encontraron manuales que coincidan con tu búsqueda' : 
+                    'No se han cargado manuales técnicos todavía'}</p>
+                ${!appState.searchTerm ? '<a href="../nuevo-manual/nuevo-manual.html" class="btn" style="margin-top: 20px;"><i class="fas fa-plus"></i> Cargar Primer Manual</a>' : ''}
+            </div>
+        `;
+        return;
+    }
+
+    // Calcular manuales para la página actual
+    const startIndex = (appState.currentPage - 1) * appState.manualsPerPage;
+    const endIndex = startIndex + appState.manualsPerPage;
+    const manualsToDisplay = appState.filteredManuals.slice(startIndex, endIndex);
+
+    const manualsHTML = manualsToDisplay.map(manual => `
+        <div class="manual-card">
+            <div class="manual-preview">
+                <i class="fas fa-file-pdf pdf-icon"></i>
+            </div>
+            <div class="manual-info">
+                <h3 class="manual-title">${escapeHtml(manual.nombre)}</h3>
+                <p class="manual-description">${escapeHtml(manual.descripcion || 'Sin descripción')}</p>
+                <div class="manual-meta">
+                    <span><i class="fas fa-user"></i> ${escapeHtml(manual.creadoPor)}</span>
+                    <span><i class="fas fa-calendar"></i> ${formatDate(manual.fechaCreacion)}</span>
+                </div>
+                <div class="manual-actions">
+                    <button class="action-btn btn-view" onclick="window.viewManual('${manual.id}', '${escapeHtml(manual.nombre)}', '${manual.archivoURL}')">
+                        <i class="fas fa-eye"></i> Ver
+                    </button>
+                    <button class="action-btn btn-delete" onclick="window.deleteManual('${manual.id}', '${escapeHtml(manual.nombre)}')">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    manualsGrid.innerHTML = manualsHTML;
+}
+
+/**
+ * Actualiza la paginación
+ */
+function updatePagination() {
+    const pagination = document.getElementById('pagination');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageInfo = document.getElementById('pageInfo');
+
+    const totalPages = Math.ceil(appState.filteredManuals.length / appState.manualsPerPage);
+
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
+    }
+
+    pagination.style.display = 'flex';
+    prevBtn.disabled = appState.currentPage === 1;
+    nextBtn.disabled = appState.currentPage === totalPages;
+    pageInfo.textContent = `Página ${appState.currentPage} de ${totalPages}`;
+}
+
+// =================================================================================
+// FUNCIONES DE ACCIÓN
+// =================================================================================
+
+/**
+ * Visualiza un manual PDF
+ * @param {string} manualId - ID del manual
+ * @param {string} manualName - Nombre del manual
+ * @param {string} pdfUrl - URL del PDF
+ */
+async function viewManual(manualId, manualName, pdfUrl) {
+    const modal = document.getElementById('pdfModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const pdfViewer = document.getElementById('pdfViewer');
+
+    // Detección de entorno
+    const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isMobile = window.innerWidth < 768;
+
+    try {
+        if (isNative) {
+            // 👇 Abrir con el visor del sistema (funciona en Android e iOS)
+            const { Browser } = window.Capacitor.Plugins || 
+                (window.Capacitor?.Browser ? { Browser: window.Capacitor.Browser } : {});
+
+            if (Browser && Browser.open) {
+                await Browser.open({ url: pdfUrl });
+            } else {
+                window.open(pdfUrl, '_system');
+            }
+            return;
+        }
+
+        if (isStandalone || isMobile) {
+            // 👇 Modo PWA o navegador móvil → abrir en nueva pestaña
+            const newTab = window.open(pdfUrl, '_blank');
+            if (!newTab) {
+                Swal.fire({
+                    title: 'Aviso',
+                    text: 'Por favor permite las ventanas emergentes para ver el PDF.',
+                    icon: 'info',
+                    confirmButtonColor: '#6C43E0'
+                });
+            }
+            return;
+        }
+
+        // 👇 Modo escritorio → mostrar dentro del modal
+        modalTitle.textContent = manualName;
+        pdfViewer.src = pdfUrl;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+    } catch (error) {
+        console.error('Error al abrir manual:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'No se pudo abrir el manual.',
+            icon: 'error',
+            confirmButtonColor: '#6C43E0'
+        });
+    }
+}
+
+/**
+ * Elimina un manual
+ * @param {string} manualId - ID del manual a eliminar
+ * @param {string} manualName - Nombre del manual
+ */
+async function deleteManual(manualId, manualName) {
+    try {
+        const result = await Swal.fire({
+            title: '¿Eliminar manual?',
+            html: `¿Estás seguro de que quieres eliminar el manual <strong>"${escapeHtml(manualName)}"</strong>?<br>Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#6C43E0'
+        });
+
+        if (result.isConfirmed) {
+            // Obtener información del manual antes de eliminar
+            const manualDoc = await db.collection('manualesTecnicosPDF').doc(manualId).get();
+            const manualData = manualDoc.data();
+
+            // Eliminar archivo de Storage
+            if (manualData.archivoPath) {
+                const storage = firebase.storage();
+                const fileRef = storage.refFromURL(manualData.archivoURL);
+                await fileRef.delete();
+            }
+
+            // Eliminar documento de Firestore
+            await db.collection('manualesTecnicosPDF').doc(manualId).delete();
+
+            Swal.fire({
+                title: '¡Eliminado!',
+                text: 'El manual ha sido eliminado correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#6C43E0'
+            });
+
+            // Recargar manuales
+            loadManuals();
+        }
+    } catch (error) {
+        console.error('Error al eliminar manual:', error);
+        showError('No se pudo eliminar el manual.');
+    }
+}
+
+/**
+ * Cierra el modal del PDF
+ */
+function closeModal() {
+    const modal = document.getElementById('pdfModal');
+    const pdfViewer = document.getElementById('pdfViewer');
+    
+    modal.classList.remove('active');
+    pdfViewer.src = '';
+    document.body.style.overflow = 'auto';
+}
+
+// =================================================================================
+// FUNCIONES AUXILIARES
+// =================================================================================
+
+/**
+ * Escapa caracteres HTML para prevenir XSS
+ * @param {string} text - Texto a escapar
+ * @returns {string} Texto escapado
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Formatea una fecha para mostrar
+ * @param {any} timestamp - Timestamp de Firestore o fecha
+ * @returns {string} Fecha formateada
+ */
+function formatDate(timestamp) {
+    if (!timestamp) return 'Fecha no disponible';
+    try {
+        if (timestamp.toDate) {
+            return timestamp.toDate().toLocaleDateString('es-MX');
+        }
+        return new Date(timestamp).toLocaleDateString('es-MX');
+    } catch (error) {
+        return 'Fecha inválida';
+    }
+}
+
+/**
+ * Muestra un mensaje de error
+ * @param {string} message - Mensaje de error
+ */
+function showError(message) {
+    Swal.fire({
+        title: 'Error',
+        text: message,
+        icon: 'error',
+        confirmButtonColor: '#6C43E0'
+    });
+}
+
+// =================================================================================
+// CONFIGURACIÓN DE EVENT LISTENERS
+// =================================================================================
+
+function setupEventListeners() {
+    // Búsqueda
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            appState.searchTerm = this.value;
+            applySearchFilter();
+            displayManuals();
+        });
+    }
+
+    // Modal
+    const modalClose = document.getElementById('modalClose');
+    const modal = document.getElementById('pdfModal');
+    
+    if (modalClose) {
+        modalClose.addEventListener('click', closeModal);
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+
+    // Paginación
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            if (appState.currentPage > 1) {
+                appState.currentPage--;
+                displayManuals();
+                updatePagination();
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            const totalPages = Math.ceil(appState.filteredManuals.length / appState.manualsPerPage);
+            if (appState.currentPage < totalPages) {
+                appState.currentPage++;
+                displayManuals();
+                updatePagination();
+            }
+        });
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+}
+
+// =================================================================================
+// EXPORTAR FUNCIONES AL ÁMBITO GLOBAL
+// =================================================================================
+
+// Hacer accesibles las funciones desde el HTML (para los onclick)
+window.viewManual = viewManual;
+window.deleteManual = deleteManual;
+
+// =================================================================================
+// INICIALIZACIÓN
+// =================================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            console.log('Usuario autenticado:', user.email);
+            initialLoad();
+        } else {
+            console.log('No hay usuario autenticado, redirigiendo...');
+            window.location.href = '../nav-visitantes/inicio-de-sesion.html';
+        }
+    });
+});
