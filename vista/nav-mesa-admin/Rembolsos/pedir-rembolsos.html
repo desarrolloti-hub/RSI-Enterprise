@@ -16,7 +16,7 @@
     <div class="attendance-container" id="reimbursementContainer">
         
         <div class="attendance-header">
-            <h1>Solicitud de Reembolso</h1>
+            <h1>Solicitud de Reembolso prueba</h1>
             <p>Envía tu comprobante y detalles del gasto</p>
         </div>
 
@@ -112,6 +112,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
     
     <script>
     // La configuración de Firebase solo es referencial.
@@ -120,7 +121,7 @@
         authDomain: "rsienterprise.firebaseapp.com",
         projectId: "rsienterprise",
         databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
-        storageBucket: "rsienterprise.appspot.com",
+        storageBucket: "rsienterprise.firebasestorage.app", // Actualizado según la imagen
         messagingSenderId: "1063117165770",
         appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
         measurementId: "G-38F2DBG9HE"
@@ -129,6 +130,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         let db;
         let auth;
+        let storage;
         let allReimbursements = []; // Almacenar todos los reembolsos cargados
 
         // =========================================================================
@@ -141,14 +143,15 @@
                 // Obtener instancias sin re-inicializar
                 db = firebase.firestore();
                 auth = firebase.auth();
+                storage = firebase.storage(); // Inicializar Storage
                 
-                initializeReimbursementLogic(db, auth);
+                initializeReimbursementLogic(db, auth, storage);
             }
         }, 100);
         // =========================================================================
 
 
-        function initializeReimbursementLogic(db, auth) {
+        function initializeReimbursementLogic(db, auth, storage) {
             // Elementos del DOM
             const employeeAvatar = document.getElementById('employeeAvatar');
             const employeeDetails = document.getElementById('employeeDetails');
@@ -169,7 +172,6 @@
             const noReimbursements = document.getElementById('noReimbursements');
             const toggleHistoryBtn = document.getElementById('toggleHistoryBtn'); 
             const backToFormBtn = document.getElementById('backToFormBtn'); 
-            // ELIMINADO: const goToTicketsBtn = document.getElementById('goToTicketsBtn');
             
             // Nuevos elementos para el detalle
             const reimbursementDetail = document.getElementById('reimbursementDetail');
@@ -210,12 +212,6 @@
             toggleHistoryBtn.addEventListener('click', () => toggleView('history'));
             backToFormBtn.addEventListener('click', () => toggleView('form'));
             backToHistoryBtn.addEventListener('click', () => toggleView('history'));
-
-            // ELIMINADO: Event Listener para el botón principal de tickets
-            // goToTicketsBtn.addEventListener('click', function() {
-            //     window.location.href = '../gestion-tickets/gestion-tickets.html';
-            // });
-
 
             // --- Utilidades ---
             function showAlert(type, title, message) {
@@ -266,15 +262,46 @@
                 }
             }
             
-            function fileToBase64(file) {
+            // Función para subir archivo a Storage
+            async function uploadFileToStorage(file, userData) {
                 return new Promise((resolve, reject) => {
                     if (!file) {
-                        return resolve(null);
+                        reject(new Error("No se proporcionó ningún archivo"));
+                        return;
                     }
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = error => reject(error);
+
+                    // Crear un nombre único para el archivo
+                    const timestamp = Date.now();
+                    const fileExtension = file.name.split('.').pop();
+                    const fileName = `reembolsos/${userData.id}/${timestamp}_${file.name}`;
+                    
+                    // Referencia al archivo en Storage
+                    const storageRef = storage.ref().child(fileName);
+                    
+                    // Subir el archivo
+                    const uploadTask = storageRef.put(file);
+                    
+                    // Progress del upload (opcional)
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            // Puedes agregar una barra de progreso si lo deseas
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log('Upload is ' + progress + '% done');
+                        },
+                        (error) => {
+                            // Error en la subida
+                            reject(error);
+                        },
+                        async () => {
+                            // Subida completada exitosamente
+                            try {
+                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                resolve(downloadURL);
+                            } catch (error) {
+                                reject(error);
+                            }
+                        }
+                    );
                 });
             }
 
@@ -295,7 +322,7 @@
                 }
             });
 
-            // --- Lógica de Envío del Reembolso (Sin cambios funcionales) ---
+            // --- Lógica de Envío del Reembolso (MODIFICADO para usar Storage) ---
             async function submitReimbursement(userData) {
                 if (!userData || !userData.id) {
                     throw new Error("Datos de usuario no cargados. Intenta recargar la página.");
@@ -308,47 +335,59 @@
                     throw new Error("Por favor, completa todos los campos correctamente.");
                 }
 
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando Solicitud...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo comprobante...';
                 submitBtn.disabled = true;
 
-                const photoBase64 = await fileToBase64(photoFile);
-                const now = new Date();
-                const timestamp = firebase.firestore.Timestamp.fromDate(now);
+                try {
+                    // 1. Subir la imagen a Firebase Storage
+                    const imageUrl = await uploadFileToStorage(photoFile, userData);
+                    
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando datos...';
+                    
+                    // 2. Crear el documento en Firestore con la URL de la imagen
+                    const now = new Date();
+                    const timestamp = firebase.firestore.Timestamp.fromDate(now);
 
-                const reimbursementData = {
-                    userId: userData.id,
-                    nombre: userData.NOMBRE,
-                    emailEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'],
-                    area: userData['ÁREA'],
-                    monto: amount,
-                    descripcion: description,
-                    comprobanteBase64: photoBase64, 
-                    fechaSolicitud: timestamp,
-                    estado: 'Pendiente',
-                    detallesColaborador: {
-                        nombre: userData.NOMBRE || 'N/A', 
-                        rfc: userData.RFC || 'N/A',
-                        nit: userData.NIT || 'N/A',
-                    }
-                };
+                    const reimbursementData = {
+                        userId: userData.id,
+                        nombre: userData.NOMBRE,
+                        emailEmpresarial: userData['CORREO ELECTRÓNICO EMPRESARIAL'],
+                        area: userData['ÁREA'],
+                        monto: amount,
+                        descripcion: description,
+                        imagenUrl: imageUrl, // Guardamos la URL en lugar del Base64
+                        imagenPath: `reembolsos/${userData.id}/${Date.now()}_${photoFile.name}`, // Guardamos también la ruta por si acaso
+                        fechaSolicitud: timestamp,
+                        estado: 'Pendiente',
+                        detallesColaborador: {
+                            nombre: userData.NOMBRE || 'N/A', 
+                            rfc: userData.RFC || 'N/A',
+                            nit: userData.NIT || 'N/A',
+                        }
+                    };
 
-                await db.collection('Reembolsos').add(reimbursementData);
+                    await db.collection('Reembolsos').add(reimbursementData);
 
-                showAlert(
-                    'success', 
-                    '¡Reembolso Enviado!', 
-                    `Monto: $${amount.toFixed(2)}<br>Tu solicitud ha sido enviada con éxito.`
-                );
-                
-                setTimeout(() => {
-                    alertOverlay.classList.remove('show');
-                    toggleView('history'); // Redirigir al historial
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud de Reembolso';
-                    submitBtn.disabled = false;
-                    reimbursementForm.reset();
-                    previewImage.style.display = 'none';
-                    fileText.textContent = 'Haz clic para subir una imagen';
-                }, 1500); 
+                    showAlert(
+                        'success', 
+                        '¡Reembolso Enviado!', 
+                        `Monto: $${amount.toFixed(2)}<br>Tu solicitud ha sido enviada con éxito.`
+                    );
+                    
+                    setTimeout(() => {
+                        alertOverlay.classList.remove('show');
+                        toggleView('history'); // Redirigir al historial
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud de Reembolso';
+                        submitBtn.disabled = false;
+                        reimbursementForm.reset();
+                        previewImage.style.display = 'none';
+                        fileText.textContent = 'Haz clic para subir una imagen';
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error("Error al procesar el reembolso:", error);
+                    throw error; // Propagamos el error para manejarlo en el catch del evento submit
+                }
             }
 
             reimbursementForm.addEventListener('submit', async function(e) {
@@ -367,7 +406,7 @@
                 }
             });
 
-            // --- Lógica de Detalle del Reembolso (NUEVO) ---
+            // --- Lógica de Detalle del Reembolso (MODIFICADO para usar imagenUrl) ---
             function showReimbursementDetail(reimbursement) {
                 const date = reimbursement.fechaSolicitud && typeof reimbursement.fechaSolicitud.toDate === 'function' 
                     ? reimbursement.fechaSolicitud.toDate().toLocaleDateString('es-ES') + ' ' + reimbursement.fechaSolicitud.toDate().toLocaleTimeString('es-ES') 
@@ -381,9 +420,9 @@
                 detailDescription.textContent = reimbursement.descripcion;
                 detailDate.textContent = date;
                 
-                // Mostrar la imagen Base64
-                if (reimbursement.comprobanteBase64) {
-                    detailImage.src = reimbursement.comprobanteBase64;
+                // Mostrar la imagen desde la URL (ya no es Base64)
+                if (reimbursement.imagenUrl) {
+                    detailImage.src = reimbursement.imagenUrl;
                     detailImage.style.display = 'block';
                 } else {
                     detailImage.style.display = 'none';
@@ -394,7 +433,7 @@
             }
 
 
-            // --- Lógica de Carga y Filtrado del Historial (MODIFICADO para añadir listener) ---
+            // --- Lógica de Carga y Filtrado del Historial (MODIFICADO para mostrar elementos) ---
             function createStatusTag(status) {
                 let statusText = status;
                 let statusClass = status.replace(/\s/g, ''); 
