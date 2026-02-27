@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Nuevo Carrusel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="nuevo-carrusel.css">
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente por navegacion-admin.js -->
+    
+    <div class="main-c">
+        <div class="header">
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Nuevo Carrusel</h2>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <form id="carruselForm">
+                <div class="form-group">
+                    <label for="carruselTitulo" class="form-label">Título del Carrusel *</label>
+                    <input type="text" id="carruselTitulo" class="form-control" placeholder="Ej: Productos destacados, Equipo de trabajo, etc." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="carruselDescripcion" class="form-label">Descripción (opcional)</label>
+                    <textarea id="carruselDescripcion" class="form-control" placeholder="Describe el contenido del carrusel..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Imágenes *</label>
+                    <div class="file-upload-container" id="fileUploadContainer">
+                        <div class="file-upload-icon">
+                            <i class="fas fa-images"></i>
+                        </div>
+                        <div class="file-upload-text">
+                            Arrastra y suelta tus imágenes aquí o haz clic para seleccionar
+                        </div>
+                        <div class="file-upload-hint">
+                            Puedes seleccionar múltiples imágenes. Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB por imagen
+                        </div>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+                    </div>
+                    
+                    <!-- Galería de vistas previas -->
+                    <div class="images-gallery" id="imagesGallery"></div>
+                    
+                    <!-- Contador de imágenes -->
+                    <div class="images-counter" id="imagesCounter">0 imágenes seleccionadas</div>
+                </div>
+
+                <div class="buttons-container">
+                    <button type="button" class="btn btn-secondary" onclick="cancelForm()">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                        <i class="fas fa-save"></i>
+                        Guardar Carrusel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="nuevo-carrusel.js"></script>
+    <!-- Scripts compartidos con rutas corregidas -->
+   <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/guardar-ultima-pagina.js"></script>
+
+</body>
+</html>
