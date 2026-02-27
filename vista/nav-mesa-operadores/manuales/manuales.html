@@ -244,37 +244,62 @@
         // =================================================================================
         // FUNCIONES DE ACCIÓN
         // =================================================================================
-
-        function viewManual(manualId, manualName, pdfUrl) {
+        async function viewManual(manualId, manualName, pdfUrl) {
             const modal = document.getElementById('pdfModal');
             const modalTitle = document.getElementById('modalTitle');
             const pdfViewer = document.getElementById('pdfViewer');
 
-            // Detectar si la app está en modo PWA o en pantalla pequeña
+            // Detección de entorno
+            const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
             const isMobile = window.innerWidth < 768;
 
-            if (isStandalone || isMobile) {
-                // Abrir el PDF en una nueva pestaña (más seguro en PWA/móvil)
-                const newTab = window.open(pdfUrl, '_blank');
-                if (!newTab) {
-                    Swal.fire({
-                        title: 'Aviso',
-                        text: 'Por favor permite las ventanas emergentes para ver el PDF.',
-                        icon: 'info',
-                        confirmButtonColor: '#6C43E0'
-                    });
-                }
-                return;
-            }
+            try {
+                if (isNative) {
+                    // 👇 Abrir con el visor del sistema (funciona en Android e iOS)
+                    const { Browser } = window.Capacitor.Plugins || 
+                        (window.Capacitor?.Browser ? { Browser: window.Capacitor.Browser } : {});
 
-            // Modo escritorio: mostrar en el modal
-            modalTitle.textContent = manualName;
-            pdfViewer.src = pdfUrl;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+                    if (Browser && Browser.open) {
+                        await Browser.open({ url: pdfUrl });
+                    } else {
+                        window.open(pdfUrl, '_system');
+                    }
+                    return;
+                }
+
+                if (isStandalone || isMobile) {
+                    // 👇 Modo PWA o navegador móvil → abrir en nueva pestaña
+                    const newTab = window.open(pdfUrl, '_blank');
+                    if (!newTab) {
+                        Swal.fire({
+                            title: 'Aviso',
+                            text: 'Por favor permite las ventanas emergentes para ver el PDF.',
+                            icon: 'info',
+                            confirmButtonColor: '#6C43E0'
+                        });
+                    }
+                    return;
+                }
+
+                // 👇 Modo escritorio → mostrar dentro del modal
+                modalTitle.textContent = manualName;
+                pdfViewer.src = pdfUrl;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+            } catch (error) {
+                console.error('Error al abrir manual:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo abrir el manual.',
+                    icon: 'error',
+                    confirmButtonColor: '#6C43E0'
+                });
+            }
         }
         
+
         async function deleteManual(manualId, manualName) {
             try {
                 const result = await Swal.fire({
