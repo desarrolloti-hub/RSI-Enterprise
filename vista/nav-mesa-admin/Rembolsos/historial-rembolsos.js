@@ -1,0 +1,593 @@
+// historial-rembolsos.js
+const firebaseConfig = {
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    projectId: "rsienterprise",
+    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+    measurementId: "G-38F2DBG9HE"
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    let db;
+    let auth;
+    let storage;
+    let allReimbursements = []; 
+    let current_userData = null;
+    let currentPage = 1;
+    let itemsPerPage = 25;
+    let filteredReimbursements = [];
+    let currentSelectedReimbursement = null;
+
+    if (firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    const checkFirebaseReady = setInterval(() => {
+        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+            clearInterval(checkFirebaseReady);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            storage = firebase.storage();
+            initializeReimbursementLogic();
+        }
+    }, 100);
+
+    function initializeReimbursementLogic() {
+        const loadingHistory = document.getElementById('loadingHistory');
+        const skeletonLoading = document.getElementById('skeletonLoading');
+        const noReimbursements = document.getElementById('noReimbursements');
+        const reimbursementTableBody = document.getElementById('reimbursementTableBody');
+        const refreshIcon = document.getElementById('refreshIcon');
+        const detailModal = document.getElementById('detailModal');
+        const closeModal = document.querySelector('.close-modal');
+        const finalizeReimbursementBtn = document.getElementById('finalizeReimbursementBtn');
+        const modalFooter = document.getElementById('modalFooter');
+        
+        // Elementos de filtros y paginación
+        const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.getElementById('searchInput');
+        const itemsPerPageSelect = document.getElementById('itemsPerPage');
+        const paginationContainer = document.getElementById('paginationContainer');
+
+        // Elementos del resumen financiero
+        const totalPending = document.getElementById('totalPending');
+        const totalPaid = document.getElementById('totalPaid');
+        const totalGeneral = document.getElementById('totalGeneral');
+
+        // Event Listeners
+        refreshIcon.addEventListener('click', loadAllReimbursementHistory);
+        statusFilter.addEventListener('change', applyFilters);
+        searchInput.addEventListener('input', debounce(applyFilters, 300));
+        itemsPerPageSelect.addEventListener('change', function() {
+            itemsPerPage = parseInt(this.value);
+            currentPage = 1;
+            applyFilters();
+        });
+
+        // Modal events
+        closeModal.addEventListener('click', () => {
+            detailModal.style.display = 'none';
+            modalFooter.style.display = 'none';
+            currentSelectedReimbursement = null;
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target == detailModal) {
+                detailModal.style.display = 'none';
+                modalFooter.style.display = 'none';
+                currentSelectedReimbursement = null;
+            }
+        });
+
+        // Botón Finalizar Reembolso
+        finalizeReimbursementBtn.addEventListener('click', () => {
+            if (currentSelectedReimbursement) {
+                finalizeReimbursement(currentSelectedReimbursement);
+            }
+        });
+
+        function finalizeReimbursement(reimbursement) {
+            // Crear parámetros para pasar al siguiente archivo
+            const params = new URLSearchParams();
+            params.append('id', reimbursement.id);
+            params.append('monto', reimbursement.monto);
+            params.append('nombre', reimbursement.nombre || '');
+            params.append('area', reimbursement.area || '');
+            params.append('descripcion', reimbursement.descripcion || '');
+            params.append('emailEmpresarial', reimbursement.emailEmpresarial || '');
+            params.append('estado', reimbursement.estado || 'Pendiente');
+            params.append('imagenUrl', reimbursement.imagenUrl || '');
+            
+            if (reimbursement.fechaSolicitud && typeof reimbursement.fechaSolicitud.toDate === 'function') {
+                params.append('fechaSolicitud', reimbursement.fechaSolicitud.toDate().toISOString());
+            }
+            
+            // Redirigir a la página de finalizar reembolso
+            window.location.href = `finalizar-reembolsos.html?${params.toString()}`;
+        }
+
+        function calculateFinancialSummary() {
+            let pendingTotal = 0;
+            let paidTotal = 0;
+            let generalTotal = 0;
+
+            allReimbursements.forEach(reimbursement => {
+                const montoPagado = reimbursement.montoPagado || 0;
+                const montoPendiente = reimbursement.monto - montoPagado;
+                
+                if (reimbursement.estado === 'Pendiente' || reimbursement.estado === 'Aprobado') {
+                    pendingTotal += reimbursement.monto;
+                } else if (reimbursement.estado === 'Pagado') {
+                    paidTotal += reimbursement.monto;
+                } else if (reimbursement.estado === 'Pago Parcial') {
+                    paidTotal += montoPagado;
+                    pendingTotal += montoPendiente;
+                }
+                generalTotal += reimbursement.monto;
+            });
+
+            totalPending.textContent = `$${pendingTotal.toFixed(2)}`;
+            totalPaid.textContent = `$${paidTotal.toFixed(2)}`;
+            totalGeneral.textContent = `$${generalTotal.toFixed(2)}`;
+        }
+
+        function applyFilters() {
+            const status = statusFilter.value;
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            filteredReimbursements = allReimbursements.filter(reimbursement => {
+                const matchesStatus = !status || reimbursement.estado === status;
+                const matchesSearch = !searchTerm || 
+                    (reimbursement.nombre && reimbursement.nombre.toLowerCase().includes(searchTerm)) ||
+                    (reimbursement.area && reimbursement.area.toLowerCase().includes(searchTerm)) ||
+                    (reimbursement.descripcion && reimbursement.descripcion.toLowerCase().includes(searchTerm));
+                
+                return matchesStatus && matchesSearch;
+            });
+            
+            renderTable();
+            renderPagination();
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredReimbursements.length / itemsPerPage);
+            paginationContainer.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Botón Anterior
+            const prevButton = document.createElement('button');
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                    renderPagination();
+                }
+            });
+            paginationContainer.appendChild(prevButton);
+            
+            // Números de página
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.className = i === currentPage ? 'active' : '';
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable();
+                    renderPagination();
+                });
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            // Botón Siguiente
+            const nextButton = document.createElement('button');
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                    renderPagination();
+                }
+            });
+            paginationContainer.appendChild(nextButton);
+        }
+
+        function renderTable() {
+            reimbursementTableBody.innerHTML = '';
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentItems = filteredReimbursements.slice(startIndex, endIndex);
+            
+            if (currentItems.length === 0) {
+                noReimbursements.style.display = 'block';
+                return;
+            }
+            
+            noReimbursements.style.display = 'none';
+            
+            currentItems.forEach(data => {
+                let date = 'N/A';
+                if (data.fechaSolicitud && typeof data.fechaSolicitud.toDate === 'function') {
+                    date = data.fechaSolicitud.toDate().toLocaleDateString('es-ES');
+                }
+
+                const statusTag = createStatusTag(data.estado);
+                
+                // Truncar descripción si es muy larga
+                const descripcion = data.descripcion || 'Sin descripción';
+                const descripcionTruncada = descripcion.length > 50 ? 
+                    descripcion.substring(0, 50) + '...' : descripcion;
+
+                // Calcular montos pagados y pendientes
+                const montoPagado = data.montoPagado || 0;
+                const montoPendiente = data.monto - montoPagado;
+
+                const tableRow = document.createElement('tr');
+                tableRow.setAttribute('data-id', data.id);
+                tableRow.innerHTML = `
+                    <td title="${escapeHtml(descripcion)}">${escapeHtml(descripcionTruncada)}</td>
+                    <td>$${data.monto.toFixed(2)}</td>
+                    <td class="paid-amount">$${montoPagado.toFixed(2)}</td>
+                    <td class="pending-amount">$${montoPendiente.toFixed(2)}</td>
+                    <td>${escapeHtml(data.nombre || 'N/A')}</td>
+                    <td>${escapeHtml(data.area || 'N/A')}</td>
+                    <td>${date}</td>
+                    <td>${statusTag}</td>
+                    <td>
+                        <button class="view-detail-btn" data-id="${data.id}" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                
+                reimbursementTableBody.appendChild(tableRow);
+            });
+
+            // Agregar event listeners a los botones de ver detalles
+            document.querySelectorAll('.view-detail-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const reimbursementId = this.getAttribute('data-id');
+                    const selectedReimbursement = allReimbursements.find(r => r.id === reimbursementId);
+                    if (selectedReimbursement) {
+                        showReimbursementDetail(selectedReimbursement);
+                    }
+                });
+            });
+        }
+
+        function showReimbursementDetail(reimbursement) {
+            const modalBody = document.getElementById('modalBody');
+            const modalFooter = document.getElementById('modalFooter');
+            const date = reimbursement.fechaSolicitud && typeof reimbursement.fechaSolicitud.toDate === 'function' 
+                ? reimbursement.fechaSolicitud.toDate().toLocaleDateString('es-ES') + ' ' + reimbursement.fechaSolicitud.toDate().toLocaleTimeString('es-ES') 
+                : 'N/A';
+            
+            const statusTag = createStatusTag(reimbursement.estado);
+
+            // Calcular montos
+            const montoPagado = reimbursement.montoPagado || 0;
+            const montoPendiente = reimbursement.monto - montoPagado;
+            const porcentajePagado = reimbursement.monto > 0 ? (montoPagado / reimbursement.monto) * 100 : 0;
+
+            // Construir HTML para el comprobante
+            let comprobanteHTML = '';
+            if (reimbursement.imagenUrl) {
+                comprobanteHTML = `
+                    <div class="detail-section">
+                        <h3>Comprobante Original</h3>
+                        <div class="comprobante-container">
+                            <img src="${reimbursement.imagenUrl}" alt="Comprobante de gasto" class="comprobante-image" style="max-width:100%; max-height:400px; object-fit:contain;">
+                        </div>
+                    </div>
+                `;
+            } else if (reimbursement.comprobanteBase64) {
+                // Por compatibilidad con datos antiguos
+                comprobanteHTML = `
+                    <div class="detail-section">
+                        <h3>Comprobante Original (Base64)</h3>
+                        <div class="comprobante-container">
+                            <img src="${reimbursement.comprobanteBase64}" alt="Comprobante de gasto" class="comprobante-image" style="max-width:100%; max-height:400px; object-fit:contain;">
+                        </div>
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = `
+                <div class="detail-section">
+                    <h3>Información General</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>ID:</strong>
+                            <span>${reimbursement.id}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Estado:</strong>
+                            <span>${statusTag}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Fecha de Solicitud:</strong>
+                            <span>${date}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="amount-progress">
+                        <div class="amount-display">
+                            <div class="amount-item">
+                                <div class="amount-value total-amount">$${reimbursement.monto.toFixed(2)}</div>
+                                <div class="amount-label">Total</div>
+                            </div>
+                            <div class="amount-item">
+                                <div class="amount-value paid-amount">$${montoPagado.toFixed(2)}</div>
+                                <div class="amount-label">Pagado</div>
+                            </div>
+                            <div class="amount-item">
+                                <div class="amount-value pending-amount">$${montoPendiente.toFixed(2)}</div>
+                                <div class="amount-label">Pendiente</div>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${porcentajePagado}%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>${porcentajePagado.toFixed(1)}% completado</span>
+                            <span>$${montoPagado.toFixed(2)} de $${reimbursement.monto.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Información del Colaborador</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Nombre:</strong>
+                            <span>${escapeHtml(reimbursement.nombre || 'N/A')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Área:</strong>
+                            <span>${escapeHtml(reimbursement.area || 'N/A')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Email:</strong>
+                            <span>${escapeHtml(reimbursement.emailEmpresarial || 'N/A')}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Descripción</h3>
+                    <div class="description-box">
+                        <p>${escapeHtml(reimbursement.descripcion || 'Sin descripción')}</p>
+                    </div>
+                </div>
+
+                ${comprobanteHTML}
+
+                ${reimbursement.ultimoReembolsoPor ? `
+                <div class="detail-section">
+                    <h3>Último Reembolso Realizado Por</h3>
+                    <div class="reimbursed-by">
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <strong>Nombre:</strong>
+                                <span>${escapeHtml(reimbursement.ultimoReembolsoPor.nombre || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Email:</strong>
+                                <span>${escapeHtml(reimbursement.ultimoReembolsoPor.email || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Área:</strong>
+                                <span>${escapeHtml(reimbursement.ultimoReembolsoPor.area || 'N/A')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Fecha y Hora:</strong>
+                                <span>${escapeHtml(reimbursement.ultimoReembolsoPor.fechaHora || 'N/A')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${reimbursement.transacciones && reimbursement.transacciones.length > 0 ? `
+                <div class="detail-section transactions-section">
+                    <h3>Historial de Transacciones</h3>
+                    ${reimbursement.transacciones.map(transaccion => `
+                        <div class="transaction-item">
+                            <div class="transaction-header">
+                                <span class="transaction-amount">$${transaccion.montoTransaccion || 0}</span>
+                                <span class="transaction-date">${transaccion.fechaHora || 'Fecha no disponible'}</span>
+                            </div>
+                            <div class="transaction-details">
+                                <div><strong>Registrado por:</strong> ${escapeHtml(transaccion.registradoPor?.nombre || 'N/A')}</div>
+                                <div><strong>Área:</strong> ${escapeHtml(transaccion.registradoPor?.area || 'N/A')}</div>
+                                <div><strong>Email:</strong> ${escapeHtml(transaccion.registradoPor?.email || 'N/A')}</div>
+                                <div><strong>ID Transacción:</strong> ${escapeHtml(transaccion.id || 'N/A')}</div>
+                            </div>
+                            ${transaccion.notas ? `
+                            <div class="transaction-notes">
+                                <strong>Notas:</strong> ${escapeHtml(transaccion.notas)}
+                            </div>
+                            ` : ''}
+                            ${transaccion.comprobanteBase64 ? `
+                            <div class="payment-proof">
+                                <strong>Comprobante de Pago:</strong><br>
+                                <img src="${transaccion.comprobanteBase64}" alt="Comprobante de pago" style="max-width:100%; max-height:200px;">
+                            </div>
+                            ` : ''}
+                            ${transaccion.comprobanteUrl ? `
+                            <div class="payment-proof">
+                                <strong>Comprobante de Pago:</strong><br>
+                                <img src="${transaccion.comprobanteUrl}" alt="Comprobante de pago" style="max-width:100%; max-height:200px;">
+                            </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+            `;
+
+            // Mostrar u ocultar botón de finalizar según el estado
+            if (reimbursement.estado === 'Pendiente' || reimbursement.estado === 'Aprobado' || reimbursement.estado === 'Pago Parcial') {
+                modalFooter.style.display = 'block';
+                currentSelectedReimbursement = reimbursement;
+            } else {
+                modalFooter.style.display = 'none';
+                currentSelectedReimbursement = null;
+            }
+
+            document.getElementById('detailModal').style.display = 'block';
+        }
+
+        function createStatusTag(status) {
+            let statusText = status;
+            let statusClass = status.replace(/\s/g, ''); 
+            return `<span class="status-tag status-${statusClass}">${statusText}</span>`;
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        async function loadAllReimbursementHistory() {
+            reimbursementTableBody.innerHTML = '';
+            loadingHistory.style.display = 'block';
+            skeletonLoading.style.display = 'block';
+            noReimbursements.style.display = 'none';
+
+            try {
+                const querySnapshot = await db.collection('Reembolsos').get(); 
+                loadingHistory.style.display = 'none';
+                skeletonLoading.style.display = 'none';
+                allReimbursements = [];
+
+                if (querySnapshot.empty) {
+                    noReimbursements.style.display = 'block';
+                    return;
+                }
+
+                querySnapshot.forEach(doc => {
+                    allReimbursements.push({ id: doc.id, ...doc.data() });
+                });
+
+                allReimbursements.sort((a, b) => {
+                    const dateA = a.fechaSolicitud ? a.fechaSolicitud.toDate().getTime() : 0;
+                    const dateB = b.fechaSolicitud ? b.fechaSolicitud.toDate().getTime() : 0;
+                    return dateB - dateA;
+                });
+
+                filteredReimbursements = [...allReimbursements];
+                currentPage = 1;
+                renderTable();
+                renderPagination();
+                calculateFinancialSummary();
+
+            } catch (error) {
+                console.error("Error al cargar el historial global de reembolsos:", error);
+                loadingHistory.style.display = 'none';
+                skeletonLoading.style.display = 'none';
+                reimbursementTableBody.innerHTML = `<tr><td colspan="9" style="color:#d9534f; background:#f2dede; text-align:center;">
+                    ⚠️ Error al cargar el historial.
+                </td></tr>`;
+            }
+        }
+
+        async function getUserData(email) {
+            try {
+                const querySnapshot = await db.collection('colaboradores')
+                    .where('CORREO ELECTRÓNICO EMPRESARIAL', '==', email)
+                    .limit(1)
+                    .get();
+                if (!querySnapshot.empty) {
+                    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+                }
+                return null;
+            } catch (error) {
+                console.error("Error al obtener datos del usuario:", error);
+                return null;
+            }
+        }
+        
+        function displayUserInfo(user) {
+            const employeeDetails = document.getElementById('employeeDetails');
+            const employeeAvatar = document.getElementById('employeeAvatar');
+
+            employeeDetails.innerHTML = `
+                <h3>${escapeHtml(user.NOMBRE || 'Nombre no disponible')}</h3>
+                <p><strong>Área:</strong> ${escapeHtml(user['ÁREA'] || 'No especificado')}</p>
+                <p><strong>ID Empleado:</strong> ${escapeHtml(user.NIT || 'ID no disponible')}</p>
+                <p><strong>Email:</strong> ${escapeHtml(user['CORREO ELECTRÓNICO EMPRESARIAL'] || 'No disponible')}</p>
+            `;
+            
+            if (user.imagen) {
+                employeeAvatar.src = user.imagen;
+            } else {
+                const name = user.NOMBRE || '';
+                const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                employeeAvatar.src = `https://ui-avatars.com/api/?name=${initials}&background=c84e4e&color=fff&size=128`;
+            }
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userData = await getUserData(user.email);
+                current_userData = userData; 
+
+                if (!userData || !userData.NOMBRE) {
+                    document.getElementById('employeeDetails').innerHTML = `<h3>${user.email}</h3><p><strong>Estatus:</strong> <span>Datos incompletos</span></p>`;
+                    return;
+                }
+                
+                displayUserInfo(userData);
+                loadAllReimbursementHistory();
+                
+            } else {
+                document.getElementById('employeeDetails').innerHTML = `<h3>No Autenticado</h3><p><strong>Estatus:</strong> <span>Inicia sesión</span></p>`;
+                loadAllReimbursementHistory();
+            }
+        });
+    }
+});
+
+// Función para configurar el manejador de clics del botón de reembolso
+function setupReembolsoButtonRedirection() {
+    const reembolsoBtn = document.querySelector('.reembolso-btn');
+    
+    if (reembolsoBtn) {
+        reembolsoBtn.addEventListener('click', function() {
+            // REDIRECCIÓN USANDO JAVASCRIPT
+            window.location.href = 'pedir-rembolsos.html'; 
+            console.log('Redirigiendo a: pedir-rembolsos.html');
+        });
+    }
+}
+
+// Llama a esta función después de que el DOM esté completamente cargado.
+document.addEventListener('DOMContentLoaded', setupReembolsoButtonRedirection);

@@ -5,13 +5,15 @@
 
     // Configuración de Firebase (debe estar disponible globalmente)
     const firebaseConfig = {
-        apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
-        authDomain: "rsienterprise.firebaseapp.com",
-        projectId: "rsienterprise",
-        storageBucket: "rsienterprise.appspot.com",
-        messagingSenderId: "1063117165770",
-        appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
-    };
+    apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
+    authDomain: "rsienterprise.firebaseapp.com",
+    projectId: "rsienterprise",
+    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
+    storageBucket: "rsienterprise.appspot.com",
+    messagingSenderId: "1063117165770",
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
+    measurementId: "G-38F2DBG9HE"
+};
 
     // Inicializar Firebase si no está inicializado
     if (typeof firebase === 'undefined') {
