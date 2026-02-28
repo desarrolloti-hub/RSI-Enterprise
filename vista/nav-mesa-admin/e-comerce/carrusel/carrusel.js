@@ -178,6 +178,11 @@ function displayCarousels() {
               ).join('')
             : '<i class="fas fa-images"></i>';
 
+        // Escapar el JSON de imágenes correctamente para pasarlo a la función
+        const imagenesJSON = JSON.stringify(carousel.imagenes || [])
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'");
+
         return `
             <div class="carousel-card">
                 <div class="carousel-preview">
@@ -198,10 +203,10 @@ function displayCarousels() {
                         <span><i class="fas fa-calendar"></i> ${formatDate(carousel.fechaCreacion)}</span>
                     </div>
                     <div class="carousel-actions">
-                        <button class="action-btn btn-view" onclick="viewCarousel('${carousel.id}', '${carousel.titulo.replace(/'/g, "\\'")}', ${JSON.stringify(carousel.imagenes || []).replace(/'/g, "\\'")})">
+                        <button class="action-btn btn-view" onclick='viewCarousel("${carousel.id}", "${carousel.titulo.replace(/"/g, '&quot;')}", ${imagenesJSON})'>
                             <i class="fas fa-eye"></i> Ver
                         </button>
-                        <button class="action-btn btn-delete" onclick="deleteCarousel('${carousel.id}', '${carousel.titulo.replace(/'/g, "\\'")}')">
+                        <button class="action-btn btn-delete" onclick='deleteCarousel("${carousel.id}", "${carousel.titulo.replace(/"/g, '&quot;')}")'>
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
                     </div>
@@ -232,15 +237,18 @@ function updatePagination() {
     pageInfo.textContent = `Página ${appState.currentPage} de ${totalPages}`;
 }
 
-// Hacer viewCarousel global
+// Hacer viewCarousel global - CORREGIDO
 window.viewCarousel = function(carouselId, carouselTitle, imagenes) {
     const modal = document.getElementById('carouselModal');
     const modalTitle = document.getElementById('modalTitle');
     
     modalTitle.textContent = carouselTitle;
     
+    // Asegurarse de que imagenes sea un array
+    const imagenesArray = Array.isArray(imagenes) ? imagenes : [];
+    
     // Crear el carrusel en el modal
-    createModalCarousel(imagenes);
+    createModalCarousel(imagenesArray);
     
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -355,7 +363,7 @@ window.deleteCarousel = async function(carouselId, carouselTitle) {
                 const deletePromises = carouselData.imagenes.map(async (img) => {
                     if (img.path) {
                         try {
-                            const fileRef = storage.refFromURL(img.url);
+                            const fileRef = storage.ref().child(img.path);
                             await fileRef.delete();
                         } catch (error) {
                             console.error('Error al eliminar imagen:', error);

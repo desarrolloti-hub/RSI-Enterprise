@@ -1,4 +1,4 @@
-// carrusel.js - Versión flexible con imágenes grandes
+// Carrusel_Principal.js - Carrusel principal con imágenes de Firebase Storage v9
 (function() {
     // Inyectar el HTML del carrusel
     const carruselHTML = /*html*/ `
@@ -219,94 +219,168 @@
 
     // Funcionalidad del carrusel
     document.addEventListener('DOMContentLoaded', function() {
+        // Verificar que Firebase esté disponible
+        if (typeof firebase === 'undefined') {
+            console.error('Firebase no está cargado');
+            document.getElementById('mainLoading').innerHTML = `
+                <div class="alert alert-danger">
+                    Error: Firebase no está disponible
+                </div>
+            `;
+            return;
+        }
+
         // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
             authDomain: "rsienterprise.firebaseapp.com",
             projectId: "rsienterprise",
-            storageBucket: "rsienterprise.appspot.com",
+            storageBucket: "rsienterprise.firebasestorage.app",
             messagingSenderId: "1063117165770",
             appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
         };
         
+        // Inicializar Firebase si no está inicializado
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         
+        // Obtener referencias a los servicios
         const db = firebase.firestore();
+        // Para Firebase v8, storage está en firebase.storage()
+        const storage = firebase.storage && firebase.storage();
         
-        function loadCarousel() {
+        if (!storage) {
+            console.error('Firebase Storage no está disponible');
+            document.getElementById('mainLoading').innerHTML = `
+                <div class="alert alert-danger">
+                    Error: Firebase Storage no está disponible
+                </div>
+            `;
+            return;
+        }
+        
+        async function loadCarousel() {
             const container = document.getElementById('mainCarousel');
             const loadingElement = document.getElementById('mainLoading');
             
-            db.collection("carousels").doc("carrusel-principal").get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        renderCarousel(container, doc.data());
+            try {
+                console.log('Buscando carrusel "Carrusel_Principal"...');
+                
+                // Buscar específicamente el carrusel con nombre "Carrusel_Principal"
+                // Primero intentamos buscarlo por el nombre del documento
+                let carouselDoc = await db.collection("carruseles").doc("Carrusel_Principal").get();
+                
+                // Si no existe con ese ID, buscamos por el campo título
+                if (!carouselDoc.exists) {
+                    console.log('No se encontró por ID, buscando por título...');
+                    const querySnapshot = await db.collection("carruseles")
+                        .where("titulo", "==", "Carrusel_Principal")
+                        .get();
+                    
+                    if (!querySnapshot.empty) {
+                        carouselDoc = querySnapshot.docs[0];
+                        console.log('Carrusel encontrado por título');
                     } else {
-                        container.innerHTML = `
-                            <div class="alert alert-warning text-center py-5">
-                                No se encontró el carrusel en la base de datos
-                            </div>
-                        `;
+                        throw new Error("No se encontró el carrusel 'Carrusel_Principal'");
                     }
-                })
-                .catch((error) => {
-                    container.innerHTML = `
-                        <div class="alert alert-danger text-center py-5">
-                            Error al cargar el carrusel: ${error.message}
-                        </div>
-                    `;
-                })
-                .finally(() => {
-                    loadingElement.style.display = 'none';
-                });
+                } else {
+                    console.log('Carrusel encontrado por ID');
+                }
+                
+                if (carouselDoc && carouselDoc.exists) {
+                    const carouselData = carouselDoc.data();
+                    console.log('Datos del carrusel:', carouselData);
+                    await renderCarousel(container, carouselData);
+                }
+            } catch (error) {
+                console.error("Error al cargar el carrusel:", error);
+                container.innerHTML = `
+                    <div class="alert alert-danger text-center py-5">
+                        Error al cargar el carrusel: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingElement.style.display = 'none';
+            }
         }
         
-        function renderCarousel(container, carouselData) {
+        async function renderCarousel(container, carouselData) {
+            // Verificar que haya imágenes
+            if (!carouselData.imagenes || carouselData.imagenes.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info text-center py-5">
+                        El carrusel "Carrusel_Principal" no tiene imágenes
+                    </div>
+                `;
+                return;
+            }
+
+            console.log(`Cargando ${carouselData.imagenes.length} imágenes...`);
+
             // Crear elementos del carrusel
             const carouselInner = document.createElement('div');
             carouselInner.className = 'carousel-inner';
             
             // Añadir imágenes
-            carouselData.images.forEach((img, index) => {
+            for (let index = 0; index < carouselData.imagenes.length; index++) {
+                const img = carouselData.imagenes[index];
                 const item = document.createElement('div');
                 item.className = `carousel-item ${index === 0 ? 'active' : ''}`;
                 
                 const imgElement = new Image();
                 imgElement.className = 'carousel-img';
-                imgElement.alt = img.title || `Imagen ${index + 1}`;
-                imgElement.onerror = () => {
-                    imgElement.src = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
-                };
+                imgElement.alt = img.titulo || carouselData.titulo || `Imagen ${index + 1}`;
+                imgElement.loading = index === 0 ? 'eager' : 'lazy';
                 
+                // Usar la URL de Storage directamente
                 try {
-                    imgElement.src = `data:${img.type};base64,${img.base64}`;
+                    if (img.url) {
+                        console.log(`Usando URL directa para imagen ${index + 1}:`, img.url);
+                        imgElement.src = img.url;
+                    } else if (img.path) {
+                        console.log(`Obteniendo URL para path: ${img.path}`);
+                        // Para Firebase v8, usamos storage.ref().child()
+                        const storageRef = storage.ref().child(img.path);
+                        imgElement.src = await storageRef.getDownloadURL();
+                        console.log(`URL obtenida para imagen ${index + 1}`);
+                    } else {
+                        throw new Error('URL no disponible');
+                    }
+                    
+                    // Manejar error de carga de imagen
+                    imgElement.onerror = function() {
+                        console.error(`Error al cargar imagen ${index + 1}`);
+                        this.src = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+                    };
+                    
                 } catch (error) {
+                    console.error('Error al cargar imagen:', error);
                     imgElement.src = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
                 }
                 
                 item.appendChild(imgElement);
                 
-                if (img.title) {
+                // Añadir título si existe
+                if (img.titulo) {
                     const caption = document.createElement('div');
                     caption.className = 'carousel-caption';
                     
                     const title = document.createElement('h5');
-                    title.textContent = img.title;
+                    title.textContent = img.titulo;
                     caption.appendChild(title);
                     
                     item.appendChild(caption);
                 }
                 
                 carouselInner.appendChild(item);
-            });
+            }
             
             container.innerHTML = '';
             container.appendChild(carouselInner);
             
             // Añadir controles si hay más de una imagen
-            if (carouselData.images.length > 1) {
+            if (carouselData.imagenes.length > 1) {
                 // Controles de navegación
                 const prevButton = document.createElement('button');
                 prevButton.className = 'carousel-control-prev';
@@ -330,10 +404,10 @@
                 container.appendChild(nextButton);
                 
                 // Indicadores
-                updateDots(carouselData.images.length);
+                updateDots(carouselData.imagenes.length);
                 
                 // Inicializar carrusel Bootstrap
-                if (typeof bootstrap !== 'undefined') {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Carousel) {
                     const carousel = new bootstrap.Carousel(container, {
                         interval: 5000,
                         wrap: true,
@@ -346,20 +420,34 @@
                             .findIndex(item => item.classList.contains('active'));
                         updateActiveDot(activeIndex);
                     });
+                } else {
+                    console.warn('Bootstrap no está disponible');
+                }
+            } else {
+                // Si solo hay una imagen, ocultar los dots
+                const dotsContainer = document.querySelector('.flexible-carousel-dots');
+                if (dotsContainer) {
+                    dotsContainer.style.display = 'none';
                 }
             }
         }
         
         function updateDots(total) {
             const dotsContainer = document.querySelector('.flexible-carousel-dots');
+            if (!dotsContainer) return;
+            
             dotsContainer.innerHTML = '';
+            dotsContainer.style.display = 'flex';
             
             for (let i = 0; i < total; i++) {
                 const dot = document.createElement('div');
                 dot.className = `flexible-carousel-dot ${i === 0 ? 'active' : ''}`;
                 dot.addEventListener('click', () => {
-                    const carousel = bootstrap.Carousel.getInstance(document.getElementById('mainCarousel'));
-                    if (carousel) carousel.to(i);
+                    const carouselElement = document.getElementById('mainCarousel');
+                    if (carouselElement && bootstrap && bootstrap.Carousel) {
+                        const carousel = bootstrap.Carousel.getInstance(carouselElement);
+                        if (carousel) carousel.to(i);
+                    }
                 });
                 dotsContainer.appendChild(dot);
             }
