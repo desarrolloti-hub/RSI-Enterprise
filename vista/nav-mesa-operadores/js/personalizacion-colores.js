@@ -8,11 +8,9 @@
     apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
     authDomain: "rsienterprise.firebaseapp.com",
     projectId: "rsienterprise",
-    databaseURL: "https://rsienterprise-default-rtdb.firebaseio.com",
-    storageBucket: "rsienterprise.appspot.com",
+    storageBucket: "rsienterprise.firebasestorage.app",
     messagingSenderId: "1063117165770",
-    appId: "1:1063117165770:web:8555f26b25ae80bc42d033",
-    measurementId: "G-38F2DBG9HE"
+    appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
 };
 
     // Inicializar Firebase si no está inicializado
@@ -228,10 +226,10 @@ if (backgroundImage && backgroundImage.startsWith('data:image/')) {
             }
             
             /* Barras de progreso */
-            .progress-bar,
+            /* en caso de nesesitar quitar comentario .progress-bar,
             .bar-fill {
-                background-color: var(--primary-color) !important;
-            }
+                background-color: var(--primary-color) ;
+            }*/
             
             /* Bordes y separadores */
             .border-primary,
@@ -239,12 +237,15 @@ if (backgroundImage && backgroundImage.startsWith('data:image/')) {
                 border-color: var(--primary-color) !important;
             }
             
-            /* Estados de elementos */
-            .active,
+              
+            /* Estados de elementos */ 
+            /* en caso de necesitar quitar el comentario  background-color: var(--secondary-color) !important; */
+            /* .active,
             .selected {
-                background-color: var(--primary-color) !important;
+           
                 color: white !important;
-            }
+            } */ 
+            
             
             /* Mensajes y alertas */
             .alert-info,
