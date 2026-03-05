@@ -113,8 +113,6 @@ const DOM = {
 const AppState = {
     userData: null,
     lastCheckedTicketId: null,
-    ticketCheckInterval: null,
-    notificationCheckInterval: 10000,
     allTickets: [],
     unsubscribe: null,
     isModalOpen: false,
@@ -275,61 +273,6 @@ const Utils = {
             case 'media': return 'priority-medium';
             case 'baja': return 'priority-low';
             default: return 'priority-medium';
-        }
-    },
-    
-    async showNotification(title, body, ticketId) {
-        try {
-            if (!('Notification' in window)) {
-                console.log("Notificaciones no soportadas");
-                return false;
-            }
-
-            const permission = await Notification.requestPermission();
-            
-            if (permission === 'granted') {
-                if ('serviceWorker' in navigator) {
-                    try {
-                        const registration = await navigator.serviceWorker.ready;
-                        
-                        await registration.showNotification(title, {
-                            body: body,
-                            icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png',
-                            badge: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png',
-                            data: { 
-                                url: `https://rsienterprise.web.app/?ticketId=${ticketId}`,
-                                ticketId: ticketId
-                            },
-                            vibrate: [200, 100, 200],
-                            actions: [
-                                { 
-                                    action: 'view', 
-                                    title: 'Ver Ticket',
-                                    icon: 'https://rsienterprise.web.app/vista/css/img/icon-eye.png'
-                                }
-                            ]
-                        });
-                        return true;
-                    } catch (error) {
-                        console.error("Error con Service Worker:", error);
-                        new Notification(title, {
-                            body: body,
-                            icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png'
-                        });
-                        return true;
-                    }
-                } else {
-                    new Notification(title, {
-                        body: body,
-                        icon: 'https://rsienterprise.web.app/vista/css/img/logocon%20fondo.png'
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (error) {
-            console.error("Error mostrando notificación:", error);
-            return false;
         }
     }
 };
@@ -1345,66 +1288,11 @@ const TicketsController = {
         }
     },
     
-    async checkForNewTickets() {
-        try {
-            if (!AppState.userData || !AppState.userData.nombreCompleto) return false;
-            
-            const ticketsRef = collection(db, 'ticketsmesa');
-            const q = query(
-                ticketsRef,
-                where("responsableNombre", "==", AppState.userData.nombreCompleto),
-                where("notificacion", "==", false),
-                orderBy("fechaCreacion", "desc"),
-                limit(1)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-                const latestTicket = querySnapshot.docs[0];
-                const ticketId = latestTicket.id;
-                const ticketRef = doc(db, 'ticketsmesa', ticketId);
-                const ticketData = latestTicket.data();
-                
-                // Solo mostrar notificación si no hay modales abiertos
-                if (!AppState.isModalOpen) {
-                    const notificationShown = await Utils.showNotification(
-                        'Nuevo Ticket Asignado - RSI',
-                        `Tienes un nuevo ticket: "${ticketData.titulo || 'Nuevo ticket sin título'}"`,
-                        ticketId
-                    );
-                    
-                    if (notificationShown) {
-                        await updateDoc(ticketRef, {
-                            notificacion: true
-                        });
-                        
-                        AppState.lastCheckedTicketId = ticketId;
-                        
-                        console.log(`✅ TICKET NUEVO DETECTADO: ID: ${ticketId.substring(0, 8)}, Título: "${ticketData.titulo}"`);
-                        
-                        return true;
-                    }
-                }
-            }
-            return false;
-        } catch (error) {
-            console.error("Error verificando nuevos tickets:", error);
-            return false;
-        }
-    },
-    
     cleanupListeners() {
         // Limpiar todos los listeners de Firebase
         if (AppState.unsubscribe && typeof AppState.unsubscribe === 'function') {
             AppState.unsubscribe();
             AppState.unsubscribe = null;
-        }
-        
-        // Limpiar intervalos
-        if (AppState.ticketCheckInterval) {
-            clearInterval(AppState.ticketCheckInterval);
-            AppState.ticketCheckInterval = null;
         }
         
         // Limpiar listeners del DOM
@@ -1444,17 +1332,6 @@ const TicketsController = {
         });
 
         console.log("✅ Listener de tickets en tiempo real configurado.");
-    },
-    
-    setupTicketCheckInterval() {
-        // Limpiar intervalo anterior
-        if (AppState.ticketCheckInterval) {
-            clearInterval(AppState.ticketCheckInterval);
-        }
-        
-        AppState.ticketCheckInterval = setInterval(async () => {
-            await this.checkForNewTickets();
-        }, AppState.notificationCheckInterval);
     }
 };
 
@@ -1466,7 +1343,6 @@ async function initializeAppLogic() {
             console.log('👤 Usuario autenticado detectado:', user.email);
             await TicketsController.loadUserTickets();
             TicketsController.setupRealtimeListener();
-            TicketsController.setupTicketCheckInterval();
         } else {
             console.log('🚫 No hay usuario autenticado. Redirigiendo...');
             
@@ -1513,21 +1389,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.TicketsController = TicketsController;
     window.Utils = Utils;
     window.ticketManager = ticketManager;
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registrado:', registration.scope);
-                    navigator.serviceWorker.addEventListener('message', event => {
-                        if (event.data && event.data.action === 'view') {
-                            TicketsController.showTicketDetails(event.data.ticketId);
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.log('Error al registrar ServiceWorker:', error);
-                });
-        });
-    }
 });

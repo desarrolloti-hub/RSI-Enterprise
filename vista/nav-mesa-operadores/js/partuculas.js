@@ -1,10 +1,10 @@
-/* * Archivo: sanvalentin.js
- * Función: Crea un efecto de corazones cayendo usando Canvas.
+/* * Archivo: primavera_pequena.js
+ * Función: Crea un efecto de flores y girasoles pequeños cayendo usando Canvas.
  */
 
 (function() {
     const canvas = document.createElement('canvas');
-    canvas.id = 'loveCanvas';
+    canvas.id = 'flowerCanvas';
     
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
@@ -15,8 +15,9 @@
 
     const ctx = canvas.getContext('2d');
     let W, H;
-    let hearts = []; 
-    let maxHearts = 50; // Menos cantidad que la nieve suele verse mejor para corazones
+    let flowers = []; 
+    // Ajustado ligeramente la cantidad para compensar el tamaño menor
+    let maxFlowers = 45; 
 
     function setSize() {
         W = window.innerWidth;
@@ -28,38 +29,86 @@
     window.addEventListener('resize', setSize);
     setSize();
 
-    function initHearts() {
-        const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#ffb3c1', '#c9184a'];
-        for (let i = 0; i < maxHearts; i++) {
-            hearts.push({
+    function initFlowers() {
+        // Colores para flores variadas y el amarillo clásico del girasol
+        const colors = ['#ff85a1', '#fbb1bd', '#f7cad0', '#ffb703', '#fb8500'];
+        for (let i = 0; i < maxFlowers; i++) {
+            // REDUCCIÓN DE TAMAÑO: El rango de tamaño ahora es menor
+            const sizeBase = Math.random() * 4 + 3; // Rango de 3 a 7 píxeles de base
+            flowers.push({
                 x: Math.random() * W,
                 y: Math.random() * H,
-                size: Math.random() * 10 + 5, // Un poco más grandes que la nieve
-                d: Math.random() * 0.5 + 0.5,
+                size: sizeBase, 
+                d: Math.random() * 0.4 + 0.3, // Velocidad de caída un poco más lenta para objetos más ligeros
                 color: colors[Math.floor(Math.random() * colors.length)],
-                oscilation: Math.random() * 0.02 // Variación individual
+                type: Math.random() > 0.5 ? 'sunflower' : 'flower', // 50% probabilidad de cada una
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.04 // Rotación ligeramente más suave
             });
         }
     }
 
-    // Función especial para dibujar un corazón
-    function drawHeart(x, y, size, color) {
+    // Dibuja una flor simple
+    function drawFlower(x, y, size, color) {
         ctx.fillStyle = color;
+        // REDUCCIÓN DE TAMAÑO: El factor multiplicador es menor
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(
+                x + Math.cos(i * Math.PI * 2 / 5) * (size * 0.9), // Ajuste de distancia del pétalo
+                y + Math.sin(i * Math.PI * 2 / 5) * (size * 0.9), // Ajuste de distancia del pétalo
+                size * 0.8, // Pétalos un poco más pequeños
+                0, Math.PI * 2
+            );
+            ctx.fill();
+        }
+        ctx.fillStyle = '#fff'; // Centro blanco
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.bezierCurveTo(x, y - 3 * size / 4, x - size, y - 3 * size / 4, x - size, y);
-        ctx.bezierCurveTo(x - size, y + size / 2, x, y + size, x, y + 1.5 * size);
-        ctx.bezierCurveTo(x, y + size, x + size, y + size / 2, x + size, y);
-        ctx.bezierCurveTo(x + size, y - 3 * size / 4, x, y - 3 * size / 4, x, y);
+        ctx.arc(x, y, size * 0.4, 0, Math.PI * 2); // Centro más pequeño
+        ctx.fill();
+    }
+
+    // Dibuja un girasol
+    function drawSunflower(x, y, size) {
+        // Pétalos amarillos
+        ctx.fillStyle = '#ffcc00';
+        for (let i = 0; i < 8; i++) {
+            ctx.beginPath();
+            // REDUCCIÓN DE TAMAÑO: Escala reducida en elipses y posición
+            ctx.ellipse(
+                x + Math.cos(i * Math.PI / 4) * size, // Distancia
+                y + Math.sin(i * Math.PI / 4) * size, // Distancia
+                size * 1.0, // Tamaño elipse
+                size / 2.5, // Tamaño elipse
+                i * Math.PI / 4, 
+                0, Math.PI * 2
+            );
+            ctx.fill();
+        }
+        // Centro marrón
+        ctx.fillStyle = '#6b4226';
+        ctx.beginPath();
+        // REDUCCIÓN DE TAMAÑO: Centro proporcional al nuevo tamaño
+        ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
         ctx.fill();
     }
 
     function draw() {
         ctx.clearRect(0, 0, W, H); 
         
-        for (let i = 0; i < maxHearts; i++) {
-            const h = hearts[i];
-            drawHeart(h.x, h.y, h.size, h.color);
+        for (let i = 0; i < maxFlowers; i++) {
+            const f = flowers[i];
+            ctx.save();
+            ctx.translate(f.x, f.y);
+            ctx.rotate(f.rotation); 
+            
+            if (f.type === 'sunflower') {
+                drawSunflower(0, 0, f.size);
+            } else {
+                drawFlower(0, 0, f.size, f.color);
+            }
+            
+            ctx.restore();
         }
         update();
     }
@@ -68,21 +117,20 @@
     function update() {
         angle += 0.01;
 
-        for (let i = 0; i < maxHearts; i++) {
-            const h = hearts[i];
+        for (let i = 0; i < maxFlowers; i++) {
+            const f = flowers[i];
             
-            // Caída más suave
-            h.y += h.d * 1.5;
-            // Movimiento de lado a lado (como si flotaran)
-            h.x += Math.sin(angle + h.oscilation) * 1;
+            f.y += f.d * 1.1; // Caída ligeramente más rápida para flores pequeñas
+            f.x += Math.sin(angle) * 0.4; // Movimiento lateral más sutil
+            f.rotation += f.rotationSpeed; 
 
-            if (h.y > H + 20) {
-                hearts[i].y = -20;
-                hearts[i].x = Math.random() * W;
+            if (f.y > H + 30) {
+                flowers[i].y = -30;
+                flowers[i].x = Math.random() * W;
             }
 
-            if (h.x > W) h.x = 0;
-            else if (h.x < 0) h.x = W;
+            if (f.x > W + 15) f.x = -15;
+            else if (f.x < -15) f.x = W + 15;
         }
     }
 
@@ -91,6 +139,6 @@
         requestAnimationFrame(loop);
     }
 
-    initHearts();
+    initFlowers();
     loop();
 })();
