@@ -920,6 +920,9 @@
                         <a href="/vista/nav-mesa-admin/multas/multas.html" class="menu-nav-btn">
                             <i class="fas fa-file-alt"></i> Multas e imprevistos
                         </a>
+                        <a href="/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html" class="menu-nav-btn">
+                            <i class="fas fa-map-marked-alt"></i> Áreas
+                        </a>
                     </div>
                 </div>
 
@@ -955,9 +958,6 @@
                 <div class="menu-nav-section-content" id="section-ecommerce">
                     
                 
-                <a href="/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html" class="menu-nav-btn">
-                    <i class="fas fa-map-marked-alt"></i> Áreas
-                </a>
 
                 <a href="/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html" class="menu-nav-btn">
                     <i class="fas fa-images"></i> Carrusel
