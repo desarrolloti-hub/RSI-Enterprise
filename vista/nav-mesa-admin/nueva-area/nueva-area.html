@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Enterprise - Nueva Área</title>
+    
+    <!-- Estilos externos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="nueva-area.css">
+    
+</head>
+<body>
+    <!-- El menú lateral será cargado dinámicamente -->
+    
+    <div class="main-c">
+        <div class="header">
+            <div class="header-title-container">
+                <h2 class="title" style="color:#fff !important;">Gestión de Áreas</h2>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div class="form-title">
+                <i class="fas fa-building"></i>
+                <span id="formTitle">Nueva Área</span>
+            </div>
+
+            <form id="areaForm">
+                <div class="form-group">
+                    <label for="areaNombre">Nombre del Área *</label>
+                    <input type="text" id="areaNombre" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="areaDescripcion">Descripción</label>
+                    <textarea id="areaDescripcion" class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="subareas-section">
+                    <div class="subareas-header">
+                        <h3>Subáreas</h3>
+                        <button type="button" class="btn-success" id="btnMostrarAgregarSubarea">
+                            <i class="fas fa-plus"></i>
+                            Agregar Subárea
+                        </button>
+                    </div>
+
+                    <div class="subareas-list" id="subareasList">
+                        <!-- Las subáreas se cargarán aquí dinámicamente -->
+                        <div class="no-subareas">No hay subáreas agregadas</div>
+                    </div>
+
+                    <div class="add-subarea-form" id="addSubareaForm">
+                        <h4>Nueva Subárea</h4>
+                        <div class="form-group">
+                            <label for="subareaNombre">Nombre de la Subárea *</label>
+                            <input type="text" id="subareaNombre" class="form-control" placeholder="Ej: Recursos Humanos">
+                        </div>
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button type="button" class="btn-secondary" id="btnCancelarSubarea">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn-primary" id="btnGuardarSubarea">
+                                Guardar Subárea
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html'">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary" id="btnGuardarArea">
+                        <i class="fas fa-save"></i>
+                        Guardar Área
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SDKs de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+
+    <!-- Scripts de funcionalidad -->
+    <script src="/vista/js/personalizacion-colores.js"></script>
+    <script src="/vista/js/navegacion-admin.js"></script>
+    <script src="nueva-area.js"></script>
+    
+    <!-- Scripts de navegación -->
+    <script src="/vista/nav-mesa-admin/js/guardar-ultima-pagina.js"></script>
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+</body>
+</html>

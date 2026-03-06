@@ -1,0 +1,665 @@
+/* ESTILOS ESPECÍFICOS PARA NUEVA ÁREA */
+/* TOTALMENTE COHERENTE CON gestion-areas.css */
+
+/* Breadcrumb - mismo estilo que los badges */
+.breadcrumb {
+    margin-bottom: 24px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 0.95rem;
+    box-shadow: var(--card-shadow);
+}
+
+.breadcrumb a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    opacity: 0.9;
+}
+
+.breadcrumb a:hover {
+    opacity: 1;
+    transform: translateX(-3px);
+}
+
+.breadcrumb i {
+    font-size: 0.9rem;
+}
+
+.breadcrumb span {
+    font-weight: 500;
+}
+
+/* Contenedor principal - mismo estilo que table-container */
+.form-container {
+    max-width: 900px;
+    margin: 0 auto 30px;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Título del formulario - mismo estilo que .header .title */
+.form-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(108, 67, 224, 0.2);
+}
+
+.form-title i {
+    color: var(--primary-color);
+    font-size: 2rem;
+}
+
+/* Grupos de formulario */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.form-group label i {
+    color: var(--primary-color);
+    margin-right: 8px;
+}
+
+/* Inputs - exactamente igual que .filter-container input pero adaptado */
+.form-group .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.form-group .form-control:hover {
+    border-color: var(--primary-color);
+}
+
+.form-group .form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.2);
+}
+
+.form-group textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Sección de subáreas */
+.subareas-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed rgba(108, 67, 224, 0.2);
+}
+
+.subareas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.subareas-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subareas-header h3 i {
+    color: var(--primary-color);
+}
+
+/* Lista de subáreas - mismo estilo que .table-container */
+.subareas-list {
+    background: var(--background-color);
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 120px;
+    border: 1px solid var(--border-color);
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+/* Items de subárea - mismo estilo que las filas de tabla */
+.subarea-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.subarea-item:hover {
+    background: rgba(108, 67, 224, 0.05);
+    border-color: var(--primary-color);
+}
+
+.subarea-item:last-child {
+    margin-bottom: 0;
+}
+
+.subarea-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.subarea-icon {
+    color: var(--primary-color);
+    font-size: 0.8rem;
+}
+
+.subarea-name {
+    font-weight: 500;
+    color: var(--text-color);
+    word-break: break-word;
+}
+
+/* Botones de acción para subáreas - exactamente igual que .action-btn */
+.subarea-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.subarea-btn {
+    background: none;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.subarea-btn.edit {
+    color: var(--warning-color);
+}
+
+.subarea-btn.edit:hover {
+    background: var(--warning-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.subarea-btn.delete {
+    color: var(--danger-color);
+}
+
+.subarea-btn.delete:hover {
+    background: var(--danger-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Formulario para agregar subárea - mismo estilo que .filter-container */
+.add-subarea-form {
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(108, 67, 224, 0.05) 0%, rgba(139, 95, 235, 0.05) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    display: none;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.add-subarea-form.show {
+    display: block;
+}
+
+.add-subarea-form h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-subarea-form h4 i {
+    color: var(--primary-color);
+}
+
+/* Mensaje cuando no hay subáreas - mismo estilo que .empty-state */
+.no-subareas {
+    text-align: center;
+    color: var(--text-color);
+    font-style: italic;
+    padding: 30px 20px;
+    background: rgba(108, 67, 224, 0.02);
+    border-radius: 8px;
+    opacity: 0.8;
+}
+
+.no-subareas i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    opacity: 0.5;
+}
+
+/* Acciones del formulario principal - mismo estilo que .buttons-row */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(108, 67, 224, 0.2);
+    justify-content: flex-end;
+}
+
+.form-actions .btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    min-width: 140px;
+    justify-content: center;
+}
+
+/* Botón secundario - mismo estilo que .btn pero con color neutral */
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+    border: 2px solid #95a5a6;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+    border-color: #7f8c8d;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Texto de ayuda */
+.help-text {
+    font-size: 0.8rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.help-text i {
+    color: var(--primary-color);
+}
+
+/* Indicador de campo requerido */
+.required::after {
+    content: '*';
+    color: var(--danger-color);
+    margin-left: 4px;
+}
+
+/* RESPONSIVE - EXACTAMENTE IGUAL QUE EN gestion-areas.css */
+@media (max-width: 768px) {
+    .form-container {
+        margin: 20px 15px;
+        padding: 25px;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+    }
+
+    .form-title i {
+        font-size: 1.8rem;
+    }
+
+    .breadcrumb {
+        margin: 15px;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+
+    .subareas-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .subareas-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .subarea-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .subarea-info {
+        width: 100%;
+    }
+
+    .subarea-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .subarea-btn {
+        padding: 6px 12px;
+    }
+
+    .subarea-btn span {
+        display: inline;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-container {
+        margin: 15px 10px;
+        padding: 20px;
+    }
+
+    .form-title {
+        font-size: 1.3rem;
+        gap: 8px;
+    }
+
+    .form-title i {
+        font-size: 1.5rem;
+    }
+
+    .breadcrumb {
+        margin: 10px;
+        padding: 10px 15px;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+    }
+
+    .form-group .form-control {
+        padding: 10px 14px;
+        font-size: 0.95rem;
+    }
+
+    .subareas-list {
+        padding: 15px;
+    }
+
+    .subarea-item {
+        padding: 10px;
+    }
+
+    .subarea-name {
+        font-size: 0.95rem;
+    }
+
+    .subarea-btn {
+        padding: 5px 10px;
+        font-size: 0.85rem;
+    }
+
+    .add-subarea-form {
+        padding: 15px;
+    }
+
+    .no-subareas {
+        padding: 20px 15px;
+        font-size: 0.95rem;
+    }
+
+    .no-subareas i {
+        font-size: 1.8rem;
+    }
+
+    .help-text {
+        font-size: 0.75rem;
+    }
+}
+
+/* Animación para el botón de guardar cuando está cargando */
+.btn-primary.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-primary.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Scroll personalizado - igual que en gestión-areas */
+.subareas-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.subareas-list::-webkit-scrollbar-track {
+    background: rgba(108, 67, 224, 0.05);
+    border-radius: 10px;
+}
+
+.subareas-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.subareas-list::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+/* Estilos para el header centrado con línea más grande */
+.header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header-title-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.header .title {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    color: white;
+    margin: 0;
+}
+
+.header-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.buttons-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filters-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    min-width: 300px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.filter-container i {
+    color: white;
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.filter-container input {
+    border: none;
+    background: transparent;
+    color: white;
+    outline: none;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.filter-container input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header {
+        padding: 20px;
+    }
+
+    .header .title {
+        font-size: 1.5rem;
+    }
+
+    .buttons-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .filters-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .filter-container {
+        min-width: 250px;
+        max-width: 100%;
+    }
+
+    .btn {
+        width: 100%;
+        max-width: 250px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 15px;
+    }
+
+    .header .title {
+        font-size: 1.3rem;
+    }
+
+    .filter-container {
+        min-width: auto;
+        padding: 8px 12px;
+    }
+
+    .filter-container input {
+        font-size: 0.9rem;
+    }
+}
+/* Alternativa: usando el color primario del tema */
+.btn-success {
+    background: var(--primary-color, #6C43E0);
+    color: white;
+    border: 2px solid var(--primary-color, #6C43E0);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.btn-success:hover {
+    background: var(--secondary-color, #5a35c7);
+    border-color: var(--secondary-color, #5a35c7);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
