@@ -22,18 +22,18 @@ const storage = firebase.storage();
 const appState = {
     currentUser: null,
     userData: null,
-    selectedFiles: [], // Array para múltiples archivos
-    uploadingFiles: [], // Archivos en proceso de subida
-    isUploading: false
+    selectedFiles: [], // Archivos nuevos seleccionados (aún no subidos)
+    existingImages: [], // Imágenes ya existentes en el carrusel (con url, path, nombre)
+    imagesToDelete: [], // Paths de imágenes existentes que se eliminarán al guardar
+    uploadingFiles: [],
+    isUploading: false,
+    editingId: null // ID del carrusel que se está editando (si existe)
 };
 
 // ==========================================================================
-// FUNCIONES DE ALERTAS PERSONALIZADAS (para evitar errores de dependencias)
+// FUNCIONES DE ALERTAS PERSONALIZADAS
 // ==========================================================================
 
-/**
- * Muestra un mensaje de éxito personalizado
- */
 function showCustomSuccess(title, message) {
     return Swal.fire({
         title: title,
@@ -48,9 +48,6 @@ function showCustomSuccess(title, message) {
     });
 }
 
-/**
- * Muestra un mensaje de confirmación personalizado
- */
 function showCustomConfirm(title, message, confirmText, cancelText) {
     return Swal.fire({
         title: title,
@@ -65,9 +62,6 @@ function showCustomConfirm(title, message, confirmText, cancelText) {
     });
 }
 
-/**
- * Muestra un mensaje de error personalizado
- */
 function showCustomError(title, message) {
     return Swal.fire({
         title: title,
@@ -82,22 +76,18 @@ function showCustomError(title, message) {
 // FUNCIONES PRINCIPALES
 // ==========================================================================
 
-/**
- * Carga inicial de la aplicación
- */
 async function initialLoad() {
     try {
         await loadUserProfile();
+        await checkEditingMode();
         setupEventListeners();
+        updateSubmitButton();
     } catch (error) {
         console.error("Error en la carga inicial:", error);
         showCustomError('Error', 'No se pudieron cargar los datos iniciales.');
     }
 }
 
-/**
- * Carga el perfil del usuario actual
- */
 async function loadUserProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -125,6 +115,80 @@ async function loadUserProfile() {
     } catch (error) {
         console.error("Error al cargar perfil:", error);
     }
+}
+
+/**
+ * Verifica si estamos en modo edición (hay parámetro id en la URL)
+ * y carga los datos del carrusel.
+ */
+async function checkEditingMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const carouselId = urlParams.get('id');
+    
+    if (carouselId) {
+        appState.editingId = carouselId;
+        await loadCarouselData(carouselId);
+    }
+}
+
+/**
+ * Carga los datos de un carrusel existente y los muestra en el formulario.
+ */
+async function loadCarouselData(carouselId) {
+    try {
+        const doc = await db.collection('carruseles').doc(carouselId).get();
+        if (!doc.exists) {
+            showCustomError('Error', 'El carrusel que intentas editar no existe.');
+            setTimeout(() => {
+                window.location.href = 'carrusel.html';
+            }, 2000);
+            return;
+        }
+        
+        const data = doc.data();
+        
+        // Llenar campos del formulario
+        document.getElementById('carruselTitulo').value = data.titulo || '';
+        document.getElementById('carruselDescripcion').value = data.descripcion || '';
+        
+        // Guardar las imágenes existentes
+        appState.existingImages = (data.imagenes || []).map(img => ({
+            url: img.url,
+            path: img.path,
+            nombre: img.nombre,
+            // Añadir un identificador único para cada imagen existente
+            id: `existing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }));
+        
+        // Mostrar las imágenes existentes en la galería
+        renderExistingImages();
+        
+    } catch (error) {
+        console.error('Error al cargar datos del carrusel:', error);
+        showCustomError('Error', 'No se pudo cargar la información del carrusel.');
+    }
+}
+
+/**
+ * Renderiza las imágenes existentes en la galería.
+ */
+function renderExistingImages() {
+    const gallery = document.getElementById('imagesGallery');
+    
+    appState.existingImages.forEach(img => {
+        const previewId = img.id;
+        const previewHTML = `
+            <div class="gallery-item" id="${previewId}">
+                <img src="${img.url}" alt="${img.nombre || 'Imagen'}" style="width:100%; height:100%; object-fit:cover;">
+                <button type="button" class="gallery-item-remove" onclick="removeExistingImage('${previewId}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        gallery.insertAdjacentHTML('beforeend', previewHTML);
+    });
+    
+    updateImagesCounter();
 }
 
 // ==========================================================================
@@ -178,25 +242,20 @@ function handleFiles(files) {
     
     // Validar cada archivo
     const validFiles = filesArray.filter(file => {
-        // Validar que sea una imagen
         if (!file.type.startsWith('image/')) {
             showCustomError('Error', `"${file.name}" no es una imagen válida. Solo se permiten archivos de imagen.`);
             return false;
         }
-
-        // Validar tamaño (5MB máximo por imagen)
         if (file.size > 5 * 1024 * 1024) {
             showCustomError('Error', `"${file.name}" es demasiado grande. El tamaño máximo permitido es 5MB.`);
             return false;
         }
-
         return true;
     });
 
     // Agregar archivos válidos al estado
     validFiles.forEach(file => {
         appState.selectedFiles.push(file);
-        // Crear preview
         createImagePreview(file);
     });
 
@@ -228,7 +287,7 @@ function createImagePreview(file) {
         if (previewElement) {
             previewElement.innerHTML = `
                 <img src="${e.target.result}" alt="${file.name}">
-                <button type="button" class="gallery-item-remove" onclick="removeImage('${previewId}')">
+                <button type="button" class="gallery-item-remove" onclick="removeNewImage('${previewId}')">
                     <i class="fas fa-times"></i>
                 </button>
             `;
@@ -238,45 +297,68 @@ function createImagePreview(file) {
     reader.readAsDataURL(file);
 }
 
-// Hacer removeImage global para que funcione desde el onclick
-window.removeImage = function(previewId) {
+// Eliminar una imagen nueva (aún no subida)
+window.removeNewImage = function(previewId) {
     const previewElement = document.getElementById(previewId);
     if (!previewElement) return;
     
-    // Encontrar el índice del archivo correspondiente
+    // Encontrar el índice en selectedFiles basado en el orden en la galería
     const gallery = document.getElementById('imagesGallery');
-    const index = Array.from(gallery.children).indexOf(previewElement);
+    const allChildren = Array.from(gallery.children);
+    // Las imágenes nuevas tienen id que empieza con 'preview-', las existentes con 'existing-'
+    const newImageElements = allChildren.filter(child => child.id.startsWith('preview-'));
+    const index = newImageElements.findIndex(el => el.id === previewId);
     
     if (index !== -1 && index < appState.selectedFiles.length) {
-        // Eliminar el archivo del array
         appState.selectedFiles.splice(index, 1);
     }
     
-    // Eliminar el elemento del DOM
     previewElement.remove();
-    
     updateSubmitButton();
     updateImagesCounter();
-}
+};
+
+// Eliminar una imagen existente
+window.removeExistingImage = function(imageId) {
+    const imageElement = document.getElementById(imageId);
+    if (!imageElement) return;
+    
+    // Buscar la imagen en existingImages
+    const image = appState.existingImages.find(img => img.id === imageId);
+    if (image) {
+        // Marcar su path para eliminar de Storage al guardar
+        if (image.path) {
+            appState.imagesToDelete.push(image.path);
+        }
+        // Quitar de existingImages
+        appState.existingImages = appState.existingImages.filter(img => img.id !== imageId);
+    }
+    
+    imageElement.remove();
+    updateSubmitButton();
+    updateImagesCounter();
+};
 
 function updateImagesCounter() {
     const counter = document.getElementById('imagesCounter');
-    const count = appState.selectedFiles.length;
+    const totalImages = appState.existingImages.length + appState.selectedFiles.length;
     
-    counter.textContent = `${count} ${count === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}`;
+    counter.textContent = `${totalImages} ${totalImages === 1 ? 'imagen' : 'imágenes'}`;
 }
 
 function updateSubmitButton() {
     const submitBtn = document.getElementById('submitBtn');
     const form = document.getElementById('carruselForm');
     
-    // Verificar que todos los campos estén completos
-    const isFormValid = form.checkValidity() && appState.selectedFiles.length > 0 && !appState.isUploading;
+    const titulo = document.getElementById('carruselTitulo').value.trim();
+    const hasImages = (appState.existingImages.length + appState.selectedFiles.length) > 0;
+    
+    const isFormValid = titulo && hasImages && !appState.isUploading;
     submitBtn.disabled = !isFormValid;
 }
 
 // ==========================================================================
-// MANEJO DEL FORMULARIO
+// MANEJO DEL FORMULARIO (GUARDAR)
 // ==========================================================================
 
 async function handleFormSubmit(e) {
@@ -285,7 +367,7 @@ async function handleFormSubmit(e) {
     const titulo = document.getElementById('carruselTitulo').value.trim();
     const descripcion = document.getElementById('carruselDescripcion').value.trim();
     
-    if (!titulo || appState.selectedFiles.length === 0) {
+    if (!titulo || (appState.existingImages.length + appState.selectedFiles.length) === 0) {
         showCustomError('Error', 'Por favor, completa todos los campos obligatorios.');
         return;
     }
@@ -298,49 +380,79 @@ async function handleFormSubmit(e) {
     try {
         appState.isUploading = true;
         
-        // Mostrar indicador de carga
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo imágenes...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
-        // Subir todas las imágenes a Firebase Storage
-        const uploadPromises = appState.selectedFiles.map(async (file, index) => {
-            const fileName = `${Date.now()}_${index}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-            const fileRef = storage.ref().child(`carruseles/${fileName}`);
-            
-            const snapshot = await fileRef.put(file);
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            
-            return {
-                url: downloadURL,
-                path: snapshot.ref.fullPath,
-                nombre: file.name,
-                orden: index
-            };
-        });
+        // 1. Eliminar de Storage las imágenes marcadas para borrar
+        if (appState.imagesToDelete.length > 0) {
+            const deletePromises = appState.imagesToDelete.map(async (path) => {
+                try {
+                    const fileRef = storage.ref().child(path);
+                    await fileRef.delete();
+                } catch (error) {
+                    console.error('Error al eliminar imagen de Storage:', error);
+                    // Continuamos aunque falle la eliminación (puede que ya no exista)
+                }
+            });
+            await Promise.all(deletePromises);
+        }
 
-        const imagenesSubidas = await Promise.all(uploadPromises);
+        // 2. Subir las nuevas imágenes seleccionadas
+        const newImagesUploaded = [];
+        if (appState.selectedFiles.length > 0) {
+            const uploadPromises = appState.selectedFiles.map(async (file, index) => {
+                const fileName = `${Date.now()}_${index}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const fileRef = storage.ref().child(`carruseles/${fileName}`);
+                
+                const snapshot = await fileRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                
+                return {
+                    url: downloadURL,
+                    path: snapshot.ref.fullPath,
+                    nombre: file.name,
+                    orden: index // se reordenará después
+                };
+            });
 
-        // Ordenar las imágenes por el índice original
-        imagenesSubidas.sort((a, b) => a.orden - b.orden);
+            const uploaded = await Promise.all(uploadPromises);
+            newImagesUploaded.push(...uploaded);
+        }
 
-        // Guardar información en Firestore
-        await db.collection('carruseles').add({
-            titulo: titulo,
-            descripcion: descripcion || '',
-            imagenes: imagenesSubidas.map(img => ({
+        // 3. Construir la lista final de imágenes: las existentes (que no se eliminaron) + las nuevas
+        const imagenesFinales = [
+            ...appState.existingImages.map(img => ({
                 url: img.url,
                 path: img.path,
                 nombre: img.nombre
             })),
-            creadoPor: appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido',
-            creadoPorId: appState.currentUser ? appState.currentUser.id : 'unknown',
-            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-            fechaCreacionLocal: new Date().toLocaleString('es-MX')
-        });
+            ...newImagesUploaded
+        ];
 
-        // Mostrar mensaje de éxito
-        await showCustomSuccess('¡Carrusel guardado!', 'El carrusel se ha guardado correctamente.');
+        // 4. Guardar en Firestore (crear o actualizar)
+        const carouselData = {
+            titulo: titulo,
+            descripcion: descripcion || '',
+            imagenes: imagenesFinales,
+            // Actualizar fecha de modificación (opcional)
+            ultimaModificacion: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (appState.editingId) {
+            // Actualizar carrusel existente
+            await db.collection('carruseles').doc(appState.editingId).update(carouselData);
+            await showCustomSuccess('¡Carrusel actualizado!', 'Los cambios se han guardado correctamente.');
+        } else {
+            // Crear nuevo carrusel
+            carouselData.creadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
+            carouselData.creadoPorId = appState.currentUser ? appState.currentUser.id : 'unknown';
+            carouselData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
+            carouselData.fechaCreacionLocal = new Date().toLocaleString('es-MX');
+            
+            await db.collection('carruseles').add(carouselData);
+            await showCustomSuccess('¡Carrusel guardado!', 'El carrusel se ha guardado correctamente.');
+        }
         
         // Redirigir a la lista de carruseles
         window.location.href = 'carrusel.html';
@@ -350,9 +462,8 @@ async function handleFormSubmit(e) {
         showCustomError('Error', 'No se pudo guardar el carrusel. Por favor, intenta nuevamente.');
     } finally {
         appState.isUploading = false;
-        // Restaurar botón
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = appState.selectedFiles.length === 0;
+        submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Carrusel';
     }
 }
@@ -360,12 +471,13 @@ async function handleFormSubmit(e) {
 function resetForm() {
     document.getElementById('carruselForm').reset();
     appState.selectedFiles = [];
+    appState.existingImages = [];
+    appState.imagesToDelete = [];
     document.getElementById('imagesGallery').innerHTML = '';
     updateImagesCounter();
     updateSubmitButton();
 }
 
-// Hacer cancelForm global para que funcione desde el onclick
 window.cancelForm = function() {
     if (appState.isUploading) {
         showCustomError('Error', 'No se puede cancelar mientras se están subiendo imágenes.');

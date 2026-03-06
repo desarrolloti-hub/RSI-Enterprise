@@ -206,6 +206,9 @@ function displayCarousels() {
                         <button class="action-btn btn-view" onclick='viewCarousel("${carousel.id}", "${carousel.titulo.replace(/"/g, '&quot;')}", ${imagenesJSON})'>
                             <i class="fas fa-eye"></i> Ver
                         </button>
+                        <button class="action-btn btn-edit" onclick='editCarousel("${carousel.id}")'>
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
                         <button class="action-btn btn-delete" onclick='deleteCarousel("${carousel.id}", "${carousel.titulo.replace(/"/g, '&quot;')}")'>
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
@@ -237,7 +240,7 @@ function updatePagination() {
     pageInfo.textContent = `Página ${appState.currentPage} de ${totalPages}`;
 }
 
-// Hacer viewCarousel global - CORREGIDO
+// Hacer viewCarousel global
 window.viewCarousel = function(carouselId, carouselTitle, imagenes) {
     const modal = document.getElementById('carouselModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -253,6 +256,12 @@ window.viewCarousel = function(carouselId, carouselTitle, imagenes) {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
+
+// Función para editar carrusel
+window.editCarousel = function(carouselId) {
+    // Redirigir a la página de creación/edición con el ID como parámetro
+    window.location.href = `nuevo-carrusel.html?id=${carouselId}`;
+};
 
 function createModalCarousel(imagenes) {
     const modalBody = document.querySelector('.modal-body');
