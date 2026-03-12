@@ -1,5 +1,5 @@
 // ============================================
-// VER-TICKET.JS - Con validación automática de abandono
+// VER-TICKET.JS - Con validación automática de abandono y manejo de índices
 // ============================================
 
 // ELEMENTOS DEL DOM
@@ -1350,11 +1350,28 @@ const TicketController = {
             
         } catch (error) {
             console.error("Error cargando historial:", error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'No se pudo cargar el historial de cambios.'
-            });
+            
+            // Manejar específicamente el error de índice faltante
+            if (error.code === 'failed-precondition' && error.message.includes('requires an index')) {
+                // Extraer la URL del mensaje de error si está presente
+                const match = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
+                const indexUrl = match ? match[0] : null;
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Índice necesario',
+                    html: `La consulta requiere un índice. 
+                           ${indexUrl ? `<br><a href="${indexUrl}" target="_blank">Haz clic aquí para crearlo automáticamente</a>` : ''}
+                           <br>Si ya lo creaste, espera unos minutos y vuelve a intentar.`,
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo cargar el historial de cambios.'
+                });
+            }
         }
     }
 };
