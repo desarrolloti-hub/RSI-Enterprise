@@ -1,19 +1,22 @@
-// Carrusel_de_Soluciones.js - Carrusel autónomo para mostrar imágenes de soluciones
+// carrusel-secundario.js - Carrusel de soluciones configurable con Firebase Storage v9 y Swiper
 (function() {
+    // Crear ID único para este carrusel
+    const safeCarouselId = 'Carrusel_Soluciones';
+    
     // Inyectar el HTML del carrusel
     const carruselHTML = /*html*/ `
-    <section class="soluciones-carrusel-section">
+    <section class="soluciones-carrusel-section" data-carousel="soluciones">
         <div class="container">
-            <h2 class="section-title">Nuestras Soluciones</h2>
-            <p class="section-subtitle">Tecnología adaptada a tus necesidades</p>
+            <h2 class="section-title" id="title_${safeCarouselId}">Nuestras Soluciones</h2>
+            <p class="section-subtitle" id="subtitle_${safeCarouselId}">Tecnología adaptada a tus necesidades</p>
             
             <div class="soluciones-carrusel-container">
-                <div class="soluciones-loading" id="solucionesLoading">
+                <div class="soluciones-loading" id="solucionesLoading_${safeCarouselId}">
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
-                <div class="soluciones-error" id="solucionesError"></div>
-                <div id="solucionesCarousel" class="swiper">
-                    <div class="swiper-wrapper" id="solucionesWrapper"></div>
+                <div class="soluciones-error" id="solucionesError_${safeCarouselId}"></div>
+                <div id="solucionesCarousel_${safeCarouselId}" class="swiper">
+                    <div class="swiper-wrapper" id="solucionesWrapper_${safeCarouselId}"></div>
                     <div class="swiper-pagination"></div>
                     <div class="swiper-button-prev"></div>
                     <div class="swiper-button-next"></div>
@@ -36,7 +39,6 @@
     
     .section-title {
         text-align: center;
-
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 1rem;
@@ -74,7 +76,7 @@
         display: none;
     }
     
-    #solucionesCarousel {
+    #solucionesCarousel_${safeCarouselId} {
         display: none;
         width: 100%;
         padding: 20px 0;
@@ -244,7 +246,7 @@
             apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
             authDomain: "rsienterprise.firebaseapp.com",
             projectId: "rsienterprise",
-            storageBucket: "rsienterprise.appspot.com",
+            storageBucket: "rsienterprise.firebasestorage.app",
             messagingSenderId: "1063117165770",
             appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
         };
@@ -258,92 +260,101 @@
         const storage = firebase.storage();
         
         async function loadSolucionesCarousel() {
-            const loadingElement = document.getElementById('solucionesLoading');
-            const errorElement = document.getElementById('solucionesError');
-            const container = document.getElementById('solucionesCarousel');
-            const wrapper = document.getElementById('solucionesWrapper');
+            const loadingElement = document.getElementById(`solucionesLoading_${safeCarouselId}`);
+            const errorElement = document.getElementById(`solucionesError_${safeCarouselId}`);
+            const container = document.getElementById(`solucionesCarousel_${safeCarouselId}`);
+            const wrapper = document.getElementById(`solucionesWrapper_${safeCarouselId}`);
             
             try {
-                console.log('Buscando Carrusel_de_Soluciones...');
+                console.log('Buscando carrusel de soluciones (tipo: "soluciones")...');
                 
-                // Buscar por ID específico
-                let carouselDoc = await db.collection("carruseles").doc("Carrusel_de_Soluciones").get();
+                // Buscar carrusel con tipo "soluciones"
+                const querySnapshot = await db.collection("carruseles")
+                    .where("tipo", "==", "soluciones")
+                    .limit(1)
+                    .get();
                 
-                // Si no existe por ID, buscar por título
-                if (!carouselDoc.exists) {
-                    console.log('Buscando por título...');
-                    const querySnapshot = await db.collection("carruseles")
-                        .where("titulo", "==", "Carrusel_de_Soluciones")
-                        .get();
+                if (!querySnapshot.empty) {
+                    const carouselDoc = querySnapshot.docs[0];
+                    console.log('Carrusel de soluciones encontrado:', carouselDoc.id);
                     
-                    if (!querySnapshot.empty) {
-                        carouselDoc = querySnapshot.docs[0];
-                        console.log('Carrusel encontrado por título');
-                    } else {
-                        throw new Error("No se encontró el carrusel 'Carrusel_de_Soluciones'");
+                    const carouselData = carouselDoc.data();
+                    
+                    // Actualizar título y subtítulo con los datos del carrusel
+                    if (carouselData.titulo) {
+                        document.getElementById(`title_${safeCarouselId}`).textContent = carouselData.titulo;
                     }
-                } else {
-                    console.log('Carrusel encontrado por ID');
-                }
-                
-                const carouselData = carouselDoc.data();
-                
-                if (carouselData.imagenes && carouselData.imagenes.length > 0) {
-                    wrapper.innerHTML = '';
+                    if (carouselData.descripcion) {
+                        document.getElementById(`subtitle_${safeCarouselId}`).textContent = carouselData.descripcion;
+                    }
                     
-                    // Crear slides para cada imagen
-                    for (const imgData of carouselData.imagenes) {
-                        const slide = document.createElement('div');
-                        slide.className = 'swiper-slide';
+                    if (carouselData.imagenes && carouselData.imagenes.length > 0) {
+                        wrapper.innerHTML = '';
                         
-                        const img = document.createElement('img');
-                        
-                        // Manejar diferentes formatos de imagen
-                        try {
-                            if (imgData.url) {
-                                img.src = imgData.url;
-                            } else if (imgData.path) {
-                                // Obtener URL de Storage
-                                const storageRef = storage.ref().child(imgData.path);
-                                img.src = await storageRef.getDownloadURL();
-                            } else if (imgData.base64) {
-                                img.src = `data:${imgData.type || 'image/jpeg'};base64,${imgData.base64}`;
-                            } else {
-                                throw new Error('Formato de imagen no soportado');
+                        // Crear slides para cada imagen
+                        for (const imgData of carouselData.imagenes) {
+                            const slide = document.createElement('div');
+                            slide.className = 'swiper-slide';
+                            
+                            const img = document.createElement('img');
+                            
+                            // Manejar diferentes formatos de imagen
+                            try {
+                                if (imgData.url) {
+                                    img.src = imgData.url;
+                                } else if (imgData.path) {
+                                    // Obtener URL de Storage
+                                    const storageRef = storage.ref().child(imgData.path);
+                                    img.src = await storageRef.getDownloadURL();
+                                } else if (imgData.base64) {
+                                    img.src = `data:${imgData.type || 'image/jpeg'};base64,${imgData.base64}`;
+                                } else {
+                                    throw new Error('Formato de imagen no soportado');
+                                }
+                            } catch (error) {
+                                console.error('Error al cargar imagen:', error);
+                                img.src = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
                             }
-                        } catch (error) {
-                            console.error('Error al cargar imagen:', error);
-                            img.src = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
+                            
+                            img.alt = imgData.titulo || "Imagen de solución";
+                            img.loading = 'lazy';
+                            
+                            const content = document.createElement('div');
+                            content.className = 'swiper-slide-content';
+                            
+                            if (imgData.titulo) {
+                                const title = document.createElement('h3');
+                                title.textContent = imgData.titulo;
+                                content.appendChild(title);
+                            }
+                            
+                            if (imgData.descripcion) {
+                                const desc = document.createElement('p');
+                                desc.textContent = imgData.descripcion;
+                                content.appendChild(desc);
+                            }
+                            
+                            slide.appendChild(img);
+                            slide.appendChild(content);
+                            wrapper.appendChild(slide);
                         }
                         
-                        img.alt = imgData.titulo || "Imagen de solución";
-                        img.loading = 'lazy';
+                        // Inicializar Swiper después de un pequeño delay
+                        setTimeout(() => initSwiper(container), 100);
                         
-                        const content = document.createElement('div');
-                        content.className = 'swiper-slide-content';
-                        
-                        if (imgData.titulo) {
-                            const title = document.createElement('h3');
-                            title.textContent = imgData.titulo;
-                            content.appendChild(title);
-                        }
-                        
-                        if (imgData.descripcion) {
-                            const desc = document.createElement('p');
-                            desc.textContent = imgData.descripcion;
-                            content.appendChild(desc);
-                        }
-                        
-                        slide.appendChild(img);
-                        slide.appendChild(content);
-                        wrapper.appendChild(slide);
+                    } else {
+                        showError(errorElement, 'El carrusel de soluciones no contiene imágenes');
                     }
-                    
-                    // Inicializar Swiper después de un pequeño delay
-                    setTimeout(() => initSwiper(container), 100);
-                    
                 } else {
-                    showError(errorElement, "El carrusel no contiene imágenes");
+                    // No hay carrusel de soluciones configurado
+                    console.log('No hay carrusel de soluciones configurado');
+                    showError(errorElement, 'No hay carrusel de soluciones configurado');
+                    
+                    // Ocultar sección completa si no hay carrusel
+                    const section = document.querySelector('.soluciones-carrusel-section');
+                    if (section) {
+                        section.style.display = 'none';
+                    }
                 }
             } catch (error) {
                 console.error("Error al cargar el carrusel:", error);
@@ -405,7 +416,7 @@
                 },
                 on: {
                     init: function() {
-                        console.log('Swiper inicializado correctamente');
+                        console.log('Swiper para carrusel de soluciones inicializado correctamente');
                     },
                 }
             });
@@ -435,9 +446,9 @@
             };
             swiperScript.onerror = function() {
                 console.error('Error al cargar Swiper');
-                document.getElementById('solucionesError').textContent = 'Error al cargar el carrusel';
-                document.getElementById('solucionesError').style.display = 'flex';
-                document.getElementById('solucionesLoading').style.display = 'none';
+                document.getElementById(`solucionesError_${safeCarouselId}`).textContent = 'Error al cargar el carrusel';
+                document.getElementById(`solucionesError_${safeCarouselId}`).style.display = 'flex';
+                document.getElementById(`solucionesLoading_${safeCarouselId}`).style.display = 'none';
             };
             document.head.appendChild(swiperScript);
         } else {

@@ -458,3 +458,135 @@ textarea.form-control {
         font-size: 1rem;
     }
 }
+/* ==========================================================================
+   SELECTOR DE TIPO PARA CARRUSEL (NUEVO)
+   ========================================================================== */
+
+.tipo-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.tipo-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.tipo-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.tipo-option .tipo-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.tipo-option input[type="radio"]:checked + .tipo-card {
+    border-color: #6C43E0;
+    background: #f0ebff;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(108,67,224,0.2);
+}
+
+.tipo-option .tipo-card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.tipo-option .tipo-card .tipo-titulo {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.tipo-option .tipo-card .tipo-desc {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Colores específicos para cada tipo */
+.tipo-principal i {
+    color: #6C43E0;
+}
+
+.tipo-soluciones i {
+    color: #FF8C42;
+}
+
+.tipo-ninguno i {
+    color: #95A5A6;
+}
+
+/* Hover effects */
+.tipo-option:hover .tipo-card {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-color: #6C43E0;
+}
+
+.tipo-option:hover .tipo-principal i {
+    color: #6C43E0;
+}
+
+.tipo-option:hover .tipo-soluciones i {
+    color: #FF8C42;
+}
+
+.tipo-option:hover .tipo-ninguno i {
+    color: #95A5A6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tipo-selector {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .tipo-option .tipo-card {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        text-align: left;
+        gap: 15px;
+    }
+    
+    .tipo-option .tipo-card i {
+        margin-bottom: 0;
+        font-size: 1.5rem;
+    }
+    
+    .tipo-option .tipo-card .tipo-titulo {
+        margin-bottom: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tipo-option .tipo-card {
+        padding: 12px;
+    }
+    
+    .tipo-option .tipo-card i {
+        font-size: 1.3rem;
+    }
+    
+    .tipo-option .tipo-card .tipo-titulo {
+        font-size: 1rem;
+    }
+    
+    .tipo-option .tipo-card .tipo-desc {
+        font-size: 0.8rem;
+    }
+}

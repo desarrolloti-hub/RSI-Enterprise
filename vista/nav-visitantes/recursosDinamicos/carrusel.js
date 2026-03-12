@@ -1,16 +1,19 @@
-// Carrusel_Principal.js - Carrusel principal con imágenes de Firebase Storage v9
+// carrusel-principal.js - Carrusel principal configurable con Firebase Storage v9
 (function() {
+    // Crear ID único para este carrusel
+    const safeCarouselId = 'Carrusel_Principal';
+    
     // Inyectar el HTML del carrusel
     const carruselHTML = /*html*/ `
-    <div class="flexible-carousel-wrapper">
-        <div id="mainCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div id="mainLoading" class="d-flex justify-content-center align-items-center" style="height: 300px;">
+    <div class="flexible-carousel-wrapper" data-carousel="principal">
+        <div id="mainCarousel_${safeCarouselId}" class="carousel slide" data-bs-ride="carousel">
+            <div id="mainLoading_${safeCarouselId}" class="d-flex justify-content-center align-items-center" style="height: 300px;">
                 <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                     <span class="visually-hidden">Cargando imágenes...</span>
                 </div>
             </div>
         </div>
-        <div class="flexible-carousel-dots mt-3"></div>
+        <div class="flexible-carousel-dots mt-3" id="dots_${safeCarouselId}"></div>
     </div>
     `;
 
@@ -27,7 +30,7 @@
         position: relative;
     }
     
-    #mainCarousel {
+    #mainCarousel_${safeCarouselId} {
         width: 100%;
         height: 65vh;
         min-height: 450px;
@@ -62,7 +65,7 @@
         transition: transform 0.5s ease;
     }
     
-    #mainCarousel:hover .carousel-img {
+    #mainCarousel_${safeCarouselId}:hover .carousel-img {
         transform: scale(1.02);
     }
     
@@ -147,14 +150,14 @@
     }
     
     @media (max-width: 1200px) {
-        #mainCarousel {
+        #mainCarousel_${safeCarouselId} {
             height: 60vh;
             min-height: 400px;
         }
     }
     
     @media (max-width: 992px) {
-        #mainCarousel {
+        #mainCarousel_${safeCarouselId} {
             height: 55vh;
             min-height: 350px;
         }
@@ -170,7 +173,7 @@
     }
     
     @media (max-width: 768px) {
-        #mainCarousel {
+        #mainCarousel_${safeCarouselId} {
             height: 50vh;
             min-height: 300px;
             max-height: 500px;
@@ -194,7 +197,7 @@
     }
     
     @media (max-width: 576px) {
-        #mainCarousel {
+        #mainCarousel_${safeCarouselId} {
             height: 45vh;
             min-height: 250px;
             max-height: 400px;
@@ -222,7 +225,7 @@
         // Verificar que Firebase esté disponible
         if (typeof firebase === 'undefined') {
             console.error('Firebase no está cargado');
-            document.getElementById('mainLoading').innerHTML = `
+            document.getElementById(`mainLoading_${safeCarouselId}`).innerHTML = `
                 <div class="alert alert-danger">
                     Error: Firebase no está disponible
                 </div>
@@ -247,12 +250,11 @@
         
         // Obtener referencias a los servicios
         const db = firebase.firestore();
-        // Para Firebase v8, storage está en firebase.storage()
         const storage = firebase.storage && firebase.storage();
         
         if (!storage) {
             console.error('Firebase Storage no está disponible');
-            document.getElementById('mainLoading').innerHTML = `
+            document.getElementById(`mainLoading_${safeCarouselId}`).innerHTML = `
                 <div class="alert alert-danger">
                     Error: Firebase Storage no está disponible
                 </div>
@@ -261,37 +263,32 @@
         }
         
         async function loadCarousel() {
-            const container = document.getElementById('mainCarousel');
-            const loadingElement = document.getElementById('mainLoading');
+            const container = document.getElementById(`mainCarousel_${safeCarouselId}`);
+            const loadingElement = document.getElementById(`mainLoading_${safeCarouselId}`);
             
             try {
-                console.log('Buscando carrusel "Carrusel_Principal"...');
+                console.log('Buscando carrusel principal (tipo: "principal")...');
                 
-                // Buscar específicamente el carrusel con nombre "Carrusel_Principal"
-                // Primero intentamos buscarlo por el nombre del documento
-                let carouselDoc = await db.collection("carruseles").doc("Carrusel_Principal").get();
+                // Buscar carrusel con tipo "principal"
+                const querySnapshot = await db.collection("carruseles")
+                    .where("tipo", "==", "principal")
+                    .limit(1)
+                    .get();
                 
-                // Si no existe con ese ID, buscamos por el campo título
-                if (!carouselDoc.exists) {
-                    console.log('No se encontró por ID, buscando por título...');
-                    const querySnapshot = await db.collection("carruseles")
-                        .where("titulo", "==", "Carrusel_Principal")
-                        .get();
-                    
-                    if (!querySnapshot.empty) {
-                        carouselDoc = querySnapshot.docs[0];
-                        console.log('Carrusel encontrado por título');
-                    } else {
-                        throw new Error("No se encontró el carrusel 'Carrusel_Principal'");
-                    }
-                } else {
-                    console.log('Carrusel encontrado por ID');
-                }
-                
-                if (carouselDoc && carouselDoc.exists) {
+                if (!querySnapshot.empty) {
+                    const carouselDoc = querySnapshot.docs[0];
+                    console.log('Carrusel principal encontrado:', carouselDoc.id);
                     const carouselData = carouselDoc.data();
                     console.log('Datos del carrusel:', carouselData);
                     await renderCarousel(container, carouselData);
+                } else {
+                    // No hay carrusel principal configurado
+                    console.log('No hay carrusel principal configurado');
+                    container.innerHTML = `
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-info-circle"></i> No hay carrusel principal configurado
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error("Error al cargar el carrusel:", error);
@@ -310,7 +307,7 @@
             if (!carouselData.imagenes || carouselData.imagenes.length === 0) {
                 container.innerHTML = `
                     <div class="alert alert-info text-center py-5">
-                        El carrusel "Carrusel_Principal" no tiene imágenes
+                        El carrusel principal no tiene imágenes
                     </div>
                 `;
                 return;
@@ -340,7 +337,6 @@
                         imgElement.src = img.url;
                     } else if (img.path) {
                         console.log(`Obteniendo URL para path: ${img.path}`);
-                        // Para Firebase v8, usamos storage.ref().child()
                         const storageRef = storage.ref().child(img.path);
                         imgElement.src = await storageRef.getDownloadURL();
                         console.log(`URL obtenida para imagen ${index + 1}`);
@@ -384,7 +380,7 @@
                 // Controles de navegación
                 const prevButton = document.createElement('button');
                 prevButton.className = 'carousel-control-prev';
-                prevButton.setAttribute('data-bs-target', '#mainCarousel');
+                prevButton.setAttribute('data-bs-target', `#mainCarousel_${safeCarouselId}`);
                 prevButton.setAttribute('data-bs-slide', 'prev');
                 prevButton.innerHTML = `
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -393,7 +389,7 @@
                 
                 const nextButton = document.createElement('button');
                 nextButton.className = 'carousel-control-next';
-                nextButton.setAttribute('data-bs-target', '#mainCarousel');
+                nextButton.setAttribute('data-bs-target', `#mainCarousel_${safeCarouselId}`);
                 nextButton.setAttribute('data-bs-slide', 'next');
                 nextButton.innerHTML = `
                     <span class="carousel-control-next-icon" aria-hidden="true"></span>
@@ -425,7 +421,7 @@
                 }
             } else {
                 // Si solo hay una imagen, ocultar los dots
-                const dotsContainer = document.querySelector('.flexible-carousel-dots');
+                const dotsContainer = document.getElementById(`dots_${safeCarouselId}`);
                 if (dotsContainer) {
                     dotsContainer.style.display = 'none';
                 }
@@ -433,7 +429,7 @@
         }
         
         function updateDots(total) {
-            const dotsContainer = document.querySelector('.flexible-carousel-dots');
+            const dotsContainer = document.getElementById(`dots_${safeCarouselId}`);
             if (!dotsContainer) return;
             
             dotsContainer.innerHTML = '';
@@ -443,7 +439,7 @@
                 const dot = document.createElement('div');
                 dot.className = `flexible-carousel-dot ${i === 0 ? 'active' : ''}`;
                 dot.addEventListener('click', () => {
-                    const carouselElement = document.getElementById('mainCarousel');
+                    const carouselElement = document.getElementById(`mainCarousel_${safeCarouselId}`);
                     if (carouselElement && bootstrap && bootstrap.Carousel) {
                         const carousel = bootstrap.Carousel.getInstance(carouselElement);
                         if (carousel) carousel.to(i);
@@ -454,7 +450,7 @@
         }
         
         function updateActiveDot(activeIndex) {
-            const dots = document.querySelectorAll('.flexible-carousel-dot');
+            const dots = document.querySelectorAll(`#dots_${safeCarouselId} .flexible-carousel-dot`);
             dots.forEach((dot, index) => {
                 dot.classList.toggle('active', index === activeIndex);
             });

@@ -17,7 +17,7 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 
 // ==========================================================================
-// FUNCIONES DE ALERTAS PERSONALIZADAS
+// FUNCIONES DE ALERTAS
 // ==========================================================================
 
 function showCustomSuccess(title, message) {
@@ -56,6 +56,35 @@ function showCustomError(title, message) {
         confirmButtonColor: '#6C43E0',
         background: 'rgba(255,255,255,0.95)'
     });
+}
+
+// ==========================================================================
+// FUNCIÓN PARA OBTENER INFORMACIÓN DEL BADGE SEGÚN EL TIPO
+// ==========================================================================
+function getTipoBadgeInfo(tipo) {
+    switch(tipo) {
+        case 'principal':
+            return { 
+                clase: 'badge-principal', 
+                texto: '🏠 Principal', 
+                color: '#6C43E0',
+                icono: 'fa-star'
+            };
+        case 'soluciones':
+            return { 
+                clase: 'badge-soluciones', 
+                texto: '💡 Soluciones', 
+                color: '#FF8C42',
+                icono: 'fa-lightbulb'
+            };
+        default:
+            return { 
+                clase: 'badge-ninguno', 
+                texto: '⚪ No visible', 
+                color: '#95A5A6',
+                icono: 'fa-eye-slash'
+            };
+    }
 }
 
 // ==========================================================================
@@ -178,13 +207,16 @@ function displayCarousels() {
               ).join('')
             : '<i class="fas fa-images"></i>';
 
+        // Obtener información del badge según el tipo
+        const badgeInfo = getTipoBadgeInfo(carousel.tipo || 'ninguno');
+
         // Escapar el JSON de imágenes correctamente para pasarlo a la función
         const imagenesJSON = JSON.stringify(carousel.imagenes || [])
             .replace(/\\/g, '\\\\')
             .replace(/'/g, "\\'");
 
         return `
-            <div class="carousel-card">
+            <div class="carousel-card" data-id="${carousel.id}">
                 <div class="carousel-preview">
                     <div class="preview-images">
                         ${previewImages}
@@ -194,12 +226,17 @@ function displayCarousels() {
                         carousel.imagenes && carousel.imagenes.length > 0 ?
                         `<span class="image-count-badge">${carousel.imagenes.length} ${carousel.imagenes.length === 1 ? 'imagen' : 'imágenes'}</span>` :
                         ''}
+                    
+                    <!-- BADGE DE TIPO (NUEVO) -->
+                    <span class="tipo-badge ${badgeInfo.clase}" style="background: ${badgeInfo.color};">
+                        <i class="fas ${badgeInfo.icono}"></i> ${badgeInfo.texto}
+                    </span>
                 </div>
                 <div class="carousel-info">
                     <h3 class="carousel-title">${carousel.titulo}</h3>
                     ${carousel.descripcion ? `<p class="carousel-description">${carousel.descripcion}</p>` : ''}
                     <div class="carousel-meta">
-                        <span><i class="fas fa-user"></i> ${carousel.creadoPor}</span>
+                        <span><i class="fas fa-user"></i> ${carousel.creadoPor || 'Usuario'}</span>
                         <span><i class="fas fa-calendar"></i> ${formatDate(carousel.fechaCreacion)}</span>
                     </div>
                     <div class="carousel-actions">
@@ -240,6 +277,10 @@ function updatePagination() {
     pageInfo.textContent = `Página ${appState.currentPage} de ${totalPages}`;
 }
 
+// ==========================================================================
+// FUNCIONES DE ACCIONES (View, Edit, Delete)
+// ==========================================================================
+
 // Hacer viewCarousel global
 window.viewCarousel = function(carouselId, carouselTitle, imagenes) {
     const modal = document.getElementById('carouselModal');
@@ -259,7 +300,6 @@ window.viewCarousel = function(carouselId, carouselTitle, imagenes) {
 
 // Función para editar carrusel
 window.editCarousel = function(carouselId) {
-    // Redirigir a la página de creación/edición con el ID como parámetro
     window.location.href = `nuevo-carrusel.html?id=${carouselId}`;
 };
 
@@ -319,12 +359,10 @@ function createModalCarousel(imagenes) {
             currentIndex = index;
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
             
-            // Actualizar indicadores
             indicators.forEach((ind, i) => {
                 ind.classList.toggle('active', i === currentIndex);
             });
             
-            // Actualizar contador
             if (currentSlideSpan) {
                 currentSlideSpan.textContent = currentIndex + 1;
             }
@@ -348,7 +386,7 @@ function createModalCarousel(imagenes) {
     }
 }
 
-// Hacer deleteCarousel global
+// Función para eliminar carrusel
 window.deleteCarousel = async function(carouselId, carouselTitle) {
     try {
         const result = await Swal.fire({
@@ -412,7 +450,11 @@ function formatDate(timestamp) {
     if (!timestamp) return 'Fecha no disponible';
     try {
         if (timestamp.toDate) {
-            return timestamp.toDate().toLocaleDateString('es-MX');
+            return timestamp.toDate().toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         }
         return new Date(timestamp).toLocaleDateString('es-MX');
     } catch (error) {
@@ -421,7 +463,7 @@ function formatDate(timestamp) {
 }
 
 function setupEventListeners() {
-    // Búsqueda
+    // Búsqueda (si existe el input)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {

@@ -23,18 +23,68 @@
 
         <div class="form-container">
             <form id="carruselForm">
+                <!-- Título -->
                 <div class="form-group">
                     <label for="carruselTitulo" class="form-label">Título del Carrusel *</label>
                     <input type="text" id="carruselTitulo" class="form-control" placeholder="Ej: Productos destacados, Equipo de trabajo, etc." required>
                 </div>
 
+                <!-- Descripción -->
                 <div class="form-group">
                     <label for="carruselDescripcion" class="form-label">Descripción (opcional)</label>
                     <textarea id="carruselDescripcion" class="form-control" placeholder="Describe el contenido del carrusel..."></textarea>
                 </div>
 
+                <!-- ===== SELECTOR DE TIPO ===== -->
+                <div class="form-group">
+                    <label class="form-label">¿Dónde quieres mostrar este carrusel? *</label>
+                    
+                    <!-- Contenedor del selector de tipo -->
+                    <div class="tipo-selector">
+                        <!-- Opción Principal -->
+                        <label class="tipo-option">
+                            <input type="radio" name="tipo" value="principal" required>
+                            <div class="tipo-card tipo-principal">
+                                <i class="fas fa-star"></i>
+                                <div class="tipo-titulo">Principal</div>
+                                <div class="tipo-desc">Se muestra en la parte superior de la página</div>
+                            </div>
+                        </label>
+
+                        <!-- Opción Soluciones -->
+                        <label class="tipo-option">
+                            <input type="radio" name="tipo" value="soluciones">
+                            <div class="tipo-card tipo-soluciones">
+                                <i class="fas fa-lightbulb"></i>
+                                <div class="tipo-titulo">Secundario (Soluciones)</div>
+                                <div class="tipo-desc">Se muestra en la sección de soluciones</div>
+                            </div>
+                        </label>
+
+                        <!-- Opción Ninguno -->
+                        <label class="tipo-option">
+                            <input type="radio" name="tipo" value="ninguno">
+                            <div class="tipo-card tipo-ninguno">
+                                <i class="fas fa-eye-slash"></i>
+                                <div class="tipo-titulo">No mostrar</div>
+                                <div class="tipo-desc">Solo visible en el panel de administración</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Nota informativa -->
+                    <small style="color: #666; display: block; margin-top: 8px; font-size: 0.85rem;">
+                        <i class="fas fa-info-circle"></i> 
+                        Solo puede haber UN carrusel principal y UN carrusel de soluciones. 
+                        Si seleccionas uno que ya existe, el anterior pasará a "No visible".
+                    </small>
+                </div>
+
+                <!-- Sección de imágenes -->
                 <div class="form-group">
                     <label class="form-label">Imágenes *</label>
+                    
+                    <!-- Área de subida de archivos -->
                     <div class="file-upload-container" id="fileUploadContainer">
                         <div class="file-upload-icon">
                             <i class="fas fa-images"></i>
@@ -55,12 +105,13 @@
                     <div class="images-counter" id="imagesCounter">0 imágenes seleccionadas</div>
                 </div>
 
+                <!-- Botones de acción -->
                 <div class="buttons-container">
-                    <button type="button" class="btn btn-secondary" onclick="cancelForm()">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='carrusel.html'">
                         <i class="fas fa-times"></i>
                         Cancelar
                     </button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
                         <i class="fas fa-save"></i>
                         Guardar Carrusel
                     </button>
@@ -69,17 +120,18 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="nuevo-carrusel.js"></script>
-    <!-- Scripts compartidos con rutas corregidas -->
-   <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    
+    <!-- Scripts compartidos -->
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
     <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
     <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
     <script src="/vista/nav-mesa-admin/js/guardar-ultima-pagina.js"></script>
-
 </body>
 </html>

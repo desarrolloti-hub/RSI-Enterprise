@@ -22,16 +22,16 @@ const storage = firebase.storage();
 const appState = {
     currentUser: null,
     userData: null,
-    selectedFiles: [], // Archivos nuevos seleccionados (aún no subidos)
-    existingImages: [], // Imágenes ya existentes en el carrusel (con url, path, nombre)
-    imagesToDelete: [], // Paths de imágenes existentes que se eliminarán al guardar
+    selectedFiles: [],
+    existingImages: [],
+    imagesToDelete: [],
     uploadingFiles: [],
     isUploading: false,
-    editingId: null // ID del carrusel que se está editando (si existe)
+    editingId: null
 };
 
 // ==========================================================================
-// FUNCIONES DE ALERTAS PERSONALIZADAS
+// FUNCIONES DE ALERTAS
 // ==========================================================================
 
 function showCustomSuccess(title, message) {
@@ -70,6 +70,57 @@ function showCustomError(title, message) {
         confirmButtonColor: '#6C43E0',
         background: 'rgba(255,255,255,0.95)'
     });
+}
+
+// ==========================================================================
+// FUNCIÓN PARA VERIFICAR Y ACTUALIZAR TIPOS ÚNICOS
+// ==========================================================================
+
+async function checkAndUpdateTipo(tipo, currentCarouselId = null) {
+    // Si es "ninguno", no hay restricciones
+    if (tipo === 'ninguno') return true;
+
+    try {
+        // Buscar carrusel con el mismo tipo
+        const querySnapshot = await db.collection('carruseles')
+            .where('tipo', '==', tipo)
+            .get();
+
+        // Filtrar para excluir el carrusel actual si estamos editando
+        const existingCarousels = querySnapshot.docs.filter(doc => 
+            doc.id !== currentCarouselId
+        );
+
+        if (existingCarousels.length > 0) {
+            const existingCarousel = existingCarousels[0].data();
+            const tipoTexto = tipo === 'principal' ? 'PRINCIPAL' : 'DE SOLUCIONES';
+            
+            // Preguntar al usuario si quiere reemplazar
+            const confirm = await showCustomConfirm(
+                `¿Reemplazar carrusel ${tipoTexto}?`,
+                `Ya existe un carrusel <strong>"${existingCarousel.titulo}"</strong> como ${tipoTexto}.<br><br>` +
+                `Si continúas, ese carrusel pasará a ser "No visible" y este ocupará su lugar.`,
+                'Sí, reemplazar',
+                'Cancelar'
+            );
+
+            if (confirm) {
+                // Actualizar el carrusel existente a "ninguno"
+                await existingCarousels[0].ref.update({
+                    tipo: 'ninguno'
+                });
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error al verificar tipo:', error);
+        showCustomError('Error', 'No se pudo verificar la disponibilidad del tipo seleccionado');
+        return false;
+    }
 }
 
 // ==========================================================================
@@ -117,10 +168,6 @@ async function loadUserProfile() {
     }
 }
 
-/**
- * Verifica si estamos en modo edición (hay parámetro id en la URL)
- * y carga los datos del carrusel.
- */
 async function checkEditingMode() {
     const urlParams = new URLSearchParams(window.location.search);
     const carouselId = urlParams.get('id');
@@ -131,9 +178,6 @@ async function checkEditingMode() {
     }
 }
 
-/**
- * Carga los datos de un carrusel existente y los muestra en el formulario.
- */
 async function loadCarouselData(carouselId) {
     try {
         const doc = await db.collection('carruseles').doc(carouselId).get();
@@ -151,16 +195,25 @@ async function loadCarouselData(carouselId) {
         document.getElementById('carruselTitulo').value = data.titulo || '';
         document.getElementById('carruselDescripcion').value = data.descripcion || '';
         
+        // Seleccionar el tipo (¡NUEVO!)
+        if (data.tipo) {
+            const tipoRadio = document.querySelector(`input[name="tipo"][value="${data.tipo}"]`);
+            if (tipoRadio) tipoRadio.checked = true;
+        } else {
+            // Por defecto, seleccionar "ninguno" si no tiene tipo
+            const tipoRadio = document.querySelector('input[name="tipo"][value="ninguno"]');
+            if (tipoRadio) tipoRadio.checked = true;
+        }
+        
         // Guardar las imágenes existentes
         appState.existingImages = (data.imagenes || []).map(img => ({
             url: img.url,
             path: img.path,
             nombre: img.nombre,
-            // Añadir un identificador único para cada imagen existente
             id: `existing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         }));
         
-        // Mostrar las imágenes existentes en la galería
+        // Mostrar las imágenes existentes
         renderExistingImages();
         
     } catch (error) {
@@ -169,9 +222,6 @@ async function loadCarouselData(carouselId) {
     }
 }
 
-/**
- * Renderiza las imágenes existentes en la galería.
- */
 function renderExistingImages() {
     const gallery = document.getElementById('imagesGallery');
     
@@ -200,15 +250,12 @@ function setupEventListeners() {
     const fileUploadContainer = document.getElementById('fileUploadContainer');
     const form = document.getElementById('carruselForm');
 
-    // Click en el contenedor para abrir el selector de archivos
     fileUploadContainer.addEventListener('click', () => {
         fileInput.click();
     });
 
-    // Cambio en el input de archivo
     fileInput.addEventListener('change', handleFileSelect);
 
-    // Drag and drop
     fileUploadContainer.addEventListener('dragover', (e) => {
         e.preventDefault();
         fileUploadContainer.classList.add('dragover');
@@ -227,7 +274,6 @@ function setupEventListeners() {
         }
     });
 
-    // Envío del formulario
     form.addEventListener('submit', handleFormSubmit);
 }
 
@@ -240,26 +286,23 @@ function handleFileSelect(e) {
 function handleFiles(files) {
     const filesArray = Array.from(files);
     
-    // Validar cada archivo
     const validFiles = filesArray.filter(file => {
         if (!file.type.startsWith('image/')) {
-            showCustomError('Error', `"${file.name}" no es una imagen válida. Solo se permiten archivos de imagen.`);
+            showCustomError('Error', `"${file.name}" no es una imagen válida.`);
             return false;
         }
         if (file.size > 5 * 1024 * 1024) {
-            showCustomError('Error', `"${file.name}" es demasiado grande. El tamaño máximo permitido es 5MB.`);
+            showCustomError('Error', `"${file.name}" es demasiado grande. Máximo 5MB.`);
             return false;
         }
         return true;
     });
 
-    // Agregar archivos válidos al estado
     validFiles.forEach(file => {
         appState.selectedFiles.push(file);
         createImagePreview(file);
     });
 
-    // Limpiar el input para permitir seleccionar los mismos archivos nuevamente
     document.getElementById('fileInput').value = '';
     
     updateSubmitButton();
@@ -297,15 +340,12 @@ function createImagePreview(file) {
     reader.readAsDataURL(file);
 }
 
-// Eliminar una imagen nueva (aún no subida)
 window.removeNewImage = function(previewId) {
     const previewElement = document.getElementById(previewId);
     if (!previewElement) return;
     
-    // Encontrar el índice en selectedFiles basado en el orden en la galería
     const gallery = document.getElementById('imagesGallery');
     const allChildren = Array.from(gallery.children);
-    // Las imágenes nuevas tienen id que empieza con 'preview-', las existentes con 'existing-'
     const newImageElements = allChildren.filter(child => child.id.startsWith('preview-'));
     const index = newImageElements.findIndex(el => el.id === previewId);
     
@@ -318,19 +358,15 @@ window.removeNewImage = function(previewId) {
     updateImagesCounter();
 };
 
-// Eliminar una imagen existente
 window.removeExistingImage = function(imageId) {
     const imageElement = document.getElementById(imageId);
     if (!imageElement) return;
     
-    // Buscar la imagen en existingImages
     const image = appState.existingImages.find(img => img.id === imageId);
     if (image) {
-        // Marcar su path para eliminar de Storage al guardar
         if (image.path) {
             appState.imagesToDelete.push(image.path);
         }
-        // Quitar de existingImages
         appState.existingImages = appState.existingImages.filter(img => img.id !== imageId);
     }
     
@@ -342,18 +378,16 @@ window.removeExistingImage = function(imageId) {
 function updateImagesCounter() {
     const counter = document.getElementById('imagesCounter');
     const totalImages = appState.existingImages.length + appState.selectedFiles.length;
-    
     counter.textContent = `${totalImages} ${totalImages === 1 ? 'imagen' : 'imágenes'}`;
 }
 
 function updateSubmitButton() {
     const submitBtn = document.getElementById('submitBtn');
-    const form = document.getElementById('carruselForm');
-    
     const titulo = document.getElementById('carruselTitulo').value.trim();
+    const tipoSelected = document.querySelector('input[name="tipo"]:checked');
     const hasImages = (appState.existingImages.length + appState.selectedFiles.length) > 0;
     
-    const isFormValid = titulo && hasImages && !appState.isUploading;
+    const isFormValid = titulo && tipoSelected && hasImages && !appState.isUploading;
     submitBtn.disabled = !isFormValid;
 }
 
@@ -367,13 +401,21 @@ async function handleFormSubmit(e) {
     const titulo = document.getElementById('carruselTitulo').value.trim();
     const descripcion = document.getElementById('carruselDescripcion').value.trim();
     
+    // Validar tipo seleccionado (¡NUEVO!)
+    const tipoElement = document.querySelector('input[name="tipo"]:checked');
+    if (!tipoElement) {
+        showCustomError('Error', 'Debes seleccionar dónde mostrar el carrusel.');
+        return;
+    }
+    const tipo = tipoElement.value;
+    
     if (!titulo || (appState.existingImages.length + appState.selectedFiles.length) === 0) {
         showCustomError('Error', 'Por favor, completa todos los campos obligatorios.');
         return;
     }
 
     if (appState.isUploading) {
-        showCustomError('Error', 'Ya hay una subida en progreso. Por favor espera.');
+        showCustomError('Error', 'Ya hay una subida en progreso.');
         return;
     }
 
@@ -384,21 +426,29 @@ async function handleFormSubmit(e) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
-        // 1. Eliminar de Storage las imágenes marcadas para borrar
+        // VERIFICAR TIPO ÚNICO (¡NUEVO!)
+        const canProceed = await checkAndUpdateTipo(tipo, appState.editingId);
+        if (!canProceed) {
+            appState.isUploading = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Carrusel';
+            return;
+        }
+
+        // Eliminar de Storage las imágenes marcadas
         if (appState.imagesToDelete.length > 0) {
             const deletePromises = appState.imagesToDelete.map(async (path) => {
                 try {
                     const fileRef = storage.ref().child(path);
                     await fileRef.delete();
                 } catch (error) {
-                    console.error('Error al eliminar imagen de Storage:', error);
-                    // Continuamos aunque falle la eliminación (puede que ya no exista)
+                    console.error('Error al eliminar imagen:', error);
                 }
             });
             await Promise.all(deletePromises);
         }
 
-        // 2. Subir las nuevas imágenes seleccionadas
+        // Subir nuevas imágenes
         const newImagesUploaded = [];
         if (appState.selectedFiles.length > 0) {
             const uploadPromises = appState.selectedFiles.map(async (file, index) => {
@@ -411,8 +461,7 @@ async function handleFormSubmit(e) {
                 return {
                     url: downloadURL,
                     path: snapshot.ref.fullPath,
-                    nombre: file.name,
-                    orden: index // se reordenará después
+                    nombre: file.name
                 };
             });
 
@@ -420,7 +469,7 @@ async function handleFormSubmit(e) {
             newImagesUploaded.push(...uploaded);
         }
 
-        // 3. Construir la lista final de imágenes: las existentes (que no se eliminaron) + las nuevas
+        // Construir lista final de imágenes
         const imagenesFinales = [
             ...appState.existingImages.map(img => ({
                 url: img.url,
@@ -430,36 +479,32 @@ async function handleFormSubmit(e) {
             ...newImagesUploaded
         ];
 
-        // 4. Guardar en Firestore (crear o actualizar)
+        // Guardar en Firestore (¡CON TIPO!)
         const carouselData = {
             titulo: titulo,
             descripcion: descripcion || '',
+            tipo: tipo, // ¡NUEVO!
             imagenes: imagenesFinales,
-            // Actualizar fecha de modificación (opcional)
             ultimaModificacion: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         if (appState.editingId) {
-            // Actualizar carrusel existente
             await db.collection('carruseles').doc(appState.editingId).update(carouselData);
             await showCustomSuccess('¡Carrusel actualizado!', 'Los cambios se han guardado correctamente.');
         } else {
-            // Crear nuevo carrusel
             carouselData.creadoPor = appState.currentUser ? appState.currentUser.nombre : 'Usuario desconocido';
             carouselData.creadoPorId = appState.currentUser ? appState.currentUser.id : 'unknown';
             carouselData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
-            carouselData.fechaCreacionLocal = new Date().toLocaleString('es-MX');
             
             await db.collection('carruseles').add(carouselData);
             await showCustomSuccess('¡Carrusel guardado!', 'El carrusel se ha guardado correctamente.');
         }
         
-        // Redirigir a la lista de carruseles
         window.location.href = 'carrusel.html';
         
     } catch (error) {
-        console.error('Error al guardar el carrusel:', error);
-        showCustomError('Error', 'No se pudo guardar el carrusel. Por favor, intenta nuevamente.');
+        console.error('Error al guardar:', error);
+        showCustomError('Error', 'No se pudo guardar el carrusel.');
     } finally {
         appState.isUploading = false;
         const submitBtn = document.getElementById('submitBtn');
@@ -480,7 +525,7 @@ function resetForm() {
 
 window.cancelForm = function() {
     if (appState.isUploading) {
-        showCustomError('Error', 'No se puede cancelar mientras se están subiendo imágenes.');
+        showCustomError('Error', 'No se puede cancelar mientras se suben imágenes.');
         return;
     }
 
@@ -501,7 +546,6 @@ window.cancelForm = function() {
 // INICIALIZACIÓN
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Actualizar botón de envío cuando cambien los campos
     document.getElementById('carruselForm').addEventListener('input', updateSubmitButton);
     
     auth.onAuthStateChanged(user => {
