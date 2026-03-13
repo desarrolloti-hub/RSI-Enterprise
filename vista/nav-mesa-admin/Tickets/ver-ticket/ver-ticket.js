@@ -1,5 +1,5 @@
 // ============================================
-// VER-TICKET.JS - Con validación automática de abandono y manejo de índices
+// VER-TICKET.JS - Con validación automática de abandono y manejo de imágenes de localStorage
 // ============================================
 
 // ELEMENTOS DEL DOM
@@ -115,7 +115,7 @@ const Utils = {
         try {
             if (creationTimestamp.toDate) {
                 creationTime = creationTimestamp.toDate().getTime();
-            } else if (timestamp.seconds) {
+            } else if (creationTimestamp.seconds) {
                 creationTime = creationTimestamp.seconds * 1000;
             } else {
                 return { expired: true };
@@ -169,6 +169,7 @@ const Utils = {
                 await ticketRef.update({
                     estado: 'abandono_de_actividades',
                     fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaAbandono: firebase.firestore.FieldValue.serverTimestamp(),
                     motivoAbandono: 'Cambio automático por tiempo de inactividad excedido'
                 });
                 
@@ -195,9 +196,63 @@ const Utils = {
         }
     },
     
+    /**
+     * Carga las imágenes de un colaborador desde localStorage
+     * @param {string} ticketId - ID del ticket
+     * @param {string} colaboradorId - ID del colaborador
+     * @returns {Array} - Array de imágenes
+     */
+    loadImagesFromLocalStorage: (ticketId, colaboradorId) => {
+        try {
+            const storageKey = `evidencias_${ticketId}_${colaboradorId}`;
+            const storedData = localStorage.getItem(storageKey);
+            
+            if (storedData) {
+                const parsedData = JSON.parse(storedData);
+                console.log(`📸 Imágenes cargadas de localStorage para ${colaboradorId}:`, parsedData.length);
+                return parsedData;
+            }
+        } catch (error) {
+            console.error("Error cargando imágenes de localStorage:", error);
+        }
+        return [];
+    },
+    
+    /**
+     * Obtiene la URL de una imagen (puede ser base64 o URL de Storage)
+     * @param {Object|string} image - Objeto de imagen o string URL
+     * @returns {string} - URL de la imagen
+     */
+    getImageUrl: (image) => {
+        if (!image) return '';
+        
+        // Si es un string, puede ser URL o base64
+        if (typeof image === 'string') {
+            return image;
+        }
+        
+        // Si es un objeto con url
+        if (image.url) {
+            return image.url;
+        }
+        
+        // Si es un objeto con path (de Firebase Storage)
+        if (image.path) {
+            return `https://firebasestorage.googleapis.com/v0/b/rsienterprise.appspot.com/o/${encodeURIComponent(image.path)}?alt=media`;
+        }
+        
+        // Si es un objeto con datos base64
+        if (image.data) {
+            return image.data;
+        }
+        
+        return '';
+    },
+    
     getBadgeClass: (status) => {
         if (!status) return 'badge-info';
-        switch(status.toLowerCase()) {
+        const statusLower = status.toLowerCase();
+        switch(statusLower) {
             case 'finalizado': 
             case 'cerrado': 
             case 'cancelado': 
@@ -221,7 +276,8 @@ const Utils = {
     
     getStatusIcon: (status) => {
         if (!status) return 'fa-question-circle';
-        switch(status.toLowerCase()) {
+        const statusLower = status.toLowerCase();
+        switch(statusLower) {
             case 'finalizado': 
             case 'cerrado': 
             case 'completado': 
@@ -246,11 +302,37 @@ const Utils = {
     
     getPriorityClass: (priority) => {
         if (!priority) return 'priority-medium';
-        switch(priority.toLowerCase()) {
+        const priorityLower = priority.toLowerCase();
+        switch(priorityLower) {
             case 'alta': return 'priority-high';
             case 'media': return 'priority-medium';
             case 'baja': return 'priority-low';
             default: return 'priority-medium';
+        }
+    },
+    
+    getBadgeColor: (status) => {
+        const statusLower = status.toLowerCase();
+        switch(statusLower) {
+            case 'finalizado':
+            case 'cerrado':
+            case 'completado':
+                return '#28a745';
+            case 'abandono_de_actividades':
+                return '#dc3545';
+            case 'en_proceso':
+                return '#ffc107';
+            case 'en_camino':
+                return '#007bff';
+            case 'pendiente':
+            case 'pendiente_de_aceptación':
+                return '#dc3545';
+            case 'aceptado':
+                return '#17a2b8';
+            case 'cancelado':
+                return '#6c757d';
+            default:
+                return '#17a2b8';
         }
     },
     
@@ -293,7 +375,7 @@ const Utils = {
                     // Si el estado cambió, recargar la página
                     if (changed) {
                         console.log('Estado cambiado a abandono, recargando página...');
-                        TicketController.loadTicketFromURL();
+                        window.location.reload();
                     }
                 }
             } catch (error) {
@@ -317,7 +399,7 @@ const TicketController = {
         console.log('Inicializando controlador de ticket...');
         
         // Configurar Firebase desde firebase-init.js
-        if (typeof firebaseInit !== 'undefined') {
+        if (typeof firebaseInit !== 'undefined' && firebaseInit.db) {
             AppState.db = firebaseInit.db;
             console.log('Firebase configurado desde firebase-init.js');
         } else {
@@ -390,11 +472,13 @@ const TicketController = {
             }
             
             querySnapshot.forEach(doc => {
-                AppState.userData = doc.data();
-                AppState.userData.colaboradorId = doc.id;
-                AppState.userData.nombreCompleto = AppState.userData.NOMBRE || AppState.userData['NOMBRE'] || 'Sin nombre';
-                AppState.userData.NOMBRE = AppState.userData.NOMBRE || AppState.userData['NOMBRE'] || 'Sin nombre';
-                AppState.userData.ÁREA = AppState.userData.ÁREA || AppState.userData['ÁREA'] || 'General';
+                AppState.userData = {
+                    ...doc.data(),
+                    colaboradorId: doc.id,
+                    nombreCompleto: doc.data().NOMBRE || doc.data()['NOMBRE'] || 'Sin nombre',
+                    NOMBRE: doc.data().NOMBRE || doc.data()['NOMBRE'] || 'Sin nombre',
+                    ÁREA: doc.data().ÁREA || doc.data()['ÁREA'] || 'General'
+                };
             });
             
             console.log('Datos de usuario cargados:', AppState.userData.nombreCompleto);
@@ -510,15 +594,38 @@ const TicketController = {
                 ticketData.nombresColaboradores = await Promise.all(colaboradoresPromises);
             }
             
-            // Cargar evidencias
+            // Cargar evidencias desde Firestore
             const evidenciasSnapshot = await AppState.db.collection('evidenciatickets')
                 .where("ticketId", "==", ticketId)
                 .get();
             
             ticketData.evidencias = [];
-            evidenciasSnapshot.forEach(doc => {
-                ticketData.evidencias.push({ id: doc.id, ...doc.data() });
-            });
+            
+            // Procesar cada evidencia
+            for (const doc of evidenciasSnapshot.docs) {
+                const evidenciaData = doc.data();
+                
+                // Intentar cargar imágenes desde localStorage primero
+                const storedImages = Utils.loadImagesFromLocalStorage(ticketId, evidenciaData.colaboradorId);
+                
+                let imagenes = [];
+                
+                if (storedImages.length > 0) {
+                    // Usar imágenes de localStorage
+                    imagenes = storedImages;
+                    console.log(`📸 Usando imágenes de localStorage para ${evidenciaData.colaboradorId}`);
+                } else if (evidenciaData.imagenes && evidenciaData.imagenes.length > 0) {
+                    // Usar imágenes de Firestore (ya sea URLs o objetos con path/url)
+                    imagenes = evidenciaData.imagenes;
+                    console.log(`📸 Usando imágenes de Firestore para ${evidenciaData.colaboradorId}`);
+                }
+                
+                ticketData.evidencias.push({
+                    id: doc.id,
+                    ...evidenciaData,
+                    imagenes: imagenes
+                });
+            }
             
         } catch (error) {
             console.warn('Error cargando datos adicionales:', error);
@@ -926,13 +1033,16 @@ const TicketController = {
         const imagesHTML = userEvidence.imagenes && userEvidence.imagenes.length > 0 ? `
             <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--text-color, #f5f5f5);">Imágenes de evidencia:</h4>
             <div class="evidence-grid-ticket">
-                ${userEvidence.imagenes.map((img, index) => `
-                    <img src="${img}" 
-                         class="evidence-image" 
-                         data-image-src="${img}"
-                         alt="Evidencia ${index + 1}"
-                         onclick="Utils.showImageModal('${img}')">
-                `).join('')}
+                ${userEvidence.imagenes.map((img, index) => {
+                    const imgUrl = Utils.getImageUrl(img);
+                    return imgUrl ? `
+                        <img src="${imgUrl}" 
+                             class="evidence-image" 
+                             data-image-src="${imgUrl}"
+                             alt="Evidencia ${index + 1}"
+                             onclick="Utils.showImageModal('${imgUrl}')">
+                    ` : '';
+                }).join('')}
             </div>
         ` : '';
         
@@ -1131,7 +1241,7 @@ const TicketController = {
                 confirmButtonColor: '#3085d6'
             }).then(() => {
                 // Recargar la página
-                this.loadTicketFromURL();
+                window.location.reload();
             });
             
         } catch (error) {
@@ -1152,6 +1262,45 @@ const TicketController = {
                 didOpen: () => Swal.showLoading()
             });
             
+            // Intentar cargar desde localStorage primero
+            const storedImages = Utils.loadImagesFromLocalStorage(AppState.ticketId, colabId);
+            
+            if (storedImages.length > 0) {
+                await loadingSwal.close();
+                
+                let imagesHTML = '';
+                if (storedImages.length > 0) {
+                    imagesHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
+                            ${storedImages.map((img, index) => {
+                                const imgUrl = Utils.getImageUrl(img);
+                                return imgUrl ? `
+                                    <img src="${imgUrl}" 
+                                         style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer;" 
+                                         onclick="Utils.showImageModal('${imgUrl}')"
+                                         alt="Evidencia ${index + 1} de ${colabNombre}">
+                                ` : '';
+                            }).join('')}
+                        </div>
+                    `;
+                }
+                
+                Swal.fire({
+                    title: `Evidencias de ${colabNombre}`,
+                    html: `
+                        <div style="text-align: left;">
+                            <p><strong>Evidencias guardadas localmente:</strong></p>
+                            ${imagesHTML}
+                        </div>
+                    `,
+                    width: '80%',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Cerrar'
+                });
+                return;
+            }
+            
+            // Si no hay en localStorage, buscar en Firestore
             const evidenciasSnapshot = await AppState.db.collection('evidenciatickets')
                 .where("ticketId", "==", AppState.ticketId)
                 .where("colaboradorId", "==", colabId)
@@ -1175,12 +1324,15 @@ const TicketController = {
             if (evidencia.imagenes && evidencia.imagenes.length > 0) {
                 imagesHTML = `
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
-                        ${evidencia.imagenes.map((img, index) => `
-                            <img src="${img}" 
-                                 style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer;" 
-                                 onclick="Utils.showImageModal('${img}')"
-                                 alt="Evidencia ${index + 1} de ${colabNombre}">
-                        `).join('')}
+                        ${evidencia.imagenes.map((img, index) => {
+                            const imgUrl = Utils.getImageUrl(img);
+                            return imgUrl ? `
+                                <img src="${imgUrl}" 
+                                     style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer;" 
+                                     onclick="Utils.showImageModal('${imgUrl}')"
+                                     alt="Evidencia ${index + 1} de ${colabNombre}">
+                            ` : '';
+                        }).join('')}
                     </div>
                 `;
             }
@@ -1283,7 +1435,6 @@ const TicketController = {
                             white-space: nowrap; 
                             font-weight: bold; 
                             text-align: left; 
-                            color: #e74c3c; 
                         }
                         .history-table tr td:nth-of-type(1)::before { content: "Fecha/Hora:"; }
                         .history-table tr td:nth-of-type(2)::before { content: "Est. Anterior:"; }
@@ -1319,16 +1470,12 @@ const TicketController = {
                         <tr>
                             <td data-label="Fecha/Hora">${date}</td>
                             <td data-label="Estado Anterior">
-                                <span class="status-badge" style="background-color: ${Utils.getBadgeClass(estadoAnterior) === 'badge-success' ? '#28a745' : 
-                                    Utils.getBadgeClass(estadoAnterior) === 'badge-danger' ? '#dc3545' : 
-                                    Utils.getBadgeClass(estadoAnterior) === 'badge-warning' ? '#ffc107' : '#17a2b8'}">
+                                <span class="status-badge" style="background-color: ${Utils.getBadgeColor(estadoAnterior)}">
                                     ${estadoAnterior.replace(/_/g, ' ')}
                                 </span>
                             </td>
                             <td data-label="Estado Nuevo">
-                                <span class="status-badge" style="background-color: ${Utils.getBadgeClass(estadoNuevo) === 'badge-success' ? '#28a745' : 
-                                    Utils.getBadgeClass(estadoNuevo) === 'badge-danger' ? '#dc3545' : 
-                                    Utils.getBadgeClass(estadoNuevo) === 'badge-warning' ? '#ffc107' : '#17a2b8'}">
+                                <span class="status-badge" style="background-color: ${Utils.getBadgeColor(estadoNuevo)}">
                                     ${estadoNuevo.replace(/_/g, ' ')}
                                 </span>
                             </td>

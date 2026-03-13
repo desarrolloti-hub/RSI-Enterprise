@@ -208,6 +208,10 @@ function renderizarColaboradores(colaboradoresData) {
                         <a href="../detalle-colaborador/detalle-colaborador.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}" class="action-btn" title="Ver colaborador">
                             <i class="fas fa-eye"></i>
                         </a>
+                        <!-- NUEVO BOTÓN: Editar con navegación -->
+                        <a href="../editar-colaborador-navegacion/editar-colaborador-navegacion.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}&nombre=${encodeURIComponent(colaborador.NOMBRE || '')}&area=${encodeURIComponent(colaborador['ÁREA'] || '')}&estado=${encodeURIComponent(estado)}" class="action-btn" title="Editar con navegación">
+                            <i class="fas fa-burger"></i>
+                        </a>
                         <a href="../editar-colaborador/editar-colaborador.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}" class="action-btn edit" title="Editar colaborador">
                             <i class="fas fa-edit"></i>
                         </a>
@@ -263,6 +267,10 @@ function renderizarColaboradores(colaboradoresData) {
                 <div class="card-actions">
                     <a href="../detalle-colaborador/detalle-colaborador.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}" class="action-btn" title="Ver colaborador">
                         <i class="fas fa-eye"></i>
+                    </a>
+                    <!-- NUEVO BOTÓN: Editar con navegación -->
+                    <a href="../editar-colaborador-navegacion/editar-colaborador-navegacion.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}&nombre=${encodeURIComponent(colaborador.NOMBRE || '')}&area=${encodeURIComponent(colaborador['ÁREA'] || '')}&estado=${encodeURIComponent(estado)}" class="action-btn" title="Editar con navegación">
+                        <i class="fas fa-compass"></i>
                     </a>
                     <a href="../editar-colaborador/editar-colaborador.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}" class="action-btn edit" title="Editar colaborador">
                         <i class="fas fa-edit"></i>
@@ -321,6 +329,10 @@ function renderizarColaboradores(colaboradoresData) {
                 <div class="card-actions">
                     <a href="../detalle-colaborador/detalle-colaborador.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}" class="action-btn" title="Ver colaborador">
                         <i class="fas fa-eye"></i>
+                    </a>
+                    <!-- NUEVO BOTÓN: Editar con navegación -->
+                    <a href="../editar-colaborador-navegacion/editar-colaborador-navegacion.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}&nombre=${encodeURIComponent(colaborador.NOMBRE || '')}&area=${encodeURIComponent(colaborador['ÁREA'] || '')}&estado=${encodeURIComponent(estado)}" class="action-btn" title="Editar con navegación">
+                        <i class="fas fa-compass"></i>
                     </a>
                     <a href="../editar-colaborador/editar-colaborador.html?id=${colaborador.id}&correo=${encodeURIComponent(correo)}" class="action-btn edit" title="Editar colaborador">
                         <i class="fas fa-edit"></i>
