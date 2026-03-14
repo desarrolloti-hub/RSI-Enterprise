@@ -1,4 +1,4 @@
-// editar-colaborador.js - Versión corregida para trabajar con la estructura de áreas/subáreas
+// nuevo-colaborador.js - Versión que guarda IDs completos
 (function() {
     'use strict';
 
@@ -9,26 +9,24 @@
         apiKey: "AIzaSyBJy992gkvsT77-_fMp_O_z99wtjZiK77Y",
         authDomain: "rsienterprise.firebaseapp.com",
         projectId: "rsienterprise",
-        storageBucket: "rsienterprise.firebasestorage.app",
+        storageBucket: "rsienterprise.appspot.com",
         messagingSenderId: "1063117165770",
         appId: "1:1063117165770:web:8555f26b25ae80bc42d033"
     };
 
-    // Inicializar Firebase solo si no hay ninguna app
+    // Inicializar Firebase (solo si no está inicializado)
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-
+    
     const db = firebase.firestore();
     const auth = firebase.auth();
 
     // =============================================
     // VARIABLES GLOBALES
     // =============================================
-    let colaboradorId = null;
-    let colaboradorData = null;
     let imagenBase64 = '';
-    let areasData = []; // Array de áreas con sus subáreas (objetos con id y nombre)
+    let areasData = []; // Ahora guardará también los IDs de subáreas
     let currentUser = null;
 
     // =============================================
@@ -63,7 +61,7 @@
                 title: titulo || 'Éxito',
                 html: mensaje,
                 icon: 'success',
-                timer: 3000,
+                timer: 4000,
                 showConfirmButton: true
             });
         } 
@@ -72,24 +70,24 @@
         }
     }
 
-    function mostrarError(mensaje) {
+    function mostrarError(titulo, mensaje) {
         if (typeof Swal !== 'undefined') {
             Swal.close();
         }
         
         if (typeof window.showCustomError === 'function') {
-            window.showCustomError('Error', mensaje);
+            window.showCustomError(titulo, mensaje);
         } 
         else if (typeof Swal !== 'undefined') {
             Swal.fire({
-                title: 'Error',
+                title: titulo || 'Error',
                 text: mensaje,
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
         } 
         else {
-            alert(`❌ Error: ${mensaje}`);
+            alert(`❌ ${titulo}: ${mensaje}`);
         }
     }
 
@@ -97,26 +95,6 @@
     // FUNCIONES PRINCIPALES
     // =============================================
 
-    /**
-     * Obtiene parámetros de la URL
-     */
-    function obtenerParametrosURL() {
-        const urlParams = new URLSearchParams(window.location.search);
-        colaboradorId = urlParams.get('id');
-        
-        if (!colaboradorId) {
-            console.error('❌ No se proporcionó ID de colaborador');
-            mostrarError('No se encontró el ID del colaborador');
-            return false;
-        }
-        
-        console.log('📋 ID del colaborador a editar:', colaboradorId);
-        return true;
-    }
-
-    /**
-     * Obtiene información del usuario actual
-     */
     function obtenerUsuarioActual() {
         if (typeof window.menuState !== 'undefined' && window.menuState.userData) {
             const userData = window.menuState.userData;
@@ -145,9 +123,41 @@
         };
     }
 
-    /**
-     * Convierte imagen a base64
-     */
+    function generarSugerenciaContrasena(nombre) {
+        if (!nombre) return '';
+        
+        const partes = nombre.trim().split(' ');
+        let iniciales = '';
+        
+        for (let i = 0; i < Math.min(partes.length, 3); i++) {
+            if (partes[i]) {
+                iniciales += partes[i].charAt(0).toUpperCase();
+            }
+        }
+        
+        const añoActual = new Date().getFullYear();
+        return `${iniciales}_${añoActual}`;
+    }
+
+    async function generarNIT(subareaId) {
+        if (!subareaId) return '';
+        
+        const ahora = new Date();
+        const dia = String(ahora.getDate()).padStart(2, '0');
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const año = String(ahora.getFullYear()).slice(-2);
+        const fecha = `${dia}${mes}${año}`;
+        
+        // Ahora contamos por SUBÁREA_ID en lugar de solo el nombre
+        const snapshot = await db.collection('colaboradores')
+            .where('SUBÁREA_ID', '==', subareaId)
+            .get();
+        
+        const numeroColaboradores = snapshot.size + 1;
+        
+        return `RSI${fecha}${String(numeroColaboradores).padStart(3, '0')}`;
+    }
+
     function convertirImagenABase64(archivo) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -158,8 +168,8 @@
     }
 
     /**
-     * CARGA ÁREAS DESDE FIRESTORE
-     * Maneja la estructura de subáreas como objeto/mapa
+     * Carga las áreas desde Firestore
+     * Ahora guarda tanto el nombre del área como los IDs y nombres de subáreas
      */
     async function cargarAreas() {
         try {
@@ -175,7 +185,7 @@
                 let subareasProcesadas = [];
                 
                 if (data.subareas) {
-                    // Verificar si es un objeto (como en tu estructura)
+                    // Verificar si es un objeto
                     if (typeof data.subareas === 'object' && !Array.isArray(data.subareas)) {
                         console.log(`🔍 Subáreas como objeto para ${data.nombre}:`, data.subareas);
                         
@@ -222,20 +232,12 @@
             console.log('✅ Áreas cargadas:', areasData);
             actualizarSelectAreas();
             
-            // Si ya tenemos datos del colaborador, configurar área y subárea
-            if (colaboradorData) {
-                configurarAreaYSubarea();
-            }
-            
         } catch (error) {
             console.error('❌ Error al cargar áreas:', error);
             cargarAreasPorDefecto();
         }
     }
 
-    /**
-     * Áreas por defecto en caso de error
-     */
     function cargarAreasPorDefecto() {
         areasData = [
             { 
@@ -293,9 +295,6 @@
         actualizarSelectAreas();
     }
 
-    /**
-     * Actualiza el select de áreas
-     */
     function actualizarSelectAreas() {
         const areaSelect = document.getElementById('area');
         if (!areaSelect) return;
@@ -312,6 +311,7 @@
 
     /**
      * Actualiza las subáreas según el área seleccionada
+     * Ahora muestra los nombres pero guarda los IDs
      */
     function actualizarSubareas(areaSeleccionada) {
         const subareaSelect = document.getElementById('subarea');
@@ -330,9 +330,11 @@
                 // Agregar todas las subáreas
                 area.subareas.forEach(subarea => {
                     const option = document.createElement('option');
-                    option.value = subarea.id; // Guardamos el ID en el value
-                    option.textContent = subarea.nombre; // Mostramos el nombre
-                    option.setAttribute('data-nombre', subarea.nombre); // Guardamos el nombre como atributo
+                    // Guardamos el ID en el value, pero mostramos el nombre
+                    option.value = subarea.id;
+                    option.textContent = subarea.nombre;
+                    // Guardamos también el nombre como atributo data
+                    option.setAttribute('data-nombre', subarea.nombre);
                     subareaSelect.appendChild(option);
                 });
             } else {
@@ -350,131 +352,37 @@
             option.textContent = 'Seleccione un área válida';
             subareaSelect.appendChild(option);
         }
+        
+        // Limpiar NIT cuando cambia el área
+        document.getElementById('nit').value = '';
     }
 
-    /**
-     * Carga los datos del colaborador desde Firestore
-     */
-    async function cargarColaborador() {
-        try {
-            console.log('📥 Cargando datos del colaborador:', colaboradorId);
-            
-            const colaboradorDoc = await db.collection('colaboradores').doc(colaboradorId).get();
-            
-            if (!colaboradorDoc.exists) {
-                throw new Error('Colaborador no encontrado');
-            }
-            
-            colaboradorData = colaboradorDoc.data();
-            console.log('✅ Datos del colaborador cargados:', colaboradorData);
-            
-            actualizarFormulario(colaboradorData);
-            
-        } catch (error) {
-            console.error('❌ Error cargando colaborador:', error);
-            mostrarError('No se pudo cargar la información del colaborador');
-        }
+    function generarNITParaSubarea(subareaId) {
+        const nitInput = document.getElementById('nit');
+        if (!nitInput) return;
+        
+        nitInput.value = 'Generando...';
+        
+        // Llamar a la función asíncrona sin await para no bloquear
+        generarNIT(subareaId)
+            .then(nit => {
+                nitInput.value = nit;
+            })
+            .catch(error => {
+                console.error('Error generando NIT:', error);
+                nitInput.value = 'Error al generar';
+            });
     }
 
-    /**
-     * Actualiza el formulario con los datos del colaborador
-     */
-    function actualizarFormulario(colaborador) {
-        console.log('📝 Actualizando formulario con datos:', colaborador);
-        
-        // Foto de perfil
-        const photoPreview = document.getElementById('photoPreview');
-        if (colaborador.imagen) {
-            photoPreview.innerHTML = '';
-            const img = document.createElement('img');
-            img.src = colaborador.imagen;
-            img.alt = colaborador.NOMBRE || 'Colaborador';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.borderRadius = '50%';
-            img.style.objectFit = 'cover';
-            photoPreview.appendChild(img);
-            imagenBase64 = colaborador.imagen;
-        }
-
-        // Información personal
-        document.getElementById('nombre').value = colaborador.NOMBRE || '';
-        document.getElementById('fechaNacimiento').value = colaborador['FECHA DE NACIMIENTO'] || '';
-        document.getElementById('curp').value = colaborador.CURP || '';
-        document.getElementById('rfc').value = colaborador.RFC || '';
-        document.getElementById('estadoCivil').value = colaborador['ESTADO CIVIL'] || '';
-        document.getElementById('telefonoFijo').value = colaborador['TELÉFONO FIJO'] || '';
-        document.getElementById('telefonoMovil').value = colaborador['TELÉFONO MOVIL'] || '';
-        document.getElementById('nss').value = colaborador.NSS || '';
-
-        // Información laboral
-        document.getElementById('tipo').value = colaborador.tipo || '';
-        document.getElementById('rol').value = colaborador.rol || 'colaborador';
-        document.getElementById('nit').value = colaborador.NIT || '';
-
-        // Información de contacto (solo lectura)
-        document.getElementById('correoPersonal').value = colaborador['CORREO ELECTRONICO PERSONAL'] || colaborador['CORREO ELECTRÓNICO PERSONAL'] || '';
-        document.getElementById('correoEmpresarial').value = colaborador['CORREO ELECTRÓNICO EMPRESARIAL'] || '';
-
-        // Configurar área y subárea (esto se ejecuta después de cargar las áreas)
-        configurarAreaYSubarea();
-    }
-
-    /**
-     * Configura el área y subárea en los selects basado en los datos existentes
-     */
-    function configurarAreaYSubarea() {
-        if (!colaboradorData) return;
-        
-        const areaSelect = document.getElementById('area');
-        const subareaSelect = document.getElementById('subarea');
-        
-        // Obtener los valores guardados
-        const areaNombre = colaboradorData['ÁREA'] || ''; // Nombre del área principal
-        const subareaId = colaboradorData['SUBÁREA_ID'] || ''; // ID de la subárea
-        const subareaNombre = colaboradorData['SUBÁREA_NOMBRE'] || ''; // Nombre de la subárea
-        
-        console.log('🔍 Configurando área/subárea:', { areaNombre, subareaId, subareaNombre });
-        
-        if (areaNombre) {
-            // Buscar el área por nombre
-            const areaEncontrada = areasData.find(a => a.nombre === areaNombre);
-            
-            if (areaEncontrada) {
-                // Seleccionar el área
-                areaSelect.value = areaNombre;
-                
-                // Actualizar subáreas
-                actualizarSubareas(areaNombre);
-                
-                // Esperar a que se actualicen las subáreas y seleccionar la correcta
-                setTimeout(() => {
-                    if (subareaId) {
-                        // Intentar seleccionar por ID
-                        const optionExists = Array.from(subareaSelect.options).some(opt => opt.value === subareaId);
-                        if (optionExists) {
-                            subareaSelect.value = subareaId;
-                            console.log('✅ Subárea seleccionada por ID:', subareaId);
-                        } else if (subareaNombre) {
-                            // Si no se encuentra por ID, buscar por nombre
-                            const optionByNombre = Array.from(subareaSelect.options).find(opt => 
-                                opt.textContent === subareaNombre || opt.getAttribute('data-nombre') === subareaNombre
-                            );
-                            if (optionByNombre) {
-                                subareaSelect.value = optionByNombre.value;
-                                console.log('✅ Subárea seleccionada por nombre:', subareaNombre);
-                            }
-                        }
-                    }
-                }, 500);
-            }
-        }
-    }
-
-    /**
-     * Valida los datos del formulario
-     */
     function validarFormulario(datos) {
+        if (datos.contrasena !== datos.confirmarContrasena) {
+            throw new Error('Las contraseñas no coinciden');
+        }
+        
+        if (datos.contrasena.length < 6) {
+            throw new Error('La contraseña debe tener al menos 6 caracteres');
+        }
+        
         if (datos.curp.length !== 18) {
             throw new Error('La CURP debe tener 18 caracteres');
         }
@@ -483,30 +391,43 @@
             throw new Error('El RFC debe tener entre 12 y 13 caracteres');
         }
         
-        const areaSeleccionada = document.getElementById('area')?.value;
-        const subareaSeleccionada = document.getElementById('subarea')?.value;
-        
-        if (!areaSeleccionada) {
-            throw new Error('Debe seleccionar un área');
-        }
-        
-        if (!subareaSeleccionada) {
-            throw new Error('Debe seleccionar una subárea');
+        if (!datos.nit || datos.nit === 'Generando...' || datos.nit === 'Error al generar') {
+            throw new Error('El NIT no se ha generado correctamente. Por favor, seleccione una subárea válida.');
         }
         
         return true;
     }
 
-    /**
-     * Actualiza los documentos en Firestore
-     */
-    async function actualizarDocumentosFirestore(datos) {
+    async function crearUsuarioAuth(email, password) {
         try {
-            // Obtener área y subárea seleccionadas
-            const areaSelect = document.getElementById('area');
-            const subareaSelect = document.getElementById('subarea');
+            const tempApp = firebase.initializeApp(firebaseConfig, "TempApp");
+            const tempAuth = tempApp.auth();
             
-            const areaNombre = areaSelect?.value;
+            const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            await user.sendEmailVerification();
+            await tempAuth.signOut();
+            await tempApp.delete();
+            
+            return user;
+        } catch (error) {
+            console.error('Error creando usuario en Auth:', error);
+            
+            try {
+                const tempApp = firebase.app("TempApp");
+                await tempApp.delete();
+            } catch (e) {}
+            
+            throw new Error('No se pudo crear el usuario: ' + error.message);
+        }
+    }
+
+    async function crearDocumentosFirestore(uid, datos) {
+        try {
+            // Obtener el área y subárea seleccionadas
+            const areaSeleccionada = document.getElementById('area')?.value;
+            const subareaSelect = document.getElementById('subarea');
             const subareaId = subareaSelect?.value;
             
             // Obtener el nombre de la subárea seleccionada
@@ -515,53 +436,65 @@
                                  selectedOption?.textContent || 
                                  'Subárea desconocida';
             
-            const usuarioEditor = currentUser || obtenerUsuarioActual();
-
-            // Preparar datos para actualizar
-            const updateData = {
-                "NOMBRE": datos.nombre,
-                "FECHA DE NACIMIENTO": datos.fechaNacimiento,
-                "CURP": datos.curp,
-                "RFC": datos.rfc,
-                "ESTADO CIVIL": datos.estadoCivil,
-                "TELÉFONO FIJO": datos.telefonoFijo,
-                "TELÉFONO MOVIL": datos.telefonoMovil,
-                "NSS": datos.nss,
-                "tipo": datos.tipo,
-                "rol": datos.rol,
-                "ÁREA": areaNombre,
-                "SUBÁREA_ID": subareaId,
-                "SUBÁREA_NOMBRE": subareaNombre,
-                "actualizadoPor": usuarioEditor.nombre,
-                "actualizadoPorEmail": usuarioEditor.email,
-                "fechaActualizacion": firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // Solo agregar la imagen si se cambió
-            if (imagenBase64 && imagenBase64 !== colaboradorData?.imagen) {
-                updateData.imagen = imagenBase64;
+            if (!areaSeleccionada) {
+                throw new Error('Debe seleccionar un área');
             }
-
-            console.log('📤 Actualizando colaborador con:', updateData);
-
-            // Actualizar en colección 'colaboradores'
-            await db.collection('colaboradores').doc(colaboradorId).update(updateData);
             
-            // Actualizar también en 'usuarios'
-            await db.collection('usuarios').doc(colaboradorId).update({
+            if (!subareaId) {
+                throw new Error('Debe seleccionar una subárea');
+            }
+            
+            const usuarioCreador = currentUser || obtenerUsuarioActual();
+
+            // Crear documento en colección 'usuarios'
+            await db.collection('usuarios').doc(uid).set({
+                email: datos.correoPersonal,
+                fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
                 nombreCompleto: datos.nombre,
                 rol: datos.rol,
-                actualizadoPor: usuarioEditor.nombre,
-                actualizadoPorEmail: usuarioEditor.email,
-                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                creadoPor: usuarioCreador.nombre,
+                creadoPorEmail: usuarioCreador.email
             });
-
-            console.log('✅ Colaborador actualizado correctamente');
-            return true;
             
+            // Crear documento en colección 'colaboradores'
+            // Guardamos: ÁREA (nombre), SUBÁREA_ID (id), SUBÁREA_NOMBRE (nombre)
+            await db.collection('colaboradores').doc(uid).set({
+                "CORREO ELECTRONICO PERSONAL": datos.correoPersonal,
+                "CORREO ELECTRÓNICO EMPRESARIAL": datos.correoEmpresarial,
+                "CURP": datos.curp,
+                "ESTADO CIVIL": datos.estadoCivil,
+                "FECHA DE INGRESO": firebase.firestore.FieldValue.serverTimestamp(),
+                "FECHA DE NACIMIENTO": datos.fechaNacimiento,
+                "NIT": datos.nit,
+                "NOMBRE": datos.nombre,
+                "NSS": datos.nss,
+                "RFC": datos.rfc,
+                "TELÉFONO FIJO": datos.telefonoFijo,
+                "TELÉFONO MOVIL": datos.telefonoMovil,
+                "estado": true,
+                "fecha": firebase.firestore.FieldValue.serverTimestamp(),
+                "tipo": datos.tipo,
+                "imagen": imagenBase64,
+                // Guardamos el área principal (nombre)
+                "ÁREA": areaSeleccionada,
+                // Guardamos el ID completo de la subárea
+                "SUBÁREA_ID": subareaId,
+                // Guardamos el nombre de la subárea
+                "SUBÁREA_NOMBRE": subareaNombre,
+                "creadoPor": usuarioCreador.nombre,
+                "creadoPorEmail": usuarioCreador.email
+            });
+            
+            console.log('✅ Colaborador guardado con:', {
+                área: areaSeleccionada,
+                subárea_id: subareaId,
+                subárea_nombre: subareaNombre
+            });
+            
+            return true;
         } catch (error) {
-            console.error('❌ Error actualizando documentos en Firestore:', error);
-            throw new Error('No se pudieron guardar los cambios: ' + error.message);
+            console.error('Error creando documentos en Firestore:', error);
+            throw new Error('No se pudieron guardar los datos: ' + error.message);
         }
     }
 
@@ -569,38 +502,35 @@
     // INICIALIZACIÓN DEL FORMULARIO
     // =============================================
     function inicializar() {
-        console.log('🚀 Inicializando editar-colaborador.js');
+        console.log('🚀 Inicializando nuevo-colaborador.js');
         
-        const form = document.getElementById('editarColaboradorForm');
+        const form = document.getElementById('nuevoColaboradorForm');
         if (!form) {
             console.error('❌ No se encontró el formulario');
             return;
         }
 
+        const nombreInput = document.getElementById('nombre');
         const areaSelect = document.getElementById('area');
         const subareaSelect = document.getElementById('subarea');
+        const nitInput = document.getElementById('nit');
+        const passwordSuggestion = document.getElementById('passwordSuggestion');
         const photoInput = document.getElementById('photoInput');
         const photoUploadBtn = document.getElementById('photoUploadBtn');
         const photoPreview = document.getElementById('photoPreview');
         
-        if (!areaSelect || !subareaSelect || !photoInput || !photoUploadBtn || !photoPreview) {
+        if (!nombreInput || !areaSelect || !subareaSelect || !nitInput || 
+            !passwordSuggestion || !photoInput || !photoUploadBtn || !photoPreview) {
             console.error('❌ Faltan elementos del formulario');
             return;
         }
         
-        // Obtener usuario actual
         currentUser = obtenerUsuarioActual();
         
-        // Verificar parámetros de URL
-        if (!obtenerParametrosURL()) {
-            return;
-        }
+        // Cargar áreas
+        cargarAreas();
         
-        // PRIMERO: Cargar áreas
-        cargarAreas().then(() => {
-            // SEGUNDO: Cargar datos del colaborador
-            cargarColaborador();
-        });
+        nitInput.setAttribute('readonly', 'true');
         
         // Evento para subir foto
         photoUploadBtn.addEventListener('click', () => {
@@ -633,7 +563,7 @@
                     
                 } catch (error) {
                     console.error('Error procesando imagen:', error);
-                    mostrarError(error.message);
+                    mostrarError('Error', error.message);
                     
                     photoInput.value = '';
                     imagenBase64 = '';
@@ -647,18 +577,35 @@
             }
         });
         
-        // Actualizar subáreas cuando cambia el área
-        areaSelect.addEventListener('change', () => {
-            const areaSeleccionada = areaSelect.value;
-            actualizarSubareas(areaSeleccionada);
+        nombreInput.addEventListener('input', () => {
+            const sugerencia = generarSugerenciaContrasena(nombreInput.value);
+            passwordSuggestion.textContent = `Sugerencia: ${sugerencia}`;
+            
+            const contrasenaInput = document.getElementById('contrasena');
+            const confirmarInput = document.getElementById('confirmarContrasena');
+            
+            if (contrasenaInput && confirmarInput && !contrasenaInput.value && sugerencia) {
+                contrasenaInput.value = sugerencia;
+                confirmarInput.value = sugerencia;
+            }
         });
         
-        // Envío del formulario
+        areaSelect.addEventListener('change', () => {
+            actualizarSubareas(areaSelect.value);
+        });
+        
+        subareaSelect.addEventListener('change', () => {
+            const subareaId = subareaSelect.value;
+            if (subareaId && subareaId !== '') {
+                generarNITParaSubarea(subareaId);
+            }
+        });
+        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             try {
-                mostrarLoading('Actualizando colaborador...');
+                mostrarLoading('Creando colaborador...');
                 
                 const datos = {
                     nombre: document.getElementById('nombre')?.value || '',
@@ -670,41 +617,47 @@
                     telefonoMovil: document.getElementById('telefonoMovil')?.value || '',
                     nss: document.getElementById('nss')?.value || '',
                     tipo: document.getElementById('tipo')?.value || '',
-                    rol: document.getElementById('rol')?.value || ''
+                    rol: document.getElementById('rol')?.value || '',
+                    nit: document.getElementById('nit')?.value || '',
+                    correoPersonal: document.getElementById('correoPersonal')?.value || '',
+                    correoEmpresarial: document.getElementById('correoEmpresarial')?.value || '',
+                    contrasena: document.getElementById('contrasena')?.value || '',
+                    confirmarContrasena: document.getElementById('confirmarContrasena')?.value || ''
                 };
                 
                 validarFormulario(datos);
                 
-                await actualizarDocumentosFirestore(datos);
+                const user = await crearUsuarioAuth(datos.correoPersonal, datos.contrasena);
+                await crearDocumentosFirestore(user.uid, datos);
                 
                 if (typeof Swal !== 'undefined') {
                     Swal.close();
                 }
                 
                 mostrarExito(
-                    '¡Cambios guardados!', 
-                    'La información del colaborador ha sido actualizada exitosamente.'
+                    '¡Colaborador creado!', 
+                    'El colaborador ha sido registrado exitosamente.<br><br>' +
+                    '<strong>Se ha enviado un email de verificación al correo personal.</strong>'
                 );
                 
                 setTimeout(() => {
                     window.location.href = '../gestion-colaboradores/gestion-colaboradores.html';
-                }, 3000);
+                }, 4000);
                 
             } catch (error) {
-                console.error('Error actualizando colaborador:', error);
+                console.error('Error creando colaborador:', error);
                 
                 if (typeof Swal !== 'undefined') {
                     Swal.close();
                 }
                 
-                mostrarError(error.message);
+                mostrarError('Error', error.message);
             }
         });
         
-        console.log('✅ editar-colaborador.js inicializado correctamente');
+        console.log('✅ nuevo-colaborador.js inicializado correctamente');
     }
 
-    // Iniciar cuando el DOM esté listo
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', inicializar);
     } else {

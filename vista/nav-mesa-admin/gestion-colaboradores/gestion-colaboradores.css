@@ -826,8 +826,24 @@
             }
         }
 
-        /* Mostrar grid en escritorio cuando está activo */
-        .cards-grid.active {
-            background-color: transparent !important;
-            display: grid;
+      
+    
+        .header {
+            background: var(--primary-color, #6C43E0);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            padding: 15px 20px;
         }
+        
+        .title {
+            color: white !important;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        /* Asegurar que el contenedor sea visible */
+        #navegacionPersonalizadaContainer {
+            display: block;
+            min-height: 200px;
+        }
+  
