@@ -213,9 +213,10 @@
         stats: {
             total: 0,
             pendiente: 0,
-            en_proceso: 0,
+            aceptado: 0,
             finalizado: 0,
             cancelado: 0,
+            abandono: 0,
             alta: 0,
             media: 0,
             baja: 0
@@ -434,7 +435,7 @@
             .menu-nav-chart-label {
                 font-size: 0.8rem;
                 color: #a0a0c0;
-                width: 80px;
+                width: 110px;
                 flex-shrink: 0;
             }
             
@@ -682,6 +683,10 @@
                 .menu-nav-chart-title {
                     font-size: 0.8rem;
                 }
+                .menu-nav-chart-label {
+                    width: 95px;
+                    font-size: 0.7rem;
+                }
             }
             
             @media (max-width: 320px) {
@@ -704,8 +709,8 @@
                     font-size: 0.75rem;
                 }
                 .menu-nav-chart-label {
-                    width: 70px;
-                    font-size: 0.75rem;
+                    width: 85px;
+                    font-size: 0.65rem;
                 }
                 .menu-nav-section-header {
                     font-size: 0.85rem;
@@ -766,14 +771,21 @@
                 </div>
                 <div class="menu-nav-stat-card">
                     <div class="menu-nav-stat-title">
-                        <i class="fas fa-spinner"></i>
-                        <span>En Proceso</span>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Aceptados</span>
                     </div>
-                    <div class="menu-nav-stat-value" id="menuNavInProgressTickets">0</div>
+                    <div class="menu-nav-stat-value" id="menuNavAcceptedTickets">0</div>
                 </div>
                 <div class="menu-nav-stat-card">
                     <div class="menu-nav-stat-title">
-                        <i class="fas fa-check-circle"></i>
+                        <i class="fas fa-user-slash"></i>
+                        <span>Abandono de actividades</span>
+                    </div>
+                    <div class="menu-nav-stat-value" id="menuNavAbandonoTickets">0</div>
+                </div>
+                <div class="menu-nav-stat-card">
+                    <div class="menu-nav-stat-title">
+                        <i class="fas fa-check-double"></i>
                         <span>Finalizados</span>
                     </div>
                     <div class="menu-nav-stat-value" id="menuNavCompletedTickets">0</div>
@@ -797,8 +809,6 @@
             <div class="menu-nav-buttons-container" id="menuNavButtonsContainer">
                 <!-- Las secciones se cargarán dinámicamente según configuración -->
             </div>
-            
-            
         `;
         
         document.body.appendChild(overlay);
@@ -1391,9 +1401,10 @@
         
         const statusColors = {
             'pendiente': '#ff6b6b',
-            'en_proceso': '#ffd93d',
+            'aceptado': '#ffd93d',
             'finalizado': '#6bcf7f',
-            'cancelado': '#a0a0c0'
+            'cancelado': '#a0a0c0',
+            'abandono': '#9b59b6'
         };
         
         const priorityColors = {
@@ -1404,190 +1415,206 @@
         
         const totalTickets = stats.total || 1;
         
+        // Estado de tickets: Pendiente, Aceptados, Abandono de actividades, Finalizados
         chartBars.innerHTML = '';
-        const statusData = {
-            'pendiente': stats.pendiente,
-            'en_proceso': stats.en_proceso,
-            'finalizado': stats.finalizado,
-            'cancelado': stats.cancelado
-        };
+        const statusData = [
+            { key: 'pendiente', label: 'Pendientes', count: stats.pendiente },
+            { key: 'aceptado', label: 'Aceptados', count: stats.aceptado },
+            { key: 'abandono', label: 'Abandono de actividades', count: stats.abandono },
+            { key: 'finalizado', label: 'Finalizados', count: stats.finalizado }
+        ];
         
-        Object.entries(statusData).forEach(([status, count]) => {
-            if (count > 0) {
-                const percentage = totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0;
-                const color = statusColors[status] || '#6C43E0';
-                
-                const barHtml = `
+        statusData.forEach(item => {
+            if (item.count > 0) {
+                const percentage = Math.round((item.count / totalTickets) * 100);
+                const color = statusColors[item.key] || '#6C43E0';
+                chartBars.innerHTML += `
                     <div class="menu-nav-chart-bar">
-                        <span class="menu-nav-chart-label">${formatStatus(status)}</span>
+                        <span class="menu-nav-chart-label">${item.label}</span>
                         <div class="menu-nav-chart-progress">
-                            <div class="menu-nav-chart-fill" 
-                                 style="width: ${percentage}%; background: ${color};">
-                            </div>
+                            <div class="menu-nav-chart-fill" style="width: ${percentage}%; background: ${color};"></div>
                         </div>
                         <span class="menu-nav-chart-value">${percentage}%</span>
                     </div>
                 `;
-                chartBars.innerHTML += barHtml;
             }
         });
         
         if (chartBars.innerHTML === '') {
-            chartBars.innerHTML = `
-                <div style="text-align: center; color: #a0a0c0; font-size: 0.8rem; padding: 10px;">
-                    No hay tickets para mostrar
-                </div>
-            `;
+            chartBars.innerHTML = `<div style="text-align: center; color: #a0a0c0; padding: 10px;">No hay tickets para mostrar</div>`;
         }
         
+        // Prioridades
         priorityBars.innerHTML = '';
-        const priorityData = {
-            'alta': stats.alta,
-            'media': stats.media,
-            'baja': stats.baja
-        };
+        const priorityData = [
+            { key: 'alta', label: 'Alta', count: stats.alta },
+            { key: 'media', label: 'Media', count: stats.media },
+            { key: 'baja', label: 'Baja', count: stats.baja }
+        ];
         
-        Object.entries(priorityData).forEach(([priority, count]) => {
-            if (count > 0) {
-                const percentage = totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0;
-                const color = priorityColors[priority] || '#6C43E0';
-                
-                const barHtml = `
+        priorityData.forEach(item => {
+            if (item.count > 0) {
+                const percentage = Math.round((item.count / totalTickets) * 100);
+                const color = priorityColors[item.key] || '#6C43E0';
+                priorityBars.innerHTML += `
                     <div class="menu-nav-chart-bar">
-                        <span class="menu-nav-chart-label">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
+                        <span class="menu-nav-chart-label">${item.label}</span>
                         <div class="menu-nav-chart-progress">
-                            <div class="menu-nav-chart-fill" 
-                                 style="width: ${percentage}%; background: ${color};">
-                            </div>
+                            <div class="menu-nav-chart-fill" style="width: ${percentage}%; background: ${color};"></div>
                         </div>
                         <span class="menu-nav-chart-value">${percentage}%</span>
                     </div>
                 `;
-                priorityBars.innerHTML += barHtml;
             }
         });
         
         if (priorityBars.innerHTML === '') {
-            priorityBars.innerHTML = `
-                <div style="text-align: center; color: #a0a0c0; font-size: 0.8rem; padding: 10px;">
-                    No hay datos de prioridad
-                </div>
-            `;
+            priorityBars.innerHTML = `<div style="text-align: center; color: #a0a0c0; padding: 10px;">No hay datos de prioridad</div>`;
         }
     }
     
     function formatStatus(status) {
         const statusMap = {
             'pendiente': 'Pendientes',
-            'en_proceso': 'En Proceso',
+            'aceptado': 'Aceptados',
             'finalizado': 'Finalizados',
-            'cancelado': 'Cancelados'
+            'cancelado': 'Cancelados',
+            'abandono': 'Abandono de actividades'
         };
         return statusMap[status] || status;
     }
     
-    function getCurrentMonthRange() {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
-        firstDay.setHours(0, 0, 0, 0);
-        lastDay.setHours(23, 59, 59, 999);
-        
-        return { firstDay, lastDay };
+    function normalizeText(str) {
+        if (!str) return '';
+        return str.trim().replace(/\s+/g, ' ');
     }
     
+    function getEmptyStats() {
+        return {
+            total: 0,
+            pendiente: 0,
+            aceptado: 0,
+            finalizado: 0,
+            cancelado: 0,
+            abandono: 0,
+            alta: 0,
+            media: 0,
+            baja: 0
+        };
+    }
+    
+    function resetStatsToZero() {
+        const zeroStats = getEmptyStats();
+        document.getElementById('menuNavTotalTickets').textContent = zeroStats.total;
+        document.getElementById('menuNavPendingTickets').textContent = zeroStats.pendiente;
+        document.getElementById('menuNavAcceptedTickets').textContent = zeroStats.aceptado;
+        document.getElementById('menuNavAbandonoTickets').textContent = zeroStats.abandono;
+        document.getElementById('menuNavCompletedTickets').textContent = zeroStats.finalizado;
+        menuState.stats = zeroStats;
+    }
+    
+    // =============================================
+    // FUNCIÓN PRINCIPAL DE ESTADÍSTICAS
+    // =============================================
     async function loadUserStats() {
         try {
-            if (!menuState.userData || !menuState.userData.nombreCompleto) return;
-            
+            if (!menuState.userData || !menuState.userData.nombreCompleto) {
+                resetStatsToZero();
+                return;
+            }
+
             const db = firebase.firestore();
             const ticketsRef = db.collection('ticketsmesa');
-            const nombreResponsable = menuState.userData.nombreCompleto;
+            const nombreResponsable = normalizeText(menuState.userData.nombreCompleto);
             const colaboradorId = menuState.userData.colaboradorId;
-            
+
             const qResponsable = ticketsRef.where("responsableNombre", "==", nombreResponsable);
             const qColaborador = ticketsRef.where("colaboradores", "array-contains", colaboradorId);
-            
-            const [snapshotResponsable, snapshotColaborador] = await Promise.all([
+
+            const [snapshotResponsable, snapshotColaborador] = await Promise.allSettled([
                 qResponsable.get(),
                 qColaborador.get()
             ]);
-            
+
             const allTickets = new Map();
-            
-            snapshotResponsable.forEach(doc => {
-                allTickets.set(doc.id, doc.data());
-            });
-            
-            snapshotColaborador.forEach(doc => {
-                allTickets.set(doc.id, doc.data());
-            });
-            
-            const { firstDay, lastDay } = getCurrentMonthRange();
-            
-            const ticketsDelMes = Array.from(allTickets.values()).filter(ticket => {
-                if (!ticket.fechaCreacion) return false;
-                try {
-                    const fechaTicket = ticket.fechaCreacion.toDate();
-                    return fechaTicket >= firstDay && fechaTicket <= lastDay;
-                } catch (error) {
-                    return false;
-                }
-            });
-            
+
+            if (snapshotResponsable.status === 'fulfilled') {
+                snapshotResponsable.value.forEach(doc => {
+                    allTickets.set(doc.id, doc.data());
+                });
+            }
+
+            if (snapshotColaborador.status === 'fulfilled') {
+                snapshotColaborador.value.forEach(doc => {
+                    if (!allTickets.has(doc.id)) {
+                        allTickets.set(doc.id, doc.data());
+                    }
+                });
+            }
+
+            if (allTickets.size === 0) {
+                resetStatsToZero();
+                const monthIndicator = document.getElementById('menuNavMonthIndicator');
+                if (monthIndicator) monthIndicator.textContent = 'Mis Estadísticas (Sin tickets)';
+                createCharts(getEmptyStats());
+                return;
+            }
+
             const stats = {
-                total: ticketsDelMes.length,
+                total: allTickets.size,
                 pendiente: 0,
-                en_proceso: 0,
+                aceptado: 0,
                 finalizado: 0,
                 cancelado: 0,
+                abandono: 0,
                 alta: 0,
                 media: 0,
                 baja: 0
             };
-            
-            ticketsDelMes.forEach(ticket => {
-                if (ticket.estado && stats[ticket.estado] !== undefined) {
-                    stats[ticket.estado]++;
+
+            for (let ticket of allTickets.values()) {
+                const estado = (ticket.estado || '').toLowerCase();
+                switch (estado) {
+                    case 'pendiente': stats.pendiente++; break;
+                    case 'aceptado': stats.aceptado++; break;
+                    case 'en_proceso': stats.aceptado++; break; // "en_proceso" se cuenta como Aceptado
+                    case 'finalizado': stats.finalizado++; break;
+                    case 'cancelado': stats.cancelado++; break;
+                    case 'abandono_de_actividades': // nombre correcto en BD
+                    case 'abandono': // por si acaso
+                        stats.abandono++;
+                        break;
+                    default: break;
                 }
-                if (ticket.prioridad && stats[ticket.prioridad] !== undefined) {
-                    stats[ticket.prioridad]++;
+
+                const prioridad = (ticket.prioridad || '').toLowerCase();
+                switch (prioridad) {
+                    case 'alta': stats.alta++; break;
+                    case 'media': stats.media++; break;
+                    case 'baja': stats.baja++; break;
+                    default: break;
                 }
-            });
-            
+            }
+
+            // Actualizar DOM
             document.getElementById('menuNavTotalTickets').textContent = stats.total;
             document.getElementById('menuNavPendingTickets').textContent = stats.pendiente;
-            document.getElementById('menuNavInProgressTickets').textContent = stats.en_proceso;
+            document.getElementById('menuNavAcceptedTickets').textContent = stats.aceptado;
+            document.getElementById('menuNavAbandonoTickets').textContent = stats.abandono;
             document.getElementById('menuNavCompletedTickets').textContent = stats.finalizado;
-            
-            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            const now = new Date();
-            document.getElementById('menuNavMonthIndicator').textContent = 
-                `Estadísticas de ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-            
+
+            const monthIndicator = document.getElementById('menuNavMonthIndicator');
+            if (monthIndicator) {
+                monthIndicator.textContent = `Mis Estadísticas (Total: ${stats.total})`;
+            }
+
             menuState.stats = stats;
             createCharts(stats);
-            
+
         } catch (error) {
-            const stats = {
-                total: 0,
-                pendiente: 0,
-                en_proceso: 0,
-                finalizado: 0,
-                cancelado: 0,
-                alta: 0,
-                media: 0,
-                baja: 0
-            };
-            
-            document.getElementById('menuNavTotalTickets').textContent = '0';
-            document.getElementById('menuNavPendingTickets').textContent = '0';
-            document.getElementById('menuNavInProgressTickets').textContent = '0';
-            document.getElementById('menuNavCompletedTickets').textContent = '0';
-            
-            createCharts(stats);
+            console.error("Error en loadUserStats:", error);
+            resetStatsToZero();
+            createCharts(getEmptyStats());
         }
     }
     
@@ -1640,7 +1667,6 @@
     }
     
     window.actualizarFooterPersonalizado = updateFooterStyles;
-    
     document.addEventListener('personalizationUpdated', updateFooterStyles);
     
     function initSistemaUnificado() {
