@@ -472,33 +472,16 @@
     }
 
     /**
-     * Valida los datos del formulario
+     * Valida los datos del formulario - VERSIÓN SIN CAMPOS OBLIGATORIOS
      */
     function validarFormulario(datos) {
-        if (datos.curp.length !== 18) {
-            throw new Error('La CURP debe tener 18 caracteres');
-        }
-        
-        if (datos.rfc.length < 12 || datos.rfc.length > 13) {
-            throw new Error('El RFC debe tener entre 12 y 13 caracteres');
-        }
-        
-        const areaSeleccionada = document.getElementById('area')?.value;
-        const subareaSeleccionada = document.getElementById('subarea')?.value;
-        
-        if (!areaSeleccionada) {
-            throw new Error('Debe seleccionar un área');
-        }
-        
-        if (!subareaSeleccionada) {
-            throw new Error('Debe seleccionar una subárea');
-        }
-        
+        // No se realizan validaciones obligatorias. Esta función siempre retorna true.
+        // Puedes guardar campos vacíos sin problema.
         return true;
     }
 
     /**
-     * Actualiza los documentos en Firestore
+     * Actualiza los documentos en Firestore - VERSIÓN CORREGIDA (crea usuario si no existe)
      */
     async function actualizarDocumentosFirestore(datos) {
         try {
@@ -506,14 +489,14 @@
             const areaSelect = document.getElementById('area');
             const subareaSelect = document.getElementById('subarea');
             
-            const areaNombre = areaSelect?.value;
-            const subareaId = subareaSelect?.value;
+            const areaNombre = areaSelect?.value || '';
+            const subareaId = subareaSelect?.value || '';
             
             // Obtener el nombre de la subárea seleccionada
             const selectedOption = subareaSelect?.selectedOptions[0];
             const subareaNombre = selectedOption?.getAttribute('data-nombre') || 
                                  selectedOption?.textContent || 
-                                 'Subárea desconocida';
+                                 '';
             
             const usuarioEditor = currentUser || obtenerUsuarioActual();
 
@@ -547,14 +530,36 @@
             // Actualizar en colección 'colaboradores'
             await db.collection('colaboradores').doc(colaboradorId).update(updateData);
             
-            // Actualizar también en 'usuarios'
-            await db.collection('usuarios').doc(colaboradorId).update({
-                nombreCompleto: datos.nombre,
-                rol: datos.rol,
-                actualizadoPor: usuarioEditor.nombre,
-                actualizadoPorEmail: usuarioEditor.email,
-                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // ========== MANEJO CORREGIDO PARA 'usuarios' ==========
+            // Verificar si el documento existe en 'usuarios', si no, crearlo
+            const userDocRef = db.collection('usuarios').doc(colaboradorId);
+            const userDoc = await userDocRef.get();
+            
+            if (userDoc.exists) {
+                // Actualizar si existe
+                await userDocRef.update({
+                    nombreCompleto: datos.nombre,
+                    rol: datos.rol,
+                    actualizadoPor: usuarioEditor.nombre,
+                    actualizadoPorEmail: usuarioEditor.email,
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('📝 Usuario actualizado en colección "usuarios"');
+            } else {
+                // Crear el documento si no existe (con set y merge para no sobrescribir)
+                await userDocRef.set({
+                    nombreCompleto: datos.nombre,
+                    correo: colaboradorData?.['CORREO ELECTRÓNICO EMPRESARIAL'] || '',
+                    rol: datos.rol || 'colaborador',
+                    uid: colaboradorId,
+                    actualizadoPor: usuarioEditor.nombre,
+                    actualizadoPorEmail: usuarioEditor.email,
+                    fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                console.log('✨ Usuario CREADO en colección "usuarios" (no existía previamente)');
+            }
+            // =======================================================
 
             console.log('✅ Colaborador actualizado correctamente');
             return true;
@@ -673,6 +678,7 @@
                     rol: document.getElementById('rol')?.value || ''
                 };
                 
+                // Validar (ahora no lanza error por campos vacíos)
                 validarFormulario(datos);
                 
                 await actualizarDocumentosFirestore(datos);

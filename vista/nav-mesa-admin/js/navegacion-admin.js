@@ -798,11 +798,7 @@
                 <!-- Las secciones se cargarán dinámicamente según configuración -->
             </div>
             
-            <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <button class="menu-nav-btn menu-nav-report-btn" id="menuNavReportBtn">
-                    <i class="fas fa-bug"></i> Reportar error
-                </button>
-            </div>
+            
         `;
         
         document.body.appendChild(overlay);
