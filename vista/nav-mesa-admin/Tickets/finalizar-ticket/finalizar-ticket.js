@@ -1,12 +1,10 @@
-// finalizar-ticket.js
+// finalizar-ticket.js (sin pausa, solo finalizar)
 (function() {
     // --- CONSTANTES DE VALIDACIÓN ---
     const MAX_IMAGES = 20;
     const MIN_IMAGES = 1;
     const MAX_DESCRIPTION_LENGTH = 10000;
     const MIN_DESCRIPTION_LENGTH = 10;
-    const MAX_PAUSE_REASON_LENGTH = 500;
-    const MIN_PAUSE_REASON_LENGTH = 10;
     // --------------------------------
 
     // Configuración de Firebase
@@ -33,10 +31,10 @@
         currentUser: null,
         userData: null,
         currentTicketId: null,
-        selectedImages: [], // Guarda los File objects o paths
-        selectedImageFiles: [], // Guarda los archivos originales
+        selectedImages: [], // Guarda los File objects o objetos con path/url
+        selectedImageFiles: [],
         currentEvidenciaId: null,
-        uploadedImagePaths: [] // Guarda los paths de las imágenes subidas
+        uploadedImagePaths: []
     };
 
     // --- FUNCIONES DE UTILIDAD (CRUD, ALERTAS) ---
@@ -97,30 +95,16 @@
 
     /**
      * Sube una imagen a Firebase Storage en la carpeta FinTickets
-     * @param {File} file - Archivo de imagen
-     * @param {string} ticketId - ID del ticket
-     * @param {number} index - Índice de la imagen
-     * @returns {Promise<string>} - Path del archivo en Storage
      */
     async function uploadImageToStorage(file, ticketId, index) {
         try {
-            // Generar nombre único: FinTickets/ticketId/timestamp_index.extension
             const timestamp = Date.now();
             const extension = file.name.split('.').pop() || 'jpg';
             const fileName = `${timestamp}_${index}.${extension}`;
-            
-            // Path completo: FinTickets/TICKET_ID/archivo.jpg
             const filePath = `FinTickets/${ticketId}/${fileName}`;
             const storageRef = storage.ref().child(filePath);
-            
-            // Subir archivo
             await storageRef.put(file);
-            
-            // Obtener URL de descarga
             const downloadUrl = await storageRef.getDownloadURL();
-            
-            console.log(`Imagen subida exitosamente: ${filePath}`);
-            
             return {
                 path: filePath,
                 url: downloadUrl,
@@ -132,20 +116,14 @@
         }
     }
 
-    /**
-     * Elimina una imagen de Firebase Storage
-     * @param {string} path - Path de la imagen en Storage
-     */
     async function deleteImageFromStorage(path) {
         try {
             if (!path) return;
-            
             const storageRef = storage.ref().child(path);
             await storageRef.delete();
             console.log(`Imagen eliminada: ${path}`);
         } catch (error) {
             console.error("Error eliminando imagen de Storage:", error);
-            // No lanzamos error para no interrumpir el flujo
         }
     }
 
@@ -176,14 +154,13 @@
             const imgPreview = document.createElement('div');
             imgPreview.className = 'image-preview-item';
             
-            // Determinar la fuente de la imagen
             let imgSrc = '';
             if (img instanceof File) {
                 imgSrc = URL.createObjectURL(img);
             } else if (typeof img === 'string') {
-                imgSrc = img; // URL o base64
+                imgSrc = img;
             } else if (img.url) {
-                imgSrc = img.url; // Objeto con url
+                imgSrc = img.url;
             }
             
             imgPreview.innerHTML = `
@@ -201,26 +178,20 @@
             imgPreview.querySelector('.delete-image-btn').addEventListener('click', async function(e) {
                 e.stopPropagation();
                 const idx = parseInt(this.getAttribute('data-index'));
-                
-                // Si es una imagen ya subida (tiene path), eliminarla de Storage
                 const imageToDelete = AppState.selectedImages[idx];
                 if (imageToDelete && imageToDelete.path) {
                     await deleteImageFromStorage(imageToDelete.path);
                 }
-                
-                // Eliminar del array
                 AppState.selectedImages.splice(idx, 1);
                 if (AppState.selectedImageFiles) {
                     AppState.selectedImageFiles.splice(idx, 1);
                 }
-                
                 updateImagePreviews();
             });
         });
     }
 
     // --- FUNCIONES DE VALIDACIÓN ---
-
     function validateFinalizeForm(description, imageCount) {
         if (description.length < MIN_DESCRIPTION_LENGTH) {
             throw new Error(`La descripción de finalización debe tener al menos ${MIN_DESCRIPTION_LENGTH} caracteres`);
@@ -234,18 +205,7 @@
         return true;
     }
 
-    function validatePauseForm(reason) {
-        if (reason.length < MIN_PAUSE_REASON_LENGTH) {
-            throw new Error(`La razón de pausa debe tener al menos ${MIN_PAUSE_REASON_LENGTH} caracteres`);
-        }
-        if (reason.length > MAX_PAUSE_REASON_LENGTH) {
-            throw new Error(`La razón de pausa no debe exceder ${MAX_PAUSE_REASON_LENGTH} caracteres`);
-        }
-        return true;
-    }
-
     // --- FUNCIONES DE CARGA DE DATOS ---
-
     async function loadExistingEvidences(ticketId) {
         try {
             const evidenciasRef = db.collection('evidenciatickets');
@@ -263,15 +223,7 @@
                 document.getElementById('projectDescription').value = evidencia.descripcion || '';
                 document.getElementById('charCount').textContent = evidencia.descripcion?.length || 0;
                 
-                const ticketRef = db.collection('ticketsmesa').doc(ticketId);
-                const ticketSnap = await ticketRef.get();
-                const ticketData = ticketSnap.data();
-
-                if (document.getElementById('pauseReason')) {
-                    document.getElementById('pauseReason').value = ticketData.pauseComment || '';
-                }
-                
-                // Cargar imágenes existentes (ya tienen path y url)
+                // Cargar imágenes existentes
                 AppState.selectedImages = evidencia.imagenes || [];
                 updateImagePreviews();
                 
@@ -301,17 +253,14 @@
             
             const ticketData = ticketSnap.data();
             const shortId = ticketId.substring(0, 8);
-            
             const colaboradorNames = await getColaboradorNames(ticketData.colaboradores);
 
-            // Actualizar UI básica
             document.getElementById('ticketIdDisplay').textContent = `#${shortId.toUpperCase()}`;
             document.getElementById('ticketTitle').textContent = ticketData.titulo || 'Sin título';
             document.getElementById('ticketStatus').textContent = ticketData.estado || 'Desconocido';
             document.getElementById('ticketPriority').textContent = ticketData.prioridad || 'Media';
             document.getElementById('ticketArea').textContent = ticketData.area || 'General';
             
-            // Mostrar Descripción y Colaboradores
             const ticketInfoDiv = document.getElementById('ticketInfo');
             if (ticketInfoDiv) {
                 document.getElementById('ticketDescriptionDisplay')?.remove();
@@ -334,7 +283,6 @@
             }
 
             await loadExistingEvidences(ticketId);
-            
             hideLoading();
             
         } catch (error) {
@@ -368,20 +316,15 @@
         }
     }
 
-    // --- FUNCIONES DE ACCIÓN (SUBMIT, PAUSE) ---
-
+    // --- FUNCIONES DE ACCIÓN (SUBMIT) ---
     async function saveOrUpdateEvidence(description) {
-        // Subir imágenes nuevas a Storage
         const imageUploadPromises = [];
         const finalImages = [];
         
-        // Primero, mantener las imágenes existentes que ya tienen path
         for (const img of AppState.selectedImages) {
             if (img.path) {
-                // Es una imagen ya existente en Storage
                 finalImages.push(img);
             } else if (img instanceof File) {
-                // Es una imagen nueva (File object), subir a Storage
                 const index = imageUploadPromises.length;
                 const uploadPromise = uploadImageToStorage(img, AppState.currentTicketId, index)
                     .then(result => {
@@ -391,7 +334,6 @@
             }
         }
         
-        // Esperar a que todas las imágenes nuevas se suban
         if (imageUploadPromises.length > 0) {
             await Promise.all(imageUploadPromises);
         }
@@ -401,13 +343,12 @@
             colaboradorId: AppState.userData.colaboradorId,
             colaboradorNombre: AppState.userData.NOMBRE,
             descripcion: description,
-            imagenes: finalImages, // Guardar objetos con path y url
+            imagenes: finalImages,
             fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
             estado: 'completado'
         };
 
         if (AppState.currentEvidenciaId) {
-            // Actualizar evidencia existente
             await db.collection('evidenciatickets').doc(AppState.currentEvidenciaId).update(evidenciaData);
         } else {
             evidenciaData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
@@ -419,7 +360,6 @@
     async function updateTicketStatus() {
         const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
         const ticketSnap = await ticketRef.get();
-        
         if (!ticketSnap.exists) return;
         
         const ticketData = ticketSnap.data();
@@ -439,9 +379,8 @@
         
         const updateData = {
             evidenciasCompletadas,
-            estado: newStatus, 
-            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
-            pauseComment: '' // Limpiar comentario de pausa si se finaliza
+            estado: newStatus,
+            fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
         };
         
         if (todosCompletados) {
@@ -460,77 +399,6 @@
         );
     }
 
-    async function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-        
-        try {
-            const description = document.getElementById('projectDescription').value;
-            
-            validateFinalizeForm(description, AppState.selectedImages.length);
-            
-            showLoading('Guardando evidencias y finalizando...');
-            
-            await saveOrUpdateEvidence(description);
-            await updateTicketStatus();
-            
-            hideLoading();
-            await showSuccess('Tus evidencias han sido guardadas y el ticket marcado como completado.', 'Proceso Exitoso');
-            
-            window.location.href = '../gestion-tickets/gestion-tickets.html';
-            
-        } catch (error) {
-            console.error("Error guardando evidencias:", error);
-            showError(error.message || 'No se pudieron guardar las evidencias');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-            hideLoading();
-        }
-    }
-    
-    async function handlePauseTicket(reason) {
-        try {
-            showLoading('Pausando ticket y registrando razón...');
-
-            const ticketRef = db.collection('ticketsmesa').doc(AppState.currentTicketId);
-            const ticketSnap = await ticketRef.get();
-            const oldStatus = ticketSnap.data().estado || 'desconocido';
-
-            const updateData = {
-                estado: 'en_proceso', // Estado de Pausa
-                pauseComment: reason, // Razón de la pausa
-                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp() 
-            };
-
-            await ticketRef.update(updateData);
-
-            await recordHistory(
-                AppState.currentTicketId,
-                oldStatus,
-                'en_proceso',
-                `Pausado desde formulario de Finalización: ${reason}`,
-                AppState.userData.colaboradorId,
-                AppState.userData.NOMBRE
-            );
-
-            hideLoading();
-            await showSuccess('El ticket ha sido puesto en pausa. Volverá a la lista activa en Gestión de Tickets.', 'Ticket en Pausa');
-            
-            window.location.href = '../gestion-tickets/gestion-tickets.html';
-            
-        } catch (error) {
-            console.error("Error al pausar ticket:", error);
-            showError(error.message || 'No se pudo pausar el ticket.');
-        } finally {
-            hideLoading();
-        }
-    }
-
     async function recordHistory(ticketId, oldStatus, newStatus, motivo, collaboratorId, collaboratorName) {
         try {
             const historyData = {
@@ -542,30 +410,37 @@
                 estadoNuevo: newStatus,
                 motivo: motivo || `Cambio de estado de ${oldStatus} a ${newStatus}`
             };
-            
             await db.collection('historialTicket').add(historyData);
             console.log('Historial de ticket registrado exitosamente.');
         } catch (error) {
             console.error('Error registrando historial:', error);
         }
     }
-    
-    function handlePaste(e) {
-        const items = e.clipboardData.items;
-        const imageFiles = [];
 
-        for (let i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf('image') !== -1) {
-                const file = items[i].getAsFile();
-                if (file) {
-                    imageFiles.push(file);
-                }
-            }
-        }
-
-        if (imageFiles.length > 0) {
-            e.preventDefault(); 
-            handleImageUpload(imageFiles);
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        
+        try {
+            const description = document.getElementById('projectDescription').value;
+            validateFinalizeForm(description, AppState.selectedImages.length);
+            showLoading('Guardando evidencias y finalizando...');
+            await saveOrUpdateEvidence(description);
+            await updateTicketStatus();
+            hideLoading();
+            await showSuccess('Tus evidencias han sido guardadas y el ticket marcado como completado.', 'Proceso Exitoso');
+            window.location.href = '../gestion-tickets/gestion-tickets.html';
+        } catch (error) {
+            console.error("Error guardando evidencias:", error);
+            showError(error.message || 'No se pudieron guardar las evidencias');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            hideLoading();
         }
     }
 
@@ -580,139 +455,76 @@
         }
 
         showLoading('Procesando imágenes...');
-        
-        // Convertir FileList a array y agregar a selectedImages
         const fileArray = Array.from(files);
-        
-        // Crear previews inmediatamente
         fileArray.forEach(file => {
-            // Crear objeto temporal con File para preview
             AppState.selectedImages.push(file);
         });
-        
-        // Guardar también los File objects para subirlos después
         if (!AppState.selectedImageFiles) {
             AppState.selectedImageFiles = [];
         }
         AppState.selectedImageFiles.push(...fileArray);
-        
         hideLoading();
         updateImagePreviews();
     }
 
+    function handlePaste(e) {
+        const items = e.clipboardData.items;
+        const imageFiles = [];
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) imageFiles.push(file);
+            }
+        }
+        if (imageFiles.length > 0) {
+            e.preventDefault();
+            handleImageUpload(imageFiles);
+        }
+    }
+
     // --- SETUP DE EVENTOS ---
-    
     function setupEventListeners() {
         const textarea = document.getElementById('projectDescription');
         const counter = document.getElementById('charCount');
         const finishForm = document.getElementById('finishTicketForm');
         const cancelBtn = document.getElementById('cancelBtn');
         const input = document.getElementById('imageUpload');
-        const pauseBtn = document.getElementById('pauseBtn');
+        const pauseRedirectBtn = document.getElementById('pauseRedirectBtn');
         
-        // Lógica para el botón Pausar (Ahora usa SweetAlert2)
-        pauseBtn.addEventListener('click', () => {
-            const swalHtml = `
-                <label for="swalPauseReason" class="swal2-label" style="text-align: left; display: block; margin-bottom: 10px;">
-                    <i class="fas fa-comment-dots"></i> Razón para poner en pausa (Requerido)
-                </label>
-                <textarea 
-                    id="swalPauseReason" 
-                    class="swal2-textarea" 
-                    rows="4" 
-                    minlength="10" 
-                    maxlength="500" 
-                    placeholder="Escriba la razón detallada para pausar el ticket (mínimo 10 caracteres)"
-                    style="width: 100%; box-sizing: border-box;"
-                ></textarea>
-                <div class="char-counter" style="text-align: right; font-size: 0.8em; color: #999; margin-top: 5px;">
-                    <span id="swalPauseCharCount">0</span>/${MAX_PAUSE_REASON_LENGTH} caracteres
-                </div>
-            `;
-
-            Swal.fire({
-                title: 'Razón para Pausar Ticket',
-                html: swalHtml, 
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-pause"></i> Pausar Ticket',
-                cancelButtonText: 'Cancelar',
-                focusConfirm: false,
-                didOpen: () => {
-                    const swalTextarea = Swal.getHtmlContainer().querySelector('#swalPauseReason');
-                    const swalCounter = Swal.getHtmlContainer().querySelector('#swalPauseCharCount');
-                    
-                    const initialPauseReason = document.getElementById('pauseReason').value || '';
-                    swalTextarea.value = initialPauseReason;
-
-                    swalTextarea.addEventListener('input', function() {
-                        const length = Math.min(this.value.length, MAX_PAUSE_REASON_LENGTH);
-                        swalCounter.textContent = `${length}/${MAX_PAUSE_REASON_LENGTH} caracteres`;
-                        if (this.value.length > MAX_PAUSE_REASON_LENGTH) {
-                            this.value = this.value.substring(0, MAX_PAUSE_REASON_LENGTH);
-                        }
-                    });
-                    
-                    swalCounter.textContent = `${swalTextarea.value.length}/${MAX_PAUSE_REASON_LENGTH} caracteres`;
-                },
-                preConfirm: () => {
-                    const reasonInput = Swal.getHtmlContainer().querySelector('#swalPauseReason');
-                    const reason = reasonInput.value.trim();
-                    
-                    try {
-                         validatePauseForm(reason);
-                         return reason;
-                    } catch (error) {
-                        Swal.showValidationMessage(error.message);
-                        return false;
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('pauseReason').value = result.value;
-                    handlePauseTicket(result.value);
-                }
-            });
-        });
-
-        // Contador de caracteres (Descripción Finalización)
+        // Contador de caracteres
         textarea.addEventListener('input', function() {
-            const length = Math.min(this.value.length, MAX_DESCRIPTION_LENGTH);
+            let length = Math.min(this.value.length, MAX_DESCRIPTION_LENGTH);
             counter.textContent = length;
-            
             if (this.value.length > MAX_DESCRIPTION_LENGTH) {
                 this.value = this.value.substring(0, MAX_DESCRIPTION_LENGTH);
             }
         });
         
-        // Carga de imágenes (input file)
+        // Carga de imágenes
         input.addEventListener('change', function(e) {
             handleImageUpload(e.target.files);
-            e.target.value = ''; 
+            e.target.value = '';
         });
 
-        // Escuchador para pegar imágenes (Ctrl+V)
         document.addEventListener('paste', handlePaste);
-
-        // Envío del formulario (Finalizar)
         finishForm.addEventListener('submit', handleFormSubmit);
+        cancelBtn.addEventListener('click', () => window.location.href = '../gestion-tickets/gestion-tickets.html');
         
-        // Botón cancelar
-        cancelBtn.addEventListener('click', function() {
-            window.location.href = '../gestion-tickets/gestion-tickets.html';
-        });
-        
+        // Botón de pausa: solo redirige (sin lógica adicional)
+        if (pauseRedirectBtn) {
+            pauseRedirectBtn.addEventListener('click', () => {
+                window.location.href = '../pausar-Ticket/pausar-ticket.html';
+            });
+        }
     }
 
-    // Inicializar aplicación
+    // Inicialización
     async function initApp() {
         const { ticketId } = getUrlParams();
-        
         if (!ticketId) {
             showError('No se especificó un ticket');
             return;
         }
-        
         AppState.currentTicketId = ticketId;
         
         auth.onAuthStateChanged(async (user) => {
@@ -720,7 +532,7 @@
                 AppState.currentUser = user;
                 const loaded = await loadUserData(user);
                 if (loaded) {
-                    setupEventListeners(); 
+                    setupEventListeners();
                     await loadTicketInfo(ticketId);
                 }
             } else {

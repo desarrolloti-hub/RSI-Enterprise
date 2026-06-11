@@ -172,7 +172,7 @@ body {
     font-weight: bold;
 }
 
-/* 7. Botones de Acción */
+/* 7. Botones de Acción - MISMO TAMAÑO */
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -181,7 +181,8 @@ body {
 }
 
 .action-btn {
-    padding: 12px 25px;
+    min-width: 150px;           /* MISMO ANCHO MÍNIMO */
+    padding: 12px 20px;         /* MISMO RELLENO */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -190,12 +191,15 @@ body {
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;    /* Centra el contenido horizontalmente */
+    text-align: center;
 }
 
 .action-btn i {
     margin-right: 8px;
 }
 
+/* Botón Confirmar (Finalizar) */
 .confirm-btn {
     background-color: var(--primary-color, #6C43E0) !important;
     color: white !important;
@@ -207,6 +211,7 @@ body {
     transform: translateY(-2px);
 }
 
+/* Botón Cancelar */
 .cancel-btn {
     background-color: var(--card-bg, #ffffff) !important;
     color: var(--text-color, #495057) !important;
@@ -217,6 +222,20 @@ body {
 .cancel-btn:hover {
     background-color: var(--primary-color, #6C43E0)10 !important;
     color: var(--primary-color, #6C43E0) !important;
+    transform: translateY(-1px);
+}
+
+/* Botón Pausar Ticket */
+.pause-btn {
+    background-color: var(--card-bg, #ffffff) !important;
+    color: var(--text-color, #495057) !important;
+    border: 2px solid var(--pause-color, #fd7e14) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pause-btn:hover {
+    background-color: var(--pause-color, #fd7e14)15 !important;
+    color: var(--pause-color, #fd7e14) !important;
     transform: translateY(-1px);
 }
 
@@ -271,7 +290,7 @@ body {
     opacity: 1;
 }
 
-/* 10. Estilos Responsivos */
+/* 9. Estilos Responsivos */
 @media (max-width: 768px) {
     .container {
         padding: 0 10px;
@@ -304,9 +323,9 @@ body {
     }
 
     .action-btn {
-        width: 100%;
+        width: 100%;            /* En móvil ocupan todo el ancho */
+        min-width: unset;       /* Eliminamos el min-width para que se adapten */
         justify-content: center;
-        padding: 15px 20px;
     }
     
     .image-preview-container {
@@ -348,37 +367,26 @@ body {
     }
 }
 
-
-/* ======= REGLAS PARA CORREGIR SWEETALERT2 DE PAUSA (Final) ======= */
-
-/* 1. Centra el modal completamente en la pantalla y asegura que el contenedor no cause scroll vertical global */
+/* ======= REGLAS PARA CORREGIR SWEETALERT2 ======= */
 .swal2-container {
     align-items: center !important; 
     justify-content: center !important; 
     overflow-y: auto !important; 
 }
 
-/* 2. Corrige el desplazamiento del contenido inyectado */
 .swal2-html-container {
-    /* CORRECCIÓN CLAVE para centrar el texto del textarea y el contador: */
     text-align: center !important; 
-    /* Ajustamos el padding para que el contenido use todo el ancho del modal */
     padding: 1em 1.5em 1em 1.5em !important; 
     box-sizing: border-box;
     width: 100%;
 }
 
-/* 3. Estilos específicos para los elementos inyectados en el modal de pausa */
-
-/* Alineación forzada para el texto de la etiqueta (Razón para poner en pausa) */
-/* La etiqueta debe ir a la izquierda, incluso si el contenedor HTML está centrado */
 .swal2-popup .swal2-label {
     text-align: left !important;
     width: 100%;
     display: block;
 }
 
-/* El textarea debe ocupar el 100% del ancho, eliminar barras de scroll y centrar su TEXTO */
 .swal2-textarea {
     width: 100% !important; 
     max-width: 100% !important;
@@ -386,13 +394,10 @@ body {
     overflow: hidden !important; 
     resize: none !important;
     height: auto !important; 
-    /* CORRECCIÓN CLAVE: Centrar el texto dentro del textarea */
     text-align: center !important; 
 }
 
-/* 4. El contador de caracteres debe estar centrado debajo del textarea */
 .swal2-html-container .char-counter {
-    /* CORRECCIÓN CLAVE: Centrar el contador */
     text-align: center !important; 
     width: 100%;
     padding: 0;
@@ -402,5 +407,3 @@ body {
     box-sizing: border-box; 
     display: block;
 }
-
-/* ======================================================== */
