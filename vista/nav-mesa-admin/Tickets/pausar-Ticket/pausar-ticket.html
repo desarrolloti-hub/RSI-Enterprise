@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pausar Ticket | RSI Enterprise</title>
+    <link rel="stylesheet" href="pausar-ticket.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-pause-circle"></i> Pausar Ticket</h1>
+            <a href="../gestion-tickets/gestion-tickets.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Volver a Mis Tickets
+            </a>
+        </div>
+
+        <div class="pause-ticket-container">
+            <!-- Tarjeta de información del ticket -->
+            <div class="ticket-info-card">
+                <h3><i class="fas fa-info-circle"></i> Información del Ticket</h3>
+                <div id="ticketInfo">
+                    <p><strong>ID:</strong> <span id="ticketIdDisplay">Cargando...</span></p>
+                    <p><strong>Título:</strong> <span id="ticketTitle">Cargando...</span></p>
+                    <p><strong>Estado actual:</strong> <span id="ticketStatus">Cargando...</span></p>
+                    <p><strong>Prioridad:</strong> <span id="ticketPriority">Cargando...</span></p>
+                    <p><strong>Área:</strong> <span id="ticketArea">Cargando...</span></p>
+                    <p><strong>Colaboradores asignados:</strong> <span id="ticketColaboradores">Cargando...</span></p>
+                    <p><strong>Descripción:</strong></p>
+                    <div id="ticketDescription" class="description-box">
+                        Cargando...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de pausa -->
+            <form id="pauseTicketForm" class="pause-form">
+                <div class="form-group">
+                    <label for="pauseReason">
+                        <i class="fas fa-comment-dots"></i> Razón para pausar el ticket
+                    </label>
+                    <textarea 
+                        id="pauseReason" 
+                        class="form-control" 
+                        rows="5" 
+                        minlength="10" 
+                        maxlength="500" 
+                        placeholder="Explique detalladamente por qué se pausa el ticket (mínimo 10 caracteres, máximo 500)"
+                        required></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span> / 500 caracteres
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="action-btn cancel-btn" id="cancelBtn">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="action-btn pause-submit-btn">
+                        <i class="fas fa-pause"></i> Confirmar Pausa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts auxiliares (si los usas en tu proyecto) -->
+    <script src="/vista/nav-mesa-admin/js/navegacion-admin.js"></script>
+    <script src="/vista/nav-mesa-admin/js/personalizacion-colores.js"></script>
+    <script src="/vista/nav-mesa-admin/js/particulas.js"></script>
+    <script src="/vista/nav-mesa-admin/js/guardar-ultima-pagina.js"></script>
+
+    <!-- Script principal -->
+    <script src="pausar-ticket.js"></script>
+</body>
+</html>

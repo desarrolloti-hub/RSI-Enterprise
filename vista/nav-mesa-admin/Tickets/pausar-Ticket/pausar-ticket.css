@@ -1,0 +1,247 @@
+/* ==============================================
+    pausar-ticket.css - Estilo coherente con el sistema
+    ============================================== */
+
+/* 1. Base */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color, #f5f5f5);
+    color: var(--text-color, #333);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+    background-color: transparent;
+    padding: 0;
+    margin-top: 50px;
+}
+
+/* 2. Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 10px;
+    flex-wrap: wrap;
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    color: var(--primary-color, #6C43E0);
+    font-weight: 700;
+    margin: 0;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-color, #333) !important;
+    border: 1px solid var(--accent-color, #ccc);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--card-shadow-subtle, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+.back-btn i {
+    margin-right: 8px;
+    color: var(--primary-color, #6C43E0);
+}
+
+.back-btn:hover {
+    background-color: var(--primary-color, #6C43E0);
+    color: white !important;
+    border-color: var(--primary-color, #6C43E0);
+    transform: translateY(-2px);
+}
+
+.back-btn:hover i {
+    color: white;
+}
+
+/* 3. Contenedor principal */
+.pause-ticket-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* 4. Tarjeta de información */
+.ticket-info-card {
+    background-color: var(--card-bg, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1));
+    border: 1px solid rgba(108, 67, 224, 0.1);
+}
+
+.ticket-info-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-color, #6C43E0);
+    border-bottom: 2px solid var(--accent-color, #6C43E0);
+    padding-bottom: 5px;
+    font-size: 1.2rem;
+}
+
+.ticket-info-card p {
+    margin: 8px 0;
+    font-size: 1rem;
+}
+
+.ticket-info-card strong {
+    color: var(--primary-color, #6C43E0);
+}
+
+.description-box {
+    background-color: var(--background-color, #f8f9fa);
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 5px;
+    border: 1px solid var(--border-color, #e9ecef);
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+}
+
+/* 5. Formulario */
+.pause-form {
+    background-color: var(--card-bg, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1));
+    border: 1px solid rgba(108, 67, 224, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--primary-color, #6C43E0);
+    font-size: 1rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--accent-color, #ced4da);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-color, #333);
+    background-color: var(--card-bg, #fff);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    resize: vertical;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color, #6C43E0);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(108, 67, 224, 0.2);
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--accent-color, #6c757d);
+    margin-top: 5px;
+}
+
+/* 6. Botones (mismo tamaño) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.action-btn {
+    min-width: 150px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.cancel-btn {
+    background-color: var(--card-bg, #ffffff) !important;
+    color: var(--text-color, #495057) !important;
+    border: 2px solid var(--primary-color, #6C43E0) !important;
+}
+
+.cancel-btn:hover {
+    background-color: rgba(108, 67, 224, 0.1) !important;
+    color: var(--primary-color, #6C43E0) !important;
+    transform: translateY(-1px);
+}
+
+.pause-submit-btn {
+    background-color: var(--pause-color, #fd7e14) !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(253, 126, 20, 0.4);
+}
+
+.pause-submit-btn:hover {
+    background-color: #e06e0c !important;
+    transform: translateY(-2px);
+}
+
+/* 7. Responsive */
+@media (max-width: 768px) {
+    .container {
+        margin-top: 70px;
+        padding: 0 10px;
+    }
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    .form-actions {
+        flex-direction: column;
+    }
+    .action-btn {
+        width: 100%;
+        min-width: unset;
+    }
+    .ticket-info-card, .pause-form {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ticket-info-card, .pause-form {
+        padding: 15px;
+    }
+}
