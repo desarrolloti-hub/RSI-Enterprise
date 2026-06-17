@@ -1,18 +1,52 @@
 (function() {
     'use strict';
-    
-    // =============================================
-    // FUNCIONALIDAD DEL FOOTER FIJO
-    // =============================================
-    
+
+    // ============================================================
+    // 1. CONFIGURACIÓN INICIAL Y VARIABLES GLOBALES
+    // ============================================================
+
+    // Objeto que mantiene el estado del menú y datos del usuario
+    const menuState = {
+        currentUser: null,
+        userData: null,
+        stats: {
+            total: 0,
+            pendiente: 0,
+            aceptado: 0,
+            finalizado: 0,
+            cancelado: 0,
+            abandono: 0,
+            alta: 0,
+            media: 0,
+            baja: 0
+        },
+        configuracionNavegacion: null,
+        // Bandera para saber si el usuario tiene permisos personalizados
+        tienePermisosPersonalizados: false
+    };
+
+    // Exponemos el estado globalmente por si se necesita desde fuera
+    window.menuState = menuState;
+
+
+    // ============================================================
+    // 2. FOOTER FIJO (SIEMPRE VISIBLE)
+    // ============================================================
+
+    /**
+     * Crea un footer fijo en la parte inferior de la página.
+     * Se usa un único footer para toda la aplicación.
+     */
     function createMainContentFooter() {
+        // Evita duplicados
         if (document.getElementById('mainContentFooter')) {
             return;
         }
 
         const mainFooter = document.createElement('footer');
         mainFooter.id = 'mainContentFooter';
-        
+
+        // Estilos inline para garantizar que siempre se vea fijo
         mainFooter.style.cssText = `
             position: fixed !important;
             bottom: 0 !important;
@@ -33,7 +67,8 @@
             min-height: auto !important;
         `;
 
-        mainFooter.innerHTML =/*html*/ `
+        // Contenido HTML del footer
+        mainFooter.innerHTML = `
             <div style="
                 display: flex !important; 
                 align-items: center !important; 
@@ -64,27 +99,33 @@
         `;
 
         document.body.appendChild(mainFooter);
-        
+
+        // Ajusta el padding inferior del body para que no se superponga el footer
         const originalBodyPaddingBottom = document.body.style.paddingBottom;
         document.body.style.paddingBottom = '45px';
-        
+
+        // Aplica estilos adicionales (responsive, hover, etc.)
         applyFooterCustomStyles();
-        
+
+        // Restaura el padding original al recargar la página (por si acaso)
         window.addEventListener('beforeunload', function() {
             document.body.style.paddingBottom = originalBodyPaddingBottom;
         });
     }
-    
+
+    /**
+     * Aplica estilos CSS personalizados para el footer (responsive, temas, etc.)
+     */
     function applyFooterCustomStyles() {
         const styleId = 'footer-custom-styles';
         let styleElement = document.getElementById(styleId);
-        
+
         if (!styleElement) {
             styleElement = document.createElement('style');
             styleElement.id = styleId;
             document.head.appendChild(styleElement);
         }
-        
+
         styleElement.textContent = `
             #mainContentFooter {
                 background: var(--primary-color) !important;
@@ -168,6 +209,7 @@
                 }
             }
             
+            /* Sombra adaptativa según fondo de la página */
             body[style*="background-color: #1a1a1a"] #mainContentFooter,
             body[style*="background-color: #2a2a2a"] #mainContentFooter {
                 box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3) !important;
@@ -178,14 +220,18 @@
                 box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2) !important;
             }
         `;
-        
+
         document.body.classList.add('body-padding-adjust');
     }
-    
-    // =============================================
-    // FUNCIONALIDAD DEL MENÚ DE NAVEGACIÓN ADMIN
-    // =============================================
-    
+
+
+    // ============================================================
+    // 3. MENÚ DE NAVEGACIÓN LATERAL (SIDEBAR)
+    // ============================================================
+
+    /**
+     * Carga la librería html2canvas para capturar pantalla (usado en reportes)
+     */
     function loadHtml2Canvas(callback) {
         if (window.html2canvas) {
             callback();
@@ -194,10 +240,13 @@
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
         script.onload = callback;
-        script.onerror = callback;
+        script.onerror = callback; // Si falla, igual continuamos
         document.head.appendChild(script);
     }
 
+    /**
+     * Carga Font Awesome si no está presente (íconos)
+     */
     function loadFontAwesome() {
         if (!document.querySelector('link[href*="font-awesome"]')) {
             const link = document.createElement('link');
@@ -206,35 +255,26 @@
             document.head.appendChild(link);
         }
     }
-    
-    const menuState = {
-        currentUser: null,
-        userData: null,
-        stats: {
-            total: 0,
-            pendiente: 0,
-            aceptado: 0,
-            finalizado: 0,
-            cancelado: 0,
-            abandono: 0,
-            alta: 0,
-            media: 0,
-            baja: 0
-        },
-        configuracionNavegacion: null
-    };
-    
-    window.menuState = menuState;
-    
+
+
+    // ============================================================
+    // 4. ESTILOS Y ESTRUCTURA DEL MENÚ
+    // ============================================================
+
+    /**
+     * Agrega los estilos CSS del menú lateral al documento.
+     */
     function addMenuStyles() {
         const style = document.createElement('style');
         style.textContent = `
+            /* Reset y base */
             body {
                 margin: 0;
                 padding: 0;
                 overflow-x: hidden;
             }
             
+            /* Sidebar principal */
             .menu-nav-sidebar {
                 position: fixed;
                 top: 0;
@@ -255,6 +295,7 @@
                 left: 0;
             }
             
+            /* Overlay para cerrar al hacer clic fuera */
             .menu-nav-overlay {
                 position: fixed;
                 top: 0;
@@ -270,6 +311,7 @@
                 display: block;
             }
             
+            /* Botón flotante para abrir/cerrar menú */
             .menu-nav-floating-btn {
                 position: fixed;
                 top: 20px;
@@ -299,6 +341,7 @@
                 transition: transform 0.3s ease;
             }
             
+            /* Perfil de usuario */
             .menu-nav-user-profile {
                 padding: 30px 20px;
                 text-align: center;
@@ -343,6 +386,7 @@
                 font-weight: 500;
             }
             
+            /* Estadísticas */
             .menu-nav-stats-container {
                 padding: 20px;
                 border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -396,6 +440,7 @@
                 padding: 0 10px;
             }
             
+            /* Gráficos de barras */
             .menu-nav-charts-container {
                 padding: 20px;
                 border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -462,12 +507,14 @@
                 flex-shrink: 0;
             }
             
+            /* Contenedor de botones (secciones) */
             .menu-nav-buttons-container {
                 padding: 20px;
                 max-width: 100%;
                 box-sizing: border-box;
             }
             
+            /* Secciones plegables */
             .menu-nav-section {
                 margin-bottom: 10px;
                 border-radius: 8px;
@@ -522,6 +569,7 @@
                 max-height: 500px;
             }
             
+            /* Botones de navegación */
             .menu-nav-btn {
                 display: flex;
                 align-items: center;
@@ -561,6 +609,7 @@
                 font-size: 0.8rem;
             }
             
+            /* Estilos específicos para ciertos botones */
             .menu-nav-btn-logout {
                 background: rgba(220, 53, 69, 0.1);
                 color: #ff6b6b;
@@ -588,7 +637,26 @@
             .menu-nav-report-btn:hover {
                 background: rgba(52, 152, 219, 0.2);
             }
+
+            /* Mensaje de permisos no personalizados */
+            .menu-nav-sin-permisos {
+                padding: 20px;
+                text-align: center;
+                color: #ffd93d;
+                background: rgba(255, 193, 7, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(255, 193, 7, 0.3);
+                margin: 10px 0;
+            }
+
+            .menu-nav-sin-permisos i {
+                font-size: 2rem;
+                display: block;
+                margin-bottom: 10px;
+                color: #ffd93d;
+            }
             
+            /* Responsive */
             @media (min-width: 769px) {
                 .menu-nav-sidebar {
                     width: 320px;
@@ -729,22 +797,29 @@
         `;
         document.head.appendChild(style);
     }
-    
+
+    /**
+     * Crea la estructura HTML del menú lateral y sus elementos.
+     */
     function createMenuHTML() {
+        // Overlay para cerrar al hacer clic fuera
         const overlay = document.createElement('div');
         overlay.className = 'menu-nav-overlay';
         overlay.id = 'menuNavOverlay';
-        
+
+        // Botón flotante para abrir/cerrar
         const floatingBtn = document.createElement('button');
         floatingBtn.className = 'menu-nav-floating-btn';
         floatingBtn.id = 'menuNavFloatingBtn';
         floatingBtn.innerHTML = '<i class="fas fa-bars"></i>';
-        
+
+        // Sidebar principal
         const sidebar = document.createElement('div');
         sidebar.className = 'menu-nav-sidebar';
         sidebar.id = 'menuNavSidebar';
-        
-        sidebar.innerHTML =/*html*/ `
+
+        // Contenido inicial del sidebar (luego se actualiza dinámicamente)
+        sidebar.innerHTML = `
             <div class="menu-nav-user-profile">
                 <img src="../../css/img/Logo-RSI-OFICIAL.png" alt="Foto de perfil" class="menu-nav-user-avatar" id="menuNavUserAvatar">
                 <h2 class="menu-nav-user-name" id="menuNavUserName">Cargando...</h2>
@@ -807,15 +882,25 @@
             </div>
             
             <div class="menu-nav-buttons-container" id="menuNavButtonsContainer">
-                <!-- Las secciones se cargarán dinámicamente según configuración -->
+                <!-- Aquí se cargarán las secciones de navegación dinámicamente -->
             </div>
         `;
-        
+
+        // Agregar elementos al DOM
         document.body.appendChild(overlay);
         document.body.appendChild(floatingBtn);
         document.body.appendChild(sidebar);
     }
-    
+
+
+    // ============================================================
+    // 5. LÓGICA DE NAVEGACIÓN Y PERMISOS
+    // ============================================================
+
+    /**
+     * Define la estructura completa del menú (todas las secciones y elementos).
+     * Esta es la base; luego se filtrará según permisos.
+     */
     function obtenerEstructuraCompletaMenu() {
         return [
             {
@@ -881,7 +966,11 @@
             }
         ];
     }
-    
+
+    /**
+     * Carga la configuración de navegación personalizada desde Firestore.
+     * Busca según área y subárea del usuario.
+     */
     async function cargarConfiguracionNavegacion(areaNombre, subareaId) {
         try {
             const db = firebase.firestore();
@@ -889,33 +978,58 @@
                 .where('areaNombre', '==', areaNombre)
                 .where('subareaId', '==', subareaId)
                 .get();
-            
+
             if (!snapshot.empty) {
                 menuState.configuracionNavegacion = snapshot.docs[0].data();
+                menuState.tienePermisosPersonalizados = true; // Existe configuración
                 return menuState.configuracionNavegacion;
+            } else {
+                menuState.tienePermisosPersonalizados = false;
+                return null;
             }
-            return null;
         } catch (error) {
+            menuState.tienePermisosPersonalizados = false;
             return null;
         }
     }
-    
+
+    /**
+     * Aplica la configuración de navegación al contenedor de botones.
+     * Si el usuario NO tiene permisos personalizados, muestra un mensaje.
+     */
     function aplicarConfiguracionNavegacion() {
         const container = document.getElementById('menuNavButtonsContainer');
         if (!container) return;
-        
+
         const config = menuState.configuracionNavegacion;
         const estructuraCompleta = obtenerEstructuraCompletaMenu();
-        
+
+        // Verificar si el usuario tiene permisos personalizados
+        if (!menuState.tienePermisosPersonalizados) {
+            // Mostrar mensaje de "Comunicate con tu supervisor"
+            container.innerHTML = `
+                <div class="menu-nav-sin-permisos">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>Comunícate con tu supervisor</strong></p>
+                    <p style="font-size: 0.85rem; color: #ccc; margin-top: 5px;">
+                        Para personalizar los permisos de navegación.
+                    </p>
+                </div>
+            `;
+            return; // No se genera más contenido
+        }
+
+        // Si tiene permisos, construir el HTML con las secciones visibles
         let html = '';
-        
+
         estructuraCompleta.forEach(seccion => {
+            // Verificar si la sección está visible según configuración
             const seccionVisible = config ? config.seccionesVisibles?.includes(seccion.id) : true;
-            
             if (!seccionVisible) return;
-            
+
+            // Elementos visibles de esta sección
             const elementosVisibles = config ? config.elementosVisibles?.[seccion.id] || [] : seccion.elementos.map(e => e.id);
-            
+
             html += `
                 <div class="menu-nav-section">
                     <button class="menu-nav-section-header" data-section="${seccion.id.toLowerCase()}">
@@ -925,12 +1039,12 @@
                     </button>
                     <div class="menu-nav-section-content" id="section-${seccion.id.toLowerCase()}">
             `;
-            
+
             seccion.elementos.forEach(elemento => {
                 if (elementosVisibles.includes(elemento.id)) {
                     const claseAdicional = elemento.clase ? ` ${elemento.clase}` : '';
                     const atributos = elemento.accion ? ` data-accion="${elemento.accion}"` : '';
-                    
+
                     html += `
                         <a href="${elemento.ruta}" class="menu-nav-btn${claseAdicional}"${atributos}>
                             <i class="fas ${elemento.icono}"></i> ${elemento.nombre}
@@ -938,21 +1052,37 @@
                     `;
                 }
             });
-            
+
             html += `
                     </div>
                 </div>
             `;
         });
-        
+
+        // Si no hay secciones visibles (posible configuración vacía), mostrar mensaje
+        if (html.trim() === '') {
+            container.innerHTML = `
+                <div class="menu-nav-sin-permisos">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>Comunícate con tu supervisor</strong></p>
+                    <p style="font-size: 0.85rem; color: #ccc; margin-top: 5px;">
+                        No tienes secciones habilitadas en tu configuración.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
         container.innerHTML = html;
-        
+
+        // Agregar eventos de despliegue de secciones
         document.querySelectorAll('.menu-nav-section-header').forEach(header => {
             header.addEventListener('click', function(e) {
                 e.preventDefault();
                 const sectionId = this.getAttribute('data-section');
                 const content = document.getElementById(`section-${sectionId}`);
-                
+
+                // Cerrar otras secciones abiertas
                 document.querySelectorAll('.menu-nav-section-header').forEach(otherHeader => {
                     if (otherHeader !== this) {
                         otherHeader.classList.remove('active');
@@ -961,12 +1091,13 @@
                         if (otherContent) otherContent.classList.remove('active');
                     }
                 });
-                
+
                 this.classList.toggle('active');
                 if (content) content.classList.toggle('active');
             });
         });
-        
+
+        // Evento para cerrar sesión
         document.querySelectorAll('.menu-nav-btn-logout').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -974,17 +1105,26 @@
             });
         });
     }
-    
+
+
+    // ============================================================
+    // 6. EVENTOS DEL MENÚ (ABRIR/CERRAR)
+    // ============================================================
+
+    /**
+     * Configura los eventos para abrir/cerrar el menú lateral.
+     */
     function setupMenuEventListeners() {
         const floatingBtn = document.getElementById('menuNavFloatingBtn');
         const sidebar = document.getElementById('menuNavSidebar');
         const overlay = document.getElementById('menuNavOverlay');
 
         if (floatingBtn && sidebar && overlay) {
+            // Abrir/cerrar al hacer clic en el botón
             floatingBtn.addEventListener('click', () => {
                 const isActive = sidebar.classList.toggle('active');
                 overlay.classList.toggle('active');
-                
+
                 const icon = floatingBtn.querySelector('i');
                 if (isActive) {
                     icon.classList.remove('fa-bars');
@@ -994,22 +1134,24 @@
                     icon.classList.add('fa-bars');
                 }
             });
-            
+
+            // Cerrar al hacer clic en el overlay
             overlay.addEventListener('click', () => {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
-                
+
                 const icon = floatingBtn.querySelector('i');
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
             });
         }
-        
+
+        // Evento para el botón de reporte (captura de pantalla)
         const reportBtn = document.getElementById('menuNavReportBtn');
         if (reportBtn) {
             reportBtn.addEventListener('click', function(e) {
-                e.preventDefault(); 
-                
+                e.preventDefault();
+
                 const originalContent = this.innerHTML;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...';
                 this.style.pointerEvents = 'none';
@@ -1018,13 +1160,13 @@
                     try {
                         const sidebar = document.getElementById('menuNavSidebar');
                         const overlay = document.getElementById('menuNavOverlay');
-                        if(sidebar) sidebar.classList.remove('active');
-                        if(overlay) overlay.classList.remove('active');
+                        if (sidebar) sidebar.classList.remove('active');
+                        if (overlay) overlay.classList.remove('active');
 
                         await new Promise(resolve => setTimeout(resolve, 300));
 
                         const canvas = await html2canvas(document.body, {
-                            useCORS: true, 
+                            useCORS: true,
                             logging: false,
                             scale: 1,
                             x: window.scrollX,
@@ -1042,6 +1184,7 @@
                         window.location.href = '../crear-reporte/crear-reporte.html';
 
                     } catch (error) {
+                        // Si falla la captura, igual redirige
                         sessionStorage.setItem('tempReportSource', window.location.pathname);
                         window.location.href = '../crear-reporte/crear-reporte.html';
                     }
@@ -1049,11 +1192,16 @@
             });
         }
     }
-    
-    // =============================================
-    // FUNCIONES DE PERSONALIZACIÓN
-    // =============================================
-    
+
+
+    // ============================================================
+    // 7. PERSONALIZACIÓN DE ESTILOS (TEMAS Y FONDOS)
+    // ============================================================
+
+    /**
+     * Carga las preferencias de personalización desde localStorage o Firestore.
+     * Aplica los estilos correspondientes al menú.
+     */
     async function loadPersonalizationPreferences() {
         try {
             const savedPrefs = localStorage.getItem('personalizationPreferences');
@@ -1063,13 +1211,14 @@
             } else {
                 applyDefaultWhiteStyles();
             }
-            
+
+            // Si hay usuario autenticado, intentar cargar desde Firestore
             if (menuState.currentUser && menuState.userData) {
                 const db = firebase.firestore();
                 const prefsDoc = await db.collection('personalizacion')
                     .where('colaboradorId', '==', menuState.userData.id)
                     .get();
-                
+
                 if (!prefsDoc.empty) {
                     const prefsData = prefsDoc.docs[0].data();
                     applyCustomMenuStyles(prefsData.preferences);
@@ -1077,20 +1226,24 @@
                 }
             }
         } catch (error) {
+            // En caso de error, usar estilos por defecto
             applyDefaultWhiteStyles();
         }
     }
-    
+
+    /**
+     * Aplica los estilos por defecto (texto blanco sobre fondo oscuro).
+     */
     function applyDefaultWhiteStyles() {
         const styleId = 'menu-nav-default-styles';
         let styleElement = document.getElementById(styleId);
-        
+
         if (!styleElement) {
             styleElement = document.createElement('style');
             styleElement.id = styleId;
             document.head.appendChild(styleElement);
         }
-        
+
         styleElement.textContent = `
             .menu-nav-sidebar {
                 color: white !important;
@@ -1115,17 +1268,23 @@
             }
         `;
     }
-    
+
+    /**
+     * Aplica estilos personalizados según las preferencias (tema, fondo).
+     */
     function applyCustomMenuStyles(preferences) {
+        // Remover estilos por defecto para que prevalezcan los personalizados
         const defaultStyles = document.getElementById('menu-nav-default-styles');
         if (defaultStyles) defaultStyles.remove();
-        
+
+        // Opciones de fondo
         const backgroundOptions = [
             { id: 'light', name: 'Claro', color: '#f5f5f5', textColor: '#333', cardBg: '#ffffff' },
             { id: 'dark', name: 'Oscuro', color: '#1a1a1a', textColor: '#f5f5f5', cardBg: '#2d2d2d' },
             { id: 'gray', name: 'Gris', color: '#808080', textColor: '#ffffff', cardBg: '#a0a0a0' }
         ];
-        
+
+        // Opciones de tema (color principal)
         const themeOptions = [
             { id: 'purple', name: 'Púrpura', primary: '#6C43E0', secondary: '#5a35c7', accent: '#8B5FEB' },
             { id: 'blue', name: 'Azul', primary: '#2196F3', secondary: '#1976D2', accent: '#42A5F5' },
@@ -1134,19 +1293,20 @@
             { id: 'red', name: 'Rojo', primary: '#F44336', secondary: '#D32F2F', accent: '#EF5350' },
             { id: 'teal', name: 'Verde Azulado', primary: '#009688', secondary: '#00796B', accent: '#26A69A' }
         ];
-        
+
         const selectedBackground = backgroundOptions.find(bg => bg.id === preferences?.background) || backgroundOptions[0];
         const selectedTheme = themeOptions.find(theme => theme.id === preferences?.theme) || themeOptions[0];
-        
+
         const styleId = 'menu-nav-custom-styles';
         let styleElement = document.getElementById(styleId);
-        
+
         if (!styleElement) {
             styleElement = document.createElement('style');
             styleElement.id = styleId;
             document.head.appendChild(styleElement);
         }
-        
+
+        // Generar CSS con las variables seleccionadas
         styleElement.textContent = `
             .menu-nav-sidebar {
                 background: linear-gradient(135deg, ${selectedBackground.cardBg} 0%, ${selectedBackground.color} 100%) !important;
@@ -1304,11 +1464,14 @@
             ` : ''}
         `;
     }
-    
+
+    /**
+     * Función global para actualizar estilos desde otros módulos.
+     */
     window.updateMenuStyles = function(preferences) {
         applyCustomMenuStyles(preferences);
         localStorage.setItem('personalizationPreferences', JSON.stringify(preferences));
-        
+
         if (menuState.currentUser && menuState.userData) {
             const db = firebase.firestore();
             db.collection('personalizacion').doc(menuState.userData.id).set({
@@ -1320,7 +1483,15 @@
             }).catch(() => {});
         }
     };
-    
+
+
+    // ============================================================
+    // 8. CARGA DE DATOS DEL USUARIO Y ESTADÍSTICAS
+    // ============================================================
+
+    /**
+     * Carga el perfil del usuario desde Firestore usando el email autenticado.
+     */
     async function loadUserProfile() {
         try {
             const auth = firebase.auth();
@@ -1330,15 +1501,15 @@
                 document.getElementById('menuNavUserName').textContent = 'No autenticado';
                 return;
             }
-            
+
             const colaboradorQuery = await db.collection("colaboradores")
                 .where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email)
                 .get();
-            
+
             if (!colaboradorQuery.empty) {
                 const doc = colaboradorQuery.docs[0];
                 const userData = doc.data();
-                
+
                 menuState.currentUser = user;
                 menuState.userData = {
                     id: doc.id,
@@ -1352,20 +1523,23 @@
                     nombreCompleto: userData.NOMBRE,
                     colaboradorId: doc.id
                 };
-                
+
+                // Actualizar elementos del perfil
                 document.getElementById('menuNavUserAvatar').src = menuState.userData.imagen;
                 document.getElementById('menuNavUserName').textContent = menuState.userData.nombre;
                 document.getElementById('menuNavUserArea').textContent = menuState.userData.area;
-                
+
                 const subareaElement = document.getElementById('menuNavUserSubarea');
                 if (subareaElement) {
                     subareaElement.textContent = menuState.userData.subareaNombre || '';
                 }
-                
+
+                // Cargar configuración de navegación personalizada
                 const config = await cargarConfiguracionNavegacion(menuState.userData.area, menuState.userData.subareaId);
                 aplicarConfiguracionNavegacion();
-                
+
             } else {
+                // Usuario no encontrado en colaboradores
                 menuState.currentUser = user;
                 menuState.userData = {
                     id: user.uid,
@@ -1377,147 +1551,35 @@
                     nombreCompleto: user.email,
                     colaboradorId: user.uid
                 };
-                
+
                 document.getElementById('menuNavUserName').textContent = menuState.userData.nombre;
                 document.getElementById('menuNavUserArea').textContent = menuState.userData.area;
                 document.getElementById('menuNavUserAvatar').src = menuState.userData.imagen;
+
+                // Sin permisos personalizados (no está en colaboradores)
+                menuState.tienePermisosPersonalizados = false;
                 aplicarConfiguracionNavegacion();
             }
-            
+
         } catch (error) {
             const user = firebase.auth().currentUser;
             if (user) {
                 document.getElementById('menuNavUserName').textContent = user.email;
                 document.getElementById('menuNavUserArea').textContent = 'Error al cargar datos';
+                // En caso de error, asumimos que no tiene permisos
+                menuState.tienePermisosPersonalizados = false;
+                aplicarConfiguracionNavegacion();
             }
         }
     }
-    
-    function createCharts(stats) {
-        const chartBars = document.getElementById('menuNavChartBars');
-        const priorityBars = document.getElementById('menuNavPriorityBars');
-        
-        if (!chartBars || !priorityBars) return;
-        
-        const statusColors = {
-            'pendiente': '#ff6b6b',
-            'aceptado': '#ffd93d',
-            'finalizado': '#6bcf7f',
-            'cancelado': '#a0a0c0',
-            'abandono': '#9b59b6'
-        };
-        
-        const priorityColors = {
-            'alta': '#ff6b6b',
-            'media': '#ffd93d',
-            'baja': '#6bcf7f'
-        };
-        
-        const totalTickets = stats.total || 1;
-        
-        // Estado de tickets: Pendiente, Aceptados, Abandono de actividades, Finalizados
-        chartBars.innerHTML = '';
-        const statusData = [
-            { key: 'pendiente', label: 'Pendientes', count: stats.pendiente },
-            { key: 'aceptado', label: 'Aceptados', count: stats.aceptado },
-            { key: 'abandono', label: 'Abandono de actividades', count: stats.abandono },
-            { key: 'finalizado', label: 'Finalizados', count: stats.finalizado }
-        ];
-        
-        statusData.forEach(item => {
-            if (item.count > 0) {
-                const percentage = Math.round((item.count / totalTickets) * 100);
-                const color = statusColors[item.key] || '#6C43E0';
-                chartBars.innerHTML += `
-                    <div class="menu-nav-chart-bar">
-                        <span class="menu-nav-chart-label">${item.label}</span>
-                        <div class="menu-nav-chart-progress">
-                            <div class="menu-nav-chart-fill" style="width: ${percentage}%; background: ${color};"></div>
-                        </div>
-                        <span class="menu-nav-chart-value">${percentage}%</span>
-                    </div>
-                `;
-            }
-        });
-        
-        if (chartBars.innerHTML === '') {
-            chartBars.innerHTML = `<div style="text-align: center; color: #a0a0c0; padding: 10px;">No hay tickets para mostrar</div>`;
-        }
-        
-        // Prioridades
-        priorityBars.innerHTML = '';
-        const priorityData = [
-            { key: 'alta', label: 'Alta', count: stats.alta },
-            { key: 'media', label: 'Media', count: stats.media },
-            { key: 'baja', label: 'Baja', count: stats.baja }
-        ];
-        
-        priorityData.forEach(item => {
-            if (item.count > 0) {
-                const percentage = Math.round((item.count / totalTickets) * 100);
-                const color = priorityColors[item.key] || '#6C43E0';
-                priorityBars.innerHTML += `
-                    <div class="menu-nav-chart-bar">
-                        <span class="menu-nav-chart-label">${item.label}</span>
-                        <div class="menu-nav-chart-progress">
-                            <div class="menu-nav-chart-fill" style="width: ${percentage}%; background: ${color};"></div>
-                        </div>
-                        <span class="menu-nav-chart-value">${percentage}%</span>
-                    </div>
-                `;
-            }
-        });
-        
-        if (priorityBars.innerHTML === '') {
-            priorityBars.innerHTML = `<div style="text-align: center; color: #a0a0c0; padding: 10px;">No hay datos de prioridad</div>`;
-        }
-    }
-    
-    function formatStatus(status) {
-        const statusMap = {
-            'pendiente': 'Pendientes',
-            'aceptado': 'Aceptados',
-            'finalizado': 'Finalizados',
-            'cancelado': 'Cancelados',
-            'abandono': 'Abandono de actividades'
-        };
-        return statusMap[status] || status;
-    }
-    
-    function normalizeText(str) {
-        if (!str) return '';
-        return str.trim().replace(/\s+/g, ' ');
-    }
-    
-    function getEmptyStats() {
-        return {
-            total: 0,
-            pendiente: 0,
-            aceptado: 0,
-            finalizado: 0,
-            cancelado: 0,
-            abandono: 0,
-            alta: 0,
-            media: 0,
-            baja: 0
-        };
-    }
-    
-    function resetStatsToZero() {
-        const zeroStats = getEmptyStats();
-        document.getElementById('menuNavTotalTickets').textContent = zeroStats.total;
-        document.getElementById('menuNavPendingTickets').textContent = zeroStats.pendiente;
-        document.getElementById('menuNavAcceptedTickets').textContent = zeroStats.aceptado;
-        document.getElementById('menuNavAbandonoTickets').textContent = zeroStats.abandono;
-        document.getElementById('menuNavCompletedTickets').textContent = zeroStats.finalizado;
-        menuState.stats = zeroStats;
-    }
-    
-    // =============================================
-    // FUNCIÓN PRINCIPAL DE ESTADÍSTICAS
-    // =============================================
+
+    /**
+     * Carga las estadísticas de tickets del usuario (responsable o colaborador).
+     * Actualiza los valores y gráficos.
+     */
     async function loadUserStats() {
         try {
+            // Si no hay datos de usuario, reseteamos estadísticas a cero
             if (!menuState.userData || !menuState.userData.nombreCompleto) {
                 resetStatsToZero();
                 return;
@@ -1528,6 +1590,7 @@
             const nombreResponsable = normalizeText(menuState.userData.nombreCompleto);
             const colaboradorId = menuState.userData.colaboradorId;
 
+            // Consultas paralelas: por responsable y por colaborador
             const qResponsable = ticketsRef.where("responsableNombre", "==", nombreResponsable);
             const qColaborador = ticketsRef.where("colaboradores", "array-contains", colaboradorId);
 
@@ -1560,6 +1623,7 @@
                 return;
             }
 
+            // Inicializar contadores
             const stats = {
                 total: allTickets.size,
                 pendiente: 0,
@@ -1572,16 +1636,17 @@
                 baja: 0
             };
 
+            // Recorrer tickets y contar
             for (let ticket of allTickets.values()) {
                 const estado = (ticket.estado || '').toLowerCase();
                 switch (estado) {
                     case 'pendiente': stats.pendiente++; break;
                     case 'aceptado': stats.aceptado++; break;
-                    case 'en_proceso': stats.aceptado++; break; // "en_proceso" se cuenta como Aceptado
+                    case 'en_proceso': stats.aceptado++; break; // "en_proceso" cuenta como Aceptado
                     case 'finalizado': stats.finalizado++; break;
                     case 'cancelado': stats.cancelado++; break;
-                    case 'abandono_de_actividades': // nombre correcto en BD
-                    case 'abandono': // por si acaso
+                    case 'abandono_de_actividades':
+                    case 'abandono':
                         stats.abandono++;
                         break;
                     default: break;
@@ -1612,12 +1677,133 @@
             createCharts(stats);
 
         } catch (error) {
-            console.error("Error en loadUserStats:", error);
+            // En caso de error, resetear estadísticas
             resetStatsToZero();
             createCharts(getEmptyStats());
         }
     }
-    
+
+    /**
+     * Genera los gráficos de barras para estado y prioridad.
+     */
+    function createCharts(stats) {
+        const chartBars = document.getElementById('menuNavChartBars');
+        const priorityBars = document.getElementById('menuNavPriorityBars');
+
+        if (!chartBars || !priorityBars) return;
+
+        const statusColors = {
+            'pendiente': '#ff6b6b',
+            'aceptado': '#ffd93d',
+            'finalizado': '#6bcf7f',
+            'cancelado': '#a0a0c0',
+            'abandono': '#9b59b6'
+        };
+
+        const priorityColors = {
+            'alta': '#ff6b6b',
+            'media': '#ffd93d',
+            'baja': '#6bcf7f'
+        };
+
+        const totalTickets = stats.total || 1;
+
+        // Gráfico de estado (Pendiente, Aceptado, Abandono, Finalizado)
+        chartBars.innerHTML = '';
+        const statusData = [
+            { key: 'pendiente', label: 'Pendientes', count: stats.pendiente },
+            { key: 'aceptado', label: 'Aceptados', count: stats.aceptado },
+            { key: 'abandono', label: 'Abandono de actividades', count: stats.abandono },
+            { key: 'finalizado', label: 'Finalizados', count: stats.finalizado }
+        ];
+
+        statusData.forEach(item => {
+            if (item.count > 0) {
+                const percentage = Math.round((item.count / totalTickets) * 100);
+                const color = statusColors[item.key] || '#6C43E0';
+                chartBars.innerHTML += `
+                    <div class="menu-nav-chart-bar">
+                        <span class="menu-nav-chart-label">${item.label}</span>
+                        <div class="menu-nav-chart-progress">
+                            <div class="menu-nav-chart-fill" style="width: ${percentage}%; background: ${color};"></div>
+                        </div>
+                        <span class="menu-nav-chart-value">${percentage}%</span>
+                    </div>
+                `;
+            }
+        });
+
+        if (chartBars.innerHTML === '') {
+            chartBars.innerHTML = `<div style="text-align: center; color: #a0a0c0; padding: 10px;">No hay tickets para mostrar</div>`;
+        }
+
+        // Gráfico de prioridad (Alta, Media, Baja)
+        priorityBars.innerHTML = '';
+        const priorityData = [
+            { key: 'alta', label: 'Alta', count: stats.alta },
+            { key: 'media', label: 'Media', count: stats.media },
+            { key: 'baja', label: 'Baja', count: stats.baja }
+        ];
+
+        priorityData.forEach(item => {
+            if (item.count > 0) {
+                const percentage = Math.round((item.count / totalTickets) * 100);
+                const color = priorityColors[item.key] || '#6C43E0';
+                priorityBars.innerHTML += `
+                    <div class="menu-nav-chart-bar">
+                        <span class="menu-nav-chart-label">${item.label}</span>
+                        <div class="menu-nav-chart-progress">
+                            <div class="menu-nav-chart-fill" style="width: ${percentage}%; background: ${color};"></div>
+                        </div>
+                        <span class="menu-nav-chart-value">${percentage}%</span>
+                    </div>
+                `;
+            }
+        });
+
+        if (priorityBars.innerHTML === '') {
+            priorityBars.innerHTML = `<div style="text-align: center; color: #a0a0c0; padding: 10px;">No hay datos de prioridad</div>`;
+        }
+    }
+
+    // Funciones auxiliares para estadísticas
+    function normalizeText(str) {
+        if (!str) return '';
+        return str.trim().replace(/\s+/g, ' ');
+    }
+
+    function getEmptyStats() {
+        return {
+            total: 0,
+            pendiente: 0,
+            aceptado: 0,
+            finalizado: 0,
+            cancelado: 0,
+            abandono: 0,
+            alta: 0,
+            media: 0,
+            baja: 0
+        };
+    }
+
+    function resetStatsToZero() {
+        const zeroStats = getEmptyStats();
+        document.getElementById('menuNavTotalTickets').textContent = zeroStats.total;
+        document.getElementById('menuNavPendingTickets').textContent = zeroStats.pendiente;
+        document.getElementById('menuNavAcceptedTickets').textContent = zeroStats.aceptado;
+        document.getElementById('menuNavAbandonoTickets').textContent = zeroStats.abandono;
+        document.getElementById('menuNavCompletedTickets').textContent = zeroStats.finalizado;
+        menuState.stats = zeroStats;
+    }
+
+
+    // ============================================================
+    // 9. CIERRE DE SESIÓN
+    // ============================================================
+
+    /**
+     * Cierra la sesión del usuario con confirmación.
+     */
     async function logout() {
         try {
             const result = await Swal.fire({
@@ -1630,68 +1816,100 @@
                 confirmButtonText: 'Sí, salir',
                 cancelButtonText: 'Cancelar'
             });
-            
+
             if (result.isConfirmed) {
                 await firebase.auth().signOut();
                 window.location.href = "/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
             }
         } catch (error) {
+            // Si hay error, igual redirige
             window.location.href = "/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
         }
     }
-    
+
+
+    // ============================================================
+    // 10. OBSERVADOR DE AUTENTICACIÓN
+    // ============================================================
+
+    /**
+     * Escucha cambios en el estado de autenticación (login/logout).
+     */
     function observeUserChanges() {
         const auth = firebase.auth();
-        
+
         auth.onAuthStateChanged(async (user) => {
             if (user) {
+                // Usuario autenticado: cargar perfil, estadísticas y personalización
                 await loadUserProfile();
                 await loadUserStats();
                 await loadPersonalizationPreferences();
             } else {
+                // Usuario no autenticado: redirigir al login
                 window.location.href = "/vista/nav-visitantes/inicio-de-sesion/inicio-de-sesion.html";
             }
         });
     }
-    
+
+
+    // ============================================================
+    // 11. INICIALIZACIÓN DEL SISTEMA
+    // ============================================================
+
+    /**
+     * Inicializa todos los componentes: footer, menú, eventos, etc.
+     */
     function initializeMenu() {
-        loadFontAwesome();
-        addMenuStyles();
-        createMenuHTML();
-        setupMenuEventListeners();
-        observeUserChanges();
+        loadFontAwesome();          // Cargar íconos
+        addMenuStyles();            // Estilos del menú
+        createMenuHTML();           // Estructura HTML del menú
+        setupMenuEventListeners();  // Eventos de apertura/cierre
+        observeUserChanges();       // Observar autenticación
     }
-    
+
+    /**
+     * Actualiza los estilos del footer cuando cambia la personalización.
+     */
     function updateFooterStyles() {
         applyFooterCustomStyles();
     }
-    
+
+    // Exponer función para actualizar footer desde fuera
     window.actualizarFooterPersonalizado = updateFooterStyles;
     document.addEventListener('personalizationUpdated', updateFooterStyles);
-    
+
+    /**
+     * Función principal que inicia todo el sistema.
+     * Espera a que Firebase esté disponible.
+     */
     function initSistemaUnificado() {
+        // 1. Crear footer fijo
         createMainContentFooter();
-        
+
+        // 2. Verificar si Firebase está cargado
         if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
             initializeMenu();
         } else {
+            // Esperar a que Firebase se cargue (intervalo)
             const firebaseCheckInterval = setInterval(() => {
                 if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
                     clearInterval(firebaseCheckInterval);
                     initializeMenu();
                 }
             }, 100);
-            
+
+            // Timeout de seguridad para no quedar en bucle infinito
             setTimeout(() => {
                 clearInterval(firebaseCheckInterval);
             }, 5000);
         }
     }
-    
+
+    // Ejecutar cuando el DOM esté listo
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSistemaUnificado);
     } else {
         initSistemaUnificado();
     }
-    
+
 })();
