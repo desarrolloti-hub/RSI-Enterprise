@@ -303,7 +303,9 @@ function setupAttendanceOptions() {
 
 function redirectByRole(role) {
     const rolePaths = {
-        'admincolaborador': '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html'
+        'admincolaborador': '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html',
+        'colaborador': '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html'
+
     };
     const redirectPath = rolePaths[role] || "../nav-operadores/gestion_Tickets.html";
     window.location.href = redirectPath;
