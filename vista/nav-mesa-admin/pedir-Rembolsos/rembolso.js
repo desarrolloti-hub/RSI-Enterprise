@@ -113,76 +113,75 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Función para subir archivo a Storage - VERSIÓN CORREGIDA (igual que manuales.js)
     // Función para subir archivo a Storage - CON MANEJO DE ERRORES CORS
-async function uploadFileToStorage(file, userData) {
-    return new Promise((resolve, reject) => {
-        if (!file) {
-            reject(new Error("No se proporcionó ningún archivo"));
-            return;
-        }
+    async function uploadFileToStorage(file, userData) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject(new Error("No se proporcionó ningún archivo"));
+                return;
+            }
 
-        // Validar tipo de archivo
-        if (!file.type.startsWith('image/')) {
-            reject(new Error("Solo se permiten archivos de imagen"));
-            return;
-        }
+            // Validar tipo de archivo
+            if (!file.type.startsWith('image/')) {
+                reject(new Error("Solo se permiten archivos de imagen"));
+                return;
+            }
 
-        // Validar tamaño (máximo 5MB para evitar problemas)
-        if (file.size > 5 * 1024 * 1024) {
-            reject(new Error("La imagen no debe superar los 5MB"));
-            return;
-        }
+            // Validar tamaño (máximo 5MB para evitar problemas)
+            if (file.size > 5 * 1024 * 1024) {
+                reject(new Error("La imagen no debe superar los 5MB"));
+                return;
+            }
 
-        const timestamp = Date.now();
-        const fileName = `reembolsos/${userData.id}/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-        
-        console.log('Intentando subir archivo:', fileName);
-        
-        try {
-            const storageRef = firebase.storage().ref().child(fileName);
+            const timestamp = Date.now();
+            const fileName = `reembolsos/${userData.id}/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
             
-            // Intentar con metadata simplificada
-            const uploadTask = storageRef.put(file, {
-                contentType: file.type
-            });
+            console.log('Intentando subir archivo:', fileName);
             
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Subiendo: ${Math.round(progress)}%`;
-                },
-                (error) => {
-                    console.error('Error detallado:', error);
-                    
-                    // Mensajes amigables según el error
-                    if (error.code === 'storage/unauthorized') {
-                        reject(new Error('No tienes permisos para subir archivos'));
-                    } else if (error.code === 'storage/canceled') {
-                        reject(new Error('Subida cancelada'));
-                    } else if (error.code === 'storage/unknown' && error.message.includes('CORS')) {
-                        reject(new Error('Error de CORS. Por favor, contacta al administrador para configurar el bucket.'));
-                    } else {
-                        reject(new Error(`Error al subir: ${error.message}`));
+            try {
+                const storageRef = firebase.storage().ref().child(fileName);
+                
+                // Intentar con metadata simplificada
+                const uploadTask = storageRef.put(file, {
+                    contentType: file.type
+                });
+                
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Subiendo: ${Math.round(progress)}%`;
+                    },
+                    (error) => {
+                        console.error('Error detallado:', error);
+                        
+                        // Mensajes amigables según el error
+                        if (error.code === 'storage/unauthorized') {
+                            reject(new Error('No tienes permisos para subir archivos'));
+                        } else if (error.code === 'storage/canceled') {
+                            reject(new Error('Subida cancelada'));
+                        } else if (error.code === 'storage/unknown' && error.message.includes('CORS')) {
+                            reject(new Error('Error de CORS. Por favor, contacta al administrador para configurar el bucket.'));
+                        } else {
+                            reject(new Error(`Error al subir: ${error.message}`));
+                        }
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            console.log('Archivo subido exitosamente:', downloadURL);
+                            resolve(downloadURL);
+                        } catch (error) {
+                            console.error('Error al obtener URL:', error);
+                            reject(new Error('Error al obtener la URL del archivo'));
+                        }
                     }
-                },
-                async () => {
-                    try {
-                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                        console.log('Archivo subido exitosamente:', downloadURL);
-                        resolve(downloadURL);
-                    } catch (error) {
-                        console.error('Error al obtener URL:', error);
-                        reject(new Error('Error al obtener la URL del archivo'));
-                    }
-                }
-            );
-        } catch (error) {
-            console.error('Error al crear referencia:', error);
-            reject(new Error('Error al inicializar la subida'));
-        }
-    });
-}
+                );
+            } catch (error) {
+                console.error('Error al crear referencia:', error);
+                reject(new Error('Error al inicializar la subida'));
+            }
+        });
+    }
 
     photoFileInput.addEventListener('change', function() {
         const file = this.files[0];
@@ -423,4 +422,46 @@ async function uploadFileToStorage(file, userData) {
     // Botones de alerta
     alertBtn.addEventListener('click', function() { alertOverlay.classList.remove('show'); });
     errorBtn.addEventListener('click', function() { errorAlert.classList.remove('show'); });
+
+    // ========================================================
+    //  ASEGURAR CONTRASTE DE TEXTO SEGÚN FONDO (CLARO/OSCURO)
+    // ========================================================
+    function applyContrast() {
+        const container = document.querySelector('.attendance-container');
+        if (!container) return;
+
+        const bgColor = window.getComputedStyle(container).backgroundColor;
+        const rgb = bgColor.match(/\d+/g);
+        if (!rgb || rgb.length < 3) return;
+
+        const r = parseInt(rgb[0]);
+        const g = parseInt(rgb[1]);
+        const b = parseInt(rgb[2]);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        const textColor = luminance > 0.5 ? '#1e1e2f' : '#f8f9fa';
+
+        // Aplicar a todos los elementos que hereden el color
+        document.querySelectorAll('.attendance-container *').forEach(el => {
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON') return;
+            const elBg = window.getComputedStyle(el).backgroundColor;
+            if (elBg !== 'rgba(0, 0, 0, 0)' && elBg !== 'transparent') return;
+            el.style.color = textColor;
+        });
+        container.style.color = textColor;
+    }
+
+    // Ejecutar al inicio
+    applyContrast();
+
+    // Observar cambios en el body (por si el tema cambia)
+    const observer = new MutationObserver(() => applyContrast());
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    // Observar cambios en :root (variables CSS)
+    const rootObserver = new MutationObserver(() => applyContrast());
+    rootObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+
+    // Preferencia del sistema (modo oscuro/claro)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', applyContrast);
 });
