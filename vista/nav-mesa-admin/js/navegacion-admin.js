@@ -227,508 +227,526 @@
     window.menuState = menuState;
     
     function addMenuStyles() {
-        const style = document.createElement('style');
-        style.textContent = `
-            body {
-                margin: 0;
-                padding: 0;
-                overflow-x: hidden;
-            }
-            
+    const style = document.createElement('style');
+    style.textContent = `
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .menu-nav-sidebar {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            transition: left 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            font-family: 'Inter', sans-serif;
+            padding: 0;
+        }
+        
+        .menu-nav-sidebar.active {
+            left: 0;
+        }
+        
+        .menu-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .menu-nav-overlay.active {
+            display: block;
+        }
+        
+        .menu-nav-floating-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: #6C43E0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(108, 67, 224, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .menu-nav-floating-btn:hover {
+            background: #5a35c7;
+            transform: scale(1.05);
+        }
+        
+        .menu-nav-floating-btn i {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .menu-nav-user-profile {
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .menu-nav-user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #6C43E0;
+            margin-bottom: 15px;
+            max-width: 100%;
+        }
+        
+        .menu-nav-user-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            word-wrap: break-word;
+            padding: 0 10px;
+            color: white;
+            text-align: center;
+        }
+        
+        .menu-nav-user-area {
+            font-size: 0.9rem;
+            color: #a0a0c0;
+            margin-bottom: 5px;
+            word-wrap: break-word;
+            padding: 0 10px;
+            text-align: center;
+        }
+        
+        .menu-nav-user-subarea {
+            font-size: 0.8rem;
+            color: #6C43E0;
+            margin-top: 5px;
+            word-wrap: break-word;
+            padding: 0 10px;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .menu-nav-stats-container {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .menu-nav-stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            max-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .menu-nav-stat-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .menu-nav-stat-title {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #a0a0c0;
+            flex-wrap: wrap;
+        }
+        
+        .menu-nav-stat-title i {
+            margin-right: 8px;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        
+        .menu-nav-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            word-wrap: break-word;
+            text-align: right;
+        }
+        
+        .menu-nav-month-indicator {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #6C43E0;
+            margin-bottom: 15px;
+            font-weight: 500;
+            padding: 0 10px;
+        }
+        
+        .menu-nav-charts-container {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .menu-nav-chart-title {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6C43E0;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .menu-nav-chart {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .menu-nav-chart-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .menu-nav-chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .menu-nav-chart-label {
+            font-size: 0.8rem;
+            color: #a0a0c0;
+            width: 110px;
+            flex-shrink: 0;
+            text-align: left;
+        }
+        
+        .menu-nav-chart-progress {
+            flex: 1;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .menu-nav-chart-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .menu-nav-chart-value {
+            font-size: 0.8rem;
+            color: white;
+            width: 30px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        
+        .menu-nav-buttons-container {
+            padding: 15px 10px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .menu-nav-section {
+            margin-bottom: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .menu-nav-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 12px 15px 12px 20px;
+            background: rgba(108, 67, 224, 0.2);
+            color: white;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.95rem;
+            text-align: left;
+            box-sizing: border-box;
+        }
+        
+        .menu-nav-section-header:hover {
+            background: rgba(108, 67, 224, 0.3);
+        }
+        
+        .menu-nav-section-header i:first-child {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .menu-nav-section-header i:last-child {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+        
+        .menu-nav-section-header.active i:last-child {
+            transform: rotate(180deg);
+        }
+        
+        .menu-nav-section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(255,255,255,0.02);
+        }
+        
+        .menu-nav-section-content.active {
+            max-height: none;
+            overflow-y: visible;
+        }
+        
+        .menu-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-start;
+            width: 100%;
+            padding: 10px 15px 10px 20px;
+            background: transparent;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            word-wrap: break-word;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .menu-nav-btn:last-child {
+            border-bottom: none;
+        }
+        
+        .menu-nav-btn:hover {
+            background: rgba(108, 67, 224, 0.1);
+            padding-left: 25px;
+        }
+        
+        .menu-nav-btn i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+        
+        .menu-nav-btn-logout {
+            background: rgba(220, 53, 69, 0.1);
+            color: #ff6b6b;
+        }
+        
+        .menu-nav-btn-logout:hover {
+            background: rgba(220, 53, 69, 0.2);
+        }
+        
+        .menu-nav-btn-finish {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffd93d;
+        }
+        
+        .menu-nav-btn-finish:hover {
+            background: rgba(255, 193, 7, 0.2);
+        }
+        
+        .menu-nav-report-btn {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            margin-top: 10px;
+        }
+        
+        .menu-nav-report-btn:hover {
+            background: rgba(52, 152, 219, 0.2);
+        }
+        
+        @media (min-width: 769px) {
             .menu-nav-sidebar {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100vh;
-                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                color: white;
-                transition: left 0.3s ease;
-                z-index: 1000;
-                overflow-y: auto;
-                overflow-x: hidden;
-                box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-                font-family: 'Inter', sans-serif;
+                width: 320px;
+                left: -320px;
             }
-            
-            .menu-nav-sidebar.active {
-                left: 0;
-            }
-            
-            .menu-nav-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 999;
-                display: none;
-            }
-            
-            .menu-nav-overlay.active {
-                display: block;
-            }
-            
             .menu-nav-floating-btn {
-                position: fixed;
                 top: 20px;
                 left: 20px;
                 width: 50px;
                 height: 50px;
-                background: #6C43E0;
-                color: white;
-                border: none;
-                border-radius: 50%;
-                cursor: pointer;
-                z-index: 1001;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 4px 12px rgba(108, 67, 224, 0.4);
-                transition: all 0.3s ease;
             }
-            
-            .menu-nav-floating-btn:hover {
-                background: #5a35c7;
-                transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) and (min-width: 481px) {
+            .menu-nav-sidebar {
+                width: 100%;
+                left: -100%;
             }
-            
-            .menu-nav-floating-btn i {
-                font-size: 1.2rem;
-                transition: transform 0.3s ease;
+            .menu-nav-floating-btn {
+                top: 15px;
+                left: 15px;
+                width: 45px;
+                height: 45px;
             }
-            
             .menu-nav-user-profile {
-                padding: 30px 20px;
-                text-align: center;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                max-width: 100%;
-                box-sizing: border-box;
+                padding: 25px 15px;
             }
-            
-            .menu-nav-user-avatar {
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 3px solid #6C43E0;
-                margin-bottom: 15px;
-                max-width: 100%;
-            }
-            
-            .menu-nav-user-name {
-                font-size: 1.2rem;
-                font-weight: 600;
-                margin-bottom: 5px;
-                word-wrap: break-word;
-                padding: 0 10px;
-                color: white;
-            }
-            
-            .menu-nav-user-area {
-                font-size: 0.9rem;
-                color: #a0a0c0;
-                margin-bottom: 5px;
-                word-wrap: break-word;
-                padding: 0 10px;
-            }
-            
-            .menu-nav-user-subarea {
-                font-size: 0.8rem;
-                color: #6C43E0;
-                margin-top: 5px;
-                word-wrap: break-word;
-                padding: 0 10px;
-                font-weight: 500;
-            }
-            
             .menu-nav-stats-container {
-                padding: 20px;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                max-width: 100%;
-                box-sizing: border-box;
-            }
-            
-            .menu-nav-stat-card {
-                background: rgba(255,255,255,0.05);
-                border-radius: 8px;
                 padding: 15px;
-                margin-bottom: 12px;
-                transition: all 0.3s ease;
-                max-width: 100%;
-                box-sizing: border-box;
             }
-            
-            .menu-nav-stat-card:hover {
-                background: rgba(255,255,255,0.1);
-                transform: translateY(-2px);
-            }
-            
-            .menu-nav-stat-title {
-                display: flex;
-                align-items: center;
-                margin-bottom: 8px;
-                font-size: 0.85rem;
-                color: #a0a0c0;
-                flex-wrap: wrap;
-            }
-            
-            .menu-nav-stat-title i {
-                margin-right: 8px;
-                font-size: 0.9rem;
-                flex-shrink: 0;
-            }
-            
-            .menu-nav-stat-value {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: white;
-                word-wrap: break-word;
-            }
-            
-            .menu-nav-month-indicator {
-                text-align: center;
-                font-size: 0.8rem;
-                color: #6C43E0;
-                margin-bottom: 15px;
-                font-weight: 500;
-                padding: 0 10px;
-            }
-            
             .menu-nav-charts-container {
-                padding: 20px;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                max-width: 100%;
-                box-sizing: border-box;
-            }
-            
-            .menu-nav-chart-title {
-                text-align: center;
-                font-size: 0.9rem;
-                color: #6C43E0;
-                margin-bottom: 15px;
-                font-weight: 500;
-            }
-            
-            .menu-nav-chart {
-                background: rgba(255,255,255,0.05);
-                border-radius: 8px;
                 padding: 15px;
-                margin-bottom: 15px;
-                max-width: 100%;
-                box-sizing: border-box;
             }
-            
-            .menu-nav-chart-bars {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .menu-nav-chart-bar {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            
-            .menu-nav-chart-label {
-                font-size: 0.8rem;
-                color: #a0a0c0;
-                width: 110px;
-                flex-shrink: 0;
-            }
-            
-            .menu-nav-chart-progress {
-                flex: 1;
-                height: 20px;
-                background: rgba(255,255,255,0.1);
-                border-radius: 10px;
-                overflow: hidden;
-                position: relative;
-            }
-            
-            .menu-nav-chart-fill {
-                height: 100%;
-                border-radius: 10px;
-                transition: width 0.5s ease;
-            }
-            
-            .menu-nav-chart-value {
-                font-size: 0.8rem;
-                color: white;
-                width: 30px;
-                text-align: right;
-                flex-shrink: 0;
-            }
-            
             .menu-nav-buttons-container {
-                padding: 20px;
-                max-width: 100%;
-                box-sizing: border-box;
+                padding: 15px 10px;
             }
-            
-            .menu-nav-section {
-                margin-bottom: 10px;
-                border-radius: 8px;
-                overflow: hidden;
-                background: rgba(255,255,255,0.05);
-            }
-            
             .menu-nav-section-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 15px;
-                background: rgba(108, 67, 224, 0.2);
-                color: white;
-                border: none;
-                width: 100%;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-family: inherit;
-                font-size: 0.95rem;
-                text-align: left;
+                padding: 12px 15px 12px 15px;
             }
-            
-            .menu-nav-section-header:hover {
-                background: rgba(108, 67, 224, 0.3);
-            }
-            
-            .menu-nav-section-header i:first-child {
-                margin-right: 10px;
-                width: 20px;
-                text-align: center;
-                flex-shrink: 0;
-            }
-            
-            .menu-nav-section-header i:last-child {
-                transition: transform 0.3s ease;
-                font-size: 0.8rem;
-            }
-            
-            .menu-nav-section-header.active i:last-child {
-                transform: rotate(180deg);
-            }
-            
-            .menu-nav-section-content {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.3s ease;
-                background: rgba(255,255,255,0.02);
-            }
-            
-            .menu-nav-section-content.active {
-                max-height: 500px;
-            }
-            
             .menu-nav-btn {
-                display: flex;
-                align-items: center;
+                padding: 10px 15px 10px 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .menu-nav-sidebar {
                 width: 100%;
-                padding: 10px 15px 10px 45px;
-                background: transparent;
-                color: white;
-                text-decoration: none;
-                border: none;
-                border-radius: 0;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-family: inherit;
-                font-size: 0.9rem;
-                box-sizing: border-box;
-                word-wrap: break-word;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
+                left: -100%;
             }
-            
-            .menu-nav-btn:last-child {
-                border-bottom: none;
+            .menu-nav-floating-btn {
+                top: 10px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
             }
-            
-            .menu-nav-btn:hover {
-                background: rgba(108, 67, 224, 0.1);
-                padding-left: 50px;
+            .menu-nav-user-profile {
+                padding: 20px 10px;
             }
-            
-            .menu-nav-btn i {
-                margin-right: 10px;
-                width: 20px;
-                text-align: center;
-                flex-shrink: 0;
+            .menu-nav-user-avatar {
+                width: 70px;
+                height: 70px;
+            }
+            .menu-nav-user-name {
+                font-size: 1.1rem;
+            }
+            .menu-nav-user-area {
                 font-size: 0.8rem;
             }
-            
-            .menu-nav-btn-logout {
-                background: rgba(220, 53, 69, 0.1);
-                color: #ff6b6b;
+            .menu-nav-stats-container {
+                padding: 10px;
             }
-            
-            .menu-nav-btn-logout:hover {
-                background: rgba(220, 53, 69, 0.2);
+            .menu-nav-stat-card {
+                padding: 10px 12px;
             }
-            
-            .menu-nav-btn-finish {
-                background: rgba(255, 193, 7, 0.1);
-                color: #ffd93d;
+            .menu-nav-stat-value {
+                font-size: 1.3rem;
             }
-            
-            .menu-nav-btn-finish:hover {
-                background: rgba(255, 193, 7, 0.2);
+            .menu-nav-charts-container {
+                padding: 10px;
             }
-            
-            .menu-nav-report-btn {
-                background: rgba(52, 152, 219, 0.1);
-                color: #3498db;
-                margin-top: 10px;
+            .menu-nav-chart {
+                padding: 12px;
             }
-            
-            .menu-nav-report-btn:hover {
-                background: rgba(52, 152, 219, 0.2);
+            .menu-nav-buttons-container {
+                padding: 10px 8px;
             }
-            
-            @media (min-width: 769px) {
-                .menu-nav-sidebar {
-                    width: 320px;
-                    left: -320px;
-                }
-                .menu-nav-floating-btn {
-                    top: 20px;
-                    left: 20px;
-                    width: 50px;
-                    height: 50px;
-                }
+            .menu-nav-section-header {
+                padding: 10px 12px 10px 12px;
+                font-size: 0.9rem;
             }
-            
-            @media (max-width: 768px) and (min-width: 481px) {
-                .menu-nav-sidebar {
-                    width: 100%;
-                    left: -100%;
-                }
-                .menu-nav-floating-btn {
-                    top: 15px;
-                    left: 15px;
-                    width: 45px;
-                    height: 45px;
-                }
-                .menu-nav-user-profile {
-                    padding: 25px 15px;
-                }
-                .menu-nav-stats-container {
-                    padding: 15px;
-                }
-                .menu-nav-charts-container {
-                    padding: 15px;
-                }
-                .menu-nav-buttons-container {
-                    padding: 15px;
-                }
+            .menu-nav-btn {
+                padding: 8px 12px 8px 12px;
+                font-size: 0.85rem;
             }
-            
-            @media (max-width: 480px) {
-                .menu-nav-sidebar {
-                    width: 100%;
-                    left: -100%;
-                }
-                .menu-nav-floating-btn {
-                    top: 10px;
-                    left: 10px;
-                    width: 40px;
-                    height: 40px;
-                }
-                .menu-nav-user-profile {
-                    padding: 20px 10px;
-                }
-                .menu-nav-user-avatar {
-                    width: 70px;
-                    height: 70px;
-                }
-                .menu-nav-user-name {
-                    font-size: 1.1rem;
-                }
-                .menu-nav-user-area {
-                    font-size: 0.8rem;
-                }
-                .menu-nav-stats-container {
-                    padding: 10px;
-                }
-                .menu-nav-stat-card {
-                    padding: 12px;
-                }
-                .menu-nav-stat-value {
-                    font-size: 1.3rem;
-                }
-                .menu-nav-charts-container {
-                    padding: 10px;
-                }
-                .menu-nav-chart {
-                    padding: 12px;
-                }
-                .menu-nav-buttons-container {
-                    padding: 10px;
-                }
-                .menu-nav-section-header {
-                    padding: 10px 12px;
-                    font-size: 0.9rem;
-                }
-                .menu-nav-btn {
-                    padding: 8px 12px 8px 40px;
-                    font-size: 0.85rem;
-                }
-                .menu-nav-month-indicator {
-                    font-size: 0.75rem;
-                }
-                .menu-nav-chart-title {
-                    font-size: 0.8rem;
-                }
-                .menu-nav-chart-label {
-                    width: 95px;
-                    font-size: 0.7rem;
-                }
+            .menu-nav-month-indicator {
+                font-size: 0.75rem;
             }
-            
-            @media (max-width: 320px) {
-                .menu-nav-user-avatar {
-                    width: 60px;
-                    height: 60px;
-                }
-                .menu-nav-user-name {
-                    font-size: 1rem;
-                }
-                .menu-nav-stat-value {
-                    font-size: 1.2rem;
-                }
-                .menu-nav-btn {
-                    font-size: 0.8rem;
-                    padding: 7px 10px 7px 35px;
-                }
-                .menu-nav-btn i {
-                    margin-right: 8px;
-                    font-size: 0.75rem;
-                }
-                .menu-nav-chart-label {
-                    width: 85px;
-                    font-size: 0.65rem;
-                }
-                .menu-nav-section-header {
-                    font-size: 0.85rem;
-                    padding: 8px 10px;
-                }
+            .menu-nav-chart-title {
+                font-size: 0.8rem;
             }
-            
-            html, body {
-                max-width: 100%;
-                overflow-x: hidden;
+            .menu-nav-chart-label {
+                width: 95px;
+                font-size: 0.7rem;
             }
-            
-            * {
-                box-sizing: border-box;
+        }
+        
+        @media (max-width: 320px) {
+            .menu-nav-user-avatar {
+                width: 60px;
+                height: 60px;
             }
-        `;
-        document.head.appendChild(style);
-    }
+            .menu-nav-user-name {
+                font-size: 1rem;
+            }
+            .menu-nav-stat-value {
+                font-size: 1.2rem;
+            }
+            .menu-nav-btn {
+                font-size: 0.8rem;
+                padding: 7px 10px 7px 10px;
+            }
+            .menu-nav-btn i {
+                margin-right: 8px;
+                font-size: 0.75rem;
+            }
+            .menu-nav-chart-label {
+                width: 85px;
+                font-size: 0.65rem;
+            }
+            .menu-nav-section-header {
+                font-size: 0.85rem;
+                padding: 8px 10px 8px 10px;
+            }
+        }
+        
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+    `;
+    document.head.appendChild(style);
+}
     
     function createMenuHTML() {
         const overlay = document.createElement('div');
@@ -817,70 +835,82 @@
     }
     
     function obtenerEstructuraCompletaMenu() {
-        return [
-            {
-                id: 'Tickets',
-                nombre: 'Tickets',
-                icono: 'fa-ticket-alt',
-                elementos: [
-                    { id: 'gestionar-tickets-admin', nombre: 'Gestionar tickets', icono: 'fa-list-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html' },
-                    { id: 'ver-mis-tickets', nombre: 'Ver mis tickets', icono: 'fa-ticket-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html' },
-                    { id: 'ver-estadisticas', nombre: 'Ver estadísticas', icono: 'fa-chart-bar', ruta: '/vista/nav-mesa-admin/Tickets/graficas-tickets/graficas-tickets.html' }
-                ]
-            },
-            {
-                id: 'Administrativo',
-                nombre: 'Administrativo',
-                icono: 'fa-cogs',
-                elementos: [
-                    { id: 'gestion-areas', nombre: 'Áreas', icono: 'fa-map-marked-alt', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html' },
-                    { id: 'notas', nombre: 'Notas', icono: 'fa-sticky-note', ruta: '/vista/nav-mesa-admin/notas/notas.html' },
-                    { id: 'asistencias', nombre: 'Ver asistencias', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
-                    { id: 'reembolsos', nombre: 'Gestión de reembolsos', icono: 'fa-money-bill-wave', ruta: '/vista/nav-mesa-admin/Rembolsos/rembolso.html' },
-                    { id: 'manuales', nombre: 'Ver manuales', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/manuales/manuales.html' },
-                    { id: 'colaboradores', nombre: 'Colaboradores', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html' },
-                    { id: 'checklist', nombre: 'Checklist automoviles', icono: 'fa-car', ruta: '/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html' },
-                    { id: 'multas', nombre: 'Multas e imprevistos', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/multas/multas.html' }
-                ]
-            },
-            {
-                id: 'Finanzas',
-                nombre: 'Finanzas',
-                icono: 'fa-chart-line',
-                elementos: [
-                    { id: 'cotizar', nombre: 'Cotizar', icono: 'fa-file-invoice-dollar', ruta: '/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html' },
-                    { id: 'clientes', nombre: 'Clientes', icono: 'fa-users', ruta: '/vista/nav-mesa-admin/clientes/clientes.html' }
-                ]
-            },
-            {
-                id: 'Ecommerce',
-                nombre: 'Ecommerce',
-                icono: 'fa-shopping-cart',
-                elementos: [
-                    { id: 'carrusel', nombre: 'Carrusel', icono: 'fa-images', ruta: '/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html' },
-                    { id: 'categorias', nombre: 'Categorías', icono: 'fa-th-list', ruta: '/vista/nav-mesa-admin/e-comerce/categorias/categorias.html' },
-                    { id: 'contactos', nombre: 'Contactos', icono: 'fa-address-book', ruta: '/vista/nav-mesa-admin/e-comerce/contactos/contactos.html' },
-                    { id: 'entregas', nombre: 'Entregas', icono: 'fa-truck-loading', ruta: '/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html' },
-                    { id: 'opiniones', nombre: 'Opiniones', icono: 'fa-star', ruta: '/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html' },
-                    { id: 'pedidos-finalizados', nombre: 'Pedidos Finalizados', icono: 'fa-check-double', ruta: '/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html' },
-                    { id: 'productos', nombre: 'Productos', icono: 'fa-boxes', ruta: '/vista/nav-mesa-admin/e-comerce/productos/productos.html' },
-                    { id: 'usuarios', nombre: 'Usuarios', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html' },
-                    { id: 'ventas', nombre: 'Ventas', icono: 'fa-chart-line', ruta: '/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html' }
-                ]
-            },
-            {
-                id: 'Configuración',
-                nombre: 'Configuración',
-                icono: 'fa-sliders-h',
-                elementos: [
-                    { id: 'personalizar-interfaz', nombre: 'Personalizar interfaz', icono: 'fa-palette', ruta: '/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html' },
-                    { id: 'permisos', nombre: 'Permisos', icono: 'fa-shield-alt', ruta: '/vista/nav-mesa-admin/permisos/permisos.html' },
-                    { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html', clase: 'menu-nav-btn-finish' },
-                    { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#', clase: 'menu-nav-btn-logout', accion: 'logout' }
-                ]
-            }
-        ];
-    }
+    return [
+        {
+            id: 'Tickets',
+            nombre: 'Tickets',
+            icono: 'fa-ticket-alt',
+            elementos: [
+                { id: 'gestionar-tickets-admin', nombre: 'Gestionar tickets', icono: 'fa-list-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html' },
+                { id: 'ver-mis-tickets', nombre: 'Ver mis tickets', icono: 'fa-ticket-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html' },
+                { id: 'ver-estadisticas', nombre: 'Ver estadísticas', icono: 'fa-chart-bar', ruta: '/vista/nav-mesa-admin/Tickets/graficas-tickets/graficas-tickets.html' }
+            ]
+        },
+        {
+            id: 'Administrativo',
+            nombre: 'Administrativo',
+            icono: 'fa-cogs',
+            elementos: [
+                // Elementos existentes con nombres mejorados
+                { id: 'gestion-areas', nombre: 'Gestión de áreas', icono: 'fa-map-marked-alt', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html' },
+                { id: 'notas', nombre: 'Gestión de notas', icono: 'fa-sticky-note', ruta: '/vista/nav-mesa-admin/notas/notas.html' },
+                { id: 'asistencias', nombre: 'Gestión de asistencia', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
+                { id: 'reembolsos', nombre: 'Gestión de reembolsos', icono: 'fa-money-bill-wave', ruta: '/vista/nav-mesa-admin/Rembolsos/rembolso.html' },
+                { id: 'manuales', nombre: 'Gestión de manuales', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/manuales/manuales.html' },
+                { id: 'colaboradores', nombre: 'Gestión de colaboradores', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html' },
+                { id: 'checklist', nombre: 'Gestión de checklist automóviles', icono: 'fa-car', ruta: '/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html' },
+                { id: 'multas', nombre: 'Gestión de multas e imprevistos', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/multas/multas.html' },
+                
+                // NUEVOS MÓDULOS
+                { id: 'nueva-area', nombre: 'Nueva área', icono: 'fa-plus-circle', ruta: '/vista/nav-mesa-admin/nueva-area/nueva-area.html' },
+                { id: 'nuevo-colaborador', nombre: 'Nuevo colaborador', icono: 'fa-user-plus', ruta: '/vista/nav-mesa-admin/nuevo-colaborador/nuevo-colaborador.html' },
+                { id: 'nuevo-manual', nombre: 'Nuevo manual', icono: 'fa-file-plus', ruta: '/vista/nav-mesa-admin/nuevo-manual/nuevo-manual.html' },
+                { id: 'pedir-reembolso', nombre: 'Pedir reembolso', icono: 'fa-hand-holding-usd', ruta: '/vista/nav-mesa-admin/pedir-Rembolsos/pedir-Rembolsos.html' },
+                { id: 'historial-checklist-automoviles', nombre: 'Historial de checklist automóviles', icono: 'fa-history', ruta: '/vista/nav-mesa-admin/historial-checklist-automoviles/historial-checklist-automoviles.html' },
+                { id: 'gestion-productos-servicios', nombre: 'Gestión de productos y servicios', icono: 'fa-cubes', ruta: '/vista/nav-mesa-admin/gestionProductosServicios/gestionProductosServicios.html' }
+            ]
+        },
+        {
+            id: 'Finanzas',
+            nombre: 'Finanzas',
+            icono: 'fa-chart-line',
+            elementos: [
+                { id: 'cotizar', nombre: 'Cotizar', icono: 'fa-file-invoice-dollar', ruta: '/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html' },
+                { id: 'clientes', nombre: 'Gestión de clientes', icono: 'fa-users', ruta: '/vista/nav-mesa-admin/clientes/clientes.html' },
+                // NUEVOS MÓDULOS
+                { id: 'nueva-cotizacion', nombre: 'Nueva cotización', icono: 'fa-file-invoice', ruta: '/vista/nav-mesa-admin/nueva-cotizacion/nueva-cotizacion.html' },
+                { id: 'graficas-cotizaciones', nombre: 'Gráficas de cotizaciones', icono: 'fa-chart-pie', ruta: '/vista/nav-mesa-admin/graficas-cotizaciones/graficas-cotizaciones.html' }
+            ]
+        },
+        {
+            id: 'Ecommerce',
+            nombre: 'Ecommerce',
+            icono: 'fa-shopping-cart',
+            elementos: [
+                { id: 'carrusel', nombre: 'Carrusel', icono: 'fa-images', ruta: '/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html' },
+                { id: 'categorias', nombre: 'Categorías', icono: 'fa-th-list', ruta: '/vista/nav-mesa-admin/e-comerce/categorias/categorias.html' },
+                { id: 'contactos', nombre: 'Contactos', icono: 'fa-address-book', ruta: '/vista/nav-mesa-admin/e-comerce/contactos/contactos.html' },
+                { id: 'entregas', nombre: 'Entregas', icono: 'fa-truck-loading', ruta: '/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html' },
+                { id: 'opiniones', nombre: 'Opiniones', icono: 'fa-star', ruta: '/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html' },
+                { id: 'pedidos-finalizados', nombre: 'Pedidos Finalizados', icono: 'fa-check-double', ruta: '/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html' },
+                { id: 'productos', nombre: 'Productos', icono: 'fa-boxes', ruta: '/vista/nav-mesa-admin/e-comerce/productos/productos.html' },
+                { id: 'usuarios', nombre: 'Usuarios', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html' },
+                { id: 'ventas', nombre: 'Ventas', icono: 'fa-chart-line', ruta: '/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html' }
+            ]
+        },
+        {
+            id: 'Configuración',
+            nombre: 'Configuración',
+            icono: 'fa-sliders-h',
+            elementos: [
+                { id: 'personalizar-interfaz', nombre: 'Personalizar interfaz', icono: 'fa-palette', ruta: '/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html' },
+                { id: 'permisos', nombre: 'Permisos', icono: 'fa-shield-alt', ruta: '/vista/nav-mesa-admin/permisos/permisos.html' },
+                { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html', clase: 'menu-nav-btn-finish' },
+                { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#', clase: 'menu-nav-btn-logout', accion: 'logout' }
+            ]
+        }
+    ];
+}
     
     async function cargarConfiguracionNavegacion(areaNombre, subareaId) {
         try {
