@@ -1,23 +1,60 @@
-/* * Archivo: primavera_pequena.js
- * Función: Crea un efecto de flores y girasoles pequeños cayendo usando Canvas.
+/*
+ * Archivo: particulas_emojis.js
+ * Función: ⚽ y 🇲🇽 cayendo usando imágenes desde una ruta local.
+ * ¡Solo cambia las rutas de las imágenes!
  */
 
 (function() {
+    // ---- 👇 CAMBIA ESTAS RUTAS POR LAS TUYAS ----
+    const IMG_PATHS = {
+        ball: '/vista/css/img/balon.png',      // Ruta de tu balón ⚽
+        flag: '/vista/css/img/mex.png'     // Ruta de tu bandera 🇲🇽
+    };
+    // -------------------------------------------------
+
     const canvas = document.createElement('canvas');
-    canvas.id = 'flowerCanvas';
-    
+    canvas.id = 'emojiCanvas';
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    canvas.style.zIndex = '-1'; 
-    canvas.style.pointerEvents = 'none'; 
+    canvas.style.zIndex = '-1';
+    canvas.style.pointerEvents = 'none';
     document.body.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
     let W, H;
-    let flowers = []; 
-    // Ajustado ligeramente la cantidad para compensar el tamaño menor
-    let maxFlowers = 45; 
+    let particles = [];
+    const maxParticles = 55;
+
+    let images = {};
+    let imagesLoaded = 0;
+    const totalImages = Object.keys(IMG_PATHS).length;
+
+    function onImageLoaded() {
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+            initParticles();
+            loop();
+        }
+    }
+
+    function loadImages() {
+        for (let key in IMG_PATHS) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // solo si usas URLs externas, si es local no hace falta
+            img.src = IMG_PATHS[key];
+            img.onload = onImageLoaded;
+            img.onerror = function() {
+                console.warn('Error cargando imagen:', key, '→', IMG_PATHS[key]);
+                imagesLoaded++;
+                if (imagesLoaded === totalImages) {
+                    initParticles();
+                    loop();
+                }
+            };
+            images[key] = img;
+        }
+    }
 
     function setSize() {
         W = window.innerWidth;
@@ -25,112 +62,65 @@
         canvas.width = W;
         canvas.height = H;
     }
-    
     window.addEventListener('resize', setSize);
     setSize();
 
-    function initFlowers() {
-        // Colores para flores variadas y el amarillo clásico del girasol
-        const colors = ['#ff85a1', '#fbb1bd', '#f7cad0', '#ffb703', '#fb8500'];
-        for (let i = 0; i < maxFlowers; i++) {
-            // REDUCCIÓN DE TAMAÑO: El rango de tamaño ahora es menor
-            const sizeBase = Math.random() * 4 + 3; // Rango de 3 a 7 píxeles de base
-            flowers.push({
+    function initParticles() {
+        const types = ['ball', 'flag'];
+        for (let i = 0; i < maxParticles; i++) {
+            const sizeBase = Math.random() * 22 + 28; // 28-50px (tamaño de emoji)
+            particles.push({
                 x: Math.random() * W,
                 y: Math.random() * H,
-                size: sizeBase, 
-                d: Math.random() * 0.4 + 0.3, // Velocidad de caída un poco más lenta para objetos más ligeros
-                color: colors[Math.floor(Math.random() * colors.length)],
-                type: Math.random() > 0.5 ? 'sunflower' : 'flower', // 50% probabilidad de cada una
+                size: sizeBase,
+                d: Math.random() * 0.3 + 0.15,
+                type: types[Math.floor(Math.random() * types.length)],
                 rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.04 // Rotación ligeramente más suave
+                rotationSpeed: (Math.random() - 0.5) * 0.015
             });
         }
     }
 
-    // Dibuja una flor simple
-    function drawFlower(x, y, size, color) {
-        ctx.fillStyle = color;
-        // REDUCCIÓN DE TAMAÑO: El factor multiplicador es menor
-        for (let i = 0; i < 5; i++) {
-            ctx.beginPath();
-            ctx.arc(
-                x + Math.cos(i * Math.PI * 2 / 5) * (size * 0.9), // Ajuste de distancia del pétalo
-                y + Math.sin(i * Math.PI * 2 / 5) * (size * 0.9), // Ajuste de distancia del pétalo
-                size * 0.8, // Pétalos un poco más pequeños
-                0, Math.PI * 2
-            );
-            ctx.fill();
-        }
-        ctx.fillStyle = '#fff'; // Centro blanco
-        ctx.beginPath();
-        ctx.arc(x, y, size * 0.4, 0, Math.PI * 2); // Centro más pequeño
-        ctx.fill();
-    }
-
-    // Dibuja un girasol
-    function drawSunflower(x, y, size) {
-        // Pétalos amarillos
-        ctx.fillStyle = '#ffcc00';
-        for (let i = 0; i < 8; i++) {
-            ctx.beginPath();
-            // REDUCCIÓN DE TAMAÑO: Escala reducida en elipses y posición
-            ctx.ellipse(
-                x + Math.cos(i * Math.PI / 4) * size, // Distancia
-                y + Math.sin(i * Math.PI / 4) * size, // Distancia
-                size * 1.0, // Tamaño elipse
-                size / 2.5, // Tamaño elipse
-                i * Math.PI / 4, 
-                0, Math.PI * 2
-            );
-            ctx.fill();
-        }
-        // Centro marrón
-        ctx.fillStyle = '#6b4226';
-        ctx.beginPath();
-        // REDUCCIÓN DE TAMAÑO: Centro proporcional al nuevo tamaño
-        ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
     function draw() {
-        ctx.clearRect(0, 0, W, H); 
-        
-        for (let i = 0; i < maxFlowers; i++) {
-            const f = flowers[i];
-            ctx.save();
-            ctx.translate(f.x, f.y);
-            ctx.rotate(f.rotation); 
-            
-            if (f.type === 'sunflower') {
-                drawSunflower(0, 0, f.size);
+        ctx.clearRect(0, 0, W, H);
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            const img = images[p.type];
+            if (img && img.complete && img.naturalWidth > 0) {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.drawImage(img, -p.size/2, -p.size/2, p.size, p.size);
+                ctx.restore();
             } else {
-                drawFlower(0, 0, f.size, f.color);
+                // Fallback: emoji de texto por si no carga la imagen
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.font = `${p.size}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(p.type === 'ball' ? '⚽' : '🇲🇽', 0, 0);
+                ctx.restore();
             }
-            
-            ctx.restore();
         }
         update();
     }
 
     let angle = 0;
     function update() {
-        angle += 0.01;
-
-        for (let i = 0; i < maxFlowers; i++) {
-            const f = flowers[i];
-            
-            f.y += f.d * 1.1; // Caída ligeramente más rápida para flores pequeñas
-            f.x += Math.sin(angle) * 0.4; // Movimiento lateral más sutil
-            f.rotation += f.rotationSpeed; 
-
-            if (f.y > H + 30) {
-                flowers[i].y = -30;
-                flowers[i].x = Math.random() * W;
+        angle += 0.008;
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.y += p.d * 1.0;
+            p.x += Math.sin(angle + i * 0.5) * 0.2;
+            p.rotation += p.rotationSpeed;
+            if (p.y > H + 50) {
+                p.y = -50;
+                p.x = Math.random() * W;
             }
-
-            if (f.x > W + 15) f.x = -15;
-            else if (f.x < -15) f.x = W + 15;
+            if (p.x > W + 50) p.x = -50;
+            else if (p.x < -50) p.x = W + 50;
         }
     }
 
@@ -139,6 +129,5 @@
         requestAnimationFrame(loop);
     }
 
-    initFlowers();
-    loop();
+    loadImages();
 })();
