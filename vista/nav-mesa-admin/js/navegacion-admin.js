@@ -855,26 +855,16 @@ function obtenerEstructuraMenu() {
             nombre: 'Administrativo',
             icono: 'fa-cogs',
             elementos: [
-                // NUEVO: Gestión de navegación (colaboradores)
                 { id: 'navegador-colaboradores', nombre: 'Gestión de navegación (colaboradores)', icono: 'fa-compass', ruta: '/vista/nav-mesa-admin/Navegador-colaboradores/Navegador-colaboradores.html' },
-                
-                // Elementos existentes con nombres mejorados
                 { id: 'gestion-areas', nombre: 'Gestión de áreas', icono: 'fa-map-marked-alt', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html' },
                 { id: 'notas', nombre: 'Gestión de notas', icono: 'fa-sticky-note', ruta: '/vista/nav-mesa-admin/notas/notas.html' },
                 { id: 'asistencias', nombre: 'Gestión de asistencias', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
                 { id: 'reembolsos', nombre: 'Gestión de reembolsos', icono: 'fa-money-bill-wave', ruta: '/vista/nav-mesa-admin/Rembolsos/rembolso.html' },
                 { id: 'manuales', nombre: 'Gestión de manuales', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/manuales/manuales.html' },
                 { id: 'colaboradores', nombre: 'Gestión de colaboradores', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html' },
-                
-                // CHECKLIST ADMINISTRATIVO
                 { id: 'checklist', nombre: 'Gestión de checklist automóviles', icono: 'fa-car', ruta: '/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html' },
-                
-                // CHECKLIST PARA TÉCNICOS (renombrado y con icono diferente)
                 { id: 'historial-checklist-automoviles', nombre: 'Historial de checklist (Técnicos)', icono: 'fa-clipboard-list', ruta: '/vista/nav-mesa-admin/historial-checklist-automoviles/checklist-automoviles.html' },
-                
                 { id: 'multas', nombre: 'Gestión de multas e imprevistos', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/multas/multas.html' },
-                
-                // NUEVOS MÓDULOS
                 { id: 'nueva-area', nombre: 'Nueva área', icono: 'fa-plus-circle', ruta: '/vista/nav-mesa-admin/nueva-area/nueva-area.html' },
                 { id: 'nuevo-colaborador', nombre: 'Nuevo colaborador', icono: 'fa-user-plus', ruta: '/vista/nav-mesa-admin/nuevo-colaborador/nuevo-colaborador.html' },
                 { id: 'nuevo-manual', nombre: 'Nuevo manual', icono: 'fa-file-plus', ruta: '/vista/nav-mesa-admin/nuevo-manual/nuevo-manual.html' },
@@ -889,7 +879,7 @@ function obtenerEstructuraMenu() {
                 { id: 'cotizar', nombre: 'Cotizar', icono: 'fa-file-invoice-dollar', ruta: '/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html' },
                 { id: 'clientes', nombre: 'Gestión de clientes', icono: 'fa-users', ruta: '/vista/nav-mesa-admin/clientes/clientes.html' },
                 { id: 'nueva-cotizacion', nombre: 'Nueva cotización', icono: 'fa-file-invoice', ruta: '/vista/nav-mesa-admin/nueva-cotizacion/nueva-cotizacion.html' },
-                { id: 'graficas-cotizaciones', nombre: 'Gráficas de cotizaciones', icono: 'fa-chart-pie', ruta: '/vista/nav-mesa-admin/graficas-cotizaciones/graficas-cotizaciones.html' }
+                { id: 'graficas-cotizaciones', nombre: 'Gráficas de cotizaciones', icono: 'fa-chart-pie', ruta: '/vista/nav-mesa-admin/graficas-cotizaciones/GraficasCoti.html' }
             ]
         },
         {
@@ -916,7 +906,8 @@ function obtenerEstructuraMenu() {
                 { id: 'personalizar-interfaz', nombre: 'Personalizar interfaz', icono: 'fa-palette', ruta: '/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html' },
                 { id: 'permisos', nombre: 'Permisos', icono: 'fa-shield-alt', ruta: '/vista/nav-mesa-admin/permisos/permisos.html' },
                 { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html' },
-                { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#' }
+                // 👇 CORRECCIÓN AQUÍ
+                { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#', clase: 'menu-nav-btn-logout', accion: 'logout' }
             ]
         }
     ];
