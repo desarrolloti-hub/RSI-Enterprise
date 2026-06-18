@@ -1,4 +1,4 @@
-// Sala-de-Espera.js - VERSIÓN FINAL CON ROLES Y REDIRECCIÓN AUTOMÁTICA
+// Sala-de-Espera.js - VERSIÓN FINAL SIN CONSOLE.LOG, CON CONTADOR EXACTO Y DATOS DINÁMICOS
 
 // ============================================
 // CONFIGURACIÓN FIREBASE
@@ -14,7 +14,6 @@ const firebaseConfig = {
     measurementId: "G-38F2DBG9HE"
 };
 
-// Inicializar Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -30,7 +29,7 @@ const AppState = {
     tickets: [],
     metrics: {
         efficiency: 0,
-        hoursToday: 4.5,
+        hoursToday: 0,
         pendingTickets: 0,
         closedTickets: 0,
         totalTickets: 0,
@@ -38,7 +37,9 @@ const AppState = {
         completed: 0
     },
     charts: {},
-    attendanceTime: { hours: 12, minutes: 0 } // Meta configurada a las 12:00 hrs
+    attendanceTime: { hours: 12, minutes: 0 },
+    unsubscribeTickets: null,
+    unsubscribeAsistencias: null
 };
 
 // ============================================
@@ -87,15 +88,13 @@ function getUserFromLocalStorage() {
         if (sessionData) {
             return JSON.parse(sessionData);
         }
-        
         return {
             uid: localStorage.getItem('userUID'),
             email: localStorage.getItem('userEmail'),
             nombreCompleto: localStorage.getItem('userName'),
             rol: localStorage.getItem('userRole')
         };
-    } catch (error) {
-        console.error('Error al obtener usuario:', error);
+    } catch {
         return null;
     }
 }
@@ -104,37 +103,30 @@ function getColaboradorDataFromLocalStorage() {
     try {
         const data = localStorage.getItem('colaboradorData');
         if (data) {
-            const parsed = JSON.parse(data);
-            console.log('📦 Datos de colaborador desde localStorage:', parsed);
-            return parsed;
+            return JSON.parse(data);
         }
         return null;
-    } catch (error) {
-        console.error('Error al obtener colaborador:', error);
+    } catch {
         return null;
     }
 }
 
 // ============================================
-// MANEJADOR DE ROLES (NUEVO)
+// MANEJADOR DE ROLES
 // ============================================
 function getAsistenciaUrl() {
     const user = AppState.currentUser || getUserFromLocalStorage();
     const rol = user?.rol || 'colaborador';
-    
-    console.log('🎯 Rol detectado para asistencia:', rol);
-    
     if (rol === 'admincolaborador') {
         return '/vista/nav-mesa-admin/asistencia/asistencia.html';
     } else {
-        return '/vista/nav-mesa-operadores/asistencia/asistencia.html';
+        return '/vista/nav-mesa-admin/asistencia/asistencia.html';
     }
 }
 
 function updateAttendanceButton() {
     if (DOM.attendanceBtn) {
         DOM.attendanceBtn.href = getAsistenciaUrl();
-        console.log('✅ Botón de asistencia actualizado a:', DOM.attendanceBtn.href);
     }
 }
 
@@ -218,21 +210,17 @@ async function loadCollaboratorData() {
     try {
         const user = auth.currentUser;
         if (!user) {
-            console.warn('Usuario no autenticado');
-            
             const localColab = getColaboradorDataFromLocalStorage();
             if (localColab) {
                 AppState.colaboradorData = localColab;
-                console.log('✅ Usando datos de colaborador desde localStorage');
                 renderUserProfile();
                 updateAttendanceButton();
+                await loadAttendanceTimeFromColaborador(localColab.id);
                 return true;
             }
             return false;
         }
 
-        console.log('🔍 Buscando colaborador con email:', user.email);
-        
         const colaboradoresRef = db.collection('colaboradores');
         const q = colaboradoresRef.where("CORREO ELECTRÓNICO EMPRESARIAL", "==", user.email);
         const snapshot = await q.get();
@@ -249,41 +237,60 @@ async function loadCollaboratorData() {
                 imagen: data.imagen || data.foto || null
             };
             
-            console.log('✅ Colaborador encontrado:', AppState.colaboradorData);
-            console.log('🖼️ Imagen:', AppState.colaboradorData.imagen);
-            
-            try {
-                localStorage.setItem('colaboradorData', JSON.stringify(AppState.colaboradorData));
-            } catch (e) {
-                console.warn('No se pudo guardar en localStorage');
-            }
+            localStorage.setItem('colaboradorData', JSON.stringify(AppState.colaboradorData));
             
             renderUserProfile();
             updateAttendanceButton();
+            await loadAttendanceTimeFromColaborador(doc.id);
             return true;
         } else {
-            console.warn('No se encontró colaborador con ese email');
-            
             const localColab = getColaboradorDataFromLocalStorage();
             if (localColab) {
                 AppState.colaboradorData = localColab;
                 renderUserProfile();
                 updateAttendanceButton();
+                await loadAttendanceTimeFromColaborador(localColab.id);
                 return true;
             }
             return false;
         }
-    } catch (error) {
-        console.error('Error cargando colaborador:', error);
-        
+    } catch {
         const localColab = getColaboradorDataFromLocalStorage();
         if (localColab) {
             AppState.colaboradorData = localColab;
             renderUserProfile();
             updateAttendanceButton();
+            await loadAttendanceTimeFromColaborador(localColab.id);
             return true;
         }
         return false;
+    }
+}
+
+// ============================================
+// OBTENER HORA DE SALIDA DEL COLABORADOR (dinámico)
+// ============================================
+async function loadAttendanceTimeFromColaborador(colaboradorId) {
+    try {
+        const doc = await db.collection('colaboradores').doc(colaboradorId).get();
+        if (doc.exists) {
+            const data = doc.data();
+            let horaSalida = data.horaSalida || data.HORA_SALIDA || data.horarioSalida || '12:00';
+            if (typeof horaSalida === 'string') {
+                const parts = horaSalida.split(':');
+                if (parts.length === 2) {
+                    AppState.attendanceTime.hours = parseInt(parts[0], 10) || 12;
+                    AppState.attendanceTime.minutes = parseInt(parts[1], 10) || 0;
+                }
+            } else if (horaSalida && typeof horaSalida === 'object') {
+                const date = horaSalida.toDate ? horaSalida.toDate() : new Date(horaSalida);
+                AppState.attendanceTime.hours = date.getHours();
+                AppState.attendanceTime.minutes = date.getMinutes();
+            }
+            startCountdown();
+        }
+    } catch {
+        // Mantener 12:00 por defecto
     }
 }
 
@@ -294,129 +301,165 @@ function renderUserProfile() {
     const colaborador = AppState.colaboradorData;
     const user = AppState.currentUser || getUserFromLocalStorage();
     
-    // Nombre
     DOM.userName.textContent = colaborador?.NOMBRE || 
                                colaborador?.nombreCompleto || 
                                user?.nombreCompleto || 
                                'Usuario';
     
-    // Email
     DOM.userEmail.textContent = user?.email || 
                                 colaborador?.['CORREO ELECTRÓNICO EMPRESARIAL'] || 
                                 'correo@ejemplo.com';
     
-    // Rol
     let roleText = 'Colaborador';
     if (user?.rol === 'admincolaborador') roleText = 'Administrador';
     else if (user?.rol === 'colaborador') roleText = 'Colaborador';
     DOM.userRole.textContent = roleText;
     
-    // Imagen
     let imagenUrl = '/vista/css/img/Logo-RSI-OFICIAL.png';
-    
     if (colaborador?.imagen) {
         imagenUrl = colaborador.imagen;
-        console.log('🖼️ Usando imagen del campo "imagen":', imagenUrl);
     } else if (colaborador?.foto) {
         imagenUrl = colaborador.foto;
-        console.log('🖼️ Usando imagen del campo "foto":', imagenUrl);
     } else if (colaborador?.avatar) {
         imagenUrl = colaborador.avatar;
-        console.log('🖼️ Usando imagen del campo "avatar":', imagenUrl);
     } else if (colaborador?.fotoPerfil) {
         imagenUrl = colaborador.fotoPerfil;
-        console.log('🖼️ Usando imagen del campo "fotoPerfil":', imagenUrl);
     }
     
     DOM.userAvatar.src = imagenUrl;
-    console.log('🖼️ Imagen asignada:', DOM.userAvatar.src);
-    
     DOM.userAvatar.onerror = function() {
-        console.log('⚠️ Error cargando imagen, usando default');
         this.src = '/vista/css/img/Logo-RSI-OFICIAL.png';
     };
 }
 
 // ============================================
-// CARGA DE TICKETS
+// OBTENER HORAS TRABAJADAS HOY DESDE ASISTENCIAS
 // ============================================
-async function loadUserTickets() {
+async function loadHoursToday(colaboradorId) {
     try {
-        const user = auth.currentUser;
-        if (!user) {
-            console.warn('Usuario no autenticado en Firebase');
-            return;
-        }
-
-        console.log('🔍 Cargando tickets para:', user.email);
-
-        if (!AppState.colaboradorData) {
-            await loadCollaboratorData();
-        }
-
-        const colaboradorData = AppState.colaboradorData;
-        if (!colaboradorData) {
-            console.warn('No hay datos de colaborador');
-            return;
-        }
-
-        const ticketsRef = db.collection('ticketsmesa');
-        const nombreResponsable = colaboradorData.NOMBRE || colaboradorData.nombreCompleto;
-        const colaboradorId = colaboradorData.id;
-
-        console.log('🎯 Buscando por responsable:', nombreResponsable);
-        console.log('🎯 Buscando por ID:', colaboradorId);
-
-        let snapshotResponsable, snapshotColaborador;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
         
-        try {
-            snapshotResponsable = await ticketsRef
-                .where("responsableNombre", "==", nombreResponsable)
-                .orderBy("fechaCreacion", "desc")
-                .get();
-        } catch (e) {
-            console.log('⚠️ Error con orderBy, intentando sin orden');
-            snapshotResponsable = await ticketsRef
-                .where("responsableNombre", "==", nombreResponsable)
-                .get();
-        }
-
-        try {
-            snapshotColaborador = await ticketsRef
-                .where("colaboradores", "array-contains", colaboradorId)
-                .orderBy("fechaCreacion", "desc")
-                .get();
-        } catch (e) {
-            console.log('⚠️ Error con orderBy, intentando sin orden');
-            snapshotColaborador = await ticketsRef
-                .where("colaboradores", "array-contains", colaboradorId)
-                .get();
-        }
+        const snapshot = await db.collection('asistencias')
+            .where('userId', '==', colaboradorId)
+            .get();
         
-        const ticketsMap = new Map();
-        
-        snapshotResponsable.forEach(doc => {
-            ticketsMap.set(doc.id, { id: doc.id, ...doc.data() });
-        });
-        
-        snapshotColaborador.forEach(doc => {
-            if (!ticketsMap.has(doc.id)) {
-                ticketsMap.set(doc.id, { id: doc.id, ...doc.data() });
+        let totalMs = 0;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const fecha = data.fecha;
+            if (fecha && fecha.toDate) {
+                const fechaDate = fecha.toDate();
+                if (fechaDate >= today && fechaDate < tomorrow) {
+                    if (data.horaEntradaRegistrada && data.horaSalidaRegistrada) {
+                        const entrada = new Date(fechaDate);
+                        const salida = new Date(fechaDate);
+                        const [hEnt, mEnt, sEnt] = data.horaEntradaRegistrada.split(':').map(Number);
+                        const [hSal, mSal, sSal] = data.horaSalidaRegistrada.split(':').map(Number);
+                        entrada.setHours(hEnt || 0, mEnt || 0, sEnt || 0, 0);
+                        salida.setHours(hSal || 0, mSal || 0, sSal || 0, 0);
+                        totalMs += (salida - entrada);
+                    }
+                }
             }
         });
         
-        AppState.tickets = Array.from(ticketsMap.values());
-        console.log(`✅ Tickets cargados: ${AppState.tickets.length}`);
-        
+        const hours = totalMs / (1000 * 60 * 60);
+        AppState.metrics.hoursToday = Math.round(hours * 10) / 10;
+        renderMetrics();
+    } catch {
+        AppState.metrics.hoursToday = 0;
+    }
+}
+
+// ============================================
+// SUSCRIPCIÓN EN TIEMPO REAL A TICKETS
+// ============================================
+function subscribeToTickets() {
+    if (AppState.unsubscribeTickets) {
+        AppState.unsubscribeTickets();
+        AppState.unsubscribeTickets = null;
+    }
+
+    const colaboradorData = AppState.colaboradorData;
+    if (!colaboradorData) return;
+
+    const ticketsRef = db.collection('ticketsmesa');
+    const nombreResponsable = colaboradorData.NOMBRE || colaboradorData.nombreCompleto;
+    const colaboradorId = colaboradorData.id;
+
+    const queryResponsable = ticketsRef.where("responsableNombre", "==", nombreResponsable);
+    const queryColaborador = ticketsRef.where("colaboradores", "array-contains", colaboradorId);
+
+    let ticketsMap = new Map();
+    let isFirstLoad = true;
+
+    const onUpdate = () => {
+        const ticketsArray = Array.from(ticketsMap.values());
+        AppState.tickets = ticketsArray;
         calculateMetrics();
         renderMetrics();
         renderRecentTickets();
         renderMobileTickets();
-        initCharts();
-        
-    } catch (error) {
-        console.error('❌ Error cargando tickets:', error);
+        updateCharts();
+        if (isFirstLoad) {
+            isFirstLoad = false;
+            initCharts();
+        }
+    };
+
+    const unsubResponsable = queryResponsable.onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach(change => {
+            const doc = change.doc;
+            const data = doc.data();
+            if (change.type === 'removed') {
+                ticketsMap.delete(doc.id);
+            } else {
+                ticketsMap.set(doc.id, { id: doc.id, ...data });
+            }
+        });
+        onUpdate();
+    }, () => {});
+
+    const unsubColaborador = queryColaborador.onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach(change => {
+            const doc = change.doc;
+            const data = doc.data();
+            if (change.type === 'removed') {
+                ticketsMap.delete(doc.id);
+            } else {
+                ticketsMap.set(doc.id, { id: doc.id, ...data });
+            }
+        });
+        onUpdate();
+    }, () => {});
+
+    AppState.unsubscribeTickets = () => {
+        unsubResponsable();
+        unsubColaborador();
+    };
+}
+
+// ============================================
+// SUSCRIPCIÓN A ASISTENCIAS PARA ACTUALIZAR HORAS
+// ============================================
+function subscribeToAsistencias() {
+    if (AppState.unsubscribeAsistencias) {
+        AppState.unsubscribeAsistencias();
+        AppState.unsubscribeAsistencias = null;
     }
+
+    const colaboradorId = AppState.colaboradorData?.id;
+    if (!colaboradorId) return;
+
+    const query = db.collection('asistencias')
+        .where('userId', '==', colaboradorId);
+
+    AppState.unsubscribeAsistencias = query.onSnapshot(() => {
+        loadHoursToday(colaboradorId);
+    }, () => {});
 }
 
 // ============================================
@@ -444,17 +487,12 @@ function calculateMetrics() {
 
     const efficiency = Utils.calculateEfficiency(tickets.length, completed);
 
-    AppState.metrics = {
-        efficiency,
-        hoursToday: 4.5,
-        pendingTickets: pending,
-        closedTickets: closedToday,
-        totalTickets: tickets.length,
-        inProgress,
-        completed
-    };
-
-    console.log('📊 Métricas:', AppState.metrics);
+    AppState.metrics.efficiency = efficiency;
+    AppState.metrics.pendingTickets = pending;
+    AppState.metrics.closedTickets = closedToday;
+    AppState.metrics.totalTickets = tickets.length;
+    AppState.metrics.inProgress = inProgress;
+    AppState.metrics.completed = completed;
 }
 
 // ============================================
@@ -474,12 +512,12 @@ function renderMetrics() {
     
     if(DOM.hoursToday) DOM.hoursToday.textContent = m.hoursToday.toFixed(1);
     if(DOM.hoursBar) {
-        const hoursPercent = (m.hoursToday / 8) * 100;
+        const hoursPercent = Math.min((m.hoursToday / 8) * 100, 100);
         DOM.hoursBar.style.width = hoursPercent + '%';
     }
     
     if(DOM.hoursRemaining) {
-        const remaining = 8 - m.hoursToday;
+        const remaining = Math.max(8 - m.hoursToday, 0);
         DOM.hoursRemaining.textContent = `Restan ${remaining.toFixed(1)}h`;
     }
     
@@ -504,8 +542,6 @@ function renderRecentTickets() {
                 </td>
             </tr>
         `;
-        
-        renderMobileTickets();
         return;
     }
     
@@ -532,8 +568,6 @@ function renderRecentTickets() {
             </tr>
         `;
     }).join('');
-    
-    renderMobileTickets();
 }
 
 // ============================================
@@ -543,10 +577,7 @@ function renderMobileTickets() {
     const tickets = AppState.tickets;
     const mobileContainer = DOM.mobileTicketsContainer;
     
-    if (!mobileContainer) {
-        console.warn('No se encontró el contenedor de tarjetas móviles');
-        return;
-    }
+    if (!mobileContainer) return;
     
     if (tickets.length === 0) {
         mobileContainer.innerHTML = `
@@ -571,16 +602,12 @@ function renderMobileTickets() {
         const prioridad = ticket.prioridad || 'N/A';
         const fecha = ticket.fechaCreacion ? Utils.formatDate(ticket.fechaCreacion) : 'N/A';
         
-        let estadoClass = Utils.getBadgeClass(estado);
-        let estadoIcon = Utils.getStatusIcon(estado);
-        let estadoTexto = estado.replace(/_/g, ' ');
-        
         return `
             <div class="ticket-mobile-card">
                 <div class="ticket-mobile-header">
                     <span class="ticket-mobile-id">#${ticket.id?.substring(0, 8) || 'N/A'}</span>
-                    <span class="badge ${estadoClass}">
-                        <i class="fas ${estadoIcon}"></i> ${estadoTexto}
+                    <span class="badge ${Utils.getBadgeClass(estado)}">
+                        <i class="fas ${Utils.getStatusIcon(estado)}"></i> ${estado.replace(/_/g, ' ')}
                     </span>
                 </div>
                 
@@ -611,157 +638,186 @@ function renderMobileTickets() {
 }
 
 // ============================================
-// GRÁFICAS
+// GRÁFICAS (CREACIÓN Y ACTUALIZACIÓN)
 // ============================================
 function initCharts() {
-    Object.values(AppState.charts).forEach(chart => {
-        if (chart && typeof chart.destroy === 'function') chart.destroy();
-    });
+    updateCharts();
+}
+
+function updateCharts() {
+    const m = AppState.metrics;
     
-    setTimeout(() => {
-        try {
-            const m = AppState.metrics;
-            
-            if (DOM.statusChart) {
-                const ctx = DOM.statusChart.getContext('2d');
-                AppState.charts.statusChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Finalizados', 'En Proceso', 'Pendientes'],
-                        datasets: [{
-                            data: [m.completed, m.inProgress, m.pendingTickets],
-                            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '70%',
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-            
-            if (DOM.distributionChart) {
-                const ctx = DOM.distributionChart.getContext('2d');
-                AppState.charts.distributionChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Pendientes', 'En Proceso', 'Finalizados'],
-                        datasets: [{
-                            label: 'Tickets',
-                            data: [m.pendingTickets, m.inProgress, m.completed],
-                            backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
-                            borderRadius: 5
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            }
-            
-            if (DOM.performanceChart) {
-                const ctx = DOM.performanceChart.getContext('2d');
-                AppState.charts.performanceChart = new Chart(ctx, {
-                    type: 'radar',
-                    data: {
-                        labels: ['Eficiencia', 'Cumplimiento', 'Rapidez', 'Calidad', 'Productividad'],
-                        datasets: [{
-                            label: 'Rendimiento',
-                            data: [
-                                m.efficiency,
-                                Math.min(100, (m.completed / 5) * 100) || 0,
-                                75, 70, 80
-                            ],
-                            backgroundColor: 'rgba(108, 67, 224, 0.2)',
-                            borderColor: '#6C43E0',
-                            pointBackgroundColor: '#6C43E0'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: { r: { beginAtZero: true, max: 100 } }
-                    }
-                });
-            }
-            
-            if (DOM.pendingMiniChart) {
-                const ctx = DOM.pendingMiniChart.getContext('2d');
-                AppState.charts.pendingMiniChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['L', 'M', 'M', 'J', 'V'],
-                        datasets: [{
-                            data: [8, 10, 7, m.pendingTickets, 9],
-                            borderColor: '#dc3545',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            pointRadius: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { x: { display: false }, y: { display: false } }
-                    }
-                });
-            }
-            
-            if (DOM.closedMiniChart) {
-                const ctx = DOM.closedMiniChart.getContext('2d');
-                AppState.charts.closedMiniChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['L', 'M', 'M', 'J', 'V'],
-                        datasets: [{
-                            data: [5, 8, 12, m.closedTickets, 15],
-                            borderColor: '#28a745',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            pointRadius: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { x: { display: false }, y: { display: false } }
-                    }
-                });
-            }
-            
-            console.log('✅ Gráficas listas');
-        } catch (error) {
-            console.error('❌ Error en gráficas:', error);
+    // Status Chart (Doughnut)
+    if (DOM.statusChart) {
+        if (!AppState.charts.statusChart) {
+            const ctx = DOM.statusChart.getContext('2d');
+            AppState.charts.statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Finalizados', 'En Proceso', 'Pendientes'],
+                    datasets: [{
+                        data: [m.completed, m.inProgress, m.pendingTickets],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        } else {
+            AppState.charts.statusChart.data.datasets[0].data = [m.completed, m.inProgress, m.pendingTickets];
+            AppState.charts.statusChart.update();
         }
-    }, 200);
+    }
+    
+    // Distribution Chart (Bar)
+    if (DOM.distributionChart) {
+        if (!AppState.charts.distributionChart) {
+            const ctx = DOM.distributionChart.getContext('2d');
+            AppState.charts.distributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pendientes', 'En Proceso', 'Finalizados'],
+                    datasets: [{
+                        label: 'Tickets',
+                        data: [m.pendingTickets, m.inProgress, m.completed],
+                        backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        } else {
+            AppState.charts.distributionChart.data.datasets[0].data = [m.pendingTickets, m.inProgress, m.completed];
+            AppState.charts.distributionChart.update();
+        }
+    }
+    
+    // Performance Chart (Radar)
+    if (DOM.performanceChart) {
+        if (!AppState.charts.performanceChart) {
+            const ctx = DOM.performanceChart.getContext('2d');
+            AppState.charts.performanceChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Eficiencia', 'Cumplimiento', 'Rapidez', 'Calidad', 'Productividad'],
+                    datasets: [{
+                        label: 'Rendimiento',
+                        data: [
+                            m.efficiency,
+                            Math.min(100, (m.completed / 5) * 100) || 0,
+                            75, 70, 80
+                        ],
+                        backgroundColor: 'rgba(108, 67, 224, 0.2)',
+                        borderColor: '#6C43E0',
+                        pointBackgroundColor: '#6C43E0'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { beginAtZero: true, max: 100 } }
+                }
+            });
+        } else {
+            AppState.charts.performanceChart.data.datasets[0].data = [
+                m.efficiency,
+                Math.min(100, (m.completed / 5) * 100) || 0,
+                75, 70, 80
+            ];
+            AppState.charts.performanceChart.update();
+        }
+    }
+    
+    // Pending Mini Chart (Line)
+    if (DOM.pendingMiniChart) {
+        if (!AppState.charts.pendingMiniChart) {
+            const ctx = DOM.pendingMiniChart.getContext('2d');
+            AppState.charts.pendingMiniChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['L', 'M', 'M', 'J', 'V'],
+                    datasets: [{
+                        data: [8, 10, 7, m.pendingTickets, 9],
+                        borderColor: '#dc3545',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        } else {
+            AppState.charts.pendingMiniChart.data.datasets[0].data = [8, 10, 7, m.pendingTickets, 9];
+            AppState.charts.pendingMiniChart.update();
+        }
+    }
+    
+    // Closed Mini Chart (Line)
+    if (DOM.closedMiniChart) {
+        if (!AppState.charts.closedMiniChart) {
+            const ctx = DOM.closedMiniChart.getContext('2d');
+            AppState.charts.closedMiniChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['L', 'M', 'M', 'J', 'V'],
+                    datasets: [{
+                        data: [5, 8, 12, m.closedTickets, 15],
+                        borderColor: '#28a745',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        } else {
+            AppState.charts.closedMiniChart.data.datasets[0].data = [5, 8, 12, m.closedTickets, 15];
+            AppState.charts.closedMiniChart.update();
+        }
+    }
 }
 
 // ============================================
-// COUNTDOWN (ESTA ES LA ÚNICA PARTE QUE CAMBIÉ)
+// COUNTDOWN (CON HORA DINÁMICA Y SEGUNDOS EXACTOS)
 // ============================================
+let countdownInterval = null;
+
 function startCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+
     const updateCountdown = () => {
         const now = new Date();
         const target = new Date();
-        
-        // Lo pusimos a las 12:00 PM (Mediodía)
         target.setHours(AppState.attendanceTime.hours, AppState.attendanceTime.minutes, 0, 0);
         
         if (now > target) target.setDate(target.getDate() + 1);
         
         const diff = target - now;
         
-        // REDIRECCIÓN CUANDO EL TIEMPO LLEGA A CERO
         if (diff <= 0 || diff < 1000) {
-            console.log('⏰ ¡Tiempo cumplido! Redireccionando...');
             window.location.href = getAsistenciaUrl();
             return;
         }
@@ -776,7 +832,7 @@ function startCountdown() {
     };
     
     updateCountdown();
-    setInterval(updateCountdown, 1000);
+    countdownInterval = setInterval(updateCountdown, 1000);
 }
 
 // ============================================
@@ -784,27 +840,32 @@ function startCountdown() {
 // ============================================
 async function init() {
     try {
-        console.log('🚀 Inicializando Sala de Espera...');
-        
         AppState.currentUser = getUserFromLocalStorage();
         
+        await loadCollaboratorData();
         startCountdown();
+        
+        if (AppState.colaboradorData?.id) {
+            await loadHoursToday(AppState.colaboradorData.id);
+        }
         
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                console.log('👤 Usuario autenticado:', user.email);
+                AppState.currentUser = user;
                 await loadCollaboratorData();
-                await loadUserTickets();
+                subscribeToTickets();
+                subscribeToAsistencias();
             } else {
-                console.log('⚠️ Usuario no autenticado, usando localStorage');
                 await loadCollaboratorData();
-                renderUserProfile();
-                updateAttendanceButton();
+                if (AppState.colaboradorData) {
+                    subscribeToTickets();
+                    subscribeToAsistencias();
+                }
             }
         });
         
-    } catch (error) {
-        console.error('❌ Error en inicialización:', error);
+    } catch {
+        // Error silencioso
     }
 }
 
@@ -820,14 +881,13 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.verEficienciaBtn.addEventListener('click', () => {
         DOM.motivationalScreen.style.display = 'none';
         DOM.waitingRoomScreen.style.display = 'block';
-        setTimeout(() => initCharts(), 100);
+        updateCharts();
     });
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            
             Swal.fire({
                 title: '¿Cerrar sesión?',
                 text: '¿Estás seguro que deseas salir?',
@@ -840,6 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then((result) => {
                 if (result.isConfirmed) {
                     localStorage.clear();
+                    if (AppState.unsubscribeTickets) AppState.unsubscribeTickets();
+                    if (AppState.unsubscribeAsistencias) AppState.unsubscribeAsistencias();
                     auth.signOut().then(() => {
                         window.location.href = "../../index.html";
                     });
@@ -848,6 +910,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-// Debug
-window.AppState = AppState;
