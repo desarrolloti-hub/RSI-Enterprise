@@ -834,7 +834,11 @@
         document.body.appendChild(sidebar);
     }
     
-    function obtenerEstructuraCompletaMenu() {
+   /**
+ * OBTIENE LA ESTRUCTURA COMPLETA DEL MENÚ
+ * MODIFICADA: Se agregaron nuevos módulos, se mejoraron nombres y se distingue el checklist para técnicos
+ */
+function obtenerEstructuraMenu() {
     return [
         {
             id: 'Tickets',
@@ -851,23 +855,30 @@
             nombre: 'Administrativo',
             icono: 'fa-cogs',
             elementos: [
+                // NUEVO: Gestión de navegación (colaboradores)
+                { id: 'navegador-colaboradores', nombre: 'Gestión de navegación (colaboradores)', icono: 'fa-compass', ruta: '/vista/nav-mesa-admin/Navegador-colaboradores/Navegador-colaboradores.html' },
+                
                 // Elementos existentes con nombres mejorados
                 { id: 'gestion-areas', nombre: 'Gestión de áreas', icono: 'fa-map-marked-alt', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html' },
                 { id: 'notas', nombre: 'Gestión de notas', icono: 'fa-sticky-note', ruta: '/vista/nav-mesa-admin/notas/notas.html' },
-                { id: 'asistencias', nombre: 'Gestión de asistencia', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
+                { id: 'asistencias', nombre: 'Gestión de asistencias', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
                 { id: 'reembolsos', nombre: 'Gestión de reembolsos', icono: 'fa-money-bill-wave', ruta: '/vista/nav-mesa-admin/Rembolsos/rembolso.html' },
                 { id: 'manuales', nombre: 'Gestión de manuales', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/manuales/manuales.html' },
                 { id: 'colaboradores', nombre: 'Gestión de colaboradores', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html' },
+                
+                // CHECKLIST ADMINISTRATIVO
                 { id: 'checklist', nombre: 'Gestión de checklist automóviles', icono: 'fa-car', ruta: '/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html' },
+                
+                // CHECKLIST PARA TÉCNICOS (renombrado y con icono diferente)
+                { id: 'historial-checklist-automoviles', nombre: 'Historial de checklist (Técnicos)', icono: 'fa-clipboard-list', ruta: '/vista/nav-mesa-admin/historial-checklist-automoviles/checklist-automoviles.html' },
+                
                 { id: 'multas', nombre: 'Gestión de multas e imprevistos', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/multas/multas.html' },
                 
                 // NUEVOS MÓDULOS
                 { id: 'nueva-area', nombre: 'Nueva área', icono: 'fa-plus-circle', ruta: '/vista/nav-mesa-admin/nueva-area/nueva-area.html' },
                 { id: 'nuevo-colaborador', nombre: 'Nuevo colaborador', icono: 'fa-user-plus', ruta: '/vista/nav-mesa-admin/nuevo-colaborador/nuevo-colaborador.html' },
                 { id: 'nuevo-manual', nombre: 'Nuevo manual', icono: 'fa-file-plus', ruta: '/vista/nav-mesa-admin/nuevo-manual/nuevo-manual.html' },
-                { id: 'pedir-reembolso', nombre: 'Pedir reembolso', icono: 'fa-hand-holding-usd', ruta: '/vista/nav-mesa-admin/pedir-Rembolsos/pedir-Rembolsos.html' },
-                { id: 'historial-checklist-automoviles', nombre: 'Historial de checklist automóviles', icono: 'fa-history', ruta: '/vista/nav-mesa-admin/historial-checklist-automoviles/historial-checklist-automoviles.html' },
-                { id: 'gestion-productos-servicios', nombre: 'Gestión de productos y servicios', icono: 'fa-cubes', ruta: '/vista/nav-mesa-admin/gestionProductosServicios/gestionProductosServicios.html' }
+                { id: 'pedir-reembolso', nombre: 'Pedir reembolso', icono: 'fa-hand-holding-usd', ruta: '/vista/nav-mesa-admin/pedir-Rembolsos/rembolso.html' }
             ]
         },
         {
@@ -877,7 +888,6 @@
             elementos: [
                 { id: 'cotizar', nombre: 'Cotizar', icono: 'fa-file-invoice-dollar', ruta: '/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html' },
                 { id: 'clientes', nombre: 'Gestión de clientes', icono: 'fa-users', ruta: '/vista/nav-mesa-admin/clientes/clientes.html' },
-                // NUEVOS MÓDULOS
                 { id: 'nueva-cotizacion', nombre: 'Nueva cotización', icono: 'fa-file-invoice', ruta: '/vista/nav-mesa-admin/nueva-cotizacion/nueva-cotizacion.html' },
                 { id: 'graficas-cotizaciones', nombre: 'Gráficas de cotizaciones', icono: 'fa-chart-pie', ruta: '/vista/nav-mesa-admin/graficas-cotizaciones/graficas-cotizaciones.html' }
             ]
@@ -905,8 +915,8 @@
             elementos: [
                 { id: 'personalizar-interfaz', nombre: 'Personalizar interfaz', icono: 'fa-palette', ruta: '/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html' },
                 { id: 'permisos', nombre: 'Permisos', icono: 'fa-shield-alt', ruta: '/vista/nav-mesa-admin/permisos/permisos.html' },
-                { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html', clase: 'menu-nav-btn-finish' },
-                { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#', clase: 'menu-nav-btn-logout', accion: 'logout' }
+                { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html' },
+                { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#' }
             ]
         }
     ];
@@ -930,80 +940,81 @@
         }
     }
     
-    function aplicarConfiguracionNavegacion() {
-        const container = document.getElementById('menuNavButtonsContainer');
-        if (!container) return;
+ function aplicarConfiguracionNavegacion() {
+    const container = document.getElementById('menuNavButtonsContainer');
+    if (!container) return;
+    
+    const config = menuState.configuracionNavegacion;
+    // 👇 CAMBIO IMPORTANTE: ahora usa obtenerEstructuraMenu()
+    const estructuraCompleta = obtenerEstructuraMenu();
+    
+    let html = '';
+    
+    estructuraCompleta.forEach(seccion => {
+        const seccionVisible = config ? config.seccionesVisibles?.includes(seccion.id) : true;
         
-        const config = menuState.configuracionNavegacion;
-        const estructuraCompleta = obtenerEstructuraCompletaMenu();
+        if (!seccionVisible) return;
         
-        let html = '';
+        const elementosVisibles = config ? config.elementosVisibles?.[seccion.id] || [] : seccion.elementos.map(e => e.id);
         
-        estructuraCompleta.forEach(seccion => {
-            const seccionVisible = config ? config.seccionesVisibles?.includes(seccion.id) : true;
+        html += `
+            <div class="menu-nav-section">
+                <button class="menu-nav-section-header" data-section="${seccion.id.toLowerCase()}">
+                    <i class="fas ${seccion.icono}"></i>
+                    <span>${seccion.nombre}</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="menu-nav-section-content" id="section-${seccion.id.toLowerCase()}">
+        `;
+        
+        seccion.elementos.forEach(elemento => {
+            if (elementosVisibles.includes(elemento.id)) {
+                const claseAdicional = elemento.clase ? ` ${elemento.clase}` : '';
+                const atributos = elemento.accion ? ` data-accion="${elemento.accion}"` : '';
+                
+                html += `
+                    <a href="${elemento.ruta}" class="menu-nav-btn${claseAdicional}"${atributos}>
+                        <i class="fas ${elemento.icono}"></i> ${elemento.nombre}
+                    </a>
+                `;
+            }
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    document.querySelectorAll('.menu-nav-section-header').forEach(header => {
+        header.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sectionId = this.getAttribute('data-section');
+            const content = document.getElementById(`section-${sectionId}`);
             
-            if (!seccionVisible) return;
-            
-            const elementosVisibles = config ? config.elementosVisibles?.[seccion.id] || [] : seccion.elementos.map(e => e.id);
-            
-            html += `
-                <div class="menu-nav-section">
-                    <button class="menu-nav-section-header" data-section="${seccion.id.toLowerCase()}">
-                        <i class="fas ${seccion.icono}"></i>
-                        <span>${seccion.nombre}</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="menu-nav-section-content" id="section-${seccion.id.toLowerCase()}">
-            `;
-            
-            seccion.elementos.forEach(elemento => {
-                if (elementosVisibles.includes(elemento.id)) {
-                    const claseAdicional = elemento.clase ? ` ${elemento.clase}` : '';
-                    const atributos = elemento.accion ? ` data-accion="${elemento.accion}"` : '';
-                    
-                    html += `
-                        <a href="${elemento.ruta}" class="menu-nav-btn${claseAdicional}"${atributos}>
-                            <i class="fas ${elemento.icono}"></i> ${elemento.nombre}
-                        </a>
-                    `;
+            document.querySelectorAll('.menu-nav-section-header').forEach(otherHeader => {
+                if (otherHeader !== this) {
+                    otherHeader.classList.remove('active');
+                    const otherSectionId = otherHeader.getAttribute('data-section');
+                    const otherContent = document.getElementById(`section-${otherSectionId}`);
+                    if (otherContent) otherContent.classList.remove('active');
                 }
             });
             
-            html += `
-                    </div>
-                </div>
-            `;
+            this.classList.toggle('active');
+            if (content) content.classList.toggle('active');
         });
-        
-        container.innerHTML = html;
-        
-        document.querySelectorAll('.menu-nav-section-header').forEach(header => {
-            header.addEventListener('click', function(e) {
-                e.preventDefault();
-                const sectionId = this.getAttribute('data-section');
-                const content = document.getElementById(`section-${sectionId}`);
-                
-                document.querySelectorAll('.menu-nav-section-header').forEach(otherHeader => {
-                    if (otherHeader !== this) {
-                        otherHeader.classList.remove('active');
-                        const otherSectionId = otherHeader.getAttribute('data-section');
-                        const otherContent = document.getElementById(`section-${otherSectionId}`);
-                        if (otherContent) otherContent.classList.remove('active');
-                    }
-                });
-                
-                this.classList.toggle('active');
-                if (content) content.classList.toggle('active');
-            });
+    });
+    
+    document.querySelectorAll('.menu-nav-btn-logout').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
         });
-        
-        document.querySelectorAll('.menu-nav-btn-logout').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                logout();
-            });
-        });
-    }
+    });
+}
     
     function setupMenuEventListeners() {
         const floatingBtn = document.getElementById('menuNavFloatingBtn');

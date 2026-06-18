@@ -687,88 +687,94 @@
         }
     }
 
-    /**
-     * OBTIENE LA ESTRUCTURA COMPLETA DEL MENÚ
-     * MODIFICADA: Se agregaron nuevos módulos y se mejoraron los nombres
-     */
-    function obtenerEstructuraMenu() {
-        return [
-            {
-                id: 'Tickets',
-                nombre: 'Tickets',
-                icono: 'fa-ticket-alt',
-                elementos: [
-                    { id: 'gestionar-tickets-admin', nombre: 'Gestionar tickets', icono: 'fa-list-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html' },
-                    { id: 'ver-mis-tickets', nombre: 'Ver mis tickets', icono: 'fa-ticket-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html' },
-                    { id: 'ver-estadisticas', nombre: 'Ver estadísticas', icono: 'fa-chart-bar', ruta: '/vista/nav-mesa-admin/Tickets/graficas-tickets/graficas-tickets.html' }
-                ]
-            },
-            {
-                id: 'Administrativo',
-                nombre: 'Administrativo',
-                icono: 'fa-cogs',
-                elementos: [
-                    // Elementos existentes con nombres mejorados
-                    { id: 'gestion-areas', nombre: 'Gestión de áreas', icono: 'fa-map-marked-alt', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html' },
-                    { id: 'notas', nombre: 'Gestión de notas', icono: 'fa-sticky-note', ruta: '/vista/nav-mesa-admin/notas/notas.html' },
-                    { id: 'asistencias', nombre: 'Gestión de asistencias', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
-                    { id: 'reembolsos', nombre: 'Gestión de reembolsos', icono: 'fa-money-bill-wave', ruta: '/vista/nav-mesa-admin/Rembolsos/rembolso.html' },
-                    { id: 'manuales', nombre: 'Gestión de manuales', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/manuales/manuales.html' },
-                    { id: 'colaboradores', nombre: 'Gestión de colaboradores', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html' },
-                    { id: 'checklist', nombre: 'Gestión de checklist automóviles', icono: 'fa-car', ruta: '/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html' },
-                    { id: 'multas', nombre: 'Gestión de multas e imprevistos', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/multas/multas.html' },
-                    
-                    // NUEVOS MÓDULOS
-                    { id: 'nueva-area', nombre: 'Nueva área', icono: 'fa-plus-circle', ruta: '/vista/nav-mesa-admin/nueva-area/nueva-area.html' },
-                    { id: 'nuevo-colaborador', nombre: 'Nuevo colaborador', icono: 'fa-user-plus', ruta: '/vista/nav-mesa-admin/nuevo-colaborador/nuevo-colaborador.html' },
-                    { id: 'nuevo-manual', nombre: 'Nuevo manual', icono: 'fa-file-plus', ruta: '/vista/nav-mesa-admin/nuevo-manual/nuevo-manual.html' },
-                    { id: 'pedir-reembolso', nombre: 'Pedir reembolso', icono: 'fa-hand-holding-usd', ruta: '/vista/nav-mesa-admin/pedir-Rembolsos/pedir-Rembolsos.html' },
-                    { id: 'historial-checklist-automoviles', nombre: 'Historial de checklist automóviles', icono: 'fa-history', ruta: '/vista/nav-mesa-admin/historial-checklist-automoviles/historial-checklist-automoviles.html' },
-                    { id: 'gestion-productos-servicios', nombre: 'Gestión de productos y servicios', icono: 'fa-cubes', ruta: '/vista/nav-mesa-admin/gestionProductosServicios/gestionProductosServicios.html' }
-                ]
-            },
-            {
-                id: 'Finanzas',
-                nombre: 'Finanzas',
-                icono: 'fa-chart-line',
-                elementos: [
-                    { id: 'cotizar', nombre: 'Cotizar', icono: 'fa-file-invoice-dollar', ruta: '/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html' },
-                    { id: 'clientes', nombre: 'Gestión de clientes', icono: 'fa-users', ruta: '/vista/nav-mesa-admin/clientes/clientes.html' },
-                    
-                    // NUEVOS MÓDULOS
-                    { id: 'nueva-cotizacion', nombre: 'Nueva cotización', icono: 'fa-file-invoice', ruta: '/vista/nav-mesa-admin/nueva-cotizacion/nueva-cotizacion.html' },
-                    { id: 'graficas-cotizaciones', nombre: 'Gráficas de cotizaciones', icono: 'fa-chart-pie', ruta: '/vista/nav-mesa-admin/graficas-cotizaciones/graficas-cotizaciones.html' }
-                ]
-            },
-            {
-                id: 'Ecommerce',
-                nombre: 'Ecommerce',
-                icono: 'fa-shopping-cart',
-                elementos: [
-                    { id: 'carrusel', nombre: 'Carrusel', icono: 'fa-images', ruta: '/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html' },
-                    { id: 'categorias', nombre: 'Categorías', icono: 'fa-th-list', ruta: '/vista/nav-mesa-admin/e-comerce/categorias/categorias.html' },
-                    { id: 'contactos', nombre: 'Contactos', icono: 'fa-address-book', ruta: '/vista/nav-mesa-admin/e-comerce/contactos/contactos.html' },
-                    { id: 'entregas', nombre: 'Entregas', icono: 'fa-truck-loading', ruta: '/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html' },
-                    { id: 'opiniones', nombre: 'Opiniones', icono: 'fa-star', ruta: '/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html' },
-                    { id: 'pedidos-finalizados', nombre: 'Pedidos Finalizados', icono: 'fa-check-double', ruta: '/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html' },
-                    { id: 'productos', nombre: 'Productos', icono: 'fa-boxes', ruta: '/vista/nav-mesa-admin/e-comerce/productos/productos.html' },
-                    { id: 'usuarios', nombre: 'Usuarios', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html' },
-                    { id: 'ventas', nombre: 'Ventas', icono: 'fa-chart-line', ruta: '/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html' }
-                ]
-            },
-            {
-                id: 'Configuración',
-                nombre: 'Configuración',
-                icono: 'fa-sliders-h',
-                elementos: [
-                    { id: 'personalizar-interfaz', nombre: 'Personalizar interfaz', icono: 'fa-palette', ruta: '/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html' },
-                    { id: 'permisos', nombre: 'Permisos', icono: 'fa-shield-alt', ruta: '/vista/nav-mesa-admin/permisos/permisos.html' },
-                    { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html' },
-                    { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#' }
-                ]
-            }
-        ];
-    }
+   /**
+ * OBTIENE LA ESTRUCTURA COMPLETA DEL MENÚ
+ * MODIFICADA: Se agregaron nuevos módulos, se mejoraron nombres y se distingue el checklist para técnicos
+ */
+function obtenerEstructuraMenu() {
+    return [
+        {
+            id: 'Tickets',
+            nombre: 'Tickets',
+            icono: 'fa-ticket-alt',
+            elementos: [
+                { id: 'gestionar-tickets-admin', nombre: 'Gestionar tickets', icono: 'fa-list-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets-admin/gestion-tickets-admin.html' },
+                { id: 'ver-mis-tickets', nombre: 'Ver mis tickets', icono: 'fa-ticket-alt', ruta: '/vista/nav-mesa-admin/Tickets/gestion-tickets/gestion-tickets.html' },
+                { id: 'ver-estadisticas', nombre: 'Ver estadísticas', icono: 'fa-chart-bar', ruta: '/vista/nav-mesa-admin/Tickets/graficas-tickets/graficas-tickets.html' }
+            ]
+        },
+        {
+            id: 'Administrativo',
+            nombre: 'Administrativo',
+            icono: 'fa-cogs',
+            elementos: [
+                // NUEVO: Gestión de navegación (colaboradores)
+                { id: 'navegador-colaboradores', nombre: 'Gestión de navegación (colaboradores)', icono: 'fa-compass', ruta: '/vista/nav-mesa-admin/Navegador-colaboradores/Navegador-colaboradores.html' },
+                
+                // Elementos existentes con nombres mejorados
+                { id: 'gestion-areas', nombre: 'Gestión de áreas', icono: 'fa-map-marked-alt', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-areas/gestion-areas.html' },
+                { id: 'notas', nombre: 'Gestión de notas', icono: 'fa-sticky-note', ruta: '/vista/nav-mesa-admin/notas/notas.html' },
+                { id: 'asistencias', nombre: 'Gestión de asistencias', icono: 'fa-calendar-check', ruta: '/vista/nav-mesa-admin/asistencias-rsi/asistencias-rsi.html' },
+                { id: 'reembolsos', nombre: 'Gestión de reembolsos', icono: 'fa-money-bill-wave', ruta: '/vista/nav-mesa-admin/Rembolsos/rembolso.html' },
+                { id: 'manuales', nombre: 'Gestión de manuales', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/manuales/manuales.html' },
+                { id: 'colaboradores', nombre: 'Gestión de colaboradores', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/gestion-colaboradores/gestion-colaboradores.html' },
+                
+                // CHECKLIST ADMINISTRATIVO
+                { id: 'checklist', nombre: 'Gestión de checklist automóviles', icono: 'fa-car', ruta: '/vista/nav-mesa-admin/checklist-automoviles/checklist-automoviles.html' },
+                
+                // CHECKLIST PARA TÉCNICOS (renombrado y con icono diferente)
+                { id: 'historial-checklist-automoviles', nombre: 'Historial de checklist (Técnicos)', icono: 'fa-clipboard-list', ruta: '/vista/nav-mesa-admin/historial-checklist-automoviles/historial-checklist-automoviles.html' },
+                
+                { id: 'multas', nombre: 'Gestión de multas e imprevistos', icono: 'fa-file-alt', ruta: '/vista/nav-mesa-admin/multas/multas.html' },
+                
+                // NUEVOS MÓDULOS
+                { id: 'nueva-area', nombre: 'Nueva área', icono: 'fa-plus-circle', ruta: '/vista/nav-mesa-admin/nueva-area/nueva-area.html' },
+                { id: 'nuevo-colaborador', nombre: 'Nuevo colaborador', icono: 'fa-user-plus', ruta: '/vista/nav-mesa-admin/nuevo-colaborador/nuevo-colaborador.html' },
+                { id: 'nuevo-manual', nombre: 'Nuevo manual', icono: 'fa-file-plus', ruta: '/vista/nav-mesa-admin/nuevo-manual/nuevo-manual.html' },
+                { id: 'pedir-reembolso', nombre: 'Pedir reembolso', icono: 'fa-hand-holding-usd', ruta: '/vista/nav-mesa-admin/pedir-Rembolsos/pedir-Rembolsos.html' },
+                { id: 'gestion-productos-servicios', nombre: 'Gestión de productos y servicios', icono: 'fa-cubes', ruta: '/vista/nav-mesa-admin/gestionProductosServicios/gestionProductosServicios.html' }
+            ]
+        },
+        {
+            id: 'Finanzas',
+            nombre: 'Finanzas',
+            icono: 'fa-chart-line',
+            elementos: [
+                { id: 'cotizar', nombre: 'Cotizar', icono: 'fa-file-invoice-dollar', ruta: '/vista/nav-mesa-admin/consultar-cotizaciones/consultar-cotizaciones.html' },
+                { id: 'clientes', nombre: 'Gestión de clientes', icono: 'fa-users', ruta: '/vista/nav-mesa-admin/clientes/clientes.html' },
+                { id: 'nueva-cotizacion', nombre: 'Nueva cotización', icono: 'fa-file-invoice', ruta: '/vista/nav-mesa-admin/nueva-cotizacion/nueva-cotizacion.html' },
+                { id: 'graficas-cotizaciones', nombre: 'Gráficas de cotizaciones', icono: 'fa-chart-pie', ruta: '/vista/nav-mesa-admin/graficas-cotizaciones/graficas-cotizaciones.html' }
+            ]
+        },
+        {
+            id: 'Ecommerce',
+            nombre: 'Ecommerce',
+            icono: 'fa-shopping-cart',
+            elementos: [
+                { id: 'carrusel', nombre: 'Carrusel', icono: 'fa-images', ruta: '/vista/nav-mesa-admin/e-comerce/carrusel/carrusel.html' },
+                { id: 'categorias', nombre: 'Categorías', icono: 'fa-th-list', ruta: '/vista/nav-mesa-admin/e-comerce/categorias/categorias.html' },
+                { id: 'contactos', nombre: 'Contactos', icono: 'fa-address-book', ruta: '/vista/nav-mesa-admin/e-comerce/contactos/contactos.html' },
+                { id: 'entregas', nombre: 'Entregas', icono: 'fa-truck-loading', ruta: '/vista/nav-mesa-admin/e-comerce/panel-entregas/panel-entregas.html' },
+                { id: 'opiniones', nombre: 'Opiniones', icono: 'fa-star', ruta: '/vista/nav-mesa-admin/e-comerce/opiniones/opiniones.html' },
+                { id: 'pedidos-finalizados', nombre: 'Pedidos Finalizados', icono: 'fa-check-double', ruta: '/vista/nav-mesa-admin/e-comerce/pedidos-finalizados/pedidos-finalizados.html' },
+                { id: 'productos', nombre: 'Productos', icono: 'fa-boxes', ruta: '/vista/nav-mesa-admin/e-comerce/productos/productos.html' },
+                { id: 'usuarios', nombre: 'Usuarios', icono: 'fa-users-cog', ruta: '/vista/nav-mesa-admin/e-comerce/gestion-usuarios/gestion-usuarios.html' },
+                { id: 'ventas', nombre: 'Ventas', icono: 'fa-chart-line', ruta: '/vista/nav-mesa-admin/e-comerce/panel-ventas/panel-ventas.html' }
+            ]
+        },
+        {
+            id: 'Configuración',
+            nombre: 'Configuración',
+            icono: 'fa-sliders-h',
+            elementos: [
+                { id: 'personalizar-interfaz', nombre: 'Personalizar interfaz', icono: 'fa-palette', ruta: '/vista/nav-mesa-admin/personalizar-interfaz/personalizar-interfaz.html' },
+                { id: 'permisos', nombre: 'Permisos', icono: 'fa-shield-alt', ruta: '/vista/nav-mesa-admin/permisos/permisos.html' },
+                { id: 'terminar-asistencia', nombre: 'Terminar asistencia', icono: 'fa-flag-checkered', ruta: '/vista/nav-mesa-admin/fin-asistencia/fin-asistencia.html' },
+                { id: 'cerrar-sesion', nombre: 'Cerrar sesión', icono: 'fa-sign-out-alt', ruta: '#' }
+            ]
+        }
+    ];
+}
 
     /**
      * CARGA LAS SECCIONES EN LA CONFIGURACIÓN
