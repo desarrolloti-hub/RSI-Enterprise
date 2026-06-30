@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/png" href="/vista/css/img/logoApp.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos de Seguridad Electrónica | RSI Enterprise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- Estilos propios del documento -->
-    <script src="/components/animacion-tres-lineas.js"></script>
     <link rel="stylesheet" href="productos.css"> 
 </head>
 <body>
@@ -25,6 +21,7 @@
 
     <!-- Carga dinámica del navbar -->
     <script src="../recursosDinamicos/nav.js"></script>
+    
     <!-- Search Section -->
     <section class="search-section">
         <div class="container">
@@ -74,6 +71,11 @@
         </div>
     </section>
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../recursosDinamicos/footer.js"></script>
+    <script src="../recursosDinamicos/botones.js"></script>
+
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
@@ -94,7 +96,201 @@
     let currentCategory = '';
     const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
 
-    // Cargar categorías
+    // ========== FUNCIÓN DE NORMALIZACIÓN ==========
+    function normalizeText(text) {
+        if (!text) return '';
+        
+        let normalized = String(text).toLowerCase();
+        
+        const replacements = {
+            'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+            'Á': 'a', 'É': 'e', 'Í': 'i', 'Ó': 'o', 'Ú': 'u',
+            'ñ': 'n', 'Ñ': 'n',
+            'ü': 'u', 'Ü': 'u',
+            'à': 'a', 'è': 'e', 'ì': 'i', 'ò': 'o', 'ù': 'u',
+            'â': 'a', 'ê': 'e', 'î': 'i', 'ô': 'o', 'û': 'u',
+            'ä': 'a', 'ë': 'e', 'ï': 'i', 'ö': 'o', 'ü': 'u',
+            'ç': 'c', 'Ç': 'c'
+        };
+        
+        normalized = normalized.replace(/[áéíóúÁÉÍÓÚñÑüÜàèìòùâêîôûäëïöüçÇ]/g, match => replacements[match] || match);
+        normalized = normalized.replace(/[^a-z0-9\s]/g, ' ').trim();
+        
+        return normalized;
+    }
+
+    // ========== FUNCIÓN DE BÚSQUEDA MEJORADA ==========
+    async function searchProducts(searchTerm) {
+        try {
+            const normalizedSearch = normalizeText(searchTerm);
+            
+            if (!normalizedSearch) {
+                return [];
+            }
+            
+            const collectionsSnapshot = await getDocs(collection(db, "categorias"));
+            const categories = collectionsSnapshot.docs.map(doc => doc.data().nombre.replace(/\s+/g, ''));
+            
+            const allProducts = [];
+            
+            for (const category of categories) {
+                const collectionName = 'productos' + category;
+                const querySnapshot = await getDocs(collection(db, collectionName));
+                
+                querySnapshot.forEach((doc) => {
+                    const product = doc.data();
+                    product.id = doc.id;
+                    product.collection = collectionName;
+                    product.category = category.replace(/([A-Z])/g, ' $1').trim();
+                    allProducts.push(product);
+                });
+            }
+            
+            // Palabras clave para búsqueda semántica
+            const semanticSearch = {
+                'camara': ['cámara', 'cam', 'cámaras', 'camaras', 'cctv'],
+                'circuito': ['circuitos', 'circuito cerrado', 'circuit'],
+                'alarma': ['alarmas', 'alarma'],
+                'control': ['controles', 'control de acceso', 'acceso'],
+                'acceso': ['accesos', 'control de acceso'],
+                'inicio': ['inicia', 'iniciar', 'start'],
+                'persona': ['personas', 'personal', 'people'],
+                'contador': ['contadores', 'cuenta'],
+                'tracking': ['seguimiento', 'seguir', 'track'],
+                'megapixel': ['mp', 'megapíxeles', 'megapixeles'],
+                'fullhd': ['full hd', '1080p', 'alta definición'],
+                '4k': ['4k', 'ultra hd', 'uhd'],
+                'hd': ['alta definición', '1080p', 'fullhd'],
+                'ip': ['red', 'network', 'poe'],
+                'wifi': ['wireless', 'inalámbrico'],
+                'grabador': ['dvr', 'nvr', 'grabación', 'recorder'],
+                'disco': ['disco duro', 'hdd', 'almacenamiento'],
+                'lector': ['lector de huellas', 'biométrico', 'huella'],
+                'cerradura': ['cerraduras', 'lock', 'electronic lock']
+            };
+            
+            let expandedSearchTerms = [normalizedSearch];
+            
+            // Expandir con sinónimos
+            for (const [key, synonyms] of Object.entries(semanticSearch)) {
+                if (normalizedSearch.includes(key) || key.includes(normalizedSearch) || 
+                    synonyms.some(s => s.includes(normalizedSearch) || normalizedSearch.includes(s))) {
+                    expandedSearchTerms = expandedSearchTerms.concat(synonyms);
+                }
+            }
+            
+            // Eliminar duplicados
+            expandedSearchTerms = [...new Set(expandedSearchTerms)];
+            
+            const isShortSearch = normalizedSearch.length <= 2;
+            
+            const results = allProducts.filter(product => {
+                const searchableText = [
+                    product['Nombre Producto'] || '',
+                    product.Descripción || '',
+                    product.Características || '',
+                    product.Marca || '',
+                    product.SKU || '',
+                    product.category || '',
+                    product.Categoría || '',
+                    product.Tipo || '',
+                    product.Modelo || '',
+                    product['Palabras Clave'] || '',
+                    product.Especificaciones || ''
+                ].join(' ').toLowerCase();
+                
+                const normalizedProductText = normalizeText(searchableText);
+                
+                if (isShortSearch) {
+                    const words = normalizedProductText.split(/\s+/);
+                    return words.some(word => 
+                        word.includes(normalizedSearch) || 
+                        expandedSearchTerms.some(term => word.includes(term))
+                    );
+                }
+                
+                return expandedSearchTerms.some(term => 
+                    normalizedProductText.includes(term) ||
+                    normalizedProductText.split(/\s+/).some(word => 
+                        word.includes(term) || term.includes(word)
+                    )
+                );
+            });
+            
+            // Ordenar por relevancia
+            const sortedResults = results.sort((a, b) => {
+                const aText = normalizeText([
+                    a['Nombre Producto'] || '',
+                    a.Descripción || '',
+                    a.Características || '',
+                    a.Marca || '',
+                    a.SKU || '',
+                    a.category || ''
+                ].join(' ').toLowerCase());
+                
+                const bText = normalizeText([
+                    b['Nombre Producto'] || '',
+                    b.Descripción || '',
+                    b.Características || '',
+                    b.Marca || '',
+                    b.SKU || '',
+                    b.category || ''
+                ].join(' ').toLowerCase());
+                
+                const aCount = (aText.match(new RegExp(normalizedSearch, 'g')) || []).length;
+                const bCount = (bText.match(new RegExp(normalizedSearch, 'g')) || []).length;
+                
+                return bCount - aCount;
+            });
+            
+            return sortedResults;
+        } catch (error) {
+            console.error("Error en la búsqueda:", error);
+            return [];
+        }
+    }
+
+    // ========== FUNCIÓN PARA MOSTRAR RESULTADOS PREDICTIVOS ==========
+    function displaySearchResults(results) {
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = '';
+        
+        if (results.length === 0) {
+            resultsContainer.innerHTML = '<div class="no-results">No se encontraron productos</div>';
+            resultsContainer.style.display = 'block';
+            return;
+        }
+        
+        results.slice(0, 10).forEach(product => {
+            const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
+            const descuento = Number(product.Descuento) || 0;
+            const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
+            
+            const resultItem = document.createElement('div');
+            resultItem.className = 'search-result-item';
+            resultItem.innerHTML = `
+                <img src="${product.Imagenes?.[0] || defaultImage}" 
+                     alt="${product['Nombre Producto'] || 'Producto'}" 
+                     class="search-result-image"
+                     onerror="this.src='${defaultImage}'">
+                <div class="search-result-info">
+                    <div class="search-result-name">${product['Nombre Producto'] || 'Producto sin nombre'}</div>
+                    <div class="search-result-category">${product.category}</div>
+                </div>
+                <div class="search-result-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+            `;
+            
+            resultItem.addEventListener('click', () => {
+                window.location.href = `../detalleProducto/detalleProducto.html?collection=${product.collection}&id=${product.id}`;
+            });
+            
+            resultsContainer.appendChild(resultItem);
+        });
+        
+        resultsContainer.style.display = 'block';
+    }
+
+    // ========== CARGAR CATEGORÍAS ==========
     async function loadCategories() {
         try {
             const categoriesContainer = document.getElementById('categories-container');
@@ -118,7 +314,7 @@
         }
     }
 
-    // Crear tarjeta de categoría
+    // ========== CREAR TARJETA DE CATEGORÍA ==========
     function createCategoryCard(category) {
         const container = document.createElement('div');
         container.className = 'category-container';
@@ -149,22 +345,19 @@
         document.getElementById('categories-container').appendChild(container);
     }
 
-    // Cargar productos por categoría
+    // ========== CARGAR PRODUCTOS POR CATEGORÍA ==========
     async function loadProducts(categoryName) {
         try {
-            // Mostrar loader
             document.getElementById('products-container').innerHTML = `
                 <div class="loader-container" style="grid-column: 1 / -1;">
                     <div class="loader"></div>
                 </div>
             `;
             
-            // Ocultar categorías y mostrar productos
             document.getElementById('categories-section').style.display = 'none';
             document.getElementById('products-section').style.display = 'block';
             document.getElementById('category-title').textContent = categoryName;
             
-            // Formatear nombre de colección (eliminar espacios)
             const collectionName = 'productos' + categoryName.replace(/\s+/g, '');
             
             const querySnapshot = await getDocs(collection(db, collectionName));
@@ -183,7 +376,6 @@
                 createProductCard(product, collectionName);
             });
             
-            // Scroll suave a la sección de productos
             document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
         } catch (error) {
             console.error("Error cargando productos:", error);
@@ -192,7 +384,7 @@
         }
     }
 
-    // Crear tarjeta de producto
+    // ========== CREAR TARJETA DE PRODUCTO ==========
     function createProductCard(product, collectionName) {
         const card = document.createElement('div');
         card.className = 'product-card';
@@ -239,7 +431,7 @@
             window.location.href = `/vista/nav-visitantes/detalleProducto/detalleProducto.html?collection=${collection}&id=${productId}`;
         });
         
-        // Evento para añadir al carrito - NUEVO ENFOQUE
+        // Evento para añadir al carrito
         card.querySelector('.add-to-cart-btn').addEventListener('click', () => {
             addToCartDirect(product, collectionName);
         });
@@ -247,28 +439,22 @@
         document.getElementById('products-container').appendChild(card);
     }
 
-    // Función para agregar directamente al carrito
+    // ========== FUNCIÓN PARA AGREGAR AL CARRITO ==========
     function addToCartDirect(product, collectionName) {
         try {
             const cart = JSON.parse(localStorage.getItem("cart")) || [];
-            const defaultImage = 'https://rsienterprise.com/vista/css/img/Logo-RSI-OFICIAL.png';
             
-            // Generar un ID único para el producto
             const productId = product.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
-            // Buscar si el producto ya está en el carrito
             const existingProductIndex = cart.findIndex(item => item.id === productId);
             
             if (existingProductIndex !== -1) {
-                // Incrementar cantidad si ya existe
                 cart[existingProductIndex].cantidad += 1;
             } else {
-                // Calcular precios
                 const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
                 const descuento = Number(product.Descuento) || 0;
                 const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
                 
-                // Añadir nuevo producto al carrito
                 cart.push({
                     imagen: product.Imagenes?.[0] || defaultImage,
                     nombre: product['Nombre Producto'] || 'Producto sin nombre',
@@ -283,11 +469,8 @@
             }
             
             localStorage.setItem("cart", JSON.stringify(cart));
-            
-            // Actualizar contador
             updateCartCount();
             
-            // Mostrar notificación
             Swal.fire({
                 title: '¡Producto agregado!',
                 text: `${product['Nombre Producto'] || 'El producto'} se ha añadido al carrito`,
@@ -309,18 +492,16 @@
         }
     }
 
-    // Función para actualizar contador del carrito
+    // ========== ACTUALIZAR CONTADOR DEL CARRITO ==========
     function updateCartCount() {
         try {
             const cart = JSON.parse(localStorage.getItem("cart")) || [];
             const totalItems = cart.reduce((total, item) => total + (item.cantidad || 1), 0);
             
-            // Actualizar en botones.js si existe
             if (window.updateCartCount) {
                 window.updateCartCount();
             }
             
-            // Actualizar directamente por si acaso
             const cartCountElement = document.getElementById("cart-count");
             if (cartCountElement) {
                 cartCountElement.textContent = totalItems;
@@ -330,116 +511,27 @@
         }
     }
 
-    // Evento para volver a categorías
+    // ========== EVENTO VOLVER A CATEGORÍAS ==========
     document.getElementById('back-to-categories').addEventListener('click', () => {
         document.getElementById('categories-section').style.display = 'block';
         document.getElementById('products-section').style.display = 'none';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // Función para buscar productos en todas las categorías
-    async function searchProducts(searchTerm) {
-        try {
-            // Obtener todas las colecciones de productos
-            const collectionsSnapshot = await getDocs(collection(db, "categorias"));
-            const categories = collectionsSnapshot.docs.map(doc => doc.data().nombre.replace(/\s+/g, ''));
-            
-            const allProducts = [];
-            
-            // Buscar en cada colección de productos
-            for (const category of categories) {
-                const collectionName = 'productos' + category;
-                const querySnapshot = await getDocs(collection(db, collectionName));
-                
-                querySnapshot.forEach((doc) => {
-                    const product = doc.data();
-                    product.id = doc.id;
-                    product.collection = collectionName;
-                    product.category = category.replace(/([A-Z])/g, ' $1').trim(); // Formatear nombre de categoría
-                    allProducts.push(product);
-                });
-            }
-            
-            // Filtrar productos que coincidan con el término de búsqueda
-            const results = allProducts.filter(product => {
-                const searchFields = [
-                    product['Nombre Producto'] || '',
-                    product.Descripción || '',
-                    product.Características || '',
-                    product.Marca || '',
-                    product.SKU || '',
-                    product.category || ''
-                ].join(' ').toLowerCase();
-                
-                return searchFields.includes(searchTerm.toLowerCase());
-            });
-            
-            return results;
-        } catch (error) {
-            console.error("Error en la búsqueda:", error);
-            return [];
-        }
-    }
-
-    // Función para mostrar resultados de búsqueda
-    function displaySearchResults(results) {
-        const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = '';
-        
-        if (results.length === 0) {
-            resultsContainer.innerHTML = '<div class="no-results">No se encontraron productos</div>';
-            resultsContainer.style.display = 'block';
-            return;
-        }
-        
-        results.slice(0, 10).forEach(product => {
-            const precioBase = Number(product['Precio MXN'] || product['Precio Base'] || 0);
-            const descuento = Number(product.Descuento) || 0;
-            const precioFinal = descuento > 0 ? precioBase * (1 - descuento/100) : precioBase;
-            
-            const resultItem = document.createElement('div');
-            resultItem.className = 'search-result-item';
-            resultItem.innerHTML = `
-                <img src="${product.Imagenes?.[0] || defaultImage}" 
-                     alt="${product['Nombre Producto'] || 'Producto'}" 
-                     class="search-result-image"
-                     onerror="this.src='${defaultImage}'">
-                <div class="search-result-info">
-                    <div class="search-result-name">${product['Nombre Producto'] || 'Producto sin nombre'}</div>
-                    <div class="search-result-category">${product.category}</div>
-                </div>
-                <div class="search-result-price">$${precioFinal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
-            `;
-            
-            resultItem.addEventListener('click', () => {
-                // Redirigir a la página de detalles del producto
-                window.location.href = `/vista/detalleProducto/detalleProducto.html?collection=${product.collection}&id=${product.id}`;
-            });
-            
-            resultsContainer.appendChild(resultItem);
-        });
-        
-        resultsContainer.style.display = 'block';
-    }
-
-    // Evento para búsqueda predictiva
+    // ========== EVENTO BÚSQUEDA PREDICTIVA ==========
     let searchTimeout;
     document.getElementById('search-input').addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim();
         const resultsContainer = document.getElementById('search-results');
         
-        // Limpiar timeout anterior
         clearTimeout(searchTimeout);
         
-        // Ocultar resultados si el campo está vacío
         if (searchTerm.length === 0) {
             resultsContainer.style.display = 'none';
             return;
         }
         
-        // Mostrar resultados solo después de 3 caracteres
-        if (searchTerm.length >= 3) {
-            // Mostrar loader en los resultados
+        if (searchTerm.length >= 2) {
             resultsContainer.innerHTML = `
                 <div style="padding: 20px; text-align: center;">
                     <div class="loader" style="margin: 0 auto; width: 30px; height: 30px; border-width: 3px;"></div>
@@ -460,25 +552,16 @@
                     `;
                     console.error("Error en búsqueda predictiva:", error);
                 }
-            }, 300); // Pequeño retraso para evitar múltiples solicitudes
+            }, 300);
         } else {
             resultsContainer.style.display = 'none';
         }
     });
 
-    // Ocultar resultados al hacer clic fuera
-    document.addEventListener('click', (e) => {
-        const searchContainer = document.querySelector('.search-container');
-        if (!searchContainer.contains(e.target)) {
-            document.getElementById('search-results').style.display = 'none';
-        }
-    });
-
-    // Evento para búsqueda principal
+    // ========== EVENTO BÚSQUEDA PRINCIPAL ==========
     document.getElementById('search-button').addEventListener('click', async () => {
         const searchTerm = document.getElementById('search-input').value.trim();
         if (searchTerm) {
-            // Mostrar loader
             Swal.fire({
                 title: 'Buscando productos...',
                 html: 'Por favor espera mientras buscamos los productos que coinciden con tu búsqueda.',
@@ -490,7 +573,7 @@
 
             try {
                 const results = await searchProducts(searchTerm);
-                Swal.close(); // Cerrar el loader
+                Swal.close();
                 
                 if (results.length === 0) {
                     Swal.fire({
@@ -502,10 +585,9 @@
                     return;
                 }
                 
-                // Mostrar todos los resultados en la sección de productos
                 document.getElementById('categories-section').style.display = 'none';
                 document.getElementById('products-section').style.display = 'block';
-                document.getElementById('category-title').textContent = `Resultados para: "${searchTerm}"`;
+                document.getElementById('category-title').textContent = `Resultados para: "${searchTerm}" (${results.length} productos)`;
                 
                 const productsContainer = document.getElementById('products-container');
                 productsContainer.innerHTML = '';
@@ -514,9 +596,16 @@
                     createProductCard(product, product.collection);
                 });
                 
+                if (results.length > 20) {
+                    const message = document.createElement('p');
+                    message.style.cssText = 'grid-column: 1 / -1; text-align: center; color: #666; margin-top: 10px;';
+                    message.textContent = `Mostrando ${results.length} productos encontrados`;
+                    productsContainer.appendChild(message);
+                }
+                
                 document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
-                Swal.close(); // Cerrar el loader en caso de error
+                Swal.close();
                 Swal.fire({
                     title: 'Error en la búsqueda',
                     text: 'Ocurrió un error al buscar los productos. Por favor intenta nuevamente.',
@@ -528,25 +617,26 @@
         }
     });
 
-    // Evento para tecla Enter en búsqueda
+    // ========== EVENTO TECLA ENTER EN BÚSQUEDA ==========
     document.getElementById('search-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             document.getElementById('search-button').click();
         }
     });
 
-    // Inicializar
+    // ========== OCULTAR RESULTADOS AL HACER CLIC FUERA ==========
+    document.addEventListener('click', (e) => {
+        const searchContainer = document.querySelector('.search-container');
+        if (!searchContainer.contains(e.target)) {
+            document.getElementById('search-results').style.display = 'none';
+        }
+    });
+
+    // ========== INICIALIZAR ==========
     document.addEventListener('DOMContentLoaded', () => {
         loadCategories();
         updateCartCount();
     });
-</script>
-
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="../recursosDinamicos/footer.js"></script>
-     <!-- Carga dinámica de botones flotantes -->
-    <script src="../recursosDinamicos/botones.js"></script>
+    </script>
 </body>
-<script src="/vista/nav-mesa-operadores/js/guardar-ultima-pagina.js"></script>
 </html>
