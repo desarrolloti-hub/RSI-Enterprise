@@ -51,7 +51,7 @@
     
     let allEmployees = [];
 
-    // Función para inicializar Firebase
+    // Función para inicializar Firebase (CORREGIDA)
     function initFirebase() {
         return new Promise((resolve, reject) => {
             if (typeof firebase !== 'undefined') {
@@ -62,10 +62,19 @@
                     db = firebase.firestore();
                     auth = firebase.auth();
                     
-                    db.settings({
-                        timestampsInSnapshots: true,
-                        ignoreUndefinedProperties: true
-                    });
+                    // 🔥 ELIMINADA la llamada a db.settings() porque ya no es necesaria
+                    // (timestampsInSnapshots e ignoreUndefinedProperties son true por defecto en versiones recientes)
+                    // Si por algún motivo necesitas configurarlas, usa try/catch:
+                    /*
+                    try {
+                        db.settings({
+                            timestampsInSnapshots: true,
+                            ignoreUndefinedProperties: true
+                        });
+                    } catch (e) {
+                        console.warn('Configuración de Firestore ya aplicada, omitiendo...');
+                    }
+                    */
                     
                     console.log('✅ Firebase inicializado correctamente');
                     resolve();
