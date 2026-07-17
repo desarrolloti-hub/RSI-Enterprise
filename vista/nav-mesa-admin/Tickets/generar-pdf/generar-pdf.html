@@ -499,70 +499,72 @@
         }
 
         async function loadActivities() {
-    try {
-        if (!appState.currentTicketId) {
-            appState.activities = [];
-            updateImagesUI();
-            return;
-        }
-        
-        const activitiesSnapshot = await db.collection('evidenciatickets')
-            .where('ticketId', '==', appState.currentTicketId)
-            .get();
-        
-        appState.activities = [];
-        appState.selectedImages = [];
-        let descripcionesEvidencias = [];
-        
-        activitiesSnapshot.forEach(doc => {
-            const activityData = doc.data();
-            appState.activities.push({
-                id: doc.id,
-                ...activityData
-            });
-            
-            // Agregar imágenes de esta actividad
-            if (activityData.imagenes && activityData.imagenes.length > 0) {
-                activityData.imagenes.forEach(imgUrl => {
-                    // Evitar duplicados verificando la URL
-                    if (!appState.selectedImages.some(img => img.url === imgUrl)) {
-                        // IMPORTANTE: NO cargar la descripción de la base de datos
-                        // Dejar el campo description vacío para que el usuario lo complete
-                        appState.selectedImages.push({
-                            url: imgUrl,
-                            description: '', // VACÍO - el usuario pondrá su propia descripción
-                            selected: true,
-                            type: 'evidence',
-                            fileName: `Evidencia ${appState.selectedImages.length + 1}`
+            try {
+                if (!appState.currentTicketId) {
+                    appState.activities = [];
+                    updateImagesUI();
+                    return;
+                }
+                
+                const activitiesSnapshot = await db.collection('evidenciatickets')
+                    .where('ticketId', '==', appState.currentTicketId)
+                    .get();
+                
+                appState.activities = [];
+                appState.selectedImages = [];
+                let descripcionesEvidencias = [];
+                
+                activitiesSnapshot.forEach(doc => {
+                    const activityData = doc.data();
+                    appState.activities.push({
+                        id: doc.id,
+                        ...activityData
+                    });
+                    
+                    // Agregar imágenes de esta actividad
+                    if (activityData.imagenes && activityData.imagenes.length > 0) {
+                        activityData.imagenes.forEach(img => {
+                            // Ahora img es un objeto con url, path y nombre
+                            const imgUrl = img.url || img; // Si es string o objeto
+                            
+                            // Evitar duplicados verificando la URL
+                            if (!appState.selectedImages.some(existingImg => existingImg.url === imgUrl)) {
+                                appState.selectedImages.push({
+                                    url: imgUrl,
+                                    description: '', // VACÍO - el usuario pondrá su propia descripción
+                                    selected: true,
+                                    type: 'evidence',
+                                    fileName: img.nombre || `Evidencia ${appState.selectedImages.length + 1}`,
+                                    path: img.path || '',
+                                    nombre: img.nombre || ''
+                                });
+                            }
                         });
                     }
+                    
+                    // Recopilar descripciones de evidencias para la sección general
+                    if (activityData.descripcion && activityData.descripcion.trim() !== '') {
+                        descripcionesEvidencias.push(activityData.descripcion);
+                    }
                 });
+                
+                console.log(`Total de imágenes cargadas: ${appState.selectedImages.length}`);
+                console.log(`Descripciones encontradas para sección general: ${descripcionesEvidencias.length}`);
+                
+                // Combinar todas las descripciones en un solo texto para la sección "DESCRIPCIÓN DE EVIDENCIAS"
+                if (descripcionesEvidencias.length > 0) {
+                    const descripcionCombinada = descripcionesEvidencias.join('\n\n');
+                    document.getElementById('pdfEvidenciasDescription').value = descripcionCombinada;
+                    console.log("Descripción general cargada automáticamente en la sección correspondiente");
+                }
+                
+                updateImagesUI();
+                
+            } catch (error) {
+                console.error("Error al cargar actividades:", error);
+                showError('No se pudieron cargar las actividades.');
             }
-            
-            // Recopilar descripciones de evidencias para la sección general
-            if (activityData.descripcion && activityData.descripcion.trim() !== '') {
-                descripcionesEvidencias.push(activityData.descripcion);
-            }
-        });
-        
-        console.log(`Total de imágenes cargadas: ${appState.selectedImages.length}`);
-        console.log(`Descripciones encontradas para sección general: ${descripcionesEvidencias.length}`);
-        
-        // Combinar todas las descripciones en un solo texto para la sección "DESCRIPCIÓN DE EVIDENCIAS"
-        if (descripcionesEvidencias.length > 0) {
-            const descripcionCombinada = descripcionesEvidencias.join('\n\n');
-            document.getElementById('pdfEvidenciasDescription').value = descripcionCombinada;
-            console.log("Descripción general cargada automáticamente en la sección correspondiente");
         }
-        
-        updateImagesUI();
-        
-    } catch (error) {
-        console.error("Error al cargar actividades:", error);
-        showError('No se pudieron cargar las actividades.');
-    }
-}
-
         function setupDefaultHeaderData() {
             const ticket = appState.ticketData;
             if (!ticket) return;

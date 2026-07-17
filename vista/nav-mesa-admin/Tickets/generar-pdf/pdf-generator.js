@@ -191,6 +191,7 @@ const pdfManager = {
         doc.text('EVIDENCIAS FOTOGRÁFICAS', MARGIN, y);
         y += 15;
         
+        // En generatePdfContentNewFormat, donde se llaman las evidencias
         y = await this.addEvidenceImagesGrid(doc, ticketData, MARGIN, y, CONTENT_WIDTH, imageDescriptions);
 
         // ===== ORDEN DE SERVICIO (SIEMPRE EN NUEVA PÁGINA) =====
@@ -566,18 +567,15 @@ const pdfManager = {
             return y;
         }
 
-        // Configuración del grid - 3 imágenes por fila con tamaño original
+        // Configuración del grid - 3 imágenes por fila
         const imagesPerRow = 3;
-        const imageSpacing = 5; // Espacio entre imágenes
-        const imageWidth = this.IMAGE_WIDTH; // Tamaño original 45mm
-        const imageHeight = this.IMAGE_HEIGHT; // Tamaño original 45mm
-        const descriptionHeight = 12; // Espacio para descripciones
+        const imageSpacing = 5;
+        const imageWidth = this.IMAGE_WIDTH;
+        const imageHeight = this.IMAGE_HEIGHT;
+        const descriptionHeight = 12;
         const rowSpacing = 15;
         
-        // Calcular ancho total de una fila
         const rowWidth = (imageWidth * imagesPerRow) + (imageSpacing * (imagesPerRow - 1));
-        
-        // Centrar el grid si es necesario
         const startX = MARGIN + ((CONTENT_WIDTH - rowWidth) / 2);
         let currentX = startX;
         let currentY = y;
@@ -585,50 +583,47 @@ const pdfManager = {
         const currentTime = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
         const address = 'C. 31 110, El Sol, 57200 Nezahualcóyotl, Méx.';
 
-        // Procesar todas las imágenes con gestión de páginas mejorada
+        // Procesar todas las imágenes
         for (let i = 0; i < ticketData.imagenes.length; i++) {
-            const imageUrl = ticketData.imagenes[i];
+            const imageItem = ticketData.imagenes[i];
+            // Obtener la URL de la imagen (puede ser string u objeto)
+            const imageUrl = typeof imageItem === 'string' ? imageItem : imageItem.url;
             const imageDesc = imageDescriptions[i] || '';
             
-            // Verificar si necesitamos nueva página para la siguiente imagen
+            // Verificar si necesitamos nueva página
             const spaceNeeded = imageHeight + descriptionHeight + rowSpacing;
             if (this.needsNewPage(doc, currentY, spaceNeeded)) {
-                // Crear nueva página
-                y = this.addNewPageWithHeader(doc, 'REPORTE FOTOGRÁFICO');
+                currentY = this.addNewPageWithHeader(doc, 'REPORTE FOTOGRÁFICO');
                 
-                // Re-agregar título de sección en nueva página
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(12);
                 doc.setTextColor(this.COLOR_AZUL_MARINO);
-                doc.text('EVIDENCIAS FOTOGRÁFICAS (continuación)', MARGIN, y);
-                currentY = y + 15;
+                doc.text('EVIDENCIAS FOTOGRÁFICAS (continuación)', MARGIN, currentY);
+                currentY += 15;
                 currentX = startX;
             }
 
             try {
+                // Cargar imagen desde URL
                 const imageDataUrl = await this.loadImageAsDataURL(imageUrl);
                 if (imageDataUrl) {
                     const imageWithWatermark = await this.addWatermarkNewFormat(imageDataUrl, address, currentTime);
                     const img = await this.loadImage(imageWithWatermark);
                     
-                    // Calcular dimensiones manteniendo proporción pero ajustando al tamaño original
+                    // Calcular dimensiones manteniendo proporción
                     const aspectRatio = img.width / img.height;
                     let finalWidth = imageWidth;
                     let finalHeight = imageHeight;
                     
                     if (aspectRatio > 1) {
-                        // Imagen horizontal - mantener ancho, ajustar altura
                         finalHeight = imageWidth / aspectRatio;
                     } else {
-                        // Imagen vertical - mantener altura, ajustar ancho
                         finalWidth = imageHeight * aspectRatio;
                     }
                     
-                    // Centrar la imagen en su celda
                     const xOffset = currentX + (imageWidth - finalWidth) / 2;
                     const yOffset = currentY;
                     
-                    // Agregar la imagen con tamaño original
                     doc.addImage(imageWithWatermark, 'JPEG', xOffset, yOffset, finalWidth, finalHeight);
                     
                     // Agregar descripción debajo de la imagen si existe
@@ -637,12 +632,9 @@ const pdfManager = {
                         doc.setFontSize(9);
                         doc.setTextColor('#000000');
                         
-                        // Calcular posición Y para la descripción
                         const descY = currentY + imageHeight + 3;
                         
-                        // Verificar si hay espacio para la descripción
                         if (!this.needsNewPage(doc, descY, descriptionHeight)) {
-                            // Dividir descripción si es muy larga
                             const maxDescWidth = imageWidth - 2;
                             const splitDesc = doc.splitTextToSize(imageDesc, maxDescWidth);
                             
@@ -653,10 +645,8 @@ const pdfManager = {
                         }
                     }
                     
-                    // Actualizar posición para la siguiente imagen
                     currentX += imageWidth + imageSpacing;
                     
-                    // Si hemos llegado al máximo de imágenes por fila, pasar a la siguiente
                     if ((i + 1) % imagesPerRow === 0) {
                         currentX = startX;
                         currentY += imageHeight + rowSpacing + (imageDesc ? descriptionHeight : 0);
@@ -664,7 +654,6 @@ const pdfManager = {
                 }
             } catch (error) {
                 console.error(`Error al procesar imagen ${i}:`, error);
-                // Continuar con la siguiente imagen
             }
         }
 
@@ -1068,6 +1057,7 @@ const pdfManager = {
     // FUNCIÓN MEJORADA: Cargar imagen como DataURL (con soporte para PNG transparente)
     async loadImageAsDataURL(url) {
         return new Promise((resolve, reject) => {
+            // Si ya es data URL, resolver directamente
             if (url.startsWith('data:')) {
                 resolve(url);
                 return;
@@ -1076,7 +1066,14 @@ const pdfManager = {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             
+            // Timeout para evitar bloqueos
+            const timeout = setTimeout(() => {
+                console.warn('Timeout al cargar imagen:', url);
+                reject(new Error('Timeout al cargar imagen'));
+            }, 15000); // 15 segundos
+            
             img.onload = function() {
+                clearTimeout(timeout);
                 try {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
@@ -1085,23 +1082,24 @@ const pdfManager = {
                     
                     // Si es PNG, mantener transparencia
                     if (url.toLowerCase().includes('.png')) {
-                        // Crear fondo blanco para PNG transparentes
                         ctx.fillStyle = 'white';
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
                     }
                     
                     ctx.drawImage(img, 0, 0);
                     
-                    // Determinar formato basado en la extensión
                     const format = url.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
                     const dataURL = canvas.toDataURL(`image/${format}`, format === 'JPEG' ? 0.9 : 1.0);
                     resolve(dataURL);
                 } catch (error) {
+                    clearTimeout(timeout);
                     reject(error);
                 }
             };
             
             img.onerror = function() {
+                clearTimeout(timeout);
+                console.error('Error al cargar imagen:', url);
                 reject(new Error(`No se pudo cargar la imagen: ${url}`));
             };
             

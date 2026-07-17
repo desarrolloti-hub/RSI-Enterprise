@@ -96,3 +96,55 @@ exports.enviarNotificacion = functions.https.onRequest(async (req, res) => {
     });
   }
 });
+
+//Functions para comunicacion con facturama
+//Obtener cliente
+const facturamaController = require("./controllers/facturama.controller");
+exports.obtenerClientes = functions.https.onRequest(
+    facturamaController.obtenerClientes
+);
+
+// Crear cliente
+exports.crearCliente = functions.https.onRequest(
+    facturamaController.crearCliente
+);
+
+// Crear factura
+exports.crearFactura = functions.https.onRequest((req, res) => {
+
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).send("Método no permitido");
+    }
+
+    return facturamaController.crearFactura(req, res);
+
+});
+
+//Validar cliente
+exports.validarCliente = functions.https.onRequest(async (req, res) => {
+
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({
+            error: "Método no permitido"
+        });
+    }
+
+    return facturamaController.validarCliente(req, res);
+
+});
